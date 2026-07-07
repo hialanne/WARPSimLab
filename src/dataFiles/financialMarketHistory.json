@@ -1,0 +1,73 @@
+{
+    "25_year_data": {
+            "eq_mean": 10.4,
+            "bd_mean": 3.93,
+            "cs_mean": 2.75,
+            "re_mean": 5.1,
+            "eq_std": 15.0,
+            "bd_std": 5.0,
+            "cs_std": 1.0,
+            "re_std": 8.7,
+            "inflation": 2.8,
+            "_comment_1": "Equities based on S&P500 2001 to 2025.",
+            "_comment_2": "Bonds based on Bloomberg US Aggregate Bond Index 2001 to 2025.",
+            "_comment_3": "Cash based on 3-month U.S. Treasury bill yield 2001 to 2025.",
+            "_comment_4": "Real Estate based on annual home price appreciation rate 2001 to 2025.",
+            "_comment_5": "Inflation based on United States Consumer Price Index 2001 to 2025."
+    },
+    "50_year_data": {
+            "eq_mean": 12.2,
+            "bd_mean": 6.7,
+            "cs_mean": 3.5,
+            "re_mean": 4.9,
+            "eq_std": 18.0,
+            "bd_std": 7.0,
+            "cs_std": 0.3,
+            "re_std": 6.5,
+            "inflation": 3.5
+    },
+    "100_year_data": {
+            "eq_mean": 10.52,
+            "bd_mean": 5.5,
+            "cs_mean": 3.5,
+            "re_mean": 4.5,
+            "eq_std": 19.0,
+            "bd_std": 7.0,
+            "cs_std": 0.4,
+            "re_std": 6.5,
+            "inflation": 3.9
+    },
+    "depression": {
+        "eq_mean": -12.1,
+        "bd_mean": 4.7,
+        "cs_mean": 2,
+        "re_mean": -0.6,
+        "eq_std": 26.95,
+        "bd_std": 5.92,
+        "cs_std": 1,
+        "re_std": 5.5,
+        "inflation": -1.6
+    },
+    "irrational_exuberance": {
+        "eq_mean": 16.1,
+        "bd_mean": 7.7,
+        "cs_mean": 7.46,
+        "re_mean": 4.4,
+        "eq_std": 13.3,
+        "bd_std": 9.7,
+        "cs_std": 0.5,
+        "re_std": 2.2,
+        "inflation": 3.0
+    },
+    "investment_group_projection": {
+        "eq_mean": 4.5,
+        "bd_mean": 4.3,
+        "cs_mean": 3.6,
+        "re_mean": 4.9,
+        "eq_std": 15.1,
+        "bd_std": 6.2,
+        "cs_std": 1.1,
+        "re_std": 8.7,
+        "inflation": 2.0
+    }
+}
