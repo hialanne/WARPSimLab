@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Sequence of Returns Risk in Retirement",
+      "description": "Educational explanation of sequence of returns risk in retirement and how WARPSimLab models it using Monte Carlo recession timing scenarios.",
+      "url": "https://warpsimlab.org/sequence-of-returns-risk.html"
+    }
+    </script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence of Returns Risk in Retirement (Educational) | WARPSimLab</title>
+    <meta name="description" content="Learn what sequence of returns risk means in retirement and how WARPSimLab models it using Monte Carlo recession timing scenarios, including early, mid, and late retirement downturns.">
+    <link rel="canonical" href="https://warpsimlab.org/sequence-of-returns-risk.html">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <header class="site-header">
+        <div class="brand-bar">
+            <div class="container brand-inner">
+                <div class="brand-block">
+                    <a href="index.html" class="brand">WARPSimLab</a>
+                    <p class="brand-subtitle">Educational Personal Finance Simulation Software</p>
+                </div>
+
+                <div class="header-actions">
+                    <a class="header-button" href="downloads.html">Downloads</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Primary navigation">
+            <div class="container nav-inner">
+                <a href="/#overview">Overview</a>
+                <a href="/#features">Core Features</a>
+                <a href="/#screens">Interface Views</a>
+                <a href="reports.html">Reports</a>
+                <a href="faq.html">FAQ</a>
+                <a href="release-notes.html">Release Notes</a>
+                <a href="legal.html">Legal</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <section class="hero" id="top">
+            <div class="container hero-grid">
+                <div class="hero-copy">
+                    <h1>Sequence of Returns Risk in Retirement</h1>
+
+                    <p class="hero-text">
+                    WARPSimLab is educational personal finance and retirement simulation software. Sequence of returns risk
+                    refers to how the timing of investment gains and losses can affect long-term financial outcomes,
+                    even when average returns are the same.
+                    </p>
+
+                    <p class="hero-note-secondary">
+                    In WARPSimLab, this concept is explored through Monte Carlo recession timing scenarios, including
+                    downturns occurring early, mid, or late in retirement, with varying lengths and severities.
+                    This helps illustrate how return timing can influence portfolio behavior while withdrawals are occurring.
+                    </p>
+                </div>
+
+                <aside class="hero-card hero-image-card" aria-label="Sequence of returns risk illustration">
+                    <img
+                        class="hero-screenshot"
+                        src="images/SequenceOfReturnsRisk.png"
+                        alt="WARPSimLab simulation illustrating how different return sequences can affect retirement portfolio outcomes over time."
+                    >
+                    <p class="image-caption">
+                        Different return sequences can lead to different retirement outcomes, even when the starting assumptions are unchanged.
+                    </p>
+                </aside>
+            </div>
+        </section>
+
+        <section class="section section-white" id="meaning">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>What Sequence of Returns Risk Means</h2>
+
+                    <p>
+                    Sequence of returns risk describes how the timing of investment gains and losses affects a portfolio that is experiencing withdrawals.
+                    </p>
+
+                    <p>
+                    Two scenarios can have the same starting balance, the same withdrawal pattern, and the same average return,
+                    but still produce different outcomes depending on when gains and losses occur.
+                    </p>
+
+                    <p>
+                    When negative returns occur earlier, withdrawals may reduce the portfolio base before it has had an opportunity to recover.
+                    When positive returns occur earlier, the portfolio may grow before withdrawals are applied.
+                    </p>
+
+                    <p>
+                    This difference in timing can lead to materially different outcomes even when long-term averages are identical.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-white" id="timing">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>Why Return Timing Matters</h2>
+
+                    <p>
+                    Average return assumptions do not describe how returns occur over time.
+                    </p>
+
+                    <p>
+                    In a single projection, returns are often applied in a fixed pattern. In practice, returns vary from year to year.
+                    Sequence effects arise because withdrawals are made while portfolio values are changing, and gains and losses
+                    compound differently depending on their order.
+                    </p>
+
+                    <p>
+                    As a result, two scenarios with the same average return can produce materially different outcomes based on timing alone.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-soft" id="recession-timing">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>Early, Mid, and Late Retirement Declines</h2>
+                    <p>
+                    One way to understand sequence effects is to compare how market declines occurring at different stages of retirement affect outcomes.
+                    </p>
+                </div>
+
+                <div class="feature-grid">
+
+                    <article class="feature-card">
+                        <h3>Early Retirement Decline</h3>
+                        <p>
+                        Losses occur near the beginning of retirement, when withdrawals are also reducing the portfolio.
+                        This can leave fewer assets available to participate in a later recovery.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Mid-Retirement Decline</h3>
+                        <p>
+                        Losses occur after retirement is underway, when the portfolio may have experienced some growth
+                        but is still supporting ongoing withdrawals.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Late Retirement Decline</h3>
+                        <p>
+                        Losses occur later in retirement, after more withdrawals have already taken place and the remaining
+                        time horizon may be shorter.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Same Average, Different Path</h3>
+                        <p>
+                        These scenarios can have the same average return over the full period, but still produce different outcomes
+                        because the timing of gains and losses is different.
+                        </p>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-white" id="how-warpsimlab-models-it">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>How WARPSimLab Models Sequence Risk</h2>
+
+                    <p>
+                    In WARPSimLab, sequence of returns risk is explored using the Monte Carlo simulation engine,
+                    which allows return paths to vary rather than following a single fixed projection.
+                    </p>
+
+                    <p>
+                    The simulator extends this approach by modeling recession timing scenarios, where market declines
+                    can occur at different stages of retirement. These scenarios include early, mid, and late retirement
+                    downturns, allowing the same financial plan to be evaluated under different return sequences.
+                    </p>
+
+                    <p>
+                    Scenario characteristics can also vary, including the length and severity of declines.
+                    By comparing these variations, it becomes possible to observe how the timing, duration,
+                    and magnitude of losses influence outcomes under otherwise similar assumptions.
+                    </p>
+
+                    <p>
+                    For a broader overview of the simulation framework, see the
+                    <a href="monte-carlo-retirement-simulator.html">Monte Carlo retirement simulator page</a>.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-soft" id="interpretation">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>How to Interpret Simulation Results</h2>
+                    <p>
+                    Simulation outputs summarize results across many runs rather than focusing on a single path.
+                    </p>
+                </div>
+
+                <div class="feature-grid">
+
+                    <article class="feature-card">
+                        <h3>Range of Outcomes</h3>
+                        <p>
+                        Simulations may show a spread of portfolio values over time rather than one expected result.
+                        This range reflects how outcomes can vary across different return sequences.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Median and Distribution</h3>
+                        <p>
+                        Some summaries focus on the median outcome or the overall distribution of results.
+                        These views help illustrate how different paths compare within the model.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Educational Interpretation</h3>
+                        <p>
+                        These outputs are educational illustrations of how timing and variability affect modeled outcomes.
+                        They are not predictions or guarantees of future financial performance.
+                        </p>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-white" id="education">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>Educational Use</h2>
+
+                    <p>
+                    Sequence of returns risk is one of several factors that can influence long-term financial outcomes.
+                    In WARPSimLab, results are based on user-defined inputs and simplified assumptions and are intended
+                    for exploration and learning.
+                    </p>
+
+                    <p>
+                    The goal is to examine how timing and variability affect outcomes, rather than to produce forecasts,
+                    recommendations, or financial advice.
+                    </p>
+
+                    <p>
+                    For additional background, see the <a href="faq.html">FAQ</a> or review the
+                    <a href="legal.html">legal disclaimer</a>.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-white" id="explore">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>Explore Sequence Effects Through Simulation</h2>
+
+                    <p>
+                    Different return sequences can lead to different outcomes, even when long-term assumptions are unchanged.
+                    Simulation helps illustrate how timing, duration, and severity of market declines can affect portfolio behavior over time.
+                    </p>
+
+                    <p>
+                    To explore how these scenarios are modeled, visit the
+                    <a href="monte-carlo-retirement-simulator.html">Monte Carlo retirement simulator page</a>
+                    or <a href="downloads.html">download WARPSimLab</a>.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner footer-inner-simple">
+            <div>
+                <p class="footer-brand">WARPSimLab</p>
+                <p class="footer-copy">Educational personal finance simulation software.</p>
+
+                <p style="margin-top:1.5rem;">
+                    Questions, feedback, or bug reports:<br>
+                    info [at] warpsimlab [dot] com
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

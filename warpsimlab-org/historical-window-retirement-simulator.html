@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Historical Window Retirement Simulation | WARPSimLab</title>
+    <meta name="description" content="Learn how Historical Window retirement simulation works in WARPSimLab. Explore how the same financial plan behaves across rolling historical market periods to examine timing, variability, and long-term retirement outcomes.">
+    <link rel="canonical" href="https://warpsimlab.org/historical-window-retirement-simulator.html">
+    <link rel="stylesheet" href="style.css">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "WARPSimLab",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Windows",
+      "description": "WARPSimLab is educational personal finance and retirement simulation software. This page explains Historical Window analysis as a method for applying the same financial plan across rolling historical market periods to examine portfolio behavior, cash flow, and long-term retirement outcomes.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0"
+      }
+    }
+    </script>
+</head>
+
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <header class="site-header">
+        <div class="brand-bar">
+            <div class="container brand-inner">
+                <div class="brand-block">
+                    <a href="index.html" class="brand">WARPSimLab</a>
+                    <p class="brand-subtitle">Educational Personal Finance Simulation Software</p>
+                </div>
+
+                <div class="header-actions">
+                    <a class="header-button" href="downloads.html">Downloads</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Primary navigation">
+            <div class="container nav-inner">
+                <a href="/#overview">Overview</a>
+                <a href="/#features">Core Features</a>
+                <a href="/#screens">Interface Views</a>
+                <a href="reports.html">Reports</a>
+                <a href="faq.html">FAQ</a>
+                <a href="release-notes.html">Release Notes</a>
+                <a href="legal.html">Legal</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <section class="hero" id="top">
+            <div class="container hero-grid">
+                <div class="hero-copy">
+                    <h1>Historical Window Retirement Simulation</h1>
+
+                    <p class="hero-text">
+                    WARPSimLab is educational personal finance and retirement simulation software. This page explains
+                    its Historical Window analysis approach, which applies the same financial plan across rolling
+                    historical market periods to show how outcomes vary under real-world return sequences.
+                    </p>
+
+                    <p class="hero-note-secondary">
+                    By changing inputs such as retirement age, income, spending, contributions, and portfolio assumptions,
+                    you can explore how outcomes differ across historical periods and how market timing affects
+                    long-term retirement results.
+                    </p>
+
+                </div>
+
+                <aside class="hero-card hero-image-card" aria-label="Historical Window retirement simulation preview">
+                    <img
+                        class="hero-screenshot"
+                        src="images/HistoricalWindow4.png"
+                        alt="WARPSimLab Historical Window simulation showing projected portfolio paths and percentile bands across rolling historical periods."
+                    >
+                    <p class="image-caption">
+                        Example Historical Window simulation output showing how the same modeled plan can produce different
+                        portfolio outcomes across rolling historical market periods.
+                    </p>
+                </aside>
+            </div>
+        </section>
+
+
+        <section class="section section-white" id="overview">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>What Historical Window Retirement Simulation Means</h2>
+
+                    <p>
+                    Historical Window retirement simulation evaluates the same financial plan across many rolling historical
+                    market periods. The inputs remain fixed, but the sequence of returns changes based on actual historical data.
+                    </p>
+
+                    <p>
+                    This produces a range of outcomes instead of a single projected line, showing how results depend on
+                    market timing, economic conditions, and the order in which gains and losses occur.
+                    </p>
+
+                    <p>
+                    In WARPSimLab, this approach is used alongside other simulation methods to examine how portfolio balances
+                    and retirement outcomes change under different historical return sequences.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-white" id="success-rate">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>What "Success Rate" Means in Historical Analysis</h2>
+
+                    <p>
+                    Historical Window simulations can be summarized using a "success rate" or similar metric.
+                    In WARPSimLab, this represents the share of historical runs in which the portfolio value
+                    falls below $0 during the modeled period.
+                    </p>
+
+                    <p>
+                    Each run represents one historical sequence of returns applied to the same general assumptions.
+                    When many runs are evaluated, the results can be summarized to show how often a given outcome occurs.
+                    </p>
+
+                    <p>
+                    This metric reflects how a modeled scenario behaves under different historical return sequences.
+                    It is not a prediction of future outcomes, but a summary of results generated by applying the model
+                    to real historical data using the selected inputs and assumptions.
+                    </p>
+
+                    <p>The result depends on factors including:</p>
+
+                    <ul>
+                        <li>model assumptions</li>
+                        <li>time horizon</li>
+                        <li>historical data included in the analysis</li>
+                        <li>income, expenses, and withdrawal structure</li>
+                    </ul>
+
+                    <p>
+                    Small changes to inputs can materially change the distribution of outcomes.
+                    For this reason, the metric is best understood as an illustration of variability
+                    across historical conditions, rather than a determination of whether a
+                    specific plan will succeed or fail.
+                    </p>
+
+                    <p>
+                    For additional context, see the
+                    <a href="sequence-of-returns-risk.html">sequence of returns risk explanation</a>.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-white" id="single-vs-historical">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>Single Projection vs Historical Window Analysis</h2>
+
+                    <p>
+                    Financial outcomes can be modeled in different ways. Two common approaches are single projections
+                    and Historical Window analysis, which differ in how they represent variation over time and why
+                    a range of outcomes may be more informative than a single path.
+                    </p>
+
+                    <h3>Single Projection (Deterministic Model)</h3>
+
+                    <p>
+                    A single projection applies one set of return assumptions across the full simulation period.
+                    This produces one continuous path for portfolio values and cash flow under fixed conditions.
+                    </p>
+
+                    <p>
+                    Because the path does not change, this approach does not capture variation in the timing of returns
+                    or how different market periods can affect outcomes.
+                    </p>
+
+                    <h3>Historical Window Analysis</h3>
+
+                    <p>
+                    Historical Window analysis applies the same plan across many rolling real-world market periods
+                    rather than a single fixed path. Each run uses the same general assumptions, but returns follow
+                    different historical sequences.
+                    </p>
+
+                    <p>
+                    This produces a range of outcomes and shows how results can vary when the timing of gains and losses changes
+                    across real historical conditions, which cannot be observed in a single projection.
+                    </p>
+
+                    <h3>How This Compares to Monte Carlo Simulation</h3>
+
+                    <p>
+                    In addition to historical analysis, WARPSimLab also uses Monte Carlo simulation, which models many
+                    possible return paths using simulated sequences. Historical Window analysis shows how a plan would
+                    have behaved across real market periods, while Monte Carlo simulation shows how it behaves across
+                    generated return paths.
+                    </p>
+
+                    <h3>Why the Difference Matters</h3>
+
+                    <p>
+                    These approaches differ in how variability is represented. A single projection shows one outcome under
+                    fixed assumptions, while Historical Window analysis and Monte Carlo simulation show how results can change
+                    when return timing varies.
+                    </p>
+
+                    <p>
+                    This variation can materially influence outcomes, particularly in scenarios that include withdrawals
+                    or changing cash flow over time.
+                    </p>
+
+                    <p>
+                    For example, two scenarios with the same average return may produce different results depending on
+                    the order in which gains and losses occur.
+                    </p>
+
+                    <p>
+                    This concept is explored further in the
+                    <a href="sequence-of-returns-risk.html">sequence of returns risk explanation</a>.
+                    </p>
+
+                    <p>
+                    These models are intended to illustrate how different assumptions and return paths affect
+                    simulated outcomes. They do not represent predictions or guarantees of future financial performance.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-soft" id="how-it-works">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>How the Simulation Works</h2>
+                    <p>
+                    WARPSimLab models retirement scenarios by combining cash flow modeling with portfolio simulation,
+                    allowing you to explore how financial outcomes change over time under different assumptions and return sequences.
+                    </p>
+                </div>
+
+                <div class="feature-grid">
+
+                    <article class="feature-card">
+                        <h3>Simulation Methods</h3>
+                        <p>
+                        Supports multiple approaches, including Historical Window analysis and Monte Carlo simulation,
+                        to evaluate how the same plan behaves across historical return sequences and simulated return paths.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Cash Flow Modeling</h3>
+                        <p>
+                        Models income, expenses, taxes, contributions, and withdrawals across the full simulation timeline.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Portfolio Modeling</h3>
+                        <p>
+                        Tracks portfolio balances over time under different return assumptions and simulation methods.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Summary Milestones</h3>
+                        <p>
+                        Summarizes results at key points, including the start of the simulation, retirement, and the end of the modeled period.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Historical Outcome Summary</h3>
+                        <p>
+                        Aggregates results across historical runs, including metrics such as the share of runs where portfolio value falls below $0.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>Local Execution</h3>
+                        <p>
+                        Runs locally on your computer. Data entered into the simulator is not transmitted to external services.
+                        </p>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-white" id="education">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>Educational Use</h2>
+
+                    <p>
+                    WARPSimLab is educational software for retirement and personal finance modeling.
+                    It does not provide financial advice or recommend investment decisions.
+                    </p>
+
+                    <p>
+                    It is intended to help users examine how modeled outcomes change under different return paths,
+                    different historical periods, and different user-defined assumptions.
+                    </p>
+
+                    <p>
+                    For more detail, see the <a href="faq.html">FAQ</a>. To try the software, visit the
+                    <a href="downloads.html">downloads page</a>.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner footer-inner-simple">
+            <div>
+                <p class="footer-brand">WARPSimLab</p>
+                <p class="footer-copy">Educational personal finance simulation software.</p>
+
+                <p style="margin-top:1.5rem;">
+                    Questions, feedback, or bug reports:<br>
+                    info [at] warpsimlab [dot] com
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

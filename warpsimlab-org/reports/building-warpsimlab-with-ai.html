@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seven Months and 20,000 Lines of Python Later: Lessons from Building a Personal Financial Simulator with AI | WARPSimLab</title>
+    <meta name="description" content="Software engineering retrospective on building WARPSimLab, a personal finance and retirement simulation platform, with AI assistance.">
+    <link rel="canonical" href="https://warpsimlab.org/reports/building-warpsimlab-with-ai.html">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <header class="site-header">
+        <div class="brand-bar">
+            <div class="container brand-inner">
+                <div class="brand-block">
+                    <a href="/" class="brand">WARPSimLab</a>
+                    <p class="brand-subtitle">Educational Personal Finance Simulation Software</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Primary navigation">
+            <div class="container nav-inner">
+                <a href="/">Home</a>
+                <a href="../reports.html">Reports</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <div class="container">
+            <article class="report-shell">
+                <p class="report-breadcrumb">
+                    <a href="/">Home</a> &gt;
+                    <a href="../reports.html">Reports</a> &gt;
+                    Building WARPSimLab with AI
+                </p>
+                <header class="report-title-card">
+                    <h1>Seven Months and 20,000 Lines of Python Later: Lessons from Building a Personal Financial Simulator with AI</h1>
+                </header>
+
+                <div class="report-content">
+            <section class="report-section" id="introduction">
+                <h2>Introduction</h2>
+                <p>Over the last seven months I built WARPSimLab, a personal finance and retirement simulation platform. The project grew to roughly 20,000 lines of Python spread across 65 source files.  WARPSimLab includes retirement modeling, portfolio simulation, taxes, Monte Carlo analysis, historical market windows, reporting, and a desktop graphical user interface.</p>
+                <p>AI (ChatGPT) was involved throughout the project.  This article describes my experience tackling a significant medium-sized software project using AI as a development partner.</p>
+                <p>Some parts of this collaboration worked remarkably well while other parts failed repeatedly. The most useful lessons came from understanding where AI’s strengths and weaknesses were, and how to mitigate issues as they arose.</p>
+            </section>
+
+            <section class="report-section" id="why-i-built-it">
+                <h2>Why I Built It</h2>
+                <p>I bought a DOS based personal financial simulator program in the 1990’s.  This simulator opened my eyes to numerous financial concepts such as the power of compounded interest, the advantages and risks of stocks, and the power of time.  Although this software was extremely educational, it had weaknesses such as not separating assets for married couples.  I eventually lost this DOS based software, and couldn’t find a replacement.  I decided to recreate this software when I retired.</p>
+                <p>Last year (2025) I became extremely interested in AI for software development.  I have been following AI since taking a class in college in the 1980’s.  AI was the tool that was going to change the world in 5 years, and remained that way for the next 40 years.  The last few years I watched AI change from a research project to another tool in a software engineer’s toolbox.  I needed a project to learn how to design and build software with AI.</p>
+                <p>I decided to use ChatGPT to create a personal financial simulator.  I started with the free, anonymous version of ChatGPT, then moved  to the free, logged in version, and finally picked up a monthly subscription.  Although obvious now, I wasn’t sure how a simulator worked.  So, I started with a command line interface to a custom financial simulator.  After a few months I wondered if projects such as mine had already been built.  I found numerous commercial and free personal financial simulators online.  Unfortunately, none of them satisfied all of my requirements.  I wanted an open source (free) personal financial software package that was targeted at education rather than advice.  I wanted this simulator to not be web based, requiring users to upload their personal information to some remote server.  I wanted it to be reasonably feature complete - simulating different tax and resource buckets, using different retirement withdrawal schemes, providing Monte Carlo and historical window risk analysis, and including sequence of return risk.  Finally, I wanted the software to be an exploration and what-if tool, allowing users to discover how finances work for themselves.</p>
+                <p>7 months, 65 files and 20,000 lines of Python later, WARPSimLab was finally mature enough to go public.</p>
+            </section>
+
+            <section class="report-section" id="a-supervised-division-of-labor">
+                <h2>A (supervised) division of labor</h2>
+                <p>Coding with AI has been interesting.  Generally speaking, we divided labor as follows:</p>
+                <h3>Working With AI:</h3>
+                <p>I have been responsible for the feature set.  This includes such mundane detail as layout of reports, whether to implement Monte Carlo and historical window algorithms, how complicated and complete the tax simulation would be, etc.</p>
+                <p>I have been responsible for the architecture.  WARPSimLab is designed in layers or components.  Currently there is the GUI layer, the simulator layer, the plots layer, and the reports layer.  I architected the boundaries between each layer and the internal architecture of each layer.</p>
+                <p>I designed (and re-designed and re-designed) the GUI main menu look and feel, along with all of the submenus.</p>
+                <p>I oversaw the refactor (and refactor and refactor) of the simulator core, the plots code, the reports code, the Scenario Explorer, etc.</p>
+                <p>I designed the current WARPSimLab webpage.  I went through versions inspired by Picasso, Leary, Rembrandt, software and hardware companies’ websites, and finally banking and financial companies websites.  I selected and polished the current design.</p>
+                <h3>AI’s responsibilities:</h3>
+                <p>AI has been my coding assistant.  AI has created whole files consisting of hundreds of complex lines of Python in a few dozen seconds.</p>
+                <p>AI has implemented GUI code (tkinter) well enough that I really haven’t needed to learn the interface.  It has written the code for the dialogs, and the code just works.</p>
+                <p>AI has created testing code for the project.  This includes deterministic, feature, invariant and module tests.  The total code base for these tests are now over 22,000 lines of Python.</p>
+                <p>AI has been a good brainstorming partner.  Questions such as “how could I implement…” are generally answered in seconds.  “Should I implement… “ or “What should I implement next” type of questions are always well thought out answers.</p>
+                <p>Although I designed and wrote the text for the website, AI wrote the html.  It checked for html mistakes, grammatical mistakes, logic mistakes etc.  An example is AI found that the percent of simulations that went to $0 was different on a picture than in the text.  This amazed me that AI could understand that the text in an image needed to match text later in the report.</p>
+            </section>
+
+            <section class="report-section" id="coding-with-ai---my-experience">
+                <h2>Coding with AI – My experience.</h2>
+                <h3>Where AI Excelled</h3>
+                <ul class="report-list">
+                    <li>AI is amazing at prototyping.  Many times, I would wonder what a dialog page would look like, and from a written description, AI would create a standalone example in under a minute.  If it wasn’t what I wanted, we would do so again.  This allowed us to rapidly prototype the GUI many times over.  This would have taken a human coder an order of magnitude more time – at least.</li>
+                    <li>AI almost always creates clean code the first time.  When there are mistakes in code, it’s almost always my fault.  I frequently edited a file and then didn’t save it into the project, or edited files incorrectly.    AI would patiently tell me that I hadn’t applied its edits – and would give them to me again with clearer instructions.</li>
+                    <li>AI is extremely good at refactoring.  For example, as files would get too complex and/or too long, I would ask for advice splitting them up.  AI was excellent at grouping functions and tasks together, checking interfaces, includes, etc.</li>
+                    <li>AI is amazing at designing complex multi file algorithms.  When I added the Scenario Inspector, I had only a vague idea how to proceed.  The problem was we needed to bypass and reverse the data flow from the simulation layer back to the GUI layer.  We also needed to inject temporary changed state into the simulator core without permanently changing user provided state.  AI provided numerous new files of many hundreds of lines of code (probably in the thousands), and hundreds of lines of interface code in half a dozen files in very organized steps that were reasonably easy to follow.  I was shocked – the code worked correctly the first time it was run.</li>
+                    <li>Debugging was a joy.  I would cut and paste error output from a run along with source files into the chat window, and AI would quickly tell me what was wrong, and would provide correct edits.  For harder problems, AI would provide suggested print statements along with insertion locations.  Sometimes these debug prints would be dozens of pages in length.  I would just copy and paste the whole verbose output into the chat window, and within seconds I would receive an explanation of what was wrong plus edits to fix the issue.  Amazing.</li>
+                </ul>
+                <h3>Where AI Struggled</h3>
+                <ul class="report-list">
+                    <li>One of the most frustrating parts about AI is you can steer conversations without realizing it.  Should we do A or B?  If we do B, how would we do it?  One time AI and I discussed working on a research project about the worst years to retire for hours.  Wait – this has nothing to do with what we were working on in the personal financial simulator!</li>
+                    <li>Another issue I frequently found is that when confused, AI will go down a rabbit hole and just keep digging.  This happened with two columns of data in the Income dialog.  After iterating over and over on vertical spacing issues for a few hours, I finally had to say “Stop!  Let’s create two parallel vertical frames.”.  Worked first time.</li>
+                    <li>AI is frequently overconfident.  AI is primarily a probability engine.  It works by “guessing”.  Early on I would ask for a dialog of some type, and what was generated was totally different than what I had asked for.  Then, we would waste time going back and forth with the design.   Other times it would move the primary store of data into dialog box tkinter variables and then try to pass these variables around.  (I have one source of “truth” for variables, in an initialization function.)  This was mostly cured by pasting the following at the start of all new chats: “for this session, ask any questions you have, and do not guess or make assumptions.”</li>
+                    <li>AI hallucinates – but is getting much better.  Early on ChatGPT would hallucinate quite often.  However, I can’t remember a time it has done so over the last 4 months.  I don’t know if this is because I have gotten better at staying within the constraints of the tool, the tool is getting better, or both.  When ChatGPT would hallucinate and change variable names, I always laughed when it would then tell me my code was incorrect, not realizing it had just given me the code.</li>
+                    <li>AI is sometimes too good at refactors.  Every once in a while when working on a task I would find large chunks of unrelated code totally rewritten.  Early on, I would even have input boxes disappear.  This stopped happening in the last few months – again, I don’t know if it’s because I am getting better at respecting limited resources or ChatGPT models are getting smarter.</li>
+                    <li>As I would work in new tabs, I had to remember I was basically working with a new assistant, and would have to spin each new tab up from scratch.  So we didn’t go down rabbit holes, I created a startup paragraph that was copied into the start of every chat.  The last sentence was always “don’t do anything until I say DONE”.  That way AI wouldn’t start thinking before I had uploaded all necessary files and given final directions.</li>
+                    <li>Using AI as a coding companion stirred the code so fast that I stopped commenting the code.  As code has stopped churning, I need to go back and add comments.  Amazingly, AI is actually pretty good at writing comments, and I will let it have first pass.</li>
+                    <li>AI focuses on what it’s told to focus on.  If you ask about dead code in a file, it will tell you all of the dead code in a file.  This actually happened after working in numerous files for months without AI hinting at a problem.</li>
+                    <li>AI is designed to mimic people.  As we were working, ChatGPT would sometimes complement me on the clarity or simplicity of my designs, the quality of my interface, my clear coding style, etc.  This really wasn’t a problem, but distracts from the primary task – writing code.  AI, like all social programs, is designed to keep people’s attention.  My goal is to build software.  Sometimes these tasks don’t totally match.</li>
+                </ul>
+            </section>
+
+            <section class="report-section" id="understanding-ais-limits">
+                <h2>Understanding AI’s Limits</h2>
+                <p>I learned that AI has limited resources the hard way.  Generally, I would start a chat by giving AI the necessary files, and clear directions for a small sub feature leading towards a goal.  A minute later I would receive new code with clear edits.  If possible, after testing, I would provide another small goal, code would be returned and we would repeat.  Early on I found that AI would inconsistently start to create trash code.</p>
+                <p>AI is a token generating and processing engine.  Unfortunately, the token stack is finite.  Further, when the token stack gets close to full, early parts of the conversation are condensed or abstracted, losing detail. (This is much better than 7 months ago when the top of the chat was just deleted.)  The problem is AI (ChatGPT in this case) doesn’t let you know it’s happening.  A human abstracts conversation in an intelligent manner.  AI does it by brute force.</p>
+                <p>Software development is very token stack intensive.  This is due to the files given to AI and all of the generated software returned.  Every time I would submit a query, the AI would have to go through the whole thread yet again, keeping track of all software given by me and returned by AI.</p>
+                <p>Token stack (and other) limitations were dealt with in numerous ways.  Logging into ChatGPT increases the size of the token stack by numerous times.  Picking up a paid account (currently $20/month) increases it by numerous times again.  Next, I would severely limit the files given to AI to only what was needed.  If I worked on a different area of WARPSimLab (such as implementing the Executive Summary report in the GUI, then the Simulator, then the reports, etc.), I would frequently open a new tab.  Every so often I would ask “Estimate the remaining safe context capacity for this conversation.”.  After telling me that ChatGPT didn’t have access to that information, it would guess (and guess pretty well).  Finally, on complex tasks I learned to open two tabs – one creating the detailed architecture and creating directions, and the second tab writing code.  This division of labor was extremely effective at not overloading the architecture tab (which had the most important history.)  The takeaway is when dealing with hundreds of lines of code ChatGPT was incredible.  When dealing with thousands of lines of code, ChatGPT was frequently fragile.  I quickly learned how to work around these limitations.</p>
+            </section>
+
+            <section class="report-section" id="an-ai-failure">
+                <h2>An AI failure</h2>
+                <p>Monte Carlo simulation engines are complex.  After architecting and implementing the Monte Carlo algorithm, it dawned on me that there was a second way to implement Monte Carlo.   I discussed this with the AI, and my suspicions were correct – there were two algorithms we could use.  This second algorithm was added to the GUI, data structures, core simulator and numerous engines that hang off of the core.  I was surprised to see that the algorithms both produced the same result.  After digging in the code, it dawned on me that we had implemented the same algorithm twice.  I wasted around a week planning, architecting, coding, debugging and then removing this second Monte Carlo path.  It’s easy to forget, the human should still be in charge.</p>
+            </section>
+
+            <section class="report-section" id="my-most-surprising-lesson">
+                <h2>My most surprising lesson</h2>
+                <p>I originally planned to write this paragraph about AI’s incredible ability to generate high quality code.  After getting a second opinion – yet again from ChatGPT, I was reminded that ChatGPT isn’t just a code generator.</p>
+                <p>Over the last seven months I have used AI to discuss such broad topics as personal finances, regulatory law, software legal risk, personal financial simulator’s architecture, feature lists, performance issues and solutions, how complete to make the tax engine, and even artistic questions such as the look and feel of the WARPSimLab website.  Although a bit academic and impersonal in prose, ChatGPT is a better writer than I am.</p>
+                <p>I went into this project expecting AI to be a great software generator.  I soon learned that it was a very good design, architect and coding partner.</p>
+            </section>
+
+            <section class="report-section" id="will-i-use-ai-for-coding-again">
+                <h2>Will I use AI for coding again?</h2>
+                <p>AI has made me not only a much more productive programmer, but a better software engineer.   AI tends to have a much stronger spotlight than humans.  Humans tend to keep a broader situational awareness.  On this project, AI and humans complemented each other extremely well.</p>
+                <p>Prototypes are no longer a major event, thus are used more frequently.  I can focus on user experience and feature set, as opposed to worrying about how to deal with problematic callback functions to properly close tabs.  Creating test suites is now extremely low cost, thus encouraging testing based designs and significantly increasing the quality of the software product.  Finally, AI removes much of the drudgery of writing software (code, debug, write tests, test, repeat) and helps me focus on the creative parts of the job, which is a joy.</p>
+                <p>One of my next projects will probably be creating an LLM from scratch.  It won’t have the breadth of AI products such as ChatGPT, but it would be a fascinating way to start to understand the machine behind the curtain.</p>
+                <p>I’m looking forward to how this technology continues to evolve over the next few years.</p>
+            </section>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner footer-inner-simple">
+            <div>
+                <p class="footer-brand">WARPSimLab</p>
+                <p class="footer-copy">Educational personal finance simulation software.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
