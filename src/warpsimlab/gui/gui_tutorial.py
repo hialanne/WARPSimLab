@@ -21,9 +21,20 @@ class TutorialFrame(ttk.Frame):
 
     BTN_WIDTH = 26
 
-    def __init__(self, parent, title="Tutorials", **kwargs):
+    def __init__(
+        self,
+        parent,
+        start_basic_tutorial_callback=None,
+        title="Tutorials",
+        **kwargs
+    ):
         super().__init__(parent, padding=10, **kwargs)
+
+        self.start_basic_tutorial_callback = (
+            start_basic_tutorial_callback
+        )
         self.title = title
+
         self._build_fields()
 
     def _build_fields(self):
@@ -81,6 +92,15 @@ class TutorialFrame(ttk.Frame):
             wraplength=420,
             justify="left",
         ).pack(anchor="w", pady=(0, 8))
+
+        if self.start_basic_tutorial_callback is not None:
+            ttk.Button(
+                left_panel,
+                text="Start Basic Tutorial",
+                style="TutorialButton.TButton",
+                width=self.BTN_WIDTH,
+                command=self.start_basic_tutorial_callback,
+            ).pack(anchor="w", pady=(8, 12))
 
         # ---- Right column: Tutorials ----
         '''

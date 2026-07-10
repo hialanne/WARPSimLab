@@ -161,7 +161,7 @@ class SummaryDialog(tk.Toplevel):
         ttk.Label(
             summary_frame,
             text=(
-                "There are three tabs on top: one for Portfolio, one for Income and one for Summary.\n\n"
+                "There are three tabs on top: one for Portfolio, one for Cash Flow, and one for Summary.\n\n"
                 "If enabled, the portfolio sustained fund expenses throughout the full simulation period.\n"
                 "Assets are shown in real (inflation-adjusted) or nominal terms,\n"
                 "  depending on the simulation settings.\n"
