@@ -25,6 +25,8 @@ class TutorialFrame(ttk.Frame):
         self,
         parent,
         start_basic_tutorial_callback=None,
+        start_advanced_building_tutorial_callback=None,
+        start_advanced_analysis_tutorial_callback=None,
         title="Tutorials",
         **kwargs
     ):
@@ -33,9 +35,16 @@ class TutorialFrame(ttk.Frame):
         self.start_basic_tutorial_callback = (
             start_basic_tutorial_callback
         )
+        self.start_advanced_building_tutorial_callback = (
+            start_advanced_building_tutorial_callback
+        )
+        self.start_advanced_analysis_tutorial_callback = (
+            start_advanced_analysis_tutorial_callback
+        )
         self.title = title
 
         self._build_fields()
+
 
     def _build_fields(self):
         style = ttk.Style()
@@ -100,7 +109,25 @@ class TutorialFrame(ttk.Frame):
                 style="TutorialButton.TButton",
                 width=self.BTN_WIDTH,
                 command=self.start_basic_tutorial_callback,
-            ).pack(anchor="w", pady=(8, 12))
+            ).pack(anchor="w", pady=(8, 6))
+
+        if self.start_advanced_building_tutorial_callback is not None:
+            ttk.Button(
+                left_panel,
+                text="Advanced: Build Simulation",
+                style="TutorialButton.TButton",
+                width=self.BTN_WIDTH,
+                command=self.start_advanced_building_tutorial_callback,
+            ).pack(anchor="w", pady=(6, 6))
+
+        if self.start_advanced_analysis_tutorial_callback is not None:
+            ttk.Button(
+                left_panel,
+                text="Advanced: Analyze Results",
+                style="TutorialButton.TButton",
+                width=self.BTN_WIDTH,
+                command=self.start_advanced_analysis_tutorial_callback,
+            ).pack(anchor="w", pady=(6, 12))
 
         # ---- Right column: Tutorials ----
         '''

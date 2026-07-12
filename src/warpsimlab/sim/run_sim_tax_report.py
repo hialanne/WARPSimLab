@@ -258,7 +258,7 @@ def run_sim_tax_report(
     expenses,
     sim_config,
 ):
-    from .src.warpsimlab.reports.tax_report import generate_tax_report
+    from src.warpsimlab.reports.tax_report import generate_tax_report
 
     report_data = build_tax_report_data_from_pipeline(
         husband_portfolio,

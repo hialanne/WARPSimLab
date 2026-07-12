@@ -35,8 +35,13 @@ from src.warpsimlab.gui.gui_reportMonteCarloRisk import MonteCarloRiskReportFram
 from src.warpsimlab.gui.gui_realEstate import RealEstateEditFrame
 from src.warpsimlab.gui.gui_derivedStatistics import DerivedStatisticsFrame
 from src.warpsimlab.gui.gui_reportTaxes import TaxReportFrame
-from src.warpsimlab.gui.gui_tutorial import TutorialFrame
 from src.warpsimlab.gui.gui_guidedtutorial import GuidedTutorialController
+from src.warpsimlab.gui.gui_tutorial_definitions import (
+    build_basic_tutorial_steps,
+    build_advanced_building_tutorial_steps,
+    build_advanced_analysis_tutorial_steps,
+)
+
 
 class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin):
     def __init__(self, root):
@@ -454,6 +459,19 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         self._apply_mode_to_top_buttons()
 
+        tutorial_controller = getattr(
+            self,
+            "guided_tutorial_controller",
+            None,
+        )
+
+        if (
+            tutorial_controller is not None
+            and tutorial_controller.active
+        ):
+            tutorial_controller.refresh_current_step()
+            return
+
         self.edit_main_home()
 
 
@@ -675,6 +693,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         home_frame.pack(padx=10, pady=5, fill="x")
         self.home_frame = home_frame
 
+
     def edit_tutorial_blank(self):
         """
         Clear the main editor area for a tutorial instruction-only step.
@@ -682,129 +701,34 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         for widget in self.edit_frame_container.winfo_children():
             widget.destroy()
 
+
     def start_basic_tutorial(self):
         """
-        Start the first runnable section of the Basic Tutorial.
+        Start the Basic Tutorial.
         """
-        steps = [
-            {
-                "title": "Welcome",
-                "text": (
-                    "WARPSimLab starts with a general example already loaded. "
-                    "This tutorial uses the current financial values and does "
-                    "not replace or reset them. The buttons across the top are "
-                    "main menu categories. Most open a second menu containing "
-                    "the individual screens. For example, Cash Flow opens a "
-                    "menu containing Normal Income and Expenses. Select Next "
-                    "to begin."
-                ),
-                "screen_callback": self.edit_main_home,
-            },
-            {
-                "title": "Cash Flow -> Normal Income",
-                "text": (
-                    "From the top menu, select Cash Flow, then select Normal "
-                    "Income. This screen contains the primary personal and "
-                    "income inputs. Review each person's age, annual income, "
-                    "retirement age, and Social Security. You may edit these "
-                    "values during the tutorial. Enable Second Person controls "
-                    "whether a second person's information is included."
-                ),
-                "screen_callback": self.edit_person_data,
-            },
-            {
-                "title": "Cash Flow -> Expenses",
-                "text": (
-                    "From the top menu, select Cash Flow, then select Expenses. "
-                    "Expenses define yearly household spending. Each expense "
-                    "can have a start year, an optional end year, an annual "
-                    "cost, and a comment. Taxes are calculated separately by "
-                    "the simulator. You may edit or add expenses here."
-                ),
-                "screen_callback": self.edit_expenses,
-            },
-            {
-                "title": "Balance Sheet -> Portfolio",
-                "text": (
-                    "From the top menu, select Balance Sheet, then select "
-                    "Portfolio. In Basic mode, the Portfolio screen presents "
-                    "starting investable assets using a simplified Savings "
-                    "entry. Review or edit the current savings values. Select "
-                    "Next when you are ready to run the simulation."
-                ),
-                "screen_callback": self.edit_portfolio_data,
-            },
-            {
-                "title": "Results -> Summary Dialog",
-                "text": (
-                    "Now run the simulation yourself. From the top menu, select "
-                    "Results, then select Summary Dialog. WARPSimLab will run "
-                    "the current financial example and open a separate "
-                    "Simulation Summary window. After the window opens, return "
-                    "to this tutorial and select Next."
-                ),
-                "screen_callback": self.edit_tutorial_blank,
-            },
-            {
-                "title": "Summary Dialog -> Three Tabs",
-                "text": (
-                    "The Simulation Summary window has three tabs across the "
-                    "top. Select Portfolio to review assets at the start, "
-                    "retirement, and end of the simulation. Select Cash Flow "
-                    "to review income, taxes, expenses, and net cash flow at "
-                    "selected years. Select Summary to review overall results, "
-                    "totals, and important simulation assumptions. Review all "
-                    "three tabs, then close the Simulation Summary window and "
-                    "return here."
-                ),
-                "screen_callback": self.edit_tutorial_blank,
-            },
-            {
-                "title": "Cash Flow -> Expenses",
-                "text": (
-                    "Now change one input and compare the results. From the top "
-                    "menu, select Cash Flow, then select Expenses. Change one "
-                    "annual expense by a noticeable but reasonable amount. Then "
-                    "select Results, followed by Summary Dialog, and run the "
-                    "simulation again. Review the Portfolio, Cash Flow, and "
-                    "Summary tabs and compare them with the earlier results. "
-                    "Changing one value at a time makes it easier to understand "
-                    "cause and effect."
-                ),
-                "screen_callback": self.edit_expenses,
-            },
-            {
-                "title": "File -> Save Financial Data",
-                "text": (
-                    "WARPSimLab does not automatically preserve your changes "
-                    "after the program closes. To keep the current financial "
-                    "scenario, select File from the top menu, then select Save "
-                    "Financial Data. Choose a file name and location you will "
-                    "recognize later. To restore a saved scenario in another "
-                    "session, select File, followed by Load Financial Data. "
-                    "Saving is optional for this tutorial."
-                ),
-                "screen_callback": self.edit_tutorial_blank,
-            },
-            {
-                "title": "Basic Tutorial Complete",
-                "text": (
-                    "You have reviewed the primary Basic mode inputs, run the "
-                    "simulation, explored the Summary Dialog, changed one input, "
-                    "compared the results, and learned how to save a scenario. "
-                    "Continue exploring in Basic mode, or select Mode from the "
-                    "upper-right menu and then select Advanced to reveal additional "
-                    "inputs, simulation controls, results, and reports. Select "
-                    "Finish to return to the Tutorials page."
-                ),
-                "screen_callback": self.edit_main_home,
-            },
-
-        ]
-
         self.guided_tutorial_controller.start(
             tutorial_title="Basic Tutorial",
-            steps=steps,
+            steps=build_basic_tutorial_steps(self),
+        )
+
+
+    def start_advanced_building_tutorial(self):
+        """
+        Start Advanced Tutorial 1: Building the Simulation.
+        """
+        self.guided_tutorial_controller.start(
+            tutorial_title="Advanced Tutorial 1: Building the Simulation",
+            steps=build_advanced_building_tutorial_steps(self),
+        )
+
+
+    def start_advanced_analysis_tutorial(self):
+        """
+        Start Advanced Tutorial 2: Analyzing Results.
+        """
+        self.guided_tutorial_controller.start(
+            tutorial_title="Advanced Tutorial 2: Analyzing Results",
+            steps=build_advanced_analysis_tutorial_steps(self),
         )
 
 
@@ -816,8 +740,15 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         tutorial_frame = TutorialFrame(
             self.edit_frame_container,
             start_basic_tutorial_callback=self.start_basic_tutorial,
+            start_advanced_building_tutorial_callback=(
+                self.start_advanced_building_tutorial
+            ),
+            start_advanced_analysis_tutorial_callback=(
+                self.start_advanced_analysis_tutorial
+            ),
             title="Tutorials",
         )
+
         tutorial_frame.pack(padx=10, pady=5, fill="x")
 
 
