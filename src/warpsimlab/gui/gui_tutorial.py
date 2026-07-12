@@ -49,176 +49,171 @@ class TutorialFrame(ttk.Frame):
     def _build_fields(self):
         style = ttk.Style()
 
-        style.configure("TutorialHeader.TLabel", font=("Arial", 12, "bold"))
-        style.configure("TutorialButton.TButton", font=("Arial", 13, "bold"), padding=(12, 10))
-        style.configure("TutorialBorder.TLabelframe", borderwidth=4, relief="solid")
+        style.configure(
+            "TutorialPageTitle.TLabel",
+            font=("Arial", 16, "bold"),
+        )
+        style.configure(
+            "TutorialSectionTitle.TLabel",
+            font=("Arial", 13, "bold"),
+        )
+        style.configure(
+            "TutorialButton.TButton",
+            font=("Arial", 13, "bold"),
+            padding=(12, 10),
+        )
+        style.configure(
+            "TutorialCard.TLabelframe",
+            borderwidth=2,
+            relief="solid",
+        )
 
         ttk.Label(
             self,
-            text="Provides tutorials for using the simulator.",
-            font=("Arial", 11),
-            wraplength=600,
-            justify="left",
+            text=self.title,
+            style="TutorialPageTitle.TLabel",
         ).pack(anchor="w", pady=(0, 8))
 
-        # ---- Bordered container ----
-        border = ttk.LabelFrame(self, style="TutorialBorder.TLabelframe")
-        border.pack(fill="both", expand=True)
-
-        # 2-column layout
-        main = ttk.Frame(border, padding=8)
-        main.pack(fill="both", expand=True)
-
-        main.columnconfigure(0, weight=1, uniform="cols")
-        main.columnconfigure(1, weight=1, uniform="cols")
-
-        # ---- Left column: Getting Started ----
         ttk.Label(
-            main,
-            text="Getting Started",
-            style="TutorialHeader.TLabel"
-        ).grid(row=0, column=0, sticky="w", padx=(0, 30), pady=(0, 6))
-
-        left_panel = ttk.Frame(main)
-        left_panel.grid(row=1, column=0, sticky="nw", padx=(0, 30))
-
-        ttk.Label(
-            left_panel,
+            self,
             text=(
-                "1. Run Cashflow.\n"
-                "2. Run Portfolio Balance.\n"
-                "3. Run Summary.\n\n"
-                "4. Change one input (e.g., retirement age or expenses).\n"
-                "5. Run again and compare results.\n\n"
-                "6. Customize Personal Data, Expenses, and Starting Assets.\n"
-                "7. Run again and compare results.\n\n"
-                "8. Click Mode (upper right) and select Advanced.\n"
-                "9. Review tabs again - some tabs display additional options in Advanced mode.\n\n"
-                "Make one change at a time to observe cause and effect."
+                "Choose a guided tutorial based on what you want to learn. "
+                "Tutorials use the financial data currently loaded and do not "
+                "reset your scenario."
             ),
-
             font=("Arial", 11),
-            wraplength=420,
+            wraplength=900,
             justify="left",
-        ).pack(anchor="w", pady=(0, 8))
+        ).pack(anchor="w", pady=(0, 14))
+
+        tutorials_container = ttk.Frame(self)
+        tutorials_container.pack(fill="x", expand=False)
+
+        # Basic Tutorial
+        basic_frame = ttk.LabelFrame(
+            tutorials_container,
+            text="Basic Tutorial",
+            style="TutorialCard.TLabelframe",
+            padding=12,
+        )
+        basic_frame.pack(fill="x", pady=(0, 10))
+
+        ttk.Label(
+            basic_frame,
+            text=(
+                "Learn the primary income, expense, and portfolio inputs. "
+                "Run a simulation, review the Summary Dialog, change an input, "
+                "compare results, and save your work."
+            ),
+            font=("Arial", 11),
+            wraplength=850,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
 
         if self.start_basic_tutorial_callback is not None:
             ttk.Button(
-                left_panel,
+                basic_frame,
                 text="Start Basic Tutorial",
                 style="TutorialButton.TButton",
                 width=self.BTN_WIDTH,
                 command=self.start_basic_tutorial_callback,
-            ).pack(anchor="w", pady=(8, 6))
+            ).pack(anchor="w")
+
+        # Advanced Tutorial 1
+        advanced_build_frame = ttk.LabelFrame(
+            tutorials_container,
+            text="Advanced Tutorial 1: Build the Simulation",
+            style="TutorialCard.TLabelframe",
+            padding=12,
+        )
+        advanced_build_frame.pack(fill="x", pady=(0, 10))
+
+        ttk.Label(
+            advanced_build_frame,
+            text=(
+                "Configure detailed income, assets, real estate, retirement "
+                "spending, market assumptions, simulation settings, and "
+                "display controls."
+            ),
+            font=("Arial", 11),
+            wraplength=850,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
 
         if self.start_advanced_building_tutorial_callback is not None:
             ttk.Button(
-                left_panel,
-                text="Advanced: Build Simulation",
+                advanced_build_frame,
+                text="Start Building Tutorial",
                 style="TutorialButton.TButton",
                 width=self.BTN_WIDTH,
                 command=self.start_advanced_building_tutorial_callback,
-            ).pack(anchor="w", pady=(6, 6))
+            ).pack(anchor="w")
+
+        # Advanced Tutorial 2
+        advanced_analysis_frame = ttk.LabelFrame(
+            tutorials_container,
+            text="Advanced Tutorial 2: Analyze Results",
+            style="TutorialCard.TLabelframe",
+            padding=12,
+        )
+        advanced_analysis_frame.pack(fill="x", pady=(0, 14))
+
+        ttk.Label(
+            advanced_analysis_frame,
+            text=(
+                "Review result plots, experiment with Scenario Explorer, "
+                "generate reports, and examine tax and portfolio-risk results."
+            ),
+            font=("Arial", 11),
+            wraplength=850,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
 
         if self.start_advanced_analysis_tutorial_callback is not None:
             ttk.Button(
-                left_panel,
-                text="Advanced: Analyze Results",
+                advanced_analysis_frame,
+                text="Start Analysis Tutorial",
                 style="TutorialButton.TButton",
                 width=self.BTN_WIDTH,
                 command=self.start_advanced_analysis_tutorial_callback,
-            ).pack(anchor="w", pady=(6, 12))
+            ).pack(anchor="w")
 
-        # ---- Right column: Tutorials ----
-        '''
-        Getting Started (full story)
-
-        Model Assumptions & Limitations
-
-        Tax Modeling
-
-        Portfolio Modeling
-
-        Withdrawal Logic
-
-        Monte Carlo & Uncertainty
-        '''
+        # Reference Guides
+        reference_frame = ttk.LabelFrame(
+            self,
+            text="Reference Guides",
+            style="TutorialCard.TLabelframe",
+            padding=12,
+        )
+        reference_frame.pack(fill="x", pady=(0, 4))
 
         ttk.Label(
-            main,
-            text="Tutorial documents",
-            style="TutorialHeader.TLabel"
-        ).grid(row=0, column=1, sticky="w", pady=(0, 6))
+            reference_frame,
+            text=(
+                "These PDF guides provide additional written reference material."
+            ),
+            font=("Arial", 11),
+            wraplength=850,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
 
-        right_panel = ttk.Frame(main)
-        right_panel.grid(row=1, column=1, sticky="nw")
+        button_frame = ttk.Frame(reference_frame)
+        button_frame.pack(anchor="w")
 
-        # ---- Two sub-columns for Technical Notes buttons ----
-        btn_grid = ttk.Frame(right_panel)
-        btn_grid.pack(anchor="nw")
-
-        btn_grid.columnconfigure(0, weight=1, uniform="btncols")
-        btn_grid.columnconfigure(1, weight=1, uniform="btncols")
-
-        # (Button text, PDF filename) - filenames are best guesses; you can rename later.
-        '''
-        buttons = [
-            ("Getting Started", "getting_started.pdf"),
-            ("Getting Started - Advanced", "getting_started_advanced.pdf"),
-            ("Beyond Getting Started", "beyond_getting_started.pdf"),
-            ("Model Assumptions", "model_assumptions_limitations.pdf"),
-            ("Tax Modeling", "tax_modeling.pdf"),
-            ("Portfolio Modeling", "portfolio_modeling.pdf"),
-            ("Withdrawal Logic", "withdrawal_logic.pdf"),
-            ("Monte Carlo", "monte_carlo_uncertainty.pdf"),
-        ]
-        '''
-
-        '''
-        buttons = [
-            ("Getting Started", "getting_started.pdf"),
-            ("Getting Started - Advanced", "getting_started_advanced.pdf"),
-            ("Users Manual", "users_manual.pdf"),
-            ("Simulator Core", "sim_core.pdf"),
-            ("Tax Modeling", "tax_modeling.pdf"),
-            ("Scenario Explorer", "scenario_explorer.pdf"),
-            ("Monte Carlo", "monte_carlo.pdf"),
-            ("FAQ", "faq.pdf"),
-        ]
-        '''
-
-        buttons = [
-            ("Getting Started", "getting_started.pdf"),
-            ("Getting Started - Advanced", "getting_started_advanced.pdf"),
+        reference_buttons = [
+            ("Getting Started Guide", "getting_started.pdf"),
+            ("Advanced Guide", "getting_started_advanced.pdf"),
         ]
 
-        # Place buttons in 3 rows x 2 columns, reading top-to-bottom then left-to-right
-        for i, (label, filename) in enumerate(buttons):
-            r = i // 2   # 0..3
-            c = i % 2    # 0..1
+        for label, filename in reference_buttons:
             ttk.Button(
-                btn_grid,
+                button_frame,
                 text=label,
                 style="TutorialButton.TButton",
                 width=self.BTN_WIDTH,
                 command=lambda fn=filename: self._open_pdf(fn),
-            ).grid(row=r, column=c, sticky="w", padx=(0, 14) if c == 0 else 0, pady=6)
+            ).pack(side="left", padx=(0, 12))
 
-
-    '''
-    def _open_pdf(self, pdf_filename: str):
-        """
-        Opens a PDF from the docs/ directory.
-        """
-        pdf_path = os.path.join("src/docs", pdf_filename)
-
-        if sys.platform.startswith("win"):
-            os.startfile(pdf_path)
-        elif sys.platform == "darwin":
-            subprocess.run(["open", pdf_path], check=False)
-        else:
-            subprocess.run(["xdg-open", pdf_path], check=False)
-    '''
 
     def _open_pdf(self, pdf_filename: str):
         """

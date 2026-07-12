@@ -22,7 +22,7 @@ INTRO_TEXT = (
     "financial trends, budgets, assets, and portfolio dynamics in a safe, interactive "
     "environment. This tool is not financial advice and is intended for learning and "
     "experimentation only.\n\n"
-    "New users: Start with 'Tutorials & Notes' to understand how WARPSimLab works.\n"
+    "New users: Accept the terms below, then select Start Tutorials.\n"
 )
 
 LEGAL_TEXT = (
@@ -134,10 +134,26 @@ class MainHomeFrame(ttk.Frame):
         )
         checkbox.pack(anchor="w", pady=(10, 0))
 
+        self.tutorial_button = ttk.Button(
+            self,
+            text="Start Tutorials",
+            command=self._open_tutorials,
+            state="disabled",
+        )
+        self.tutorial_button.pack(anchor="w", pady=(10, 0))
+
         # Initially disable run buttons
         if self.parent_gui:
             self._update_run_buttons(enabled=False)
             self._update_nav_buttons(enabled=False)
+
+
+    def _open_tutorials(self):
+        if not self.parent_gui:
+            return
+
+        self.parent_gui.edit_tutorial()
+
 
     def _on_agree_changed(self):
         if self.agree_var.get():
@@ -162,6 +178,11 @@ class MainHomeFrame(ttk.Frame):
 
     def _update_nav_buttons(self, enabled):
         """Enable or disable main navigation through the parent GUI policy."""
+        if hasattr(self, "tutorial_button"):
+            self.tutorial_button.configure(
+                state="normal" if enabled else "disabled"
+            )
+
         if not self.parent_gui:
             return
 
