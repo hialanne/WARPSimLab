@@ -135,7 +135,7 @@ def make_portfolio(
 def make_config(
     *,
     include_realestate=False,
-    sim_rebalance="dont-rebalance",
+    sim_initial_allocation_mode="dont-rebalance",
     custom_stock=0.7,
     custom_bonds=0.2,
     custom_cash=0.1,
@@ -159,7 +159,7 @@ def make_config(
 ):
     return types.SimpleNamespace(
         include_realestate=include_realestate,
-        sim_rebalance=sim_rebalance,
+        sim_initial_allocation_mode=sim_initial_allocation_mode,
         custom_stock=custom_stock,
         custom_bonds=custom_bonds,
         custom_cash=custom_cash,
@@ -205,7 +205,7 @@ def test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings():
         cash_post=60,
         real_estate=999,
     )
-    cfg = make_config(include_realestate=True, sim_rebalance="dont-rebalance")
+    cfg = make_config(include_realestate=True, sim_initial_allocation_mode="dont-rebalance")
 
     ps = pe.create_sim_portfolio(p, cfg)
 
@@ -236,7 +236,7 @@ def test_create_sim_portfolio_maintain_current_allocation_applies_household_targ
         cash_post=60,
     )
     cfg = make_config(
-        sim_rebalance="maintain-current-allocation",
+        sim_initial_allocation_mode="maintain-current-allocation",
         household_eq_target=0.5,
         household_bd_target=0.3,
         household_cs_target=0.2,
@@ -262,7 +262,7 @@ def test_create_sim_portfolio_preset_rebalance_70_20_10_applies_to_pre_and_post(
         bond_post=20,
         cash_post=60,
     )
-    cfg = make_config(sim_rebalance="70-20-10")
+    cfg = make_config(sim_initial_allocation_mode="70-20-10")
 
     ps = pe.create_sim_portfolio(p, cfg)
 
@@ -285,7 +285,7 @@ def test_create_sim_portfolio_custom_rebalance_applies_to_pre_and_post():
         cash_post=60,
     )
     cfg = make_config(
-        sim_rebalance="custom",
+        sim_initial_allocation_mode="custom",
         custom_stock=0.5,
         custom_bonds=0.3,
         custom_cash=0.2,
@@ -386,17 +386,35 @@ def test_estimate_post_tax_income_components_uses_post_tax_yields():
 
 
 def test_estimate_household_post_tax_income_components_two_people():
-    h = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=1000, bd_post=1000, cs_post=1000)
-    w = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=500, bd_post=500, cs_post=500)
+    h = DummyPortfolioState(
+        eq_pre=0,
+        bd_pre=0,
+        cs_pre=0,
+        eq_post=1000,
+        bd_post=1000,
+        cs_post=1000,
+    )
+    w = DummyPortfolioState(
+        eq_pre=0,
+        bd_pre=0,
+        cs_pre=0,
+        eq_post=500,
+        bd_post=500,
+        cs_post=500,
+    )
     cfg = make_config(
         second_person_enabled=True,
-        post_tax_bond_interest_yield=0.04,
-        post_tax_cash_interest_yield=0.02,
         post_tax_equity_dividend_yield=0.03,
     )
 
     bond_interest, cash_interest, qualified_dividends, total, h_total, w_total = (
-        pe.estimate_household_post_tax_income_components(h, w, cfg)
+        pe.estimate_household_post_tax_income_components(
+            h,
+            w,
+            cfg,
+            bond_return=0.04,
+            cash_return=0.02,
+        )
     )
 
     assert bond_interest == pytest.approx(40.0 + 20.0)
@@ -535,7 +553,7 @@ def test_apply_fund_expenses_reduces_all_components_and_returns_removed_amount()
 
 def test_rebalance_dont_rebalance_uses_stored_ratios():
     ps = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=50, bd_post=25, cs_post=25)
-    cfg = make_config(sim_rebalance="dont-rebalance")
+    cfg = make_config(sim_initial_allocation_mode="dont-rebalance")
 
     ps.eq_ratio_post = 0.2
     ps.bd_ratio_post = 0.3
@@ -559,7 +577,7 @@ def test_rebalance_dont_rebalance_uses_stored_ratios():
 def test_rebalance_maintain_current_allocation_uses_household_targets():
     ps = DummyPortfolioState(eq_pre=40, bd_pre=30, cs_pre=30, eq_post=50, bd_post=25, cs_post=25)
     cfg = make_config(
-        sim_rebalance="maintain-current-allocation",
+        sim_initial_allocation_mode="maintain-current-allocation",
         household_eq_target=0.6,
         household_bd_target=0.2,
         household_cs_target=0.2,
@@ -579,7 +597,7 @@ def test_rebalance_maintain_current_allocation_uses_household_targets():
 def test_rebalance_custom_uses_custom_ratios():
     ps = DummyPortfolioState(eq_pre=60, bd_pre=20, cs_pre=20, eq_post=10, bd_post=40, cs_post=50)
     cfg = make_config(
-        sim_rebalance="custom",
+        sim_initial_allocation_mode="custom",
         custom_stock=0.5,
         custom_bonds=0.25,
         custom_cash=0.25,
@@ -598,7 +616,7 @@ def test_rebalance_custom_uses_custom_ratios():
 
 def test_rebalance_preset_uses_preset_ratios():
     ps = DummyPortfolioState(eq_pre=90, bd_pre=5, cs_pre=5, eq_post=10, bd_post=10, cs_post=80)
-    cfg = make_config(sim_rebalance="30-30-40")
+    cfg = make_config(sim_initial_allocation_mode="30-30-40")
 
     pe.rebalance(ps, cfg)
 

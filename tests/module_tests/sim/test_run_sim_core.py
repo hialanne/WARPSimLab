@@ -269,12 +269,20 @@ def _patch_baseline(monkeypatch, mod, sim_config: DummySimConfig):
         mod.withdrawalEngine,
         "calculate_retirement_withdrawal",
         lambda *a, **k: {
-            "pre_tax": 0.0,
-            "post_tax": 0.0,
+            "pre_tax": 20.0,
+            "post_tax": 10.0,
             "roth": 0.0,
             "hsa": 0.0,
             "rmd": 0.0,
-            "total": 0.0,
+            "total": 30.0,
+            "by_person": {
+                "husband": 18.0,
+                "wife": 12.0,
+            },
+            "rmd_by_person": {
+                "husband": 0.0,
+                "wife": 0.0,
+            },
         },
     )
 
@@ -536,7 +544,22 @@ def test_retirement_withdrawal_branch_adds_pre_tax_to_ordinary_income(mod, monke
     monkeypatch.setattr(
         mod.withdrawalEngine,
         "calculate_retirement_withdrawal",
-        lambda *a, **k: {"pre_tax": 20.0, "post_tax": 10.0, "total": 30.0},
+        lambda *a, **k: {
+            "pre_tax": 20.0,
+            "post_tax": 10.0,
+            "roth": 0.0,
+            "hsa": 0.0,
+            "rmd": 0.0,
+            "total": 30.0,
+            "by_person": {
+                "husband": 18.0,
+                "wife": 12.0,
+            },
+            "rmd_by_person": {
+                "husband": 0.0,
+                "wife": 0.0,
+            },
+        },
     )
 
     seen = {}

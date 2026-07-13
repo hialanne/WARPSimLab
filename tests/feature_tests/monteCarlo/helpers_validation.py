@@ -41,7 +41,7 @@ def make_sim_config(**overrides):
         bd_std=0.06,
         cs_std=0.01,
         sim_type="portfolio_sim",
-        sim_rebalance="none",
+        sim_initial_allocation_mode="none",
         custom_stock=60.0,
         custom_bonds=30.0,
         custom_cash=10.0,
@@ -483,7 +483,22 @@ def install_minimal_core_engine_mocks(run_sim_core_module, monkeypatch):
     monkeypatch.setattr(
         run_sim_core_module.withdrawalEngine,
         "calculate_retirement_withdrawal",
-        lambda *args, **kwargs: {"pre_tax": 0.0, "post_tax": 0.0, "total": 0.0},
+        lambda *args, **kwargs: {
+            "pre_tax": 0.0,
+            "post_tax": 0.0,
+            "roth": 0.0,
+            "hsa": 0.0,
+            "rmd": 0.0,
+            "total": 0.0,
+            "by_person": {
+                "husband": 0.0,
+                "wife": 0.0,
+            },
+            "rmd_by_person": {
+                "husband": 0.0,
+                "wife": 0.0,
+            },
+        },
     )
 
     monkeypatch.setattr(

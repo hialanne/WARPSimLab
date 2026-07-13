@@ -40,7 +40,7 @@ def _base_settings():
         "num_sims": 500,
         "use_fund_expenses": True,
         "fund_expense": 0.75,
-        "rebalance": "dont-rebalance",
+        "initial_allocation_mode": "dont-rebalance",
         "custom_stock": 60.0,
         "custom_bonds": 30.0,
         "custom_cash": 10.0,
@@ -61,7 +61,7 @@ def test_init_sets_stringvars_from_settings(tk_root, mod_no_tooltip):
     assert frame.sims_var.get() == frame._format_sim_field("num_sims", settings["num_sims"])
     assert frame.use_fund_expenses_var.get() is True
     assert frame.fund_expense_var.get() == frame._format_sim_field("fund_expense", settings["fund_expense"])
-    assert frame.rebalance_var.get() == settings["rebalance"]
+    assert frame.initial_allocation_mode_var.get() == settings["initial_allocation_mode"]
 
 def test_bind_var_updates_settings_and_ignores_invalid(tk_root, mod_no_tooltip):
     mod = mod_no_tooltip
@@ -135,7 +135,7 @@ def test_toggle_custom_entries_shows_and_hides_custom_block(tk_root, mod_no_tool
     mod = mod_no_tooltip
 
     settings = _base_settings()
-    settings["rebalance"] = "dont-rebalance"
+    settings["initial_allocation_mode"] = "dont-rebalance"
     sim_vars = {"_settings_dict": settings}
 
     frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
@@ -147,7 +147,7 @@ def test_toggle_custom_entries_shows_and_hides_custom_block(tk_root, mod_no_tool
     assert frame.custom_bonds_label.winfo_manager() == ""
     assert frame.custom_cash_entry.winfo_manager() == ""
     # Switch to custom => widgets should be gridded/mapped
-    frame.rebalance_var.set("custom")
+    frame.initial_allocation_mode_var.set("custom")
     frame.toggle_custom_entries()
 
     print("root ismapped:", tk_root.winfo_ismapped())
@@ -167,7 +167,7 @@ def test_toggle_custom_entries_shows_and_hides_custom_block(tk_root, mod_no_tool
     assert frame.custom_cash_entry.winfo_manager() == "grid"
 
     # Switch away from custom => widgets should be hidden again
-    frame.rebalance_var.set("70-20-10")
+    frame.initial_allocation_mode_var.set("70-20-10")
     frame.toggle_custom_entries()
 
     assert frame.custom_stock_label.winfo_manager() == ""
@@ -180,13 +180,13 @@ def test_custom_percent_vars_update_settings_when_custom_selected(tk_root, mod_n
     mod = mod_no_tooltip
 
     settings = _base_settings()
-    settings["rebalance"] = "custom"
+    settings["initial_allocation_mode"] = "custom"
     sim_vars = {"_settings_dict": settings}
 
     frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
     frame.pack()
 
-    frame.rebalance_var.set("custom")
+    frame.initial_allocation_mode_var.set("custom")
     frame.toggle_custom_entries()
 
     assert frame._validate_sim_field("55.5", "custom_stock") is True
