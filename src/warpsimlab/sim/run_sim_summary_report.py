@@ -275,7 +275,7 @@ def _build_simulation_snapshot(sim_config):
         "State Taxes Enabled": getattr(sim_config, "calculate_state_taxes", None),
         "State of Residence": getattr(sim_config, "state_of_residence", None),
         "Withdrawal Strategy": getattr(sim_config, "retirement_withdraw_mode", None),
-        "Rebalance Strategy": getattr(sim_config, "sim_rebalance", None),
+        "Rebalance Strategy": getattr(sim_config, "sim_initial_allocation_mode", None),
         "Fund Expenses Enabled": getattr(sim_config, "use_fund_expenses", None),
     }
 
@@ -396,7 +396,7 @@ def _build_portfolio_inputs(husband_portfolio, wife_portfolio, sim_config):
             "Fund Expense Rate": _rate_fraction_to_percent(
                 getattr(sim_config, "fund_expense", None)
             ),
-            "Rebalance Strategy": _friendly_label(getattr(sim_config, "sim_rebalance", None)),
+            "Rebalance Strategy": _friendly_label(getattr(sim_config, "sim_initial_allocation_mode", None)),
             "Rebalance Every Year": getattr(sim_config, "rebalance_every_year", None),
         },
     }

@@ -103,7 +103,7 @@ def simulate_yearly_portfolios(
     # Compute household allocation target if using
     # "maintain-current-allocation"
     # ---------------------------------------------------------
-    if sim_config.sim_rebalance == "maintain-current-allocation":
+    if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
         portfolioEngine.compute_household_allocation_targets(
             husband_portfolio,
             wife_portfolio,
@@ -129,6 +129,7 @@ def simulate_yearly_portfolios(
         "roth_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "expense_amt": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "uncovered_expense": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "ira_401k": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_assets": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_assets": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -347,7 +348,11 @@ def simulate_yearly_portfolios(
                 husband_post_tax_total,
                 wife_post_tax_total,
             ) = portfolioEngine.estimate_household_post_tax_income_components(
-                h_port, w_port, sim_config
+                h_port,
+                w_port,
+                sim_config,
+                bond_return=year_returns["bd"],
+                cash_return=year_returns["cs"],
             )
 
             income["by_class"]["bond_interest"] += bond_interest
@@ -355,6 +360,10 @@ def simulate_yearly_portfolios(
             income["by_class"]["qualified_dividends"] += qualified_dividends
 
             income["total"] += post_tax_total
+            income["by_person"]["husband"] += husband_post_tax_total
+
+            if second_person_enabled:
+                income["by_person"]["wife"] += wife_post_tax_total
 
             payroll_wages_husband = max(
                 0.0,
@@ -375,6 +384,7 @@ def simulate_yearly_portfolios(
             w_401k_employer = 0.0
 
             emergency_pre_tax_used = 0.0
+            uncovered_expense = 0.0
             net_cash_result = None
             baseline_total_tax = 0.0
             final_tax_delta = 0.0
@@ -448,10 +458,27 @@ def simulate_yearly_portfolios(
                 # Additional retirement withdrawals should appear as household cash in pocket.
                 # For tax calculation, we mark them non-taxable here, then existing code
                 # adds wd_pre_tax back into ordinary income.
-                additional_withdrawal_cash = max(0.0, wd["total"] - wd_rmd)
+                additional_withdrawal_cash = max(0.0, wd["total"] - wd_rmd,)
+
+                husband_additional_withdrawal = max(0.0, wd["by_person"]["husband"] - wd["rmd_by_person"]["husband"],)
+
+                wife_additional_withdrawal = max(0.0, wd["by_person"]["wife"] - wd["rmd_by_person"]["wife"],)
+
+                person_additional_total = ( husband_additional_withdrawal + wife_additional_withdrawal)
+
+                if abs( person_additional_total - additional_withdrawal_cash ) > 1e-6:
+                    raise RuntimeError(
+                        "Person-level retirement withdrawals do not "
+                        "match the household withdrawal total"
+                    )
 
                 income["total"] += additional_withdrawal_cash
-                income["non_taxable_income"] = income.get("non_taxable_income", 0.0) + additional_withdrawal_cash
+                income["by_person"]["husband"] += (husband_additional_withdrawal)
+
+                if second_person_enabled:
+                    income["by_person"]["wife"] += (wife_additional_withdrawal)
+
+                income["non_taxable_income"] = (income.get("non_taxable_income", 0.0) + additional_withdrawal_cash)
 
             if qualified_dividends > (income["total"]):
                 print("qualified_dividends: "+str(qualified_dividends)+ " income-total: "+str(income["total"]))
@@ -501,8 +528,18 @@ def simulate_yearly_portfolios(
 
                 baseline_total_tax += payroll_tax
 
-                if sim_config.calculate_income_taxes or sim_config.calculate_payroll_taxes:
-                    net_cash = income["total"] - baseline_total_tax - expense_amt
+                taxes_enabled = (
+                    sim_config.calculate_income_taxes
+                    or sim_config.calculate_payroll_taxes
+                    or sim_config.calculate_state_taxes
+                )
+
+                if taxes_enabled:
+                    net_cash = (
+                        income["total"]
+                        - baseline_total_tax
+                        - expense_amt
+                    )
                 else:
                     net_cash = income["total"] - expense_amt
 
@@ -510,13 +547,18 @@ def simulate_yearly_portfolios(
                 # print("expense_amt: "+str(expense_amt))
                 # print("baseline_total_tax: "+str(baseline_total_tax))
 
-                # print("h_port before apply: "+str(h_port.total_value))
-
                 # Apply net cash and capture any emergency gross pre-tax draw
                 if second_person_enabled:
-                    net_cash_result = portfolioEngine.apply_net_income_couple(h_port, w_port, net_cash)
+                    net_cash_result = portfolioEngine.apply_net_income_couple(
+                        h_port,
+                        w_port,
+                        net_cash,
+                    )
                 else:
-                    net_cash_result = portfolioEngine.apply_net_income_single(h_port, net_cash)
+                    net_cash_result = portfolioEngine.apply_net_income_single(
+                        h_port,
+                        net_cash,
+                    )
 
                 # print("h_port after apply: "+str(h_port.total_value))
                 # This code dumps logs of portfolio if it's draining.  
@@ -530,6 +572,7 @@ def simulate_yearly_portfolios(
                 #)
 
                 emergency_pre_tax_used = net_cash_result["pre_tax_used"]
+                uncovered_expense = max(0.0, float(net_cash_result.get("uncovered", 0.0)),)
 
                 # Recompute final taxes only if the emergency pre-tax draw changed income
                 if emergency_pre_tax_used > 0.0:
@@ -614,12 +657,19 @@ def simulate_yearly_portfolios(
 
             # print("h_port: "+str(h_port.total_value))
 
+            equity_total_return = year_returns["eq"]
+            equity_dividend_yield = sim_config._post_tax_equity_dividend_yield
+            taxable_equity_price_return = (
+                equity_total_return - equity_dividend_yield
+            )
+
             # Portfolio returns (shared market path)
             fund_expense_rate = sim_config.fund_expense if sim_config.use_fund_expenses else 0.0
 
             fund_expenses = portfolioEngine.apply_returns_and_fund_expenses(
                 h_port,
-                year_returns["eq"],
+                equity_total_return,
+                taxable_equity_price_return,
                 year_returns["bd"],
                 year_returns["cs"],
                 year_returns["re"],
@@ -629,7 +679,8 @@ def simulate_yearly_portfolios(
             if second_person_enabled:
                 fund_expenses += portfolioEngine.apply_returns_and_fund_expenses(
                     w_port,
-                    year_returns["eq"],
+                    equity_total_return,
+                    taxable_equity_price_return,
                     year_returns["bd"],
                     year_returns["cs"],
                     year_returns["re"],
@@ -655,20 +706,28 @@ def simulate_yearly_portfolios(
             cash = h_port.total_value_cash + (w_port.total_value_cash if second_person_enabled else 0)
             bonds = h_port.total_value_bonds + (w_port.total_value_bonds if second_person_enabled else 0)
             real_estate = h_port.re_post + (w_port.re_post if second_person_enabled else 0)
+
+            taxes_enabled = (
+                sim_config.calculate_income_taxes
+                or sim_config.calculate_payroll_taxes
+                or sim_config.calculate_state_taxes
+            )
+
             net_income = (
                 income["total"] - total_tax
-                if sim_config.calculate_income_taxes or sim_config.calculate_payroll_taxes
+                if taxes_enabled
                 else income["total"]
             )
+
             if sim_config.second_person_enabled:
-                ira_401k = (
-                    h_401k_employee + h_401k_employer +
-                    w_401k_employee + w_401k_employer
-                )
+                ira_401k = h_401k_employee + h_401k_employer + w_401k_employee + w_401k_employer
+                employee_401k_total = h_401k_employee + w_401k_employee
             else:
                 ira_401k = h_401k_employee + h_401k_employer
+                employee_401k_total = h_401k_employee
 
-            gross_income = income["total"] + ira_401k + emergency_pre_tax_used
+            gross_income = income["total"] + employee_401k_total + emergency_pre_tax_used
+
             net_profit = net_income - expense_amt
 
             #print("income-net: "+str(net_income))
@@ -692,6 +751,7 @@ def simulate_yearly_portfolios(
             results["taxes"][s,year] = total_tax
             results["tax_bracket"][s,year] = federal_marginal_rate
             results["expense_amt"][s,year] = expense_amt
+            results["uncovered_expense"][s, year] = uncovered_expense
             results["ira_401k"][s,year] = ira_401k
             results["fund_expenses"][s,year] = fund_expenses
             results["bond_interest"][s, year] = bond_interest
@@ -720,9 +780,6 @@ def simulate_yearly_portfolios(
                 wife_income_for_tax_alloc = income["by_person"]["wife"]
 
                 if use_expenses and emergency_pre_tax_used > 0:
-                    # Approximation: allocate emergency pre-tax withdrawal by current
-                    # pre-tax portfolio weights, since portfolioEngine returned only the
-                    # household total gross pre-tax draw.
                     h_pre = h_port.total_value_pre
                     w_pre = w_port.total_value_pre
                     total_pre = h_pre + w_pre
@@ -734,18 +791,27 @@ def simulate_yearly_portfolios(
                         husband_income_for_tax_alloc += emergency_pre_tax_used / 2
                         wife_income_for_tax_alloc += emergency_pre_tax_used / 2
 
+                expected_person_income_total = income["total"] + emergency_pre_tax_used
+                actual_person_income_total = husband_income_for_tax_alloc + wife_income_for_tax_alloc
+
+                if abs(actual_person_income_total - expected_person_income_total) > 1e-6:
+                    raise RuntimeError("Person-level income does not match household income")
+
                 husband_tax_alloc, wife_tax_alloc = taxEngine.allocate_tax_proportionally_couple(
                     total_tax,
                     husband_income_for_tax_alloc,
                     wife_income_for_tax_alloc,
                 )
+                results["net_income_husband"][s, year] = (
+                    husband_income_for_tax_alloc - husband_tax_alloc
+                )
+                results["net_income_wife"][s, year] = (
+                    wife_income_for_tax_alloc - wife_tax_alloc
+                )
 
-                results["net_income_husband"][s,year] = husband_income_for_tax_alloc - husband_tax_alloc
-                results["net_income_wife"][s,year] = wife_income_for_tax_alloc - wife_tax_alloc
             else:
-                results["net_income_husband"][s,year] = net_income
-                results["net_income_wife"][s,year] = 0
-
+                results["net_income_husband"][s, year] = net_income
+                results["net_income_wife"][s, year] = 0.0
 
     # print('total_assets: '+str(results["total_assets"][0]))
 
@@ -771,10 +837,13 @@ def simulate_yearly_portfolios(
         results["bonds"]                = results["bonds"]              / discount_factors
         results["real_estate"]          = results["real_estate"]        / discount_factors
         results["net_income"]           = results["net_income"]         / discount_factors
+        results["net_income_husband"]   = (results["net_income_husband"] / discount_factors)
+        results["net_income_wife"]      = (results["net_income_wife"]   / discount_factors)
         results["gross_income"]         = results["gross_income"]       / discount_factors
         results["net_profit"]           = results["net_profit"]         / discount_factors
         results["taxes"]                = results["taxes"]              / discount_factors
         results["expense_amt"]          = results["expense_amt"]        / discount_factors
+        results["uncovered_expense"]    = (results["uncovered_expense"] / discount_factors)
         results["ira_401k"]             = results["ira_401k"]           / discount_factors
         results["fund_expenses"]        = results["fund_expenses"]      / discount_factors
         results["bond_interest"]        = results["bond_interest"]      / discount_factors
@@ -789,8 +858,8 @@ def simulate_yearly_portfolios(
         results["medicare_tax"] = results["medicare_tax"] / discount_factors
         results["additional_medicare_tax"] = results["additional_medicare_tax"] / discount_factors
         results["emergency_pre_tax_used"] = results["emergency_pre_tax_used"] / discount_factors
-        results["roth_withdrawals"][s, year] /= real_discount_factors[s, year]
-        results["hsa_withdrawals"][s, year] /= real_discount_factors[s, year]
+        results["roth_withdrawals"] = (results["roth_withdrawals"] / discount_factors)
+        results["hsa_withdrawals"] = (results["hsa_withdrawals"] / discount_factors)
         results["final_tax_delta"] = results["final_tax_delta"] / discount_factors
         results["final_tax_delta_deducted"] = results["final_tax_delta_deducted"] / discount_factors
         results["final_tax_delta_uncovered"] = results["final_tax_delta_uncovered"] / discount_factors
@@ -802,6 +871,9 @@ def simulate_yearly_portfolios(
         results["breakdown_by_class"]["rmd"]      = results["breakdown_by_class"]["rmd"]      / discount_factors
         results["breakdown_by_class"]["withdrawal"] = results["breakdown_by_class"]["withdrawal"] / discount_factors
         results["breakdown_by_class"]["special_income"] = results["breakdown_by_class"]["special_income"] / discount_factors
+        results["breakdown_by_class"]["bond_interest"] = (results["breakdown_by_class"]["bond_interest"] / discount_factors)
+        results["breakdown_by_class"]["cash_interest"] = (results["breakdown_by_class"]["cash_interest"] / discount_factors)
+        results["breakdown_by_class"]["qualified_dividends"] = (results["breakdown_by_class"]["qualified_dividends"] / discount_factors)
 
     return results
 

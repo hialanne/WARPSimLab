@@ -175,7 +175,7 @@ def create_sim_portfolio(portfolio, sim_config=None):
         re_post=getattr(portfolio, "real_estate", 0.0) if sim_config.include_realestate else 0.0,
     )
 
-    if sim_config.sim_rebalance == "dont-rebalance":
+    if sim_config.sim_initial_allocation_mode == "dont-rebalance":
         for bucket_name, total_attr, eq_attr, bd_attr, cs_attr in [
             ("pre", "total_value_pre", "eq_pre", "bd_pre", "cs_pre"),
             ("post", "total_value_post", "eq_post", "bd_post", "cs_post"),
@@ -196,18 +196,18 @@ def create_sim_portfolio(portfolio, sim_config=None):
         "70-20-10": {"equity": 0.70, "bonds": 0.20, "cash": 0.10},
     }
 
-    if sim_config.sim_rebalance == "maintain-current-allocation":
+    if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
         eq_ratio = getattr(sim_config, "household_eq_target", 1 / 3)
         bd_ratio = getattr(sim_config, "household_bd_target", 1 / 3)
         cs_ratio = getattr(sim_config, "household_cs_target", 1 / 3)
 
-    elif sim_config.sim_rebalance == "custom":
+    elif sim_config.sim_initial_allocation_mode == "custom":
         eq_ratio = sim_config.custom_stock
         bd_ratio = sim_config.custom_bonds
         cs_ratio = sim_config.custom_cash
 
-    elif sim_config.sim_rebalance in rebalance_ratios:
-        ratios = rebalance_ratios[sim_config.sim_rebalance]
+    elif sim_config.sim_initial_allocation_mode in rebalance_ratios:
+        ratios = rebalance_ratios[sim_config.sim_initial_allocation_mode]
         eq_ratio = ratios["equity"]
         bd_ratio = ratios["bonds"]
         cs_ratio = ratios["cash"]
@@ -282,20 +282,40 @@ def apply_post_tax_income_components_to_income(income, post_tax_income, second_p
 
     return income
 
-def estimate_household_post_tax_income_components(h_port, w_port, sim_config):
+
+def estimate_household_post_tax_income_components(
+    h_port,
+    w_port,
+    sim_config,
+    bond_return,
+    cash_return,
+):
+    """
+    Estimate taxable-account income for the current simulation year.
+
+    Taxable-account treatment:
+    - Equity dividends are calculated from the configured dividend yield.
+    - Positive bond returns become ordinary taxable cash-flow income.
+    - Positive cash returns become ordinary taxable cash-flow income.
+    - Negative bond and cash returns do not create negative taxable income.
+      They are applied later as losses to the taxable account balances.
+
+    Pre-tax, Roth, and HSA bond/cash returns remain inside their accounts.
+    """
     eq_yield = sim_config._post_tax_equity_dividend_yield
-    bd_yield = sim_config._post_tax_bond_interest_yield
-    cs_yield = sim_config._post_tax_cash_interest_yield
+
+    taxable_bond_return = max(0.0, float(bond_return))
+    taxable_cash_return = max(0.0, float(cash_return))
 
     h_qd = h_port.eq_post * eq_yield
-    h_bi = h_port.bd_post * bd_yield
-    h_ci = h_port.cs_post * cs_yield
+    h_bi = h_port.bd_post * taxable_bond_return
+    h_ci = h_port.cs_post * taxable_cash_return
     h_total = h_qd + h_bi + h_ci
 
     if sim_config.second_person_enabled:
         w_qd = w_port.eq_post * eq_yield
-        w_bi = w_port.bd_post * bd_yield
-        w_ci = w_port.cs_post * cs_yield
+        w_bi = w_port.bd_post * taxable_bond_return
+        w_ci = w_port.cs_post * taxable_cash_return
         w_total = w_qd + w_bi + w_ci
     else:
         w_qd = 0.0
@@ -307,8 +327,6 @@ def estimate_household_post_tax_income_components(h_port, w_port, sim_config):
     cash_interest = h_ci + w_ci
     qualified_dividends = h_qd + w_qd
 
-    # --- Clamp tiny floating-point negatives ---
-    EPS = 1e-12
     if -EPS < bond_interest < 0.0:
         bond_interest = 0.0
     if -EPS < cash_interest < 0.0:
@@ -330,26 +348,70 @@ def estimate_household_post_tax_income_components(h_port, w_port, sim_config):
 
 def apply_returns_and_fund_expenses(
     sim_portfolio,
-    eq_return,
+    eq_total_return,
+    eq_taxable_price_return,
     bd_return,
     cs_return,
     re_return,
     fund_expense,
 ):
-    eq_mult = 1.0 + eq_return
-    bd_mult = 1.0 + bd_return
-    cs_mult = 1.0 + cs_return
+    """
+    Apply annual asset returns and fund expenses.
+
+    Equity:
+    - Pre-tax, Roth, and HSA equity receive the full total return.
+    - Post-tax equity receives only the equity price return.
+    - Post-tax dividends are handled separately as cash-flow income.
+
+    Bonds:
+    - Pre-tax, Roth, and HSA bonds receive the full bond return.
+    - A positive post-tax bond return is handled separately as ordinary
+      taxable cash-flow income.
+    - A negative post-tax bond return reduces the post-tax bond balance.
+
+    Cash:
+    - Pre-tax, Roth, and HSA cash receive the full cash return.
+    - A positive post-tax cash return is handled separately as ordinary
+      taxable cash-flow income.
+    - A negative post-tax cash return reduces the post-tax cash balance.
+    """
+    eq_total_mult = 1.0 + eq_total_return
+    eq_taxable_price_mult = 1.0 + eq_taxable_price_return
+    bd_total_mult = 1.0 + bd_return
+    cs_total_mult = 1.0 + cs_return
+
+    post_tax_bd_mult = 1.0 + min(0.0, bd_return)
+    post_tax_cs_mult = 1.0 + min(0.0, cs_return)
+
     re_mult = 1.0 + re_return
     exp_mult = 1.0 - fund_expense
 
-    for attr in ["eq_pre", "eq_post", "eq_roth", "hsa_eq"]:
-        setattr(sim_portfolio, attr, getattr(sim_portfolio, attr) * eq_mult)
+    for attr in ["eq_pre", "eq_roth", "hsa_eq"]:
+        setattr(
+            sim_portfolio,
+            attr,
+            getattr(sim_portfolio, attr) * eq_total_mult,
+        )
 
-    for attr in ["bd_pre", "bd_post", "bd_roth", "hsa_bd"]:
-        setattr(sim_portfolio, attr, getattr(sim_portfolio, attr) * bd_mult)
+    sim_portfolio.eq_post *= eq_taxable_price_mult
 
-    for attr in ["cs_pre", "cs_post", "cs_roth", "hsa_cs"]:
-        setattr(sim_portfolio, attr, getattr(sim_portfolio, attr) * cs_mult)
+    for attr in ["bd_pre", "bd_roth", "hsa_bd"]:
+        setattr(
+            sim_portfolio,
+            attr,
+            getattr(sim_portfolio, attr) * bd_total_mult,
+        )
+
+    sim_portfolio.bd_post *= post_tax_bd_mult
+
+    for attr in ["cs_pre", "cs_roth", "hsa_cs"]:
+        setattr(
+            sim_portfolio,
+            attr,
+            getattr(sim_portfolio, attr) * cs_total_mult,
+        )
+
+    sim_portfolio.cs_post *= post_tax_cs_mult
 
     sim_portfolio.re_post *= re_mult
 
@@ -361,7 +423,11 @@ def apply_returns_and_fund_expenses(
         "eq_roth", "bd_roth", "cs_roth",
         "hsa_eq", "hsa_bd", "hsa_cs",
     ]:
-        setattr(sim_portfolio, attr, getattr(sim_portfolio, attr) * exp_mult)
+        setattr(
+            sim_portfolio,
+            attr,
+            getattr(sim_portfolio, attr) * exp_mult,
+        )
 
     fund_expenses = total_before * fund_expense
 
@@ -450,13 +516,13 @@ def rebalance(sim_portfolio, sim_config):
     Rebalance all investable buckets:
     pre-tax, post-tax, Roth, and HSA.
     """
-
-    if sim_config.sim_rebalance == "maintain-current-allocation":
+    
+    if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
         eq_ratio = getattr(sim_config, "household_eq_target", 1 / 3)
         bd_ratio = getattr(sim_config, "household_bd_target", 1 / 3)
         cs_ratio = getattr(sim_config, "household_cs_target", 1 / 3)
 
-    elif sim_config.sim_rebalance == "dont-rebalance":
+    elif sim_config.sim_initial_allocation_mode == "dont-rebalance":
         buckets = [
             ("pre", "eq_pre", "bd_pre", "cs_pre"),
             ("post", "eq_post", "bd_post", "cs_post"),
@@ -484,7 +550,7 @@ def rebalance(sim_portfolio, sim_config):
 
         return
 
-    elif sim_config.sim_rebalance == "custom":
+    elif sim_config.sim_initial_allocation_mode == "custom":
         eq_ratio = sim_config.custom_stock
         bd_ratio = sim_config.custom_bonds
         cs_ratio = sim_config.custom_cash
@@ -496,11 +562,12 @@ def rebalance(sim_portfolio, sim_config):
             "70-20-10": {"equity": 0.70, "bonds": 0.20, "cash": 0.10},
         }
 
-        if sim_config.sim_rebalance not in rebalance_ratios:
+        if sim_config.sim_initial_allocation_mode not in rebalance_ratios:
             print("Bad, bad, bad in rebalance")
+            print("sim_initial_allocation_mode:" + str(sim_config.sim_initial_allocation_mode))
             return
 
-        ratios = rebalance_ratios[sim_config.sim_rebalance]
+        ratios = rebalance_ratios[sim_config.sim_initial_allocation_mode]
         eq_ratio = ratios["equity"]
         bd_ratio = ratios["bonds"]
         cs_ratio = ratios["cash"]
@@ -764,6 +831,29 @@ def _withdraw_from_bucket(port, amount, bucket):
     return take
 
 
+def _withdraw_from_real_estate(port, amount):
+    """
+    Withdraw from net real-estate equity.
+
+    Real estate is treated as a simplified last-resort asset.
+    Transaction costs, taxes, sale timing, and financing constraints
+    are not modeled.
+    """
+    amount = float(max(amount, 0.0))
+    available = float(max(port.re_post, 0.0))
+
+    if amount <= 0.0 or available <= 0.0:
+        return 0.0
+
+    take = min(amount, available)
+    port.re_post -= take
+
+    if port.re_post < 0.0:
+        port.re_post = 0.0
+
+    return take
+
+
 # NOTE ON PRE-TAX WITHDRAWALS
 # ---------------------------
 # These net-income functions move assets only.
@@ -786,6 +876,7 @@ def apply_net_income_couple(h_port, w_port, net_cash):
         "pre_tax_used": 0.0,
         "roth_used": 0.0,
         "hsa_used": 0.0,
+        "real_estate_used": 0.0,
         "uncovered": 0.0,
     }
 
@@ -848,6 +939,20 @@ def apply_net_income_couple(h_port, w_port, net_cash):
         deficit -= actually_used
 
     if deficit > 0.0:
+        if h_port.re_post >= w_port.re_post:
+            real_estate_order = [h_port, w_port]
+        else:
+            real_estate_order = [w_port, h_port]
+
+        for port in real_estate_order:
+            if deficit <= 0.0:
+                break
+
+            used = _withdraw_from_real_estate(port, deficit)
+            result["real_estate_used"] += used
+            deficit -= used
+
+    if deficit > 0.0:
         result["uncovered"] = deficit
 
     _clamp_portfolio_components(h_port)
@@ -862,6 +967,7 @@ def apply_net_income_single(port, net_cash):
         "pre_tax_used": 0.0,
         "roth_used": 0.0,
         "hsa_used": 0.0,
+        "real_estate_used": 0.0,
         "uncovered": 0.0,
     }
 
@@ -882,6 +988,11 @@ def apply_net_income_single(port, net_cash):
 
         used = _withdraw_from_bucket(port, deficit, bucket)
         result[result_key] += used
+        deficit -= used
+
+    if deficit > 0.0:
+        used = _withdraw_from_real_estate(port, deficit)
+        result["real_estate_used"] += used
         deficit -= used
 
     if deficit > 0.0:

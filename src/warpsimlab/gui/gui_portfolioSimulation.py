@@ -145,16 +145,16 @@ class PortfolioSimulationEditFrame(ttk.Frame):
         ttk.Label(self, text="Simulate Re-balanced Portfolio", font=("Arial", 12, "bold")).grid(row=row, column=0, sticky="w")
         row += 1
 
-        self.rebalance_var = tk.StringVar(value=settings["rebalance"])
-        self._bind_var(self.rebalance_var, lambda x, s=settings: s.__setitem__("rebalance", x))
+        self.initial_allocation_mode_var = tk.StringVar(value=settings["initial_allocation_mode"])
+        self._bind_var(self.initial_allocation_mode_var, lambda x, s=settings: s.__setitem__("initial_allocation_mode", x))
 
         # Create Radiobuttons as variables
-        rb_current = ttk.Radiobutton(self, text="Maintain Current Allocation", variable=self.rebalance_var, value="maintain-current-allocation")
-        rb_dont = ttk.Radiobutton(self, text="Don't Rebalance", variable=self.rebalance_var, value="dont-rebalance")
-        rb_30 = ttk.Radiobutton(self, text="Conservative (30-30-40)", variable=self.rebalance_var, value="30-30-40")
-        rb_50 = ttk.Radiobutton(self, text="Balanced (50-30-20)", variable=self.rebalance_var, value="50-30-20")
-        rb_70 = ttk.Radiobutton(self, text="Agressive (70-20-10)", variable=self.rebalance_var, value="70-20-10")
-        rb_custom = ttk.Radiobutton(self, text="Custom", variable=self.rebalance_var, value="custom")
+        rb_current = ttk.Radiobutton(self, text="Maintain Current Allocation", variable=self.initial_allocation_mode_var, value="maintain-current-allocation")
+        rb_dont = ttk.Radiobutton(self, text="Don't Rebalance", variable=self.initial_allocation_mode_var, value="dont-rebalance")
+        rb_30 = ttk.Radiobutton(self, text="Conservative (30-30-40)", variable=self.initial_allocation_mode_var, value="30-30-40")
+        rb_50 = ttk.Radiobutton(self, text="Balanced (50-30-20)", variable=self.initial_allocation_mode_var, value="50-30-20")
+        rb_70 = ttk.Radiobutton(self, text="Agressive (70-20-10)", variable=self.initial_allocation_mode_var, value="70-20-10")
+        rb_custom = ttk.Radiobutton(self, text="Custom", variable=self.initial_allocation_mode_var, value="custom")
 
         # Place them with grid
         for i, rb in enumerate([rb_current, rb_dont, rb_30, rb_50, rb_70, rb_custom]):
@@ -205,7 +205,7 @@ class PortfolioSimulationEditFrame(ttk.Frame):
             validatecommand=vcmd
         )
 
-        self.rebalance_var.trace_add("write", lambda *args: self.toggle_custom_entries())
+        self.initial_allocation_mode_var.trace_add("write", lambda *args: self.toggle_custom_entries())
         self.toggle_custom_entries()  # initialize visibility
 
     # ------------------------
@@ -219,7 +219,7 @@ class PortfolioSimulationEditFrame(ttk.Frame):
 
 
     def toggle_custom_entries(self):
-        if self.rebalance_var.get() == "custom":
+        if self.initial_allocation_mode_var.get() == "custom":
             r = self.custom_anchor_row  # align with "70-20-10"
 
             # Shift the whole custom block to the right within the existing 2-column form,

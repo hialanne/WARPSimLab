@@ -67,11 +67,12 @@ def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_con
     """
     Retirement withdrawals.
 
-    V1 withdrawal order:
+    Withdrawal order:
         1. post-tax
         2. pre-tax
         3. Roth
         4. HSA
+        5. net real-estate equity
 
     Roth and HSA are modeled as simplified tax-free buckets.
     RMDs apply only to pre-tax assets.
@@ -128,6 +129,10 @@ def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_con
     withdrawn_post = 0.0
     withdrawn_roth = 0.0
     withdrawn_hsa = 0.0
+    withdrawn_real_estate = 0.0
+
+    withdrawn_husband = rmd_h
+    withdrawn_wife = rmd_w
 
     def result():
         return {
@@ -137,19 +142,38 @@ def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_con
             "post_tax": withdrawn_post,
             "roth": withdrawn_roth,
             "hsa": withdrawn_hsa,
+            "real_estate": withdrawn_real_estate,
+            "uncovered": max(0.0, remaining),
+            "by_person": {
+                "husband": withdrawn_husband,
+                "wife": withdrawn_wife,
+            },
+            "rmd_by_person": {
+                "husband": rmd_h,
+                "wife": rmd_w,
+            },
         }
+
 
     if remaining <= 0.0:
         return result()
+
 
     def order_by_bucket(p1, p2, total_attr):
         if getattr(p1, total_attr) >= getattr(p2, total_attr):
             return [p1, p2]
         return [p2, p1]
 
-    def withdraw_from_bucket(port, amount, bucket):
-        nonlocal withdrawn_pre, withdrawn_post, withdrawn_roth, withdrawn_hsa
 
+    def withdraw_from_bucket(port, amount, bucket):
+        nonlocal withdrawn_pre
+        nonlocal withdrawn_post
+        nonlocal withdrawn_roth
+        nonlocal withdrawn_hsa
+        nonlocal withdrawn_husband
+        nonlocal withdrawn_wife
+
+        amount = max(0.0, float(amount))
         if amount <= 0.0:
             return 0.0
 
@@ -166,18 +190,23 @@ def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_con
             total = port.total_value_hsa
             attrs = ("hsa_eq", "hsa_bd", "hsa_cs")
         else:
-            return 0.0
+            raise ValueError(f"Unknown withdrawal bucket: {bucket}")
 
+        total = max(0.0, float(total))
         if total <= 0.0:
             return 0.0
 
         take = min(amount, total)
+        ratio = take / total
 
-        eq_attr, bd_attr, cs_attr = attrs
+        for attr in attrs:
+            current = float(getattr(port, attr))
+            updated = current - current * ratio
 
-        setattr(port, eq_attr, getattr(port, eq_attr) - take * (getattr(port, eq_attr) / total))
-        setattr(port, bd_attr, getattr(port, bd_attr) - take * (getattr(port, bd_attr) / total))
-        setattr(port, cs_attr, getattr(port, cs_attr) - take * (getattr(port, cs_attr) / total))
+            if updated < 0.0 and updated > -1e-9:
+                updated = 0.0
+
+            setattr(port, attr, max(0.0, updated))
 
         if bucket == "post":
             withdrawn_post += take
@@ -187,6 +216,45 @@ def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_con
             withdrawn_roth += take
         elif bucket == "hsa":
             withdrawn_hsa += take
+
+        if port is h_port:
+            withdrawn_husband += take
+        elif port is w_port:
+            withdrawn_wife += take
+        else:
+            raise RuntimeError(
+                "Withdrawal used an unknown portfolio object"
+            )
+
+        return take
+
+
+    def withdraw_from_real_estate(port, amount):
+        nonlocal withdrawn_real_estate
+        nonlocal withdrawn_husband
+        nonlocal withdrawn_wife
+
+        if amount <= 0.0:
+            return 0.0
+
+        available = max(0.0, float(port.re_post))
+        if available <= 0.0:
+            return 0.0
+
+        take = min(amount, available)
+        port.re_post -= take
+
+        if port.re_post < 0.0:
+            port.re_post = 0.0
+
+        withdrawn_real_estate += take
+
+        if port is h_port:
+            withdrawn_husband += take
+        elif port is w_port:
+            withdrawn_wife += take
+        else:
+            raise RuntimeError("Real-estate withdrawal used an unknown portfolio object")
 
         return take
 
@@ -214,6 +282,20 @@ def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_con
 
             if remaining <= 0.0:
                 return result()
+
+    if remaining > 0.0:
+        if sim_config.second_person_enabled:
+            for port in order_by_bucket(h_port, w_port, "re_post"):
+                taken = withdraw_from_real_estate(port, remaining)
+                remaining -= taken
+                total_withdrawn += taken
+
+                if remaining <= 0.0:
+                    return result()
+        else:
+            taken = withdraw_from_real_estate(h_port, remaining)
+            remaining -= taken
+            total_withdrawn += taken
 
     return result()
 

@@ -28,7 +28,7 @@ class RealEstateEditFrame(ttk.Frame):
 
         ttk.Label(
             self,
-            text="Defines real estate value used by the simulation and balance sheet calculations.",
+            text="Defines real estate value used by the simulation and balance sheet calculations.  Represents actual worth after loans.",
             font=("Arial", 11),
             wraplength=700,
             justify="left",

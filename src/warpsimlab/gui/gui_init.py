@@ -174,7 +174,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             "num_sims": 1000,
             "fund_expense": 0.5,
             "use_fund_expenses": True,
-            "rebalance": "maintain-current-allocation",
+            "initial_allocation_mode": "maintain-current-allocation",
             "custom_stock": 0.0,
             "custom_bonds": 0.0,
             "custom_cash": 100.0

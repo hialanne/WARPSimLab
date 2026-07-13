@@ -40,7 +40,7 @@ def run_sim_portfolio(husband_portfolio, wife_portfolio, husband, wife, expenses
         simulation_data,
         sim_config=sim_config,
         annotate_plots=sim_config.annotate_plots,
-        sim_rebalance_string=sim_config.sim_rebalance,
+        sim_rebalance_string=sim_config.sim_initial_allocation_mode,
         husband=husband,
         wife=wife,
     )

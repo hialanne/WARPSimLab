@@ -60,7 +60,7 @@ class PortfolioSimulatorGUI_RunMixin:
         if use_snapshots:
             inflation               = retirement_snapshots.inflation
             fund_expense            = retirement_snapshots.fund_expense
-            rebalance               = "custom"
+            initial_allocation_mode = "custom"
             custom_stock            = float(retirement_snapshots.custom_stock_percent / 100)
             custom_bonds            = float(retirement_snapshots.custom_bonds_percent / 100)
             custom_cash             = float(retirement_snapshots.custom_cash_percent / 100)
@@ -80,7 +80,7 @@ class PortfolioSimulatorGUI_RunMixin:
         else:
             inflation               = self.inflation
             fund_expense            = sim_cfg.get("fund_expense")
-            rebalance               = sim_cfg.get("rebalance", "none")
+            initial_allocation_mode = sim_cfg.get("initial_allocation_mode", "none")
             custom_stock            = float(sim_cfg.get("custom_stock", 0)) / 100
             custom_bonds            = float(sim_cfg.get("custom_bonds", 0)) / 100
             custom_cash             = float(sim_cfg.get("custom_cash", 0)) / 100
@@ -137,7 +137,7 @@ class PortfolioSimulatorGUI_RunMixin:
             cs_std=float(market_data["cs_std"]) / 100,
             re_std=float(market_data["re_std"]) / 100,
 
-            sim_rebalance=rebalance,
+            sim_initial_allocation_mode=initial_allocation_mode,
             custom_stock=custom_stock,
             custom_bonds=custom_bonds,
             custom_cash=custom_cash,
@@ -222,6 +222,8 @@ class PortfolioSimulatorGUI_RunMixin:
                 else 1.0
             ),
         )
+
+        #sprint("initial_allocation_mode in gui_run:" + str(initial_allocation_mode))
 
         # Normalize incompatible plot options:
         # In Monte Carlo mode, do not draw or label fund expense overlays.

@@ -148,11 +148,14 @@ def prepare_market_path_sampling(sim_config):
             return
 
         corr_matrix = np.asarray(sim_config.return_correlation_matrix, dtype=float)
+
         sim_config._mc_cov_matrix = build_covariance_matrix(
             sim_config._mc_std_devs,
-            corr_matrix
+            corr_matrix,
         )
-        sim_config._mc_cholesky = np.linalg.cholesky(sim_config._mc_cov_matrix)
+        sim_config._mc_cholesky = build_covariance_factor(
+            sim_config._mc_cov_matrix
+        )
         return
 
     if mode == "rollingHistoricalWindows":
@@ -577,6 +580,35 @@ def validate_correlation_matrix(corr_matrix, atol=1e-10):
             "Correlation matrix must be positive semidefinite. "
             f"Minimum eigenvalue was {np.min(eigvals):.12f}"
         )
+
+
+def build_covariance_factor(cov_matrix, atol=1e-12):
+    """
+    Build a matrix factor for correlated sampling from a positive
+    semidefinite covariance matrix.
+
+    Unlike np.linalg.cholesky(), this supports singular covariance matrices,
+    including configurations where one or more asset classes have zero
+    standard deviation.
+
+    Returns
+    -------
+    np.ndarray
+        Factor F such that F @ F.T approximately equals cov_matrix.
+    """
+    cov_matrix = np.asarray(cov_matrix, dtype=float)
+
+    eigvals, eigvecs = np.linalg.eigh(cov_matrix)
+
+    if np.min(eigvals) < -atol:
+        raise ValueError(
+            "Covariance matrix must be positive semidefinite. "
+            f"Minimum eigenvalue was {np.min(eigvals):.12f}"
+        )
+
+    eigvals = np.clip(eigvals, 0.0, None)
+
+    return eigvecs @ np.diag(np.sqrt(eigvals))
 
 
 def build_covariance_matrix(std_devs, corr_matrix):

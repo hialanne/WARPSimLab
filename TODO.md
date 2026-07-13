@@ -24,10 +24,9 @@ GitHub issues, documentation files, or release plans.
 ## Simulator
 
 - TODO: Add simulator cleanup notes here.
-
-## Reports
-
-- TODO: Add report cleanup notes here.
+- Input hardening to the simulator.
+- Roths 
+- Advanced - enhance historical window.
 
 ## Tests
 

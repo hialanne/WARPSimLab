@@ -17,7 +17,7 @@ class Simulation:
             post_tax_cash_interest_yield=None,
             sim_type=False,
             report_options=None,
-            sim_rebalance="none",
+            sim_initial_allocation_mode="none",
             monte_carlo_plot_style="fill",
             use_correlated_returns=True,
             monte_carlo_mode="pathBasedAnnualSampling",
@@ -165,7 +165,7 @@ class Simulation:
         self.user_annotation_strings = user_annotation_strings
         self.scenario_explorer_annotations = scenario_explorer_annotations
 
-        self.sim_rebalance = sim_rebalance
+        self.sim_initial_allocation_mode = sim_initial_allocation_mode
         self.monte_carlo_plot_style = monte_carlo_plot_style
         self.use_correlated_returns = use_correlated_returns
         self.monte_carlo_mode = monte_carlo_mode
