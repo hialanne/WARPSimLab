@@ -81,7 +81,7 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
         post_tax_bond_interest_yield=0.0,
         post_tax_cash_interest_yield=0.0,
         sim_type="portfolio_sim",
-        sim_rebalance="dont-rebalance",
+        sim_initial_allocation_mode="dont-rebalance",
         rebalance_every_year=False,
         include_realestate=False,
         retirement_withdraw_mode="Off",
@@ -138,7 +138,8 @@ def test_401k_contribution_scenario_while_working_nominal():
     assert row(results, "year").tolist() == [2026.0, 2027.0]
 
     # Employee contribution reduces work income.
-    assert row(results, "gross_income") == pytest.approx([0.0, 105_000.0])
+    # Gross income contains salary only; employer match goes directly to pretax assets.
+    assert row(results, "gross_income") == pytest.approx([0.0, 100_000.0])
     assert row(results, "net_income") == pytest.approx([0.0, 90_000.0])
     assert row(results, "ira_401k") == pytest.approx([0.0, 15_000.0])
     assert row(results, "expense_amt") == pytest.approx([0.0, 90_000.0])

@@ -111,7 +111,7 @@ def make_config(**overrides):
         post_tax_bond_interest_yield=0.0,
         post_tax_cash_interest_yield=0.0,
         sim_type="portfolio_sim",
-        sim_rebalance="none",
+        sim_initial_allocation_mode="none",
         custom_stock=0.0,
         custom_bonds=0.0,
         custom_cash=1.0,

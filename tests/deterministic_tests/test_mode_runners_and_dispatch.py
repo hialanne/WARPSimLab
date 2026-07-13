@@ -215,4 +215,4 @@ def test_run_sim_portfolio_caps_num_sims_and_calls_plotter(monkeypatch, scenario
 
     assert sim_config.num_sims == 50000
     assert np.array_equal(captured["years_list"], np.array([0, 1, 2]))
-    assert captured["sim_rebalance_string"] == sim_config.sim_rebalance
+    assert captured["sim_rebalance_string"] == sim_config.sim_initial_allocation_mode

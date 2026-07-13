@@ -67,8 +67,8 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
         state_of_residence="NM",
         second_person_enabled=False,
         eq_mean=0.0,
-        bd_mean=0.0,
-        cs_mean=0.0,
+        bd_mean=0.04,
+        cs_mean=0.08,
         re_mean=0.0,
         eq_std=0.0,
         bd_std=0.0,
@@ -78,7 +78,7 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
         post_tax_bond_interest_yield=0.04,
         post_tax_cash_interest_yield=0.08,
         sim_type="portfolio_sim",
-        sim_rebalance="dont-rebalance",
+        sim_initial_allocation_mode="dont-rebalance",
         rebalance_every_year=False,
         include_realestate=False,
         retirement_withdraw_mode="Off",
@@ -131,8 +131,8 @@ def test_taxable_account_income_components_nominal():
     results = run_sim(cfg, husband_portfolio)
 
     expected_qd = 100_000.0 * 0.02
-    expected_bond_interest = 50_000.0 * 0.04
-    expected_cash_interest = 25_000.0 * 0.08
+    expected_bond_interest = 50_000.0 * cfg.bd_mean
+    expected_cash_interest = 25_000.0 * cfg.cs_mean    
     expected_ordinary = expected_bond_interest + expected_cash_interest
 
     taxEngine.initialize_tax_engine_for_simulation(cfg)

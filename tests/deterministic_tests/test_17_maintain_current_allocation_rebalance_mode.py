@@ -83,7 +83,7 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
         post_tax_bond_interest_yield=0.0,
         post_tax_cash_interest_yield=0.0,
         sim_type="portfolio_sim",
-        sim_rebalance="maintain-current-allocation",
+        sim_initial_allocation_mode="maintain-current-allocation",
         rebalance_every_year=True,
         include_realestate=False,
         retirement_withdraw_mode="Off",

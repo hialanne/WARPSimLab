@@ -66,7 +66,7 @@ def test_run_sim_portfolio_caps_num_sims_at_40000_and_sends_correct_plot_payload
         {
             "num_sims": 50000,
             "annotate_plots": True,
-            "sim_rebalance": "annual",
+            "sim_initial_allocation_mode": "annual",
             "output_csv": "Do Not Output",
         },
     )()

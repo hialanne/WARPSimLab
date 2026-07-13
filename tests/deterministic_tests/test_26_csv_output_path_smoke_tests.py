@@ -180,7 +180,7 @@ def test_run_sim_portfolio_calls_expected_csv_writer(monkeypatch):
             "output_csv": "Output",
             "num_sims": 100,
             "annotate_plots": False,
-            "sim_rebalance": "none",
+            "sim_initial_allocation_mode": "none",
         },
     )()
 
