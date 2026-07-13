@@ -7,7 +7,7 @@ from dataclasses import dataclass
 class DummySimConfig:
     num_sims: int = 100
     annotate_plots: bool = False
-    sim_rebalance: str = "None"
+    sim_initial_allocation_mode: str = "None"
     output_csv: str = "None"
 
 
@@ -67,7 +67,7 @@ def test_run_sim_portfolio_calls_pipeline_and_plot(monkeypatch):
 
     assert kwargs["sim_config"] is sim_config
     assert kwargs["annotate_plots"] == sim_config.annotate_plots
-    assert kwargs["sim_rebalance_string"] == sim_config.sim_rebalance
+    assert kwargs["sim_rebalance_string"] == sim_config.sim_initial_allocation_mode
     assert kwargs["husband"] is husband
     assert kwargs["wife"] is wife
 

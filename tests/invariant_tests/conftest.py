@@ -44,7 +44,7 @@ def make_case(tmp_path):
         always_use_expense_mode=True,
         scenario_expense_multiplier=1.0,
         sim_type="portfolio_sim",
-        sim_rebalance="none",
+        sim_initial_allocation_mode="none",
         rebalance_every_year=False,
         annotate_plots=False,
         constant_y_plots=False,
@@ -191,7 +191,7 @@ def make_case(tmp_path):
             post_tax_bond_interest_yield=post_tax_bond_interest_yield,
             post_tax_cash_interest_yield=post_tax_cash_interest_yield,
             sim_type=sim_type,
-            sim_rebalance=sim_rebalance,
+            sim_initial_allocation_mode=sim_initial_allocation_mode,
             annotate_plots=annotate_plots,
             constant_y_plots=constant_y_plots,
             rebalance_every_year=rebalance_every_year,
@@ -217,11 +217,6 @@ def make_case(tmp_path):
             root=None,
         )
         sim_config.return_correlation_matrix = np.eye(4)
-
-        sim_config.eq_std = 0.01
-        sim_config.bd_std = 0.01
-        sim_config.cs_std = 0.01
-        sim_config.re_std = 0.01
 
         return husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config
 

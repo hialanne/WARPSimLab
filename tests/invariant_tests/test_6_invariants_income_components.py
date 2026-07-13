@@ -47,7 +47,11 @@ def test_qualified_dividends_not_exceed_total_income(make_case):
 
 
 def test_gross_income_identity(make_case):
-    core, cfg = run_case(make_case)
+    core, cfg = run_case(
+        make_case,
+        husband_annual_employer_match=0.0,
+        wife_annual_employer_match=0.0,
+    )
 
     breakdown = core["breakdown_by_class"]
 

@@ -25,6 +25,7 @@ class DummyPortfolioState:
         hsa_eq=0.0,
         hsa_bd=0.0,
         hsa_cs=0.0,
+        re_post=0.0,
     ):
         self.eq_pre = float(eq_pre)
         self.bd_pre = float(bd_pre)
@@ -41,6 +42,8 @@ class DummyPortfolioState:
         self.hsa_eq = float(hsa_eq)
         self.hsa_bd = float(hsa_bd)
         self.hsa_cs = float(hsa_cs)
+
+        self.re_post = float(re_post)
 
     @property
     def total_value_pre(self):

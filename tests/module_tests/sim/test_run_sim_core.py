@@ -31,7 +31,7 @@ class DummySimConfig:
     use_correlated_returns: bool = True
 
     inflation_rate: float = 0.05
-    sim_rebalance: str = "dont-rebalance"
+    sim_initial_allocation_mode: str = "dont-rebalance"
 
     eq_mean: float = 0.07
     bd_mean: float = 0.03

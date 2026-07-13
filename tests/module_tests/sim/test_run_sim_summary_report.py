@@ -211,7 +211,7 @@ def test_build_simulation_snapshot_includes_payroll_tax_setting():
         calculate_state_taxes=True,
         state_of_residence="NM",
         retirement_withdraw_mode="Off",
-        sim_rebalance="dont-rebalance",
+        sim_initial_allocation_mode="dont-rebalance",
         use_fund_expenses=False,
     )
 
@@ -259,7 +259,7 @@ def test_build_portfolio_inputs_single_person():
         second_person_enabled=False,
         use_fund_expenses=True,
         fund_expense=0.0015,
-        sim_rebalance="none",
+        sim_initial_allocation_mode="none",
         rebalance_every_year=False,
     )
 
@@ -402,7 +402,7 @@ def test_build_assumptions_summary_includes_tax_assumptions_and_payroll_flag():
         second_person_enabled=False,
         use_fund_expenses=False,
         fund_expense=0.0,
-        sim_rebalance="none",
+        sim_initial_allocation_mode="none",
         rebalance_every_year=False,
         always_use_expense_mode=True,
         retirement_withdraw_mode="Off",
