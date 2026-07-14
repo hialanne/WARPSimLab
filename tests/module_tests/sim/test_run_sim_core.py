@@ -631,3 +631,362 @@ def test_real_mode_deflates_selected_series(mod, monkeypatch):
     assert results["net_income"][0, 1] == pytest.approx(95.0 / 1.10)
     assert results["taxes"][0, 1] == pytest.approx(5.0 / 1.10)
     assert results["expense_amt"][0, 1] == pytest.approx(10.0 / 1.10)
+
+
+def _requested_roth_flows(
+    *,
+    ira_husband=0.0,
+    ira_wife=0.0,
+    workplace_husband=0.0,
+    workplace_wife=0.0,
+    conversion_husband=0.0,
+    conversion_wife=0.0,
+):
+    ira_total = ira_husband + ira_wife
+    workplace_total = workplace_husband + workplace_wife
+
+    return {
+        "roth_ira_contribution": {
+            "husband": ira_husband,
+            "wife": ira_wife,
+            "total": ira_total,
+        },
+        "roth_workplace_contribution": {
+            "husband": workplace_husband,
+            "wife": workplace_wife,
+            "total": workplace_total,
+        },
+        "roth_conversion": {
+            "husband": conversion_husband,
+            "wife": conversion_wife,
+            "total": conversion_husband + conversion_wife,
+        },
+        "requested_contribution_total": ira_total + workplace_total,
+    }
+
+
+def test_roth_flows_are_recorded_and_conversion_is_taxable(
+    mod,
+    monkeypatch,
+):
+    sim_config = DummySimConfig(years_to_simulate=1)
+    _patch_baseline(monkeypatch, mod, sim_config)
+
+    requested = _requested_roth_flows(
+        ira_husband=4000.0,
+        ira_wife=1000.0,
+        workplace_husband=3000.0,
+        workplace_wife=2000.0,
+        conversion_husband=6000.0,
+        conversion_wife=4000.0,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "prepare_requested_roth_flows",
+        lambda **kwargs: requested,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "apply_roth_conversions",
+        lambda **kwargs: {
+            "husband": 6000.0,
+            "wife": 4000.0,
+            "total": 10000.0,
+        },
+    )
+
+    deposited = {}
+
+    def fake_deposit(**kwargs):
+        funded = kwargs["funded_contributions"]
+        deposited["total"] = funded["total"]
+        return {
+            "husband": 7000.0,
+            "wife": 3000.0,
+            "total": funded["total"],
+        }
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "deposit_funded_roth_contributions",
+        fake_deposit,
+    )
+
+    seen_tax = {}
+
+    def fake_tax_split(*args, **kwargs):
+        seen_tax["ordinary_income"] = kwargs["ordinary_income"]
+        return _tax_split(total_tax=10.0)
+
+    monkeypatch.setattr(
+        mod.taxEngine,
+        "calculate_total_income_tax_split",
+        fake_tax_split,
+    )
+
+    results = mod.simulate_yearly_portfolios(
+        DummyPortfolio(),
+        DummyPortfolio(),
+        DummyPerson(),
+        DummyPerson(),
+        DummyExpenses(),
+        sim_config,
+        num_sims=1,
+    )
+
+    assert seen_tax["ordinary_income"] == pytest.approx(10100.0)
+    assert deposited["total"] == pytest.approx(10000.0)
+
+    assert results["roth_ira_contributions"][0, 1] == pytest.approx(
+        5000.0
+    )
+    assert results["roth_workplace_contributions"][0, 1] == pytest.approx(
+        5000.0
+    )
+    assert results["roth_conversions"][0, 1] == pytest.approx(
+        10000.0
+    )
+    assert results["roth_total_flows"][0, 1] == pytest.approx(
+        20000.0
+    )
+    assert results["breakdown_by_class"]["roth_conversion"][
+        0, 1
+    ] == pytest.approx(10000.0)
+
+
+def test_expense_mode_reduces_roth_contributions_before_uncovered_expense(
+    mod,
+    monkeypatch,
+):
+    sim_config = DummySimConfig(years_to_simulate=1)
+    _patch_baseline(monkeypatch, mod, sim_config)
+
+    requested = _requested_roth_flows(
+        ira_husband=4000.0,
+        ira_wife=1000.0,
+        workplace_husband=3000.0,
+        workplace_wife=2000.0,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "prepare_requested_roth_flows",
+        lambda **kwargs: requested,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "apply_roth_conversions",
+        lambda **kwargs: {
+            "husband": 0.0,
+            "wife": 0.0,
+            "total": 0.0,
+        },
+    )
+
+    monkeypatch.setattr(
+        mod.portfolioEngine,
+        "apply_net_income_couple",
+        lambda *args, **kwargs: {
+            "post_tax_used": 0.0,
+            "pre_tax_used": 0.0,
+            "uncovered": 4000.0,
+        },
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "deposit_funded_roth_contributions",
+        lambda **kwargs: {
+            "husband": 4200.0,
+            "wife": 1800.0,
+            "total": kwargs["funded_contributions"]["total"],
+        },
+    )
+
+    results = mod.simulate_yearly_portfolios(
+        DummyPortfolio(),
+        DummyPortfolio(),
+        DummyPerson(),
+        DummyPerson(),
+        DummyExpenses(),
+        sim_config,
+        num_sims=1,
+    )
+
+    assert results["roth_ira_contributions"][0, 1] == pytest.approx(
+        3000.0
+    )
+    assert results["roth_workplace_contributions"][0, 1] == pytest.approx(
+        3000.0
+    )
+    assert results["roth_total_flows"][0, 1] == pytest.approx(
+        6000.0
+    )
+    assert results["uncovered_expense"][0, 1] == pytest.approx(0.0)
+
+
+def test_expense_mode_reports_only_shortfall_beyond_all_roth_contributions(
+    mod,
+    monkeypatch,
+):
+    sim_config = DummySimConfig(years_to_simulate=1)
+    _patch_baseline(monkeypatch, mod, sim_config)
+
+    requested = _requested_roth_flows(
+        ira_husband=4000.0,
+        ira_wife=1000.0,
+        workplace_husband=3000.0,
+        workplace_wife=2000.0,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "prepare_requested_roth_flows",
+        lambda **kwargs: requested,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "apply_roth_conversions",
+        lambda **kwargs: {
+            "husband": 0.0,
+            "wife": 0.0,
+            "total": 0.0,
+        },
+    )
+
+    monkeypatch.setattr(
+        mod.portfolioEngine,
+        "apply_net_income_couple",
+        lambda *args, **kwargs: {
+            "post_tax_used": 0.0,
+            "pre_tax_used": 0.0,
+            "uncovered": 13000.0,
+        },
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "deposit_funded_roth_contributions",
+        lambda **kwargs: {
+            "husband": 0.0,
+            "wife": 0.0,
+            "total": kwargs["funded_contributions"]["total"],
+        },
+    )
+
+    results = mod.simulate_yearly_portfolios(
+        DummyPortfolio(),
+        DummyPortfolio(),
+        DummyPerson(),
+        DummyPerson(),
+        DummyExpenses(),
+        sim_config,
+        num_sims=1,
+    )
+
+    assert results["roth_ira_contributions"][0, 1] == pytest.approx(0.0)
+    assert results["roth_workplace_contributions"][0, 1] == pytest.approx(
+        0.0
+    )
+    assert results["roth_total_flows"][0, 1] == pytest.approx(0.0)
+    assert results["uncovered_expense"][0, 1] == pytest.approx(3000.0)
+
+
+def test_retirement_mode_requests_extra_cash_for_roth_contributions(
+    mod,
+    monkeypatch,
+):
+    sim_config = DummySimConfig(years_to_simulate=1)
+    _patch_baseline(monkeypatch, mod, sim_config)
+
+    requested = _requested_roth_flows(
+        ira_husband=4000.0,
+        workplace_husband=6000.0,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "prepare_requested_roth_flows",
+        lambda **kwargs: requested,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "apply_roth_conversions",
+        lambda **kwargs: {
+            "husband": 0.0,
+            "wife": 0.0,
+            "total": 0.0,
+        },
+    )
+
+    monkeypatch.setattr(
+        mod.withdrawalEngine,
+        "use_expenses_this_year",
+        lambda *args, **kwargs: False,
+    )
+
+    seen = {}
+
+    def fake_retirement_withdrawal(*args, **kwargs):
+        seen["additional_cash_needed"] = kwargs[
+            "additional_cash_needed"
+        ]
+        return {
+            "pre_tax": 20000.0,
+            "post_tax": 20000.0,
+            "roth": 0.0,
+            "hsa": 0.0,
+            "rmd": 0.0,
+            "total": 40000.0,
+            "uncovered": 0.0,
+            "by_person": {
+                "husband": 24000.0,
+                "wife": 16000.0,
+            },
+            "rmd_by_person": {
+                "husband": 0.0,
+                "wife": 0.0,
+            },
+        }
+
+    monkeypatch.setattr(
+        mod.withdrawalEngine,
+        "calculate_retirement_withdrawal",
+        fake_retirement_withdrawal,
+    )
+
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "deposit_funded_roth_contributions",
+        lambda **kwargs: {
+            "husband": kwargs["funded_contributions"]["total"],
+            "wife": 0.0,
+            "total": kwargs["funded_contributions"]["total"],
+        },
+    )
+
+    results = mod.simulate_yearly_portfolios(
+        DummyPortfolio(),
+        DummyPortfolio(),
+        DummyPerson(),
+        DummyPerson(),
+        DummyExpenses(),
+        sim_config,
+        num_sims=1,
+    )
+
+    assert seen["additional_cash_needed"] == pytest.approx(10000.0)
+    assert results["roth_ira_contributions"][0, 1] == pytest.approx(
+        4000.0
+    )
+    assert results["roth_workplace_contributions"][0, 1] == pytest.approx(
+        6000.0
+    )
+    assert results["roth_total_flows"][0, 1] == pytest.approx(
+        10000.0
+    )
