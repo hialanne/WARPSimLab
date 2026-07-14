@@ -254,7 +254,7 @@ class RothEditFrame(ttk.Frame):
                 self.TYPE_LABELS[flow_type]
                 for flow_type in self.ROTH_FLOW_TYPES
             ],
-            width=32,
+            width=29,
             state="readonly",
         )
         type_combo.grid(
@@ -294,7 +294,7 @@ class RothEditFrame(ttk.Frame):
         amount_entry = ttk.Entry(
             self,
             textvariable=amount_var,
-            width=14,
+            width=12,
             validate="focusout",
             validatecommand=(
                 self.register(
