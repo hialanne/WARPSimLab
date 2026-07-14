@@ -226,6 +226,7 @@ def build_synthetic_core(total_assets):
         "cash_interest",
         "qualified_dividends",
         "special_income",
+        "roth_conversion",
     ]
 
     return {
@@ -251,6 +252,10 @@ def build_synthetic_core(total_assets):
         "additional_medicare_tax": zeros.copy(),
         "expense_amt": zeros.copy(),
         "ira_401k": zeros.copy(),
+        "roth_ira_contributions": zeros.copy(),
+        "roth_workplace_contributions": zeros.copy(),
+        "roth_conversions": zeros.copy(),
+        "roth_total_flows": zeros.copy(),
         "fund_expenses": zeros.copy(),
         "bond_interest": zeros.copy(),
         "cash_interest": zeros.copy(),

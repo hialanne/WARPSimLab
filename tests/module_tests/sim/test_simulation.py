@@ -97,7 +97,22 @@ def _core_for_extracts() -> dict:
         "gross_income": np.array([[120.0, 121.0, 122.0, 123.0]]),
         "tax_bracket": np.array([[0.10, 0.10, 0.12, 0.12]]),
         "ira_401k": np.array([[0.0, 0.0, 0.0, 0.0]]),
+
+        "roth_ira_contributions": np.array(
+            [[0.0, 1.0, 2.0, 3.0]]
+        ),
+        "roth_workplace_contributions": np.array(
+            [[0.0, 4.0, 5.0, 6.0]]
+        ),
+        "roth_conversions": np.array(
+            [[0.0, 7.0, 8.0, 9.0]]
+        ),
+        "roth_total_flows": np.array(
+            [[0.0, 12.0, 15.0, 18.0]]
+        ),
+
         "fund_expenses": np.array([[0.0, 1.0, 1.0, 2.0]]),
+
         "cash": np.array([[100.0, 110.0, 120.0, 130.0]]),
         "bonds": np.array([[200.0, 210.0, 220.0, 230.0]]),
     }

@@ -10,8 +10,8 @@ from .engines import (
     taxEngine,
     statsCollector,
     monteCarloEngine,
+    rothEngine,
 )
-
 
 def _find_first_withdrawal_year(sim_config, husband, wife, years_to_simulate):
     """
@@ -131,6 +131,10 @@ def simulate_yearly_portfolios(
         "expense_amt": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "uncovered_expense": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "ira_401k": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "roth_ira_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "roth_workplace_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "roth_conversions": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "roth_total_flows": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_assets": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_assets": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "fund_expenses": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -147,6 +151,7 @@ def simulate_yearly_portfolios(
                 "cash_interest",
                 "qualified_dividends",
                 "special_income",
+                "roth_conversion",
             ]
         },
 
@@ -335,6 +340,7 @@ def simulate_yearly_portfolios(
 
             # Income breakdown
             income = incomeEngine.calculate_income_breakdown(husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year, sim_config)
+            income["by_class"]["roth_conversion"] = 0.0
 
             #print("income husband at breakdown: "+str(income["by_person"]["husband"]))
             #print("income wife at breakdown: "+str(income["by_person"]["wife"]))
@@ -419,6 +425,119 @@ def simulate_yearly_portfolios(
                         w_port, w_401k_employee + w_401k_employer
                     )
 
+            # ---------------------------------------------------------
+            # Scheduled Roth flows
+            #
+            # Sprint 1 applies conversions only.
+            #
+            # A Roth conversion:
+            #   - moves existing pre-tax assets into Roth assets
+            #   - creates ordinary taxable income
+            #   - does not create spendable household cash
+            #   - occurs before tax calculation and annual returns
+            # ---------------------------------------------------------
+            roth_flows_for_year = (
+                rothEngine.calculate_roth_flows_for_year(
+                    curr_husband_age=curr_h_age,
+                    curr_wife_age=curr_w_age,
+                    year=year,
+                    sim_config=sim_config,
+                )
+            )
+
+            requested_husband_conversion = (
+                roth_flows_for_year[
+                    rothEngine.ROTH_CONVERSION
+                ]["husband"]
+            )
+
+            requested_wife_conversion = (
+                roth_flows_for_year[
+                    rothEngine.ROTH_CONVERSION
+                ]["wife"]
+            )
+
+            husband_roth_conversion = (
+                portfolioEngine.convert_pre_tax_to_roth(
+                    h_port,
+                    requested_husband_conversion,
+                )
+            )
+
+            wife_roth_conversion = 0.0
+
+            if second_person_enabled:
+                wife_roth_conversion = (
+                    portfolioEngine.convert_pre_tax_to_roth(
+                        w_port,
+                        requested_wife_conversion,
+                    )
+                )
+
+            roth_conversion_total = (
+                husband_roth_conversion
+                + wife_roth_conversion
+            )
+
+            # Record the taxable conversion separately from cash income.
+            # Do not add this to income["total"].
+            income["by_class"]["roth_conversion"] = (
+                roth_conversion_total
+            )
+            # ---------------------------------------------------------
+            # Requested Roth contributions
+            #
+            # IRA contributions are scheduled after-tax cash uses.
+            #
+            # Workplace contributions are also after-tax cash uses, but
+            # each owner's requested amount is capped by current gross wages.
+            # They do not reduce ordinary taxable income or payroll wages.
+            # ---------------------------------------------------------
+            requested_husband_roth_ira = (
+                roth_flows_for_year[
+                    rothEngine.ROTH_IRA_CONTRIBUTION
+                ]["husband"]
+            )
+
+            requested_wife_roth_ira = (
+                roth_flows_for_year[
+                    rothEngine.ROTH_IRA_CONTRIBUTION
+                ]["wife"]
+            )
+
+            requested_husband_roth_workplace = min(
+                roth_flows_for_year[
+                    rothEngine.ROTH_WORKPLACE_CONTRIBUTION
+                ]["husband"],
+                payroll_wages_husband,
+            )
+
+            requested_wife_roth_workplace = 0.0
+
+            if second_person_enabled:
+                requested_wife_roth_workplace = min(
+                    roth_flows_for_year[
+                        rothEngine.ROTH_WORKPLACE_CONTRIBUTION
+                    ]["wife"],
+                    payroll_wages_wife,
+                )
+
+            requested_roth_contribution_total = (
+                requested_husband_roth_ira
+                + requested_wife_roth_ira
+                + requested_husband_roth_workplace
+                + requested_wife_roth_workplace
+            )
+
+            actual_husband_roth_ira = 0.0
+            actual_wife_roth_ira = 0.0
+            actual_husband_roth_workplace = 0.0
+            actual_wife_roth_workplace = 0.0
+
+            actual_roth_ira_total = 0.0
+            actual_roth_workplace_total = 0.0
+            actual_roth_contribution_total = 0.0
+
             #print("income-total after 401k: "+str(income["total"]))
 
             (
@@ -441,7 +560,15 @@ def simulate_yearly_portfolios(
                 wd_hsa = 0
             else:
                 wd = withdrawalEngine.calculate_retirement_withdrawal(
-                    h_port, w_port, husband, wife, year, sim_config
+                    h_port,
+                    w_port,
+                    husband,
+                    wife,
+                    year,
+                    sim_config,
+                    additional_cash_needed=(
+                        requested_roth_contribution_total
+                    ),
                 )
                 expense_amt = 0
                 wd_pre_tax = wd["pre_tax"]
@@ -449,6 +576,74 @@ def simulate_yearly_portfolios(
                 wd_roth = wd.get("roth", 0.0)
                 wd_hsa = wd.get("hsa", 0.0)
                 wd_rmd = wd.get("rmd", 0.0)
+                # Contributions are discretionary relative to the base retirement
+                # withdrawal. Any uncovered amount reduces the Roth contribution first.
+                withdrawal_uncovered = max(
+                    0.0,
+                    float(wd.get("uncovered", 0.0)),
+                )
+
+                actual_roth_contribution_total = max(
+                    0.0,
+                    requested_roth_contribution_total
+                    - withdrawal_uncovered,
+                )
+
+                funded_roth_contributions = (
+                    rothEngine.allocate_funded_contributions(
+                        requested_ira_husband=(
+                            requested_husband_roth_ira
+                        ),
+                        requested_ira_wife=(
+                            requested_wife_roth_ira
+                        ),
+                        requested_workplace_husband=(
+                            requested_husband_roth_workplace
+                        ),
+                        requested_workplace_wife=(
+                            requested_wife_roth_workplace
+                        ),
+                        funded_total=(
+                            actual_roth_contribution_total
+                        ),
+                    )
+                )
+
+                actual_husband_roth_ira = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_IRA_CONTRIBUTION
+                    ]["husband"]
+                )
+
+                actual_wife_roth_ira = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_IRA_CONTRIBUTION
+                    ]["wife"]
+                )
+
+                actual_husband_roth_workplace = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_WORKPLACE_CONTRIBUTION
+                    ]["husband"]
+                )
+
+                actual_wife_roth_workplace = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_WORKPLACE_CONTRIBUTION
+                    ]["wife"]
+                )
+
+                actual_roth_ira_total = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_IRA_CONTRIBUTION
+                    ]["total"]
+                )
+
+                actual_roth_workplace_total = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_WORKPLACE_CONTRIBUTION
+                    ]["total"]
+                )
 
                 income["by_class"]["withdrawal"] = wd["total"]
 
@@ -458,13 +653,60 @@ def simulate_yearly_portfolios(
                 # Additional retirement withdrawals should appear as household cash in pocket.
                 # For tax calculation, we mark them non-taxable here, then existing code
                 # adds wd_pre_tax back into ordinary income.
-                additional_withdrawal_cash = max(0.0, wd["total"] - wd_rmd,)
+                additional_withdrawal_cash = max(
+                    0.0,
+                    wd["total"]
+                    - wd_rmd
+                    - actual_roth_contribution_total,
+                )
 
-                husband_additional_withdrawal = max(0.0, wd["by_person"]["husband"] - wd["rmd_by_person"]["husband"],)
+                husband_gross_additional_withdrawal = max(
+                    0.0,
+                    wd["by_person"]["husband"]
+                    - wd["rmd_by_person"]["husband"],
+                )
 
-                wife_additional_withdrawal = max(0.0, wd["by_person"]["wife"] - wd["rmd_by_person"]["wife"],)
+                wife_gross_additional_withdrawal = max(
+                    0.0,
+                    wd["by_person"]["wife"]
+                    - wd["rmd_by_person"]["wife"],
+                )
 
-                person_additional_total = ( husband_additional_withdrawal + wife_additional_withdrawal)
+                gross_person_additional_total = (
+                    husband_gross_additional_withdrawal
+                    + wife_gross_additional_withdrawal
+                )
+
+                if gross_person_additional_total > 0.0:
+                    husband_contribution_funding = (
+                        actual_roth_contribution_total
+                        * husband_gross_additional_withdrawal
+                        / gross_person_additional_total
+                    )
+                else:
+                    husband_contribution_funding = 0.0
+
+                wife_contribution_funding = (
+                    actual_roth_contribution_total
+                    - husband_contribution_funding
+                )
+
+                husband_additional_withdrawal = max(
+                    0.0,
+                    husband_gross_additional_withdrawal
+                    - husband_contribution_funding,
+                )
+
+                wife_additional_withdrawal = max(
+                    0.0,
+                    wife_gross_additional_withdrawal
+                    - wife_contribution_funding,
+                )
+
+                person_additional_total = (
+                    husband_additional_withdrawal
+                    + wife_additional_withdrawal
+                )
 
                 if abs( person_additional_total - additional_withdrawal_cash ) > 1e-6:
                     raise RuntimeError(
@@ -511,6 +753,7 @@ def simulate_yearly_portfolios(
                     - qualified_dividends
                     - income.get("non_taxable_income", 0.0)
                     + wd_pre_tax
+                    + roth_conversion_total
                 )
 
                 (
@@ -539,9 +782,14 @@ def simulate_yearly_portfolios(
                         income["total"]
                         - baseline_total_tax
                         - expense_amt
+                        - requested_roth_contribution_total
                     )
                 else:
-                    net_cash = income["total"] - expense_amt
+                    net_cash = (
+                        income["total"]
+                        - expense_amt
+                        - requested_roth_contribution_total
+                    )
 
                 # print("income total: "+str(income["total"]))
                 # print("expense_amt: "+str(expense_amt))
@@ -572,7 +820,87 @@ def simulate_yearly_portfolios(
                 #)
 
                 emergency_pre_tax_used = net_cash_result["pre_tax_used"]
-                uncovered_expense = max(0.0, float(net_cash_result.get("uncovered", 0.0)),)
+
+                combined_uncovered = max(
+                    0.0,
+                    float(
+                        net_cash_result.get(
+                            "uncovered",
+                            0.0,
+                        )
+                    ),
+                )
+
+                # Contributions are discretionary. If the portfolio cannot fund
+                # the complete cash requirement, reduce contributions before
+                # reporting ordinary expenses as uncovered.
+                actual_roth_contribution_total = max(
+                    0.0,
+                    requested_roth_contribution_total
+                    - combined_uncovered,
+                )
+
+                uncovered_expense = max(
+                    0.0,
+                    combined_uncovered
+                    - requested_roth_contribution_total,
+                )
+
+                funded_roth_contributions = (
+                    rothEngine.allocate_funded_contributions(
+                        requested_ira_husband=(
+                            requested_husband_roth_ira
+                        ),
+                        requested_ira_wife=(
+                            requested_wife_roth_ira
+                        ),
+                        requested_workplace_husband=(
+                            requested_husband_roth_workplace
+                        ),
+                        requested_workplace_wife=(
+                            requested_wife_roth_workplace
+                        ),
+                        funded_total=(
+                            actual_roth_contribution_total
+                        ),
+                    )
+                )
+
+                actual_husband_roth_ira = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_IRA_CONTRIBUTION
+                    ]["husband"]
+                )
+
+                actual_wife_roth_ira = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_IRA_CONTRIBUTION
+                    ]["wife"]
+                )
+
+                actual_husband_roth_workplace = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_WORKPLACE_CONTRIBUTION
+                    ]["husband"]
+                )
+
+                actual_wife_roth_workplace = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_WORKPLACE_CONTRIBUTION
+                    ]["wife"]
+                )
+
+                actual_roth_ira_total = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_IRA_CONTRIBUTION
+                    ]["total"]
+                )
+
+                actual_roth_workplace_total = (
+                    funded_roth_contributions[
+                        rothEngine.ROTH_WORKPLACE_CONTRIBUTION
+                    ]["total"]
+                )
 
                 # Recompute final taxes only if the emergency pre-tax draw changed income
                 if emergency_pre_tax_used > 0.0:
@@ -639,6 +967,7 @@ def simulate_yearly_portfolios(
                     - qualified_dividends
                     - income.get("non_taxable_income", 0.0)
                     + wd_pre_tax
+                    + roth_conversion_total
                 )
 
                 (
@@ -656,6 +985,29 @@ def simulate_yearly_portfolios(
                 total_tax += payroll_tax
 
             # print("h_port: "+str(h_port.total_value))
+
+            # ---------------------------------------------------------
+            # Deposit only the Roth contributions that were actually funded.
+            #
+            # Contributions are added before annual returns, so they participate
+            # in the current year's return under the simulator's annual timing model.
+            # ---------------------------------------------------------
+            portfolioEngine.apply_roth_contribution(
+                h_port,
+                (
+                    actual_husband_roth_ira
+                    + actual_husband_roth_workplace
+                ),
+            )
+
+            if second_person_enabled:
+                portfolioEngine.apply_roth_contribution(
+                    w_port,
+                    (
+                        actual_wife_roth_ira
+                        + actual_wife_roth_workplace
+                    ),
+                )
 
             equity_total_return = year_returns["eq"]
             equity_dividend_yield = sim_config._post_tax_equity_dividend_yield
@@ -728,7 +1080,16 @@ def simulate_yearly_portfolios(
 
             gross_income = income["total"] + employee_401k_total + emergency_pre_tax_used
 
-            net_profit = net_income - expense_amt
+            if use_expenses:
+                net_profit = (
+                    net_income
+                    - expense_amt
+                    - actual_roth_contribution_total
+                )
+            else:
+                # Retirement-mode income already excludes the withdrawal cash
+                # redirected into Roth contributions.
+                net_profit = net_income
 
             #print("income-net: "+str(net_income))
             #print("income-total: "+str(income["total"]))
@@ -752,8 +1113,27 @@ def simulate_yearly_portfolios(
             results["tax_bracket"][s,year] = federal_marginal_rate
             results["expense_amt"][s,year] = expense_amt
             results["uncovered_expense"][s, year] = uncovered_expense
-            results["ira_401k"][s,year] = ira_401k
-            results["fund_expenses"][s,year] = fund_expenses
+            results["ira_401k"][s, year] = ira_401k
+
+            results["roth_ira_contributions"][s, year] = (
+                actual_roth_ira_total
+            )
+
+            results["roth_workplace_contributions"][s, year] = (
+                actual_roth_workplace_total
+            )
+
+            results["roth_conversions"][s, year] = (
+                roth_conversion_total
+            )
+
+            results["roth_total_flows"][s, year] = (
+                actual_roth_ira_total
+                + actual_roth_workplace_total
+                + roth_conversion_total
+            )
+
+            results["fund_expenses"][s, year] = fund_expenses            
             results["bond_interest"][s, year] = bond_interest
             results["cash_interest"][s, year] = cash_interest
             results["qualified_dividends"][s, year] = qualified_dividends
@@ -773,40 +1153,84 @@ def simulate_yearly_portfolios(
 
             # Breakdown by class
             for key in results["breakdown_by_class"]:
-                results["breakdown_by_class"][key][s,year] = income["by_class"][key]
+                results["breakdown_by_class"][key][s, year] = (
+                    income["by_class"][key]
+                )
 
+            # ---------------------------------------------------------
+            # Allocate household income and taxes by person.
+            # ---------------------------------------------------------
             if second_person_enabled:
-                husband_income_for_tax_alloc = income["by_person"]["husband"]
-                wife_income_for_tax_alloc = income["by_person"]["wife"]
+                husband_income_for_tax_alloc = (
+                    income["by_person"]["husband"]
+                    + husband_roth_conversion
+                )
 
-                if use_expenses and emergency_pre_tax_used > 0:
+                wife_income_for_tax_alloc = (
+                    income["by_person"]["wife"]
+                    + wife_roth_conversion
+                )
+
+                if use_expenses and emergency_pre_tax_used > 0.0:
                     h_pre = h_port.total_value_pre
                     w_pre = w_port.total_value_pre
                     total_pre = h_pre + w_pre
 
-                    if total_pre > 0:
-                        husband_income_for_tax_alloc += emergency_pre_tax_used * (h_pre / total_pre)
-                        wife_income_for_tax_alloc += emergency_pre_tax_used * (w_pre / total_pre)
+                    if total_pre > 0.0:
+                        husband_income_for_tax_alloc += (
+                            emergency_pre_tax_used
+                            * h_pre
+                            / total_pre
+                        )
+                        wife_income_for_tax_alloc += (
+                            emergency_pre_tax_used
+                            * w_pre
+                            / total_pre
+                        )
                     else:
-                        husband_income_for_tax_alloc += emergency_pre_tax_used / 2
-                        wife_income_for_tax_alloc += emergency_pre_tax_used / 2
+                        husband_income_for_tax_alloc += (
+                            emergency_pre_tax_used / 2.0
+                        )
+                        wife_income_for_tax_alloc += (
+                            emergency_pre_tax_used / 2.0
+                        )
 
-                expected_person_income_total = income["total"] + emergency_pre_tax_used
-                actual_person_income_total = husband_income_for_tax_alloc + wife_income_for_tax_alloc
+                expected_person_income_total = (
+                    income["total"]
+                    + emergency_pre_tax_used
+                    + roth_conversion_total
+                )
 
-                if abs(actual_person_income_total - expected_person_income_total) > 1e-6:
-                    raise RuntimeError("Person-level income does not match household income")
+                actual_person_income_total = (
+                    husband_income_for_tax_alloc
+                    + wife_income_for_tax_alloc
+                )
 
-                husband_tax_alloc, wife_tax_alloc = taxEngine.allocate_tax_proportionally_couple(
+                if abs(
+                    actual_person_income_total
+                    - expected_person_income_total
+                ) > 1e-6:
+                    raise RuntimeError(
+                        "Person-level income does not match household income"
+                    )
+
+                (
+                    husband_tax_alloc,
+                    wife_tax_alloc,
+                ) = taxEngine.allocate_tax_proportionally_couple(
                     total_tax,
                     husband_income_for_tax_alloc,
                     wife_income_for_tax_alloc,
                 )
+
                 results["net_income_husband"][s, year] = (
-                    husband_income_for_tax_alloc - husband_tax_alloc
+                    husband_income_for_tax_alloc
+                    - husband_tax_alloc
                 )
+
                 results["net_income_wife"][s, year] = (
-                    wife_income_for_tax_alloc - wife_tax_alloc
+                    wife_income_for_tax_alloc
+                    - wife_tax_alloc
                 )
 
             else:
@@ -845,6 +1269,22 @@ def simulate_yearly_portfolios(
         results["expense_amt"]          = results["expense_amt"]        / discount_factors
         results["uncovered_expense"]    = (results["uncovered_expense"] / discount_factors)
         results["ira_401k"]             = results["ira_401k"]           / discount_factors
+        results["roth_ira_contributions"] = (
+            results["roth_ira_contributions"]
+            / discount_factors
+        )
+        results["roth_workplace_contributions"] = (
+            results["roth_workplace_contributions"]
+            / discount_factors
+        )
+        results["roth_conversions"] = (
+            results["roth_conversions"]
+            / discount_factors
+        )
+        results["roth_total_flows"] = (
+            results["roth_total_flows"]
+            / discount_factors
+        )
         results["fund_expenses"]        = results["fund_expenses"]      / discount_factors
         results["bond_interest"]        = results["bond_interest"]      / discount_factors
         results["cash_interest"]        = results["cash_interest"]      / discount_factors

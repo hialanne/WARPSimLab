@@ -854,6 +854,77 @@ def _withdraw_from_real_estate(port, amount):
     return take
 
 
+def apply_roth_contribution(sim_portfolio, amount):
+    """
+    Add new outside money to the Roth bucket.
+
+    New Roth contributions enter Roth cash. Annual rebalancing may
+    subsequently redistribute the Roth bucket.
+    """
+    amount = max(0.0, float(amount))
+
+    if amount <= 0.0:
+        return 0.0
+
+    sim_portfolio.cs_roth += amount
+
+    _clamp_portfolio_components(sim_portfolio)
+
+    return amount
+
+
+def convert_pre_tax_to_roth(sim_portfolio, amount):
+    """
+    Move assets proportionally from the pre-tax bucket to the Roth bucket.
+
+    The conversion preserves the pre-tax asset mix:
+        pre-tax equity -> Roth equity
+        pre-tax bonds  -> Roth bonds
+        pre-tax cash   -> Roth cash
+
+    Returns the amount actually converted, capped at available pre-tax assets.
+    """
+    requested_amount = max(0.0, float(amount))
+    available_pre_tax = max(
+        0.0,
+        float(sim_portfolio.total_value_pre),
+    )
+
+    if requested_amount <= 0.0 or available_pre_tax <= 0.0:
+        return 0.0
+
+    converted_amount = min(
+        requested_amount,
+        available_pre_tax,
+    )
+
+    conversion_ratio = (
+        converted_amount / available_pre_tax
+    )
+
+    equity_converted = (
+        sim_portfolio.eq_pre * conversion_ratio
+    )
+    bonds_converted = (
+        sim_portfolio.bd_pre * conversion_ratio
+    )
+    cash_converted = (
+        sim_portfolio.cs_pre * conversion_ratio
+    )
+
+    sim_portfolio.eq_pre -= equity_converted
+    sim_portfolio.bd_pre -= bonds_converted
+    sim_portfolio.cs_pre -= cash_converted
+
+    sim_portfolio.eq_roth += equity_converted
+    sim_portfolio.bd_roth += bonds_converted
+    sim_portfolio.cs_roth += cash_converted
+
+    _clamp_portfolio_components(sim_portfolio)
+
+    return converted_amount
+
+
 # NOTE ON PRE-TAX WITHDRAWALS
 # ---------------------------
 # These net-income functions move assets only.

@@ -178,10 +178,16 @@ class PortfolioSimulatorGUI_IOMixin:
                 comment    = exp.get("comment", "")
                 if start_year is not None and cost is not None:
                     self.expensesDict.add_expense(start_year, cost, end_year, comment)
+
             self.special_income_streams.clear()
 
             for stream in data.get("SPECIAL_INCOME_STREAMS", []):
                 self.special_income_streams.append(dict(stream))
+
+            self.roth_flows.clear()
+
+            for flow in data.get("ROTH_FLOWS", []):
+                self.roth_flows.append(dict(flow))
 
             container = getattr(self, "edit_frame_container", None)
             if container is not None:
@@ -280,13 +286,34 @@ class PortfolioSimulatorGUI_IOMixin:
         else:
             updated_values["DEFAULT_ENABLE_SECOND_PERSON"] = 0
 
-        # Simulation / global settings
         updated_values.update({
-            "DEFAULT_YEARS": int(self.simulation_settings.get('years_to_simulate', 30)),
-            "DEFAULT_SIMULATIONS": int(self.simulation_settings.get('num_sims', 500)),
-            "DEFAULT_FUND_EXPENSE": float(self.simulation_settings.get('fund_expense', 0)),
-            "SPECIAL_INCOME_STREAMS": self.special_income_streams,
-            
+            "DEFAULT_YEARS": int(
+                self.simulation_settings.get(
+                    "years_to_simulate",
+                    30,
+                )
+            ),
+            "DEFAULT_SIMULATIONS": int(
+                self.simulation_settings.get(
+                    "num_sims",
+                    500,
+                )
+            ),
+            "DEFAULT_FUND_EXPENSE": float(
+                self.simulation_settings.get(
+                    "fund_expense",
+                    0,
+                )
+            ),
+            "SPECIAL_INCOME_STREAMS": [
+                dict(stream)
+                for stream in self.special_income_streams
+            ],
+            "ROTH_FLOWS": [
+                dict(flow)
+                for flow in self.roth_flows
+            ],
+
             # Store dynamic expenses as a JSON array
             "EXPENSES": [
                 {

@@ -49,6 +49,10 @@ def test_overlay_taxes_off_attaches_median_without_taxes_and_exceeds_taxed_basel
             "hsa_withdrawals": zeros.copy(),
             "expense_amt": np.array([[35.0, 36.0, 37.0, 38.0]]),
             "ira_401k": zeros.copy(),
+            "roth_ira_contributions": zeros.copy(),
+            "roth_workplace_contributions": zeros.copy(),
+            "roth_conversions": zeros.copy(),
+            "roth_total_flows": zeros.copy(),
             "fund_expenses": np.array([[1.0, 1.0, 1.0, 1.0]]),
             "breakdown_by_class": {
                 "work": np.array([[50.0, 50.0, 50.0, 50.0]]),

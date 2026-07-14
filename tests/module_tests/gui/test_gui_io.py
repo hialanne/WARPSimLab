@@ -105,6 +105,7 @@ def _make_dummy_gui(tmp_path: Path):
     gui.expensesDict = DummyExpenses()
 
     gui.special_income_streams = []
+    gui.roth_flows = []
 
     gui.simulation_controls = {"enable_second_person": 0}
     gui.simulation_settings = {"years_to_simulate": 30, "num_sims": 500, "fund_expense": 0.0}

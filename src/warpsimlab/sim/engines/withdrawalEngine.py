@@ -63,9 +63,23 @@ def withdraw_rmds(sim_portfolio, rmd):
     return rmd
 
 
-def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_config):
+def calculate_retirement_withdrawal(
+    h_port,
+    w_port,
+    husband,
+    wife,
+    year,
+    sim_config,
+    additional_cash_needed=0.0,
+):
+
     """
     Retirement withdrawals.
+
+    additional_cash_needed is an optional scheduled after-tax cash use,
+    such as a Roth IRA or Roth workplace-plan contribution. It increases
+    the requested portfolio withdrawal but does not change the cached base
+    retirement-withdrawal amount.
 
     Withdrawal order:
         1. post-tax
@@ -120,7 +134,18 @@ def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_con
     else:
         withdrawal_amount = rmd_total
 
-    withdrawal_amount = max(withdrawal_amount, rmd_total)
+    withdrawal_amount = max(
+        withdrawal_amount,
+        rmd_total,
+    )
+
+    additional_cash_needed = max(
+        0.0,
+        float(additional_cash_needed),
+    )
+
+    withdrawal_amount += additional_cash_needed
+
     remaining = withdrawal_amount - rmd_total
 
     total_withdrawn = rmd_total

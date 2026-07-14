@@ -57,6 +57,7 @@ class Simulation:
             user_annotation_strings=None,
             scenario_explorer_annotations=None,
             special_income_streams=None,
+            roth_flows=None,
             root=None
     ): 
 
@@ -92,6 +93,14 @@ class Simulation:
         self.special_income_streams = [
             dict(stream)
             for stream in special_income_streams
+        ]
+
+        if roth_flows is None:
+            roth_flows = []
+
+        self.roth_flows = [
+            dict(flow)
+            for flow in roth_flows
         ]
 
         # Controls which sim we run.  Current is plots such as portfolio, income and summary,

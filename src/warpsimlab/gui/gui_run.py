@@ -204,7 +204,20 @@ class PortfolioSimulatorGUI_RunMixin:
 
             special_income_streams=[
                 dict(stream)
-                for stream in getattr(self, "special_income_streams", [])
+                for stream in getattr(
+                    self,
+                    "special_income_streams",
+                    [],
+                )
+            ],
+
+            roth_flows=[
+                dict(flow)
+                for flow in getattr(
+                    self,
+                    "roth_flows",
+                    [],
+                )
             ],
 
             overlay_tax_impacts=controls.get("overlay_tax_impacts", False),

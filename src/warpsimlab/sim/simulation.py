@@ -63,6 +63,18 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "wages": r["breakdown_by_class"]["work"][0],
         "rmd": r["breakdown_by_class"]["rmd"][0],
         "ira_401k": r["ira_401k"][0],
+        "roth_ira_contributions": (
+            r["roth_ira_contributions"][0]
+        ),
+        "roth_workplace_contributions": (
+            r["roth_workplace_contributions"][0]
+        ),
+        "roth_conversions": (
+            r["roth_conversions"][0]
+        ),
+        "roth_total_flows": (
+            r["roth_total_flows"][0]
+        ),
         "social_security": r["breakdown_by_class"]["ss"][0],
         "pensions": r["breakdown_by_class"]["pension"][0],
         "annuities": r["breakdown_by_class"]["annuity"][0],

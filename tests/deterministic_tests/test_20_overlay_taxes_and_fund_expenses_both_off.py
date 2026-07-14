@@ -60,7 +60,11 @@ def test_overlay_taxes_and_fund_expenses_both_off_attaches_combined_and_combined
             "hsa_withdrawals": zeros.copy(),
             "expense_amt": np.array([[40.0, 41.0, 42.0, 43.0]]),
             "ira_401k": zeros.copy(),
-            "fund_expenses": np.array([[2.0, 2.0, 2.0, 2.0]]),
+            "roth_ira_contributions": zeros.copy(),
+            "roth_workplace_contributions": zeros.copy(),
+            "roth_conversions": zeros.copy(),
+            "roth_total_flows": zeros.copy(),
+            "fund_expenses": np.array([[1.0, 1.0, 1.0, 1.0]]),
             "breakdown_by_class": {
                 "work": np.array([[60.0, 60.0, 60.0, 60.0]]),
                 "pension": zeros.copy(),

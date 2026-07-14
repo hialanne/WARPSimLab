@@ -28,6 +28,7 @@ from src.warpsimlab.gui.gui_utils import (noop,set_tk_button_soft_disabled,creat
 from .gui_notes import NotesFrame
 from src.warpsimlab.gui.gui_expenses import ExpensesEditFrame
 from src.warpsimlab.gui.gui_taxes import TaxesEditFrame
+from src.warpsimlab.gui.gui_roth import RothEditFrame
 from src.warpsimlab.gui.gui_reportExecutiveSummary import ExecutiveSummaryReportFrame
 from src.warpsimlab.gui.gui_reportYearByYearDetails import YearByYearDetailsReportFrame
 from src.warpsimlab.gui.gui_reportHistoricalWindowRisk import HistoricalWindowRiskReportFrame
@@ -313,6 +314,9 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         # Special income streams
         self.special_income_streams = []
 
+        # Scheduled Roth contributions and conversions
+        self.roth_flows = []
+
 
     def _sync_tax_status_from_second_person(self):
         if self.simulation_controls["enable_second_person"]:
@@ -383,13 +387,35 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         self._apply_mode_to_reports_button()
 
-        if hasattr(self, "cashflow_menu") and hasattr(self, "_cashflow_special_income_index"):
+        if (
+            hasattr(self, "cashflow_menu")
+            and hasattr(self, "_cashflow_special_income_index")
+        ):
             state = "normal" if advanced_enabled else "disabled"
-            self.cashflow_menu.entryconfig(self._cashflow_special_income_index, state=state)
+            self.cashflow_menu.entryconfig(
+                self._cashflow_special_income_index,
+                state=state,
+            )
 
-        if hasattr(self, "cashflow_menu") and hasattr(self, "_cashflow_taxes_index"):
+        if (
+            hasattr(self, "cashflow_menu")
+            and hasattr(self, "_cashflow_roth_index")
+        ):
             state = "normal" if advanced_enabled else "disabled"
-            self.cashflow_menu.entryconfig(self._cashflow_taxes_index, state=state)
+            self.cashflow_menu.entryconfig(
+                self._cashflow_roth_index,
+                state=state,
+            )
+
+        if (
+            hasattr(self, "cashflow_menu")
+            and hasattr(self, "_cashflow_taxes_index")
+        ):
+            state = "normal" if advanced_enabled else "disabled"
+            self.cashflow_menu.entryconfig(
+                self._cashflow_taxes_index,
+                state=state,
+            )
 
         self._apply_mode_to_results_button()
 
@@ -547,12 +573,32 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             pady=2,
         )
 
-        self.cashflow_menu.add_command(label="Normal Income", command=self.edit_person_data)
-        self.cashflow_menu.add_command(label="Special Income",command=self.edit_special_income)
+        self.cashflow_menu.add_command(
+            label="Normal Income",
+            command=self.edit_person_data
+        )
+
+        self.cashflow_menu.add_command(
+            label="Special Income",
+            command=self.edit_special_income
+        )
         self._cashflow_special_income_index = self.cashflow_menu.index("end")
 
-        self.cashflow_menu.add_command(label="Expenses", command=self.edit_expenses)
-        self.cashflow_menu.add_command(label="Taxes", command=self.edit_taxes)
+        self.cashflow_menu.add_command(
+            label="Roth Contributions / Conversions",
+            command=self.edit_roth
+        )
+        self._cashflow_roth_index = self.cashflow_menu.index("end")
+
+        self.cashflow_menu.add_command(
+            label="Expenses",
+            command=self.edit_expenses
+        )
+
+        self.cashflow_menu.add_command(
+            label="Taxes",
+            command=self.edit_taxes
+        )
         self._cashflow_taxes_index = self.cashflow_menu.index("end")
 
         self.balance_sheet_button, self.balance_sheet_menu, self._show_balance_sheet_menu = create_dropdown_button(
@@ -801,6 +847,30 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         )
 
         special_income_frame.pack(padx=10, pady=5, fill="x")
+
+
+    def edit_roth(self):
+        if not self._advanced_only():
+            return
+
+        for widget in self.edit_frame_container.winfo_children():
+            widget.destroy()
+
+        roth_frame = RothEditFrame(
+            self.edit_frame_container,
+            roth_flows=self.roth_flows,
+            enable_second_person=self.simulation_controls.get(
+                "enable_second_person",
+                False,
+            ),
+            title="Roth Contributions / Conversions",
+        )
+
+        roth_frame.pack(
+            padx=10,
+            pady=5,
+            fill="x",
+        )
 
 
     def edit_expenses(self):
