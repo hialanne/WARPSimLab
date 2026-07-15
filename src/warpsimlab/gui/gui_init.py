@@ -445,7 +445,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         )
 
         self.results_menu.add_command(
-            label="Summary Dialog",
+            label="Simulation Summary",
             command=lambda: self.run_simulation_from_gui(sim_type="summary_sim")
         )
 

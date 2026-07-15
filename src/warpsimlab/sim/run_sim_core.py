@@ -131,6 +131,7 @@ def simulate_yearly_portfolios(
         "expense_amt": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "uncovered_expense": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "ira_401k": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "employee_401k_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_ira_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_workplace_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_conversions": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -931,6 +932,7 @@ def simulate_yearly_portfolios(
             results["expense_amt"][s,year] = expense_amt
             results["uncovered_expense"][s, year] = uncovered_expense
             results["ira_401k"][s, year] = ira_401k
+            results["employee_401k_contributions"][s, year] = employee_401k_total
 
             results["roth_ira_contributions"][s, year] = (
                 funded_roth_contributions[

@@ -1,11 +1,15 @@
 # monteCarloEngine.py
 
 import numpy as np
+import copy
+
 from src.warpsimlab.utils.io_utils import (
     load_historical_asset_returns_csv,
     load_historical_inflation_csv,
 )
 
+
+MONTE_CARLO_SEED = 12345
 
 def _prepare_historical_window_data(sim_config):
     """
@@ -104,6 +108,10 @@ def prepare_market_path_sampling(sim_config):
       - sim_config._hist_num_windows
     """
 
+    sim_config._mc_rng = np.random.default_rng(
+        MONTE_CARLO_SEED
+    )
+
     # --- reset Monte Carlo caches ---
     sim_config._mc_means = np.array([
         sim_config.eq_mean,
@@ -165,8 +173,6 @@ def prepare_market_path_sampling(sim_config):
 
     raise ValueError(f"Unsupported monte_carlo_mode: {mode}")
 
-import copy
-import numpy as np
 
 
 def _sequence_risk_length_to_years(length_label):
@@ -510,14 +516,33 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
                     "Call prepare_market_path_sampling(sim_config) before simulation."
                 )
 
-            z = np.random.normal(size=(years_to_simulate, 4))
+            rng = sim_config._mc_rng
+            z = rng.normal(size=(years_to_simulate, 4))
             draws = z @ chol.T + means
         else:
+            rng = sim_config._mc_rng
+
             draws = np.column_stack([
-                np.random.normal(sim_config.eq_mean, sim_config.eq_std, years_to_simulate),
-                np.random.normal(sim_config.bd_mean, sim_config.bd_std, years_to_simulate),
-                np.random.normal(sim_config.cs_mean, sim_config.cs_std, years_to_simulate),
-                np.random.normal(sim_config.re_mean, sim_config.re_std, years_to_simulate),
+                rng.normal(
+                    sim_config.eq_mean,
+                    sim_config.eq_std,
+                    years_to_simulate
+                ),
+                rng.normal(
+                    sim_config.bd_mean,
+                    sim_config.bd_std,
+                    years_to_simulate
+                ),
+                rng.normal(
+                    sim_config.cs_mean,
+                    sim_config.cs_std,
+                    years_to_simulate
+                ),
+                rng.normal(
+                    sim_config.re_mean,
+                    sim_config.re_std,
+                    years_to_simulate
+                ),
             ])
 
         eq[1:] = draws[:, 0]

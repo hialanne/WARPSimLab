@@ -62,7 +62,9 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "net_cash_flow": r["net_profit"][0],
         "wages": r["breakdown_by_class"]["work"][0],
         "rmd": r["breakdown_by_class"]["rmd"][0],
+        "special_income": r["breakdown_by_class"]["special_income"][0],
         "ira_401k": r["ira_401k"][0],
+        "employee_401k_contributions": (r["employee_401k_contributions"][0]),
         "roth_ira_contributions": (
             r["roth_ira_contributions"][0]
         ),
