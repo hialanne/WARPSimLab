@@ -97,7 +97,7 @@ def draw_operating_balance(
     _plot_retirement_age_overlay(husband, wife, years_to_simulate, sim_config, plot_operating_balance)
 
     value_type = "Real" if getattr(sim_config, "plot_mode", "nominal") == "real" else "Nominal"
-    ax.set_title(f"Cumulative Household Cashflow ({value_type})", pad=20)
+    ax.set_title(f"Cumulative Operating Balance ({value_type})", pad=20)
 
     subtitle_text = "Running total of household income - expenses - taxes.\nExcludes investment returns."
 
@@ -132,7 +132,7 @@ def draw_operating_balance(
         Patch(
             facecolor="red",
             edgecolor="red",
-            label="Deficit Exceeds Portfolio\nSimulated cumulative cashflow deficit"
+            label="Deficit Exceeds Portfolio\nSimulated cumulative Cash Flow deficit"
         ),
     ]
 

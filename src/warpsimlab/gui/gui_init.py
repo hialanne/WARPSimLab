@@ -58,13 +58,13 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             y = (screen_height // 2) - (height // 2)
             window.geometry(f"{width}x{height}+{x}+{y}")
 
-        root.title("WARPSimLab v3.0")
+        root.title("WARPSimLab version 4.0")
 
         window_width = 1200
         window_height = 750
         center_window(root, window_width, window_height)
 
-        ttk.Label(root, text="WARPSimLab v3.0", font=("Arial", 16)).pack(pady=10)
+        ttk.Label(root, text="WARPSimLab version 4.0", font=("Arial", 16)).pack(pady=10)
 
         self.frame = ttk.Frame(root)
         self.frame.pack(pady=5, padx=10, fill="both", expand=True)
@@ -456,7 +456,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
                 command=self.scenario_controller.start_or_focus
             )
             self.results_menu.add_command(
-                label="Operating Balance Plots",
+                label="Cumulative Operating Balance",
                 command=lambda: self.run_simulation_from_gui(sim_type="operating_balance_sim")
             )
 

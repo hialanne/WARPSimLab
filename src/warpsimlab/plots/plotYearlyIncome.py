@@ -80,6 +80,19 @@ def draw_yearly_income(
             'special_income': "slateblue",
             'income': "skyblue",
         }
+        display_labels = {
+            "work": "Wages",
+            "pension": "Pension",
+            "annuity": "Annuity",
+            "ss": "Social Security",
+            "rmd": "RMD",
+            "withdrawal": "Portfolio Withdrawals",
+            "bond_interest": "Bond Interest",
+            "cash_interest": "Cash Interest",
+            "qualified_dividends": "Qualified Dividends",
+            "special_income": "Special Income",
+            "income": "Net Income",
+        }
         bottom = np.zeros(years_to_simulate + 1)
         if sim_config.sim_type == "income_sim":
             plot_keys = [
@@ -103,15 +116,33 @@ def draw_yearly_income(
 
         for key in plot_keys:
             values = np.array(breakdown[key])
-            label = key.replace("_", " ").title()
-            plt.bar(x, values, bottom=bottom, color=colors[key], label=label)
+
+            label = display_labels[key]
+
+            plt.bar(
+                x,
+                values,
+                bottom=bottom,
+                color=colors[key],
+                label=label
+            )
             bottom += values
 
     # ------------------------------------------------------------
     # Total combined income only
     # ------------------------------------------------------------
     elif net_income is not None:
-        plt.bar(x, net_income, color="skyblue", label="Net Income")
+        if sim_config.sim_type == "cashflow_sim":
+            total_label = "Cash Flow"
+        else:
+            total_label = "Net Income"
+
+        plt.bar(
+            x,
+            net_income,
+            color="skyblue",
+            label=total_label
+        )
 
     if sim_config.annotate_plots:
         income_sources = {
@@ -119,7 +150,7 @@ def draw_yearly_income(
             "Pension": breakdown['pension'],
             "Annuity": breakdown['annuity'],
             "RMD": breakdown['rmd'],
-            "Withdrawals": breakdown['withdrawal']
+            "Portfolio Withdrawals": breakdown['withdrawal']
         }
 
         colors = {
@@ -127,7 +158,7 @@ def draw_yearly_income(
             "Pension": "black",
             "Annuity": "black",
             "RMD": "black",
-            "Withdrawals": "black"
+            "Portfolio Withdrawals": "black"
         }
 
         for label, values in income_sources.items():
@@ -174,10 +205,16 @@ def draw_yearly_income(
     # Keep using plot_yearly_income as the handle container for legend extras (existing behavior)
     _plot_retirement_age_overlay(husband, wife, years_to_simulate, sim_config, plot_yearly_income)
 
-    if sim_config.always_use_expense_mode:
-        sim_type_text = "Income-Expenses"
-    else:
-        sim_type_text = "Portfolio Withdrawals"
+    if sim_config.sim_type == "income_sim":
+        if sim_config.always_use_expense_mode:
+            sim_type_text = "Income and Expenses"
+        else:
+            sim_type_text = "Income and Withdrawals"
+    elif sim_config.sim_type == "cashflow_sim":
+        if sim_config.always_use_expense_mode:
+            sim_type_text = "Cash Flow and Expenses"
+        else:
+            sim_type_text = "Cash Flow and Withdrawals"
 
     value_type = "Real" if getattr(sim_config, "plot_mode", "nominal") == "real" else "Nominal"
 

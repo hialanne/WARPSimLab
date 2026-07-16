@@ -88,6 +88,13 @@ def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, s
         )
     '''
 
+    # NOTE:
+    # The plot_yearly_income() parameter is named "net_income", but this caller
+    # intentionally passes plot_total. In income mode, plot_total is total modeled
+    # income. In cash flow mode, plot_total also includes RMDs, portfolio
+    # withdrawals, cash interest, bond interest, and qualified dividends.
+    # Do not replace plot_total with p["net_income"] without reviewing both data flows.
+
     # Plot
     plot_yearly_income(
         p["years"],

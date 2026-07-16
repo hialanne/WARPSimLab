@@ -364,7 +364,7 @@ def _render_income_projection_placeholder(report_data, output_folder=None):
             <div class="plot-card">
                 <h3>{_safe(asset.get("title", "Income Projection"))}</h3>
                 <p>
-                    This chart shows simulated income and cash-flow values under the selected assumptions.
+                    This chart shows simulated Income and Cash Flow values under the selected assumptions.
                 </p>
                 <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Income projection"))}">
             </div>
@@ -428,18 +428,18 @@ def _render_cashflow_projection_placeholder(report_data, output_folder=None):
             image_src = _relative_asset_path(asset.get("path"), output_folder)
             cards.append(f"""
             <div class="plot-card">
-                <h3>{_safe(asset.get("title", "Cashflow Projection"))}</h3>
+                <h3>{_safe(asset.get("title", "Cash Flow Projection"))}</h3>
                 <p>
-                    This chart shows simulated household cashflow under the selected assumptions.
+                    This chart shows simulated household Cash Flow under the selected assumptions.
                 </p>
-                <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Cashflow projection"))}">
+                <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Cash Flow projection"))}">
             </div>
             """)
         else:
             cards.append("""
             <div class="placeholder-card">
-                <h3>Cashflow Projection</h3>
-                <p>Placeholder. The selected cashflow plot was not available for this report.</p>
+                <h3>Cash Flow Projection</h3>
+                <p>Placeholder. The selected Cash Flow plot was not available for this report.</p>
             </div>
             """)
 
@@ -450,18 +450,18 @@ def _render_cashflow_projection_placeholder(report_data, output_folder=None):
             image_src = _relative_asset_path(asset.get("path"), output_folder)
             cards.append(f"""
             <div class="plot-card">
-                <h3>{_safe(asset.get("title", "Cashflow Breakdown"))}</h3>
+                <h3>{_safe(asset.get("title", "Cash Flow Breakdown"))}</h3>
                 <p>
-                    This chart shows simulated cashflow broken down by source across the projection period.
+                    This chart shows simulated Cash Flow broken down by source across the projection period.
                 </p>
-                <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Cashflow breakdown"))}">
+                <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Cash Flow breakdown"))}">
             </div>
             """)
         else:
             cards.append("""
             <div class="placeholder-card">
-                <h3>Cashflow Breakdown</h3>
-                <p>Placeholder. The selected cashflow breakdown plot was not available for this report.</p>
+                <h3>Cash Flow Breakdown</h3>
+                <p>Placeholder. The selected Cash Flow breakdown plot was not available for this report.</p>
             </div>
             """)
 
@@ -470,9 +470,9 @@ def _render_cashflow_projection_placeholder(report_data, output_folder=None):
 
     return f"""
 <section>
-    <h2>Cashflow Visuals</h2>
+    <h2>Cash Flow Visuals</h2>
     <p class="section-intro">
-        This section presents selected cashflow visuals generated from the simulation results.
+        This section presents selected Cash Flow visuals generated from the simulation results.
     </p>
     <div class="plot-stack">
         {''.join(cards)}
@@ -501,8 +501,8 @@ def _render_operating_balance_placeholder(report_data, output_folder=None):
             <h3>{_safe(asset.get("title", "Cumulative Operating Balance"))}</h3>
             <p>
                 This chart shows the cumulative simulated operating balance across the projection period.
-                Positive values indicate cumulative simulated cash-flow surplus.
-                Negative values indicate cumulative simulated cash-flow deficit.
+                Positive values indicate cumulative simulated Cash Flow surplus.
+                Negative values indicate cumulative simulated Cash Flow deficit.
             </p>
             <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Cumulative operating balance"))}">
         </div>
@@ -538,7 +538,7 @@ def _render_income_summary(report_data):
         "Wages",
         "RMD",
         "Social Security",
-        "Pensions & Annuities",
+        "Pensions and Annuities",
         "Gross Income",
         "401k or IRA Contribution",
         "Taxes",
@@ -580,7 +580,7 @@ def _render_income_summary(report_data):
 <section>
     <h2>Income and Cash Flow Summary</h2>
     <p class="section-intro">
-        This section shows how major income and cash-flow categories change at key points
+        This section shows how major income and Cash Flow categories change at key points
         in the simulation. It is a milestone summary, not a year-by-year table.
     </p>
     <table class="wide-table">
