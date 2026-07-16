@@ -63,6 +63,7 @@ def _core_for_extracts() -> dict:
             "annuity": np.array([[0.0, 0.0, 0.0, 0.0]]),
             "ss": np.array([[5.0, 5.0, 5.0, 5.0]]),
             "rmd": np.array([[0.0, 0.0, 0.0, 0.0]]),
+            "special_income": np.array([[4.0, 4.0, 4.0, 4.0]]),
             "withdrawal": np.array([[1.0, 1.0, 1.0, 1.0]]),
             "bond_interest": np.array([[2.0, 2.0, 2.0, 2.0]]),
             "cash_interest": np.array([[3.0, 3.0, 3.0, 3.0]]),
@@ -97,6 +98,9 @@ def _core_for_extracts() -> dict:
         "gross_income": np.array([[120.0, 121.0, 122.0, 123.0]]),
         "tax_bracket": np.array([[0.10, 0.10, 0.12, 0.12]]),
         "ira_401k": np.array([[0.0, 0.0, 0.0, 0.0]]),
+        "employee_401k_contributions": np.array(
+            [[0.0, 10.0, 20.0, 30.0]]
+        ),
 
         "roth_ira_contributions": np.array(
             [[0.0, 1.0, 2.0, 3.0]]
@@ -155,6 +159,30 @@ def test_extract_summary_single_run_builds_expected_keys():
     np.testing.assert_allclose(summary["net_cash_flow"], core["net_profit"][0])
     np.testing.assert_allclose(summary["wages"], core["breakdown_by_class"]["work"][0])
     np.testing.assert_allclose(summary["rmd"], core["breakdown_by_class"]["rmd"][0])
+    np.testing.assert_allclose(
+        summary["special_income"],
+        core["breakdown_by_class"]["special_income"][0],
+    )
+    np.testing.assert_allclose(
+        summary["employee_401k_contributions"],
+        core["employee_401k_contributions"][0],
+    )
+    np.testing.assert_allclose(
+        summary["roth_ira_contributions"],
+        core["roth_ira_contributions"][0],
+    )
+    np.testing.assert_allclose(
+        summary["roth_workplace_contributions"],
+        core["roth_workplace_contributions"][0],
+    )
+    np.testing.assert_allclose(
+        summary["roth_conversions"],
+        core["roth_conversions"][0],
+    )
+    np.testing.assert_allclose(
+        summary["roth_total_flows"],
+        core["roth_total_flows"][0],
+    )
     np.testing.assert_allclose(summary["ira_401k"], core["ira_401k"][0])
     np.testing.assert_allclose(summary["social_security"], core["breakdown_by_class"]["ss"][0])
     np.testing.assert_allclose(summary["pensions"], core["breakdown_by_class"]["pension"][0])

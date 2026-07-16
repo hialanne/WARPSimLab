@@ -50,6 +50,7 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
             "hsa_withdrawals": zeros.copy(),
             "expense_amt": np.array([[25.0, 25.0, 25.0, 25.0]]),
             "ira_401k": zeros.copy(),
+            "employee_401k_contributions": zeros.copy(),
             "roth_ira_contributions": zeros.copy(),
             "roth_workplace_contributions": zeros.copy(),
             "roth_conversions": zeros.copy(),

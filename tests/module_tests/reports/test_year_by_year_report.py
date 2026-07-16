@@ -33,7 +33,7 @@ def make_report_data(**overrides):
                 "Social Security": 0.0,
                 "Pensions & Annuities": 0.0,
                 "RMD": 0.0,
-                "Withdrawals": 0.0,
+                "Portfolio Withdrawals": 0.0,
                 "Gross Income": 1000.0,
                 "Taxes": 100.0,
                 "Household Expenses": 500.0,
@@ -56,7 +56,7 @@ def make_report_data(**overrides):
                 "Social Security": 0.0,
                 "Pensions & Annuities": 0.0,
                 "RMD": 0.0,
-                "Withdrawals": 100.0,
+                "Portfolio Withdrawals": 100.0,
                 "Gross Income": 1200.0,
                 "Taxes": 120.0,
                 "Household Expenses": 600.0,
@@ -150,8 +150,8 @@ def test_calculate_summary_statistics_uses_totals_maximum_and_last_row():
     assert stats["Total Lifetime Income"] == pytest.approx(2200.0)
     assert stats["Total Taxes Paid"] == pytest.approx(220.0)
     assert stats["Total Household Expenses"] == pytest.approx(1100.0)
-    assert stats["Total Withdrawals"] == pytest.approx(100.0)
-    assert stats["Largest Annual Withdrawal"] == pytest.approx(100.0)
+    assert stats["Total Portfolio Withdrawals"] == pytest.approx(100.0)
+    assert stats["Largest Annual Portfolio Withdrawal"] == pytest.approx(100.0)
     assert stats["Ending Portfolio"] == pytest.approx(109300.0)
     assert stats["Ending Net Worth"] == pytest.approx(109300.0)
 
@@ -185,7 +185,7 @@ def test_render_year_table_escapes_headers_values_and_marks_negative_values():
                 "Gross Income": "<bad>",
                 "Taxes": -100.0,
                 "Household Expenses": 500.0,
-                "Withdrawals": 0.0,
+                "Portfolio Withdrawals": 0.0,
                 "Net Cash Flow": -400.0,
                 "Total Portfolio": 100000.0,
                 "Total Assets / Net Worth": 100000.0,

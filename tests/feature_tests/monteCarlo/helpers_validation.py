@@ -252,6 +252,7 @@ def build_synthetic_core(total_assets):
         "additional_medicare_tax": zeros.copy(),
         "expense_amt": zeros.copy(),
         "ira_401k": zeros.copy(),
+        "employee_401k_contributions": zeros.copy(),
         "roth_ira_contributions": zeros.copy(),
         "roth_workplace_contributions": zeros.copy(),
         "roth_conversions": zeros.copy(),
