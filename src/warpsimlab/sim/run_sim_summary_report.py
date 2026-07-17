@@ -127,7 +127,7 @@ def _build_income_milestone(results, index):
         "Social Security": _array_value(results, "social_security", index),
         "Pensions & Annuities": pensions_and_annuities,
         "Gross Income": _array_value(results, "gross_income", index),
-        "401k or IRA Contribution": _array_value(results, "ira_401k", index),
+        "401(k) / IRA + Match": _array_value(results, "ira_401k", index),
         "Taxes": _array_value(results, "taxes", index),
         "Tax Bracket": _array_value(results, "tax_bracket", index),
         "Net Income": _array_value(results, "net_income", index),
@@ -423,7 +423,7 @@ def _build_household_retirement_table(husband, wife, sim_config):
         ("Pension Start Age", "pension_age", _fmt_assumption_number, False),
         ("Annuity Amount", "annuity", _fmt_assumption_currency, True),
         ("Annuity Start Age", "annuity_age", _fmt_assumption_number, False),
-        ("401k / IRA Contribution", "annual_401k_contribution", _fmt_assumption_currency, True),
+        ("Employee 401(k) / IRA", "annual_401k_contribution", _fmt_assumption_currency, True),
         ("Employer Match", "annual_employer_match", _fmt_assumption_currency, True),
     ]
 
@@ -706,6 +706,8 @@ def _save_portfolio_plot_with_temporary_modes(
             sim_config,
             force_num_sims=force_num_sims,
         )
+
+        p["portfolio_plot_data"].total_label = "Total Portfolio"
 
         image_path = save_portfolio_projection_report_plot(
             output_folder=output_folder,

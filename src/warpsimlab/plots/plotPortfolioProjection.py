@@ -105,7 +105,7 @@ def draw_portfolio_projection(
     _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config)
     
     value_type = "Real" if getattr(sim_config, "plot_mode", "nominal") == "real" else "Nominal"
-    plt.title(f"Portfolio Simulation ({value_type})")
+    plt.title(f"Portfolio Projection ({value_type})")
 
     handles, labels = ax.get_legend_handles_labels()
     if hasattr(_plot_monte_carlo_assets, "_extra_handles"):
@@ -151,8 +151,7 @@ def _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config):
             "show_simulated_shortfall_rate is True, but simulation_data.simulated_shortfall_rate is missing"
         )
 
-    #label = f"{rate:.0f}% of modeled scenarios fell below $0"
-    label = f"{rate:.0f}% of scenarios fell below $0"
+    label = f"{rate:.0f}% % of scenarios depleted the portfolio"
 
     ax.text(
         0.98,
@@ -197,13 +196,16 @@ def _plot_assets(years_list, simulation_data, total_color=COLOR_TOTAL_REAL, sim_
         )
 
     
-        # Draw line on top
         plt.plot(
             years_list,
             median_values,
             color=total_color,
             linewidth=2,
-            label="Total Assets"
+            label=getattr(
+                simulation_data,
+                "total_label",
+                "Total Assets",
+            )
         )
 
 # -------------------
@@ -509,14 +511,40 @@ def _plot_sub_category_assets(years_list, simulation_data, sim_config):
 # -------------------
 # Utility for drawing baseline line
 # -------------------
+
 def _plot_baseline_line(years_list, simulation_data, line_color, label_prefix=""):
     """
     Plot the baseline portfolio line, turning red if it ever effectively hits zero.
     """
     NEAR_ZERO_THRESHOLD = 1e-6
-    color = "red" if np.any(simulation_data.percentiles["median"] <= NEAR_ZERO_THRESHOLD) else line_color
-    label = f"Median Total Assets ({label_prefix})" if label_prefix else "Total Assets"
-    plt.plot(years_list, simulation_data.percentiles["median"], color=color, linewidth=2, label=label)
+
+    total_label = getattr(
+        simulation_data,
+        "total_label",
+        "Total Assets",
+    )
+
+    color = (
+        "red"
+        if np.any(
+            simulation_data.percentiles["median"]
+            <= NEAR_ZERO_THRESHOLD
+        )
+        else line_color
+    )
+
+    if label_prefix:
+        label = f"Median {total_label} ({label_prefix})"
+    else:
+        label = total_label
+
+    plt.plot(
+        years_list,
+        simulation_data.percentiles["median"],
+        color=color,
+        linewidth=2,
+        label=label,
+    )
 
 
 def _plot_overlays(years_list, simulation_data, sim_config, husband=None, wife=None):

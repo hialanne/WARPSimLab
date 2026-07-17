@@ -759,7 +759,7 @@ class SummaryDialog(tk.Toplevel):
         )
 
         add_row(
-            "Employee Traditional 401k ",
+            "Employee 401(k) / IRA",
             "employee_401k_contributions"
         )
 
@@ -1153,22 +1153,22 @@ class SummaryDialog(tk.Toplevel):
         ).pack(pady=6)
 
         add_input_label(
-            "Stocks Yearly Gains:    ",
+            "Expected Annual Stock Return:    ",
             f"{self.sim_config.eq_mean * 100:.2f}%"
         )
 
         add_input_label(
-            "Bonds Yearly Gains:     ",
+            "Expected Annual Bond Return:     ",
             f"{self.sim_config.bd_mean * 100:.2f}%"
         )
 
         add_input_label(
-            "Cash Yearly Gains:      ",
+            "Expected Annual Cash Return:      ",
             f"{self.sim_config.cs_mean * 100:.2f}%"
         )
 
         add_input_label(
-            "Inflation Rate:         ",
+            "Expected Inflation Rate:         ",
             f"{self.sim_config.inflation_rate * 100:.2f}%"
         )
 

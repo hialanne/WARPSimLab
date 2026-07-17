@@ -359,8 +359,8 @@ def _plot_net_profit_overlay(x, net_profit, sim_config):
              color="blue" if y_vals[start_idx] >= 0 else "red", linewidth=2)
 
     # Legend helpers
-    plt.plot([], [], color="blue", linewidth=2, label="Net Profit (Positive)")
-    plt.plot([], [], color="red", linewidth=2, label="Net Profit (Negative)")
+    plt.plot([], [], color="blue", linewidth=2, label="Net Cash Flow (Positive)")
+    plt.plot([], [], color="red", linewidth=2, label="Net Cash Flow (Negative)")
 
 
 def _draw_annotation_block(ax, annotations, *, corner="lower_right"):

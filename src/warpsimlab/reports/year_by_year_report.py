@@ -23,7 +23,7 @@ COMPACT_COLUMNS = [
     "Portfolio Withdrawals",
     "Net Cash Flow",
     "Total Portfolio",
-    "Total Assets / Net Worth",
+    "Total Assets",
 ]
 
 DETAILED_COLUMNS = [
@@ -47,7 +47,7 @@ DETAILED_COLUMNS = [
     "HSA Assets",
     "Real Estate",
     "Total Portfolio",
-    "Total Assets / Net Worth",
+    "Total Assets",
 ]
 
 YEAR_KEYS = {"Year"}
@@ -115,13 +115,13 @@ def _calculate_summary_statistics(report_data):
 
     return {
         "Years Simulated": len(rows) - 1,
-        "Total Lifetime Income": total("Gross Income"),
+        "Total Gross Income": total("Gross Income"),
         "Total Taxes Paid": total("Taxes"),
         "Total Household Expenses": total("Household Expenses"),
         "Total Portfolio Withdrawals": total("Portfolio Withdrawals"),
         "Largest Annual Portfolio Withdrawal": maximum("Portfolio Withdrawals"),
         "Ending Portfolio": last.get("Total Portfolio", 0.0),
-        "Ending Net Worth": last.get("Total Assets / Net Worth", 0.0),
+        "Ending Total Assets": last.get("Total Assets", 0.0),
     }
 
 

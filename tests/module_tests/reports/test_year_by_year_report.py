@@ -45,7 +45,7 @@ def make_report_data(**overrides):
                 "HSA Assets": 2000.0,
                 "Real Estate": 0.0,
                 "Total Portfolio": 107000.0,
-                "Total Assets / Net Worth": 107000.0,
+                "Total Assets": 107000.0,
             },
             {
                 "Year": 2027,
@@ -68,7 +68,7 @@ def make_report_data(**overrides):
                 "HSA Assets": 2100.0,
                 "Real Estate": 0.0,
                 "Total Portfolio": 109300.0,
-                "Total Assets / Net Worth": 109300.0,
+                "Total Assets": 109300.0,
             },
         ],
         warnings=[],
@@ -132,7 +132,7 @@ def test_selected_columns_uses_detailed_columns_and_includes_roth_hsa():
     assert "Wages" in columns
     assert "Roth Assets" in columns
     assert "HSA Assets" in columns
-    assert "Total Assets / Net Worth" in columns
+    assert "Total Assets" in columns
 
 
 def test_calculate_summary_statistics_empty_rows_returns_empty_dict():
@@ -188,7 +188,7 @@ def test_render_year_table_escapes_headers_values_and_marks_negative_values():
                 "Portfolio Withdrawals": 0.0,
                 "Net Cash Flow": -400.0,
                 "Total Portfolio": 100000.0,
-                "Total Assets / Net Worth": 100000.0,
+                "Total Assets": 100000.0,
             }
         ]
     )

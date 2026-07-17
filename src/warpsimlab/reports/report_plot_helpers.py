@@ -328,6 +328,7 @@ def _build_portfolio_only_plot_data(portfolio_plot_data, summary_results):
     return PortfolioPlotData(
         years=portfolio_plot_data.years,
         percentiles=percentiles,
+        total_label="Total Portfolio",
         median_without_fund_expenses=None,
         median_without_taxes=None,
         median_without_taxes_or_fund_expenses=None,

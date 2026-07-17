@@ -10,6 +10,8 @@ class PortfolioPlotData:
     years: np.ndarray
     percentiles: Dict[str, np.ndarray]  # keys: 'pct1', 'pct5', ... 'median'
 
+    total_label: str = "Total Assets"
+
     # Variants
     median_without_fund_expenses: Optional[np.ndarray] = None
     median_without_taxes: Optional[np.ndarray] = None
