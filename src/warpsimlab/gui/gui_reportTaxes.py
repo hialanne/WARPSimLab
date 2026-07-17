@@ -206,7 +206,7 @@ class TaxReportFrame(ttk.Frame):
         self.options.clear()
         self.options.update(copy.deepcopy(self.working_options))
 
-        self.parent_gui.edit_main_home()
+        self.parent_gui.edit_blank()
         self.parent_gui.run_simulation_from_gui(sim_type="tax_report")
 
     def cancel_changes(self):
@@ -216,4 +216,4 @@ class TaxReportFrame(ttk.Frame):
             path = path_key.split(".")
             var.set(self._get_option_path(path, False))
 
-        self.parent_gui.edit_main_home()
+        self.parent_gui.edit_blank()

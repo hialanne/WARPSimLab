@@ -219,7 +219,7 @@ class RiskReportBaseFrame(ttk.Frame):
         self.options.clear()
         self.options.update(copy.deepcopy(self.working_options))
 
-        self.parent_gui.edit_main_home()
+        self.parent_gui.edit_blank()
         self.parent_gui.run_simulation_from_gui(sim_type=self.RUN_SIM_TYPE)
 
     def cancel_changes(self):
@@ -231,4 +231,4 @@ class RiskReportBaseFrame(ttk.Frame):
             if isinstance(var, tk.BooleanVar):
                 var.set(self._get_option_path(path, False))
 
-        self.parent_gui.edit_main_home()
+        self.parent_gui.edit_blank()

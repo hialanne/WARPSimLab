@@ -308,7 +308,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         # Dynamic expenses
         self.expensesDict = DynamicExpenses()
-        self.expensesDict.add_expense(start_year=2026, cost=75000, comment="Initial yearly expense")
+        self.expensesDict.add_expense(start_year=2026, cost=74000, comment="Initial yearly expense")
         self.expensesDict.add_expense(start_year=2026, end_year=2030, cost=5000, comment="Car or something")
 
         # Special income streams
@@ -740,12 +740,19 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self.home_frame = home_frame
 
 
+    def edit_blank(self):
+        """
+        Clear the main editor area without displaying another frame.
+        """
+        for widget in self.edit_frame_container.winfo_children():
+            widget.destroy()
+
+
     def edit_tutorial_blank(self):
         """
         Clear the main editor area for a tutorial instruction-only step.
         """
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        self.edit_blank()
 
 
     def start_basic_tutorial(self):

@@ -353,7 +353,7 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
         self.options.clear()
         self.options.update(copy.deepcopy(self.working_options))
 
-        self.parent_gui.edit_main_home()
+        self.parent_gui.edit_blank()
         self.parent_gui.run_simulation_from_gui(sim_type="summary_report")
 
     def cancel_changes(self):
@@ -367,7 +367,7 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             elif isinstance(var, tk.StringVar):
                 var.set(self._get_option_path(path, "HTML"))
 
-        self.parent_gui.edit_main_home()
+        self.parent_gui.edit_blank()
 
     def _add_section_label_to_frame(self, parent, text, row):
         ttk.Label(
