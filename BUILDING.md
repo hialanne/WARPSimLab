@@ -310,13 +310,14 @@ GitHub automatically creates source-code ZIP and tar.gz archives for the release
 Before publishing the release:
 
 1. Confirm the tag is correct.
-2. Confirm the version number is correct.
-3. Confirm the uploaded ZIP is the final scanned file.
+2. Confirm the release title and version number are correct.
+3. Confirm the uploaded Windows ZIP is the final scanned file.
 4. Confirm the checksum file is correct.
-5. Download the GitHub ZIP.
+5. Download `WARPSimLab-v[X.Y.Z]-Windows-x64.zip` from the draft release.
 6. Generate its SHA-256 checksum.
 7. Confirm it matches the published checksum.
-
+8. Publish the release.
+1. 
 Publish the GitHub release only after verification succeeds.
 
 ## 16. Update the Website
