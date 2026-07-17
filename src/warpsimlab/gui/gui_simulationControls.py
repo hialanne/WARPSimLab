@@ -561,6 +561,7 @@ class SimulationControlsEditFrame(ttk.Frame):
             pady=(8, 2)
         )
 
+        '''
         ttk.Label(
             csv_section,
             text="CSV Output",
@@ -632,3 +633,4 @@ class SimulationControlsEditFrame(ttk.Frame):
         output_csv_var.trace_add("write", on_output_csv_changed)
 
         update_csv_dir_visibility()
+        '''

@@ -213,7 +213,9 @@ class PortfolioEditFrame(ttk.Frame):
         ttk.Label(
             self,
             text=(
-                "Note: HSA is shown as one row. Internally, the edited HSA value is currently stored as HSA cash."
+                "Note: HSA is shown as one row. Internally, the edited HSA value is currently stored as HSA cash.\n\n"
+                "HSA accounts are modeled as separate asset buckets. This release does not model new HSA\n"
+                " contributions, qualified medical expenses, or detailed HSA tax treatment."
             ),
             font=("Arial", 12, "italic"),
             foreground="#555555",
