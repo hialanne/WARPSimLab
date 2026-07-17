@@ -10,8 +10,12 @@ from src.warpsimlab.gui.gui_reportTaxes import TaxReportFrame
 
 class DummyParentGUI:
     def __init__(self):
+        self.edit_blank_calls = 0
         self.edit_main_home_calls = 0
         self.run_calls = []
+
+    def edit_blank(self):
+        self.edit_blank_calls += 1
 
     def edit_main_home(self):
         self.edit_main_home_calls += 1
@@ -334,7 +338,8 @@ def test_apply_changes_copies_working_options_and_runs_tax_report(tk_root):
     frame.apply_changes()
 
     assert options["output"]["generate_csv"] is True
-    assert parent_gui.edit_main_home_calls == 1
+    assert parent_gui.edit_blank_calls == 1
+    assert parent_gui.edit_main_home_calls == 0
     assert parent_gui.run_calls == ["tax_report"]
 
     # Confirm caller options do not share nested dicts with working_options.
@@ -376,5 +381,6 @@ def test_cancel_changes_resets_working_options_and_vars_without_running_report(t
     assert options["output"]["generate_csv"] is False
     assert options["sections"]["include_roth_analysis"] is True
 
-    assert parent_gui.edit_main_home_calls == 1
+    assert parent_gui.edit_blank_calls == 1
+    assert parent_gui.edit_main_home_calls == 0    
     assert parent_gui.run_calls == []

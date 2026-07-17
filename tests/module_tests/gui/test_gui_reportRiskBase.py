@@ -10,8 +10,12 @@ from src.warpsimlab.gui.gui_reportRiskBase import RiskReportBaseFrame
 
 class DummyParentGUI:
     def __init__(self):
+        self.edit_blank_calls = 0
         self.edit_main_home_calls = 0
         self.run_calls = []
+
+    def edit_blank(self):
+        self.edit_blank_calls += 1
 
     def edit_main_home(self):
         self.edit_main_home_calls += 1
@@ -21,6 +25,7 @@ class DummyParentGUI:
 
 
 class TestRiskReportFrame(RiskReportBaseFrame):
+
     REPORT_NAME = "Test Risk Report"
     RUN_SIM_TYPE = "test_risk_report"
     DESCRIPTION = "Test risk report description."
@@ -372,7 +377,8 @@ def test_apply_changes_copies_working_options_and_runs_report(tk_root):
     frame.apply_changes()
 
     assert options["output"]["generate_csv"] is True
-    assert parent_gui.edit_main_home_calls == 1
+    assert parent_gui.edit_blank_calls == 1
+    assert parent_gui.edit_main_home_calls == 0
     assert parent_gui.run_calls == ["test_risk_report"]
 
     # Confirm caller options are not sharing nested dicts with working_options.
@@ -405,7 +411,8 @@ def test_cancel_changes_resets_working_options_and_vars_without_running_report(t
     assert frame.vars["output.generate_csv"].get() is False
 
     assert options["output"]["generate_csv"] is False
-    assert parent_gui.edit_main_home_calls == 1
+    assert parent_gui.edit_blank_calls == 1
+    assert parent_gui.edit_main_home_calls == 0
     assert parent_gui.run_calls == []
 
 

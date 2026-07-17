@@ -24,15 +24,15 @@ def tk_root():
 def parent_gui():
     calls = []
 
-    def edit_main_home():
-        calls.append(("edit_main_home", None))
+    def edit_blank():
+        calls.append(("edit_blank", None))
 
     def run_simulation_from_gui(*, sim_type):
         calls.append(("run_simulation_from_gui", sim_type))
 
     return SimpleNamespace(
         calls=calls,
-        edit_main_home=edit_main_home,
+        edit_blank=edit_blank,
         run_simulation_from_gui=run_simulation_from_gui,
     )
 
@@ -163,7 +163,7 @@ def test_apply_changes_writes_options_and_runs_summary_report(tk_root, parent_gu
     assert options["include_simulation_summary"] is False
     assert options["output_format"] == "PDF"
     assert parent_gui.calls == [
-        ("edit_main_home", None),
+        ("edit_blank", None),
         ("run_simulation_from_gui", "summary_report"),
     ]
 
@@ -212,4 +212,4 @@ def test_cancel_changes_restores_vars_from_original_options(tk_root, parent_gui,
     assert frame.working_options["include_simulation_summary"] is True
     assert frame.working_options["portfolio_visuals"]["include_normal_projection"] is True
     assert frame.working_options["output_format"] == "HTML"
-    assert parent_gui.calls == [("edit_main_home", None)]
+    assert parent_gui.calls == [("edit_blank", None)]

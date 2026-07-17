@@ -147,13 +147,13 @@ def test_calculate_summary_statistics_uses_totals_maximum_and_last_row():
     stats = mod._calculate_summary_statistics(report_data)
 
     assert stats["Years Simulated"] == 1
-    assert stats["Total Lifetime Income"] == pytest.approx(2200.0)
+    assert stats["Total Gross Income"] == pytest.approx(2200.0)
     assert stats["Total Taxes Paid"] == pytest.approx(220.0)
     assert stats["Total Household Expenses"] == pytest.approx(1100.0)
     assert stats["Total Portfolio Withdrawals"] == pytest.approx(100.0)
     assert stats["Largest Annual Portfolio Withdrawal"] == pytest.approx(100.0)
     assert stats["Ending Portfolio"] == pytest.approx(109300.0)
-    assert stats["Ending Net Worth"] == pytest.approx(109300.0)
+    assert stats["Ending Total Assets"] == pytest.approx(109300.0)
 
 
 def test_render_summary_statistics_returns_empty_without_rows():
@@ -170,7 +170,7 @@ def test_render_summary_statistics_contains_formatted_values():
     assert "Summary Statistics" in html
     assert "Years Simulated" in html
     assert "1" in html
-    assert "Total Lifetime Income" in html
+    assert "Total Gross Income" in html
     assert "$2,200" in html
     assert "Ending Portfolio" in html
     assert "$109,300" in html

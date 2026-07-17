@@ -12,11 +12,11 @@ from src.warpsimlab.gui.gui_reportYearByYearDetails import (
 
 class DummyParentGUI:
     def __init__(self):
-        self.edit_main_home_calls = 0
+        self.edit_blank_calls = 0
         self.run_calls = []
 
-    def edit_main_home(self):
-        self.edit_main_home_calls += 1
+    def edit_blank(self):
+        self.edit_blank_calls += 1
 
     def run_simulation_from_gui(self, *, sim_type):
         self.run_calls.append(sim_type)
@@ -343,7 +343,7 @@ def test_apply_changes_copies_working_options_and_runs_year_by_year_report(tk_ro
         "insert_5_year_breaks": True,
     }
 
-    assert parent_gui.edit_main_home_calls == 1
+    assert parent_gui.edit_blank_calls == 1
     assert parent_gui.run_calls == ["year_by_year_report"]
 
     frame.working_options["generate_csv"] = True
@@ -393,5 +393,5 @@ def test_cancel_changes_resets_working_options_and_vars_without_running_report(t
         "insert_5_year_breaks": True,
     }
 
-    assert parent_gui.edit_main_home_calls == 1
+    assert parent_gui.edit_blank_calls == 1
     assert parent_gui.run_calls == []
