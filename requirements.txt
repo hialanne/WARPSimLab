@@ -1,0 +1,4 @@
+matplotlib==3.10.7
+numpy==2.3.5
+pyinstaller==6.18.0
+pytest==9.0.1

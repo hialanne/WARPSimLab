@@ -22,12 +22,28 @@ unexpected dependencies that are being masked by the current windows environment
 
 Lets create a virtual environment.  
 
+First, create retquirements.txt.  This happens once.
 ```
-py -m venv .venv-release
+python -m pip freeze > installed-package.txt
+```
+
+Now, start using an empty requirements.txt.  
+Currently, we need:
+
+matplotlib==3.10.7
+numpy==2.3.5
+pyinstaller==6.18.0
+pytest==9.0.1
+
+```
+python -m venv .venv-release
 .\.venv-release\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
+
+Run python WARPSimLab.py.  Everytime it breaks, add that package to requirements.txt.  Again, this should happen once.
+
 
 Record the build environment:
 
@@ -47,6 +63,7 @@ python -m pytest 2>&1 | Tee-Object -FilePath test-results.txt
 ```
 
 Keep `test-results.txt` with the release records; do not distribute it.
+
 
 ## 5. Run a Source Smoke Test
 
@@ -68,10 +85,11 @@ Before building the executable, run WARPSimLab from Python and verify:
 
 ## 6. Remove Previous Build Output
 
-
 ```
 Remove-Item -Recurse -Force build, dist -ErrorAction SilentlyContinue
 ```
+Or delete build and dist in a file explorer.
+
 
 ## 7. Build the Windows Distribution
 
@@ -141,7 +159,10 @@ Create one canonical Windows ZIP file.  Create the ZIP from the completed `dist\
 WARPSimLab-v[X.Y.Z]-Windows-x64.zip
 ```
 
-The ZIP should contain one top-level directory:
+The ZIP should contain one top-level directory.
+
+NOTICE: The LICENSE.txt file is manually moved up a level.
+NOTICE: Create the README-FIRST.txt file.
 
 ```text
 WARPSimLab-v[X.Y.Z]\
@@ -201,16 +222,14 @@ Record:
 
 From PowerShell:
 
-```powershell
-Get-FileHash `
-    .\WARPSimLab-v[X.Y.Z]-Windows-x64.zip `
-    -Algorithm SHA256
+```
+Get-FileHash .\WARPSimLab-v4.0.0-Win-x86_64_.zip -Algorithm SHA256
 ```
 
 Save the result in:
 
 ```text
-WARPSimLab-v[X.Y.Z]-SHA256.txt
+WARPSimLab-v4.0.0-SHA256.txt
 ```
 
 Suggested format:
