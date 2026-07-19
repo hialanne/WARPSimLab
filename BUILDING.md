@@ -223,7 +223,7 @@ Record:
 From PowerShell:
 
 ```
-Get-FileHash .\WARPSimLab-v4.0.0-Win-x86_64_.zip -Algorithm SHA256
+Get-FileHash .\WARPSimLab-v4.0.1-Win-x86_64.zip -Algorithm SHA256
 ```
 
 Save the result in:

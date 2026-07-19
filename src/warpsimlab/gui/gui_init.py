@@ -58,13 +58,13 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             y = (screen_height // 2) - (height // 2)
             window.geometry(f"{width}x{height}+{x}+{y}")
 
-        root.title("WARPSimLab version 4.0")
+        root.title("WARPSimLab version 4.0.1")
 
         window_width = 1200
         window_height = 750
         center_window(root, window_width, window_height)
 
-        ttk.Label(root, text="WARPSimLab version 4.0", font=("Arial", 16)).pack(pady=10)
+        ttk.Label(root, text="WARPSimLab version 4.0.1", font=("Arial", 16)).pack(pady=10)
 
         self.frame = ttk.Frame(root)
         self.frame.pack(pady=5, padx=10, fill="both", expand=True)
