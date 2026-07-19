@@ -270,7 +270,7 @@ git push origin v[X.Y.Z]
 
 ## 15. Create the GitHub Release
 
-Create a draft GitHub release using the new version tag.
+Create a On the GitHub website, draft GitHub release using the new version tag.
 
 Upload:
 
