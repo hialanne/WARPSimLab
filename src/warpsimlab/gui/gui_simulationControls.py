@@ -516,8 +516,10 @@ class SimulationControlsEditFrame(ttk.Frame):
 
         historical_note = ttk.Label(
             monte_carlo_section,
-            text="Historical Windows uses annual returns from the historical CSV file.\n"
-                 "Correlated returns do not apply in this mode.",
+            text="Historical Windows uses annual returns \n"
+                "from the historical CSV file.\n"
+                "Correlated returns do not apply in \n"
+                "this mode.",
             justify="left"
         )
         historical_note.grid(row=6, column=0, sticky="w", pady=(8, 2))
