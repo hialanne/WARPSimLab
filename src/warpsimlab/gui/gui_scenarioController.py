@@ -345,6 +345,9 @@ class ScenarioController:
 
         sim_config.use_snapshot_annotations = annotate_enabled
 
+        if panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
+            sim_config.sim_type = "cashflow_sim"
+
         return sim_config
 
 
@@ -403,21 +406,33 @@ class ScenarioController:
         ax.clear()
 
         if panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
-            cashflow_keys = [
+
+            breakdown = dict(p["breakdown_by_class"])
+
+            income_keys = [
                 "work",
                 "pension",
                 "annuity",
                 "ss",
-                "rmd",
-                "withdrawal",
-                "bond_interest",
-                "cash_interest",
-                "qualified_dividends",
                 "special_income",
             ]
 
+            breakdown["income"] = sum(
+                breakdown[key]
+                for key in income_keys
+            )
+
+            cashflow_keys = [
+                "income",
+                "rmd",
+                "withdrawal",
+                "cash_interest",
+                "bond_interest",
+                "qualified_dividends",
+            ]
+
             cashflow_total = sum(
-                p["breakdown_by_class"][key]
+                breakdown[key]
                 for key in cashflow_keys
             )
 
@@ -426,14 +441,13 @@ class ScenarioController:
                 p["years"],
                 p["net_profit"],
                 cashflow_total,
-                p["breakdown_by_class"],
+                breakdown,
                 p["taxes"],
                 p["expense_amt"],
                 husband,
                 wife,
                 sim_config
             )
-
         elif panel["plot_family"] == PLOT_FAMILY_PORTFOLIO:
             draw_portfolio_projection(
                 ax,
