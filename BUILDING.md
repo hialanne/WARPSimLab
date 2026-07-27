@@ -265,14 +265,14 @@ The version tag created in the next step must point to this commit.
 Create an annotated tag for the exact release commit:
 
 ```
-git tag -a v[X.Y.Z] -m "WARPSimLab v[X.Y.Z]"
+git tag -a v[X.Y.Z] -m "WARPSimLab v[X.Y.Z]" (Note, get rid if the square braces)
 git push origin main
 git push origin v[X.Y.Z]
 ```
 
 ## 15. Create the GitHub Release
 
-Create a On the GitHub website, draft GitHub release using the new version tag.
+On the GitHub website,Create a draft GitHub release using the new version tag.
 
 Upload:
 
