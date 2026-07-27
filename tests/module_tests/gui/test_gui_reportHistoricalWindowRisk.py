@@ -30,7 +30,6 @@ def test_default_options_include_expected_general_sections():
 
 def test_default_options_include_expected_analysis_sections():
     options = HistoricalWindowRiskReportFrame.DEFAULT_OPTIONS
-
     assert options["analysis"] == {
         "include_portfolio_projection": True,
         "include_portfolio_sustainability": True,
@@ -41,10 +40,10 @@ def test_default_options_include_expected_analysis_sections():
 
 def test_default_options_include_expected_output_sections():
     options = HistoricalWindowRiskReportFrame.DEFAULT_OPTIONS
-
     assert options["output"] == {
         "generate_html": True,
         "generate_csv": False,
+        "open_report_in_browser": False,
     }
 
 

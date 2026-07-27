@@ -284,6 +284,7 @@ def test_constructor_builds_labels_and_checkbuttons(tk_root):
     assert "Generate HTML report" in checkbuttons
     assert "Generate CSV export" in checkbuttons
     assert "Enable custom option" in checkbuttons
+    assert "Open HTML report in web browser when complete" in checkbuttons
 
 
 def test_constructor_uses_explicit_title_when_provided(tk_root):
@@ -332,12 +333,14 @@ def test_constructor_normalizes_report_options_and_creates_vars(tk_root):
         "analysis.include_percentile_table",
         "output.generate_html",
         "output.generate_csv",
+        "output.open_report_in_browser",
         "custom.enabled",
     }
 
     assert set(frame.vars) == expected_var_keys
     assert frame.vars["output.generate_csv"].get() is True
     assert frame.vars["custom.enabled"].get() is True
+    assert frame.vars["output.open_report_in_browser"].get() is False
 
 
 def test_checkbox_trace_updates_working_options(tk_root):

@@ -73,6 +73,7 @@ def test_default_options_have_expected_output_and_sections():
         "output": {
             "generate_html": True,
             "generate_csv": False,
+            "open_report_in_browser": False,
         },
         "sections": {
             "include_roth_analysis": True,
@@ -102,6 +103,7 @@ def test_normalize_options_starts_from_defaults_and_applies_known_section_overri
         "output": {
             "generate_html": True,
             "generate_csv": True,
+            "open_report_in_browser": False,
         },
         "sections": {
             "include_roth_analysis": True,
@@ -247,6 +249,7 @@ def test_constructor_builds_labels_and_checkbuttons(tk_root):
     assert "Include HSA Analysis" in checkbuttons
     assert "Include RMD Analysis" in checkbuttons
     assert "Include Educational Commentary" in checkbuttons
+    assert "Open HTML report in web browser when complete" in checkbuttons
 
 
 def test_constructor_uses_explicit_title(tk_root):
@@ -294,11 +297,14 @@ def test_constructor_normalizes_report_options_and_creates_vars(tk_root):
         "sections.include_hsa_analysis",
         "sections.include_rmd_analysis",
         "sections.include_educational_commentary",
+        "output.open_report_in_browser",
     }
 
     assert set(frame.vars) == expected_var_keys
     assert frame.vars["output.generate_csv"].get() is True
     assert frame.vars["sections.include_hsa_analysis"].get() is False
+    assert frame.working_options["output"]["open_report_in_browser"] is False
+    assert frame.vars["output.open_report_in_browser"].get() is False
 
 
 def test_checkbox_trace_updates_working_options(tk_root):

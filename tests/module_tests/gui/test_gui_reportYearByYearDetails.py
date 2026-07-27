@@ -88,8 +88,8 @@ def test_default_options_have_expected_values():
         "generate_csv": True,
         "table_detail": "Compact",
         "insert_5_year_breaks": True,
+        "open_report_in_browser": False,
     }
-
 
 def test_normalize_options_starts_from_defaults_and_applies_known_overrides():
     frame = object.__new__(YearByYearDetailsReportFrame)
@@ -107,6 +107,7 @@ def test_normalize_options_starts_from_defaults_and_applies_known_overrides():
         "generate_csv": False,
         "table_detail": "Detailed",
         "insert_5_year_breaks": False,
+        "open_report_in_browser": False,
     }
 
 
@@ -125,6 +126,7 @@ def test_normalize_options_ignores_unknown_keys():
         "generate_csv": True,
         "table_detail": "Compact",
         "insert_5_year_breaks": True,
+        "open_report_in_browser": False,
     }
     assert "unknown" not in normalized
 
@@ -224,6 +226,7 @@ def test_constructor_builds_labels_checkbuttons_and_radiobuttons(tk_root):
     ) in labels
 
     assert "Generate HTML report" in checkbuttons
+    assert "Open HTML report in web browser when complete" in checkbuttons
     assert "Generate CSV export" in checkbuttons
     assert "Insert visual break every 5 years" in checkbuttons
 
@@ -266,11 +269,13 @@ def test_constructor_normalizes_report_options_and_creates_vars(tk_root):
         "generate_csv": False,
         "table_detail": "Detailed",
         "insert_5_year_breaks": False,
+        "open_report_in_browser": False,
     }
 
     expected_var_keys = {
         "generate_html",
         "generate_csv",
+        "open_report_in_browser",
         "insert_5_year_breaks",
         "table_detail",
     }
@@ -281,6 +286,7 @@ def test_constructor_normalizes_report_options_and_creates_vars(tk_root):
     assert frame.vars["generate_csv"].get() is False
     assert frame.vars["insert_5_year_breaks"].get() is False
     assert frame.vars["table_detail"].get() == "Detailed"
+    assert frame.vars["open_report_in_browser"].get() is False
 
 
 def test_checkbox_trace_updates_working_options(tk_root):
@@ -341,6 +347,7 @@ def test_apply_changes_copies_working_options_and_runs_year_by_year_report(tk_ro
         "generate_csv": False,
         "table_detail": "Detailed",
         "insert_5_year_breaks": True,
+        "open_report_in_browser": False,
     }
 
     assert parent_gui.edit_blank_calls == 1
@@ -380,12 +387,14 @@ def test_cancel_changes_resets_working_options_and_vars_without_running_report(t
         "generate_csv": True,
         "table_detail": "Compact",
         "insert_5_year_breaks": True,
+        "open_report_in_browser": False,
     }
 
     assert frame.vars["generate_html"].get() is True
     assert frame.vars["generate_csv"].get() is True
     assert frame.vars["table_detail"].get() == "Compact"
     assert frame.vars["insert_5_year_breaks"].get() is True
+    assert frame.vars["open_report_in_browser"].get() is False
 
     assert options == {
         "generate_csv": True,

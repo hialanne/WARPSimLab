@@ -31,7 +31,6 @@ def test_default_options_include_expected_general_sections():
 
 def test_default_options_include_expected_analysis_sections():
     options = MonteCarloRiskReportFrame.DEFAULT_OPTIONS
-
     assert options["analysis"] == {
         "include_portfolio_projection": True,
         "include_portfolio_sustainability": True,
@@ -42,12 +41,11 @@ def test_default_options_include_expected_analysis_sections():
 
 def test_default_options_include_expected_output_sections():
     options = MonteCarloRiskReportFrame.DEFAULT_OPTIONS
-
     assert options["output"] == {
         "generate_html": True,
         "generate_csv": False,
+        "open_report_in_browser": False,
     }
-
 
 def test_build_method_specific_analysis_options_adds_monte_carlo_insights(monkeypatch):
     frame = object.__new__(MonteCarloRiskReportFrame)
