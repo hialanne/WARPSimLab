@@ -54,12 +54,18 @@ def make_results(n=5, start_year=2025):
     }
 
 
-def make_config(root, *, second_person_enabled=False, always_use_expense_mode=True):
+def make_config(
+    root,
+    *,
+    second_person_enabled=False,
+    always_use_expense_mode=True,
+):
     # Only the fields referenced by SummaryDialog are included here.
     return types.SimpleNamespace(
         root=root,
         second_person_enabled=second_person_enabled,
         always_use_expense_mode=always_use_expense_mode,
+        plot_mode="real",
         eq_mean=0.07,
         bd_mean=0.03,
         cs_mean=0.01,

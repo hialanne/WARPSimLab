@@ -125,12 +125,16 @@ def test_build_income_milestone_combines_pensions_and_annuities():
     results = {
         "year": [2030],
         "wages": [100.0],
+        "employee_401k_contributions": [7.0],
+        "special_income": [3.0],
         "rmd": [5.0],
         "social_security": [10.0],
         "pensions": [20.0],
         "annuities": [30.0],
-        "gross_income": [165.0],
-        "ira_401k": [7.0],
+        "bond_interest": [2.0],
+        "cash_interest": [1.0],
+        "qualified_dividends": [4.0],
+        "gross_income": [175.0],
         "taxes": [15.0],
         "tax_bracket": [0.22],
         "net_income": [150.0],
@@ -142,12 +146,14 @@ def test_build_income_milestone_combines_pensions_and_annuities():
     milestone = mod._build_income_milestone(results, 0)
 
     assert milestone["Year"] == pytest.approx(2030.0)
-    assert milestone["Wages"] == pytest.approx(100.0)
+    assert milestone["Gross Wages"] == pytest.approx(107.0)
+    assert milestone["Special Income"] == pytest.approx(3.0)
     assert milestone["RMD"] == pytest.approx(5.0)
     assert milestone["Social Security"] == pytest.approx(10.0)
     assert milestone["Pensions and Annuities"] == pytest.approx(50.0)
-    assert milestone["Gross Income"] == pytest.approx(165.0)
-    assert milestone["401k or IRA Contribution"] == pytest.approx(7.0)
+    assert milestone["Investment Income"] == pytest.approx(7.0)
+    assert milestone["Gross Income"] == pytest.approx(175.0)
+    assert milestone["Employee 401k Contribution"] == pytest.approx(7.0)
     assert milestone["Taxes"] == pytest.approx(15.0)
     assert milestone["Tax Bracket"] == pytest.approx(0.22)
     assert milestone["Net Income"] == pytest.approx(150.0)

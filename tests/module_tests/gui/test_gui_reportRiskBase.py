@@ -24,7 +24,7 @@ class DummyParentGUI:
         self.run_calls.append(sim_type)
 
 
-class TestRiskReportFrame(RiskReportBaseFrame):
+class DummyRiskReportFrame(RiskReportBaseFrame):
 
     REPORT_NAME = "Test Risk Report"
     RUN_SIM_TYPE = "test_risk_report"
@@ -112,7 +112,7 @@ def _checkbutton_texts(widget: tk.Misc) -> list[str]:
 
 
 def test_normalize_options_starts_from_defaults_and_applies_overrides():
-    frame = object.__new__(TestRiskReportFrame)
+    frame = object.__new__(DummyRiskReportFrame)
 
     normalized = frame._normalize_options(
         {
@@ -144,23 +144,23 @@ def test_normalize_options_starts_from_defaults_and_applies_overrides():
 
 
 def test_normalize_options_ignores_non_dict_report_options():
-    frame = object.__new__(TestRiskReportFrame)
+    frame = object.__new__(DummyRiskReportFrame)
 
     normalized = frame._normalize_options(None)
 
-    assert normalized == TestRiskReportFrame.DEFAULT_OPTIONS
-    assert normalized is not TestRiskReportFrame.DEFAULT_OPTIONS
-    assert normalized["general"] is not TestRiskReportFrame.DEFAULT_OPTIONS["general"]
+    assert normalized == DummyRiskReportFrame.DEFAULT_OPTIONS
+    assert normalized is not DummyRiskReportFrame.DEFAULT_OPTIONS
+    assert normalized["general"] is not DummyRiskReportFrame.DEFAULT_OPTIONS["general"]
 
 
 def test_normalize_options_deep_copies_defaults():
-    frame = object.__new__(TestRiskReportFrame)
+    frame = object.__new__(DummyRiskReportFrame)
 
     normalized = frame._normalize_options({})
 
     normalized["general"]["include_executive_summary"] = False
 
-    assert TestRiskReportFrame.DEFAULT_OPTIONS["general"]["include_executive_summary"] is True
+    assert DummyRiskReportFrame.DEFAULT_OPTIONS["general"]["include_executive_summary"] is True
 
 
 def test_deep_update_preserves_unspecified_nested_values():
@@ -256,7 +256,7 @@ def test_constructor_builds_labels_and_checkbuttons(tk_root):
     parent_gui = DummyParentGUI()
     options = {}
 
-    frame = TestRiskReportFrame(
+    frame = DummyRiskReportFrame(
         tk_root,
         report_options=options,
         parent_gui=parent_gui,
@@ -290,7 +290,7 @@ def test_constructor_builds_labels_and_checkbuttons(tk_root):
 def test_constructor_uses_explicit_title_when_provided(tk_root):
     parent_gui = DummyParentGUI()
 
-    frame = TestRiskReportFrame(
+    frame = DummyRiskReportFrame(
         tk_root,
         report_options={},
         parent_gui=parent_gui,
@@ -307,7 +307,7 @@ def test_constructor_uses_explicit_title_when_provided(tk_root):
 def test_constructor_normalizes_report_options_and_creates_vars(tk_root):
     parent_gui = DummyParentGUI()
 
-    frame = TestRiskReportFrame(
+    frame = DummyRiskReportFrame(
         tk_root,
         report_options={
             "output": {
@@ -346,7 +346,7 @@ def test_constructor_normalizes_report_options_and_creates_vars(tk_root):
 def test_checkbox_trace_updates_working_options(tk_root):
     parent_gui = DummyParentGUI()
 
-    frame = TestRiskReportFrame(
+    frame = DummyRiskReportFrame(
         tk_root,
         report_options={},
         parent_gui=parent_gui,
@@ -368,7 +368,7 @@ def test_apply_changes_copies_working_options_and_runs_report(tk_root):
         }
     }
 
-    frame = TestRiskReportFrame(
+    frame = DummyRiskReportFrame(
         tk_root,
         report_options=options,
         parent_gui=parent_gui,
@@ -397,7 +397,7 @@ def test_cancel_changes_resets_working_options_and_vars_without_running_report(t
         }
     }
 
-    frame = TestRiskReportFrame(
+    frame = DummyRiskReportFrame(
         tk_root,
         report_options=options,
         parent_gui=parent_gui,
