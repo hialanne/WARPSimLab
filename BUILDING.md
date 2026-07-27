@@ -153,6 +153,8 @@ After signing, verify the signature and rerun a basic launch and simulation test
 
 ## 10. Create the Release Package
 
+File to be zip'd should use the following file format: 'WARPSimLab-vX.Y.Z-Win-x86_64'
+
 Create one canonical Windows ZIP file.  Create the ZIP from the completed `dist\WARPSimLab` directory using Windows File Explorer.
 
 ```text
@@ -223,7 +225,7 @@ Record:
 From PowerShell:
 
 ```
-Get-FileHash .\WARPSimLab-v4.0.1-Win-x86_64.zip -Algorithm SHA256
+Get-FileHash .\WARPSimLab-v4.0.2-Win-x86_64.zip -Algorithm SHA256
 ```
 
 Save the result in:
