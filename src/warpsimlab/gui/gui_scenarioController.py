@@ -459,7 +459,14 @@ class ScenarioController:
                 wife=wife
             )
 
-        self._draw_panel_role_label(ax, panel)
+        role = self._panel_role_label(panel)
+        current_title = ax.get_title()
+
+        if current_title:
+            ax.set_title(f"{role} {current_title}")
+        else:
+            ax.set_title(role)
+
         self._apply_panel_window_title(fig, panel)
 
         fig.canvas.draw_idle()
