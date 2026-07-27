@@ -31,6 +31,7 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
         "include_assumptions_appendix": True,
 
         "output_format": "HTML",
+        "open_report_in_browser": False,
     }
 
     OLD_TO_NEW_OPTION_PATHS = {
@@ -168,6 +169,13 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
                 output_format_var.get()
             )
         )
+        left_row += 1
+        left_row = self._add_check_path_to_frame(
+            left_frame,
+            "Open HTML report in web browser when complete",
+            ["open_report_in_browser"],
+            left_row
+        )
 
         right_row = self._add_section_label_to_frame(right_frame, "Portfolio Visuals", right_row)
         right_row = self._add_check_path_to_frame(
@@ -282,6 +290,7 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
                 "include_simulation_summary",
                 "include_assumptions_appendix",
                 "output_format",
+                "open_report_in_browser",
             }:
                 normalized[key] = value
 

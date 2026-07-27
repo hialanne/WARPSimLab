@@ -253,12 +253,14 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
                 "include_assumptions_appendix": True,
 
                 "output_format": "HTML",
+                "open_report_in_browser": False,
             },
             "year_by_year_details": {
                 "generate_html": True,
                 "generate_csv": True,
                 "table_detail": "Compact",
                 "insert_5_year_breaks": True,
+                "open_report_in_browser": False,
             },
             "historical_window_risk": {
                 "general": {
@@ -274,6 +276,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
                 "output": {
                     "generate_html": True,
                     "generate_csv": False,
+                    "open_report_in_browser": False,
                 },
             },
             "monte_carlo_risk": {
@@ -290,12 +293,14 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
                 "output": {
                     "generate_html": True,
                     "generate_csv": False,
+                    "open_report_in_browser": False,
                 },
             },
             "tax_report": {
                 "output": {
                     "generate_html": True,
                     "generate_csv": False,
+                    "open_report_in_browser": False,
                 },
                 "sections": {
                     "include_roth_analysis": True,

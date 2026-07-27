@@ -18,6 +18,7 @@ from src.warpsimlab.reports.report_common import (
     render_report_header,
     render_footer,
     render_base_css,
+    open_html_report_in_browser,
 )
 
 
@@ -732,6 +733,9 @@ def generate_tax_report(report_data) -> ReportResult:
                 output_folder,
                 safe_id,
             )
+
+        if output.get("open_report_in_browser", False):
+            open_html_report_in_browser(report_path)
 
         return ReportResult(
             success=True,

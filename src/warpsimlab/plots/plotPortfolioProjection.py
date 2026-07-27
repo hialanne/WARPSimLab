@@ -104,8 +104,33 @@ def draw_portfolio_projection(
     _draw_scenario_annotations_lower_right(ax, sim_config)
     _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config)
     
-    value_type = "Real" if getattr(sim_config, "plot_mode", "nominal") == "real" else "Nominal"
-    plt.title(f"Portfolio Projection ({value_type})")
+    value_type = (
+        "Real"
+        if getattr(sim_config, "plot_mode", "nominal") == "real"
+        else "Nominal"
+    )
+
+    subplot_mode = getattr(sim_config, "subplot_mode", "")
+    market_mode = getattr(
+        sim_config,
+        "monte_carlo_mode",
+        "pathBasedAnnualSampling",
+    )
+
+    if (
+        subplot_mode == "monte_carlo"
+        and market_mode == "rollingHistoricalWindows"
+    ):
+        plot_title = (
+            f"Historical Windows Portfolio Projection "
+            f"({value_type})"
+        )
+    elif subplot_mode == "monte_carlo":
+        plot_title = f"Monte Carlo Portfolio Projection ({value_type})"
+    else:
+        plot_title = f"Portfolio Projection ({value_type})"
+
+    plt.title(plot_title)
 
     handles, labels = ax.get_legend_handles_labels()
     if hasattr(_plot_monte_carlo_assets, "_extra_handles"):

@@ -10,6 +10,7 @@ from src.warpsimlab.reports.report_common import (
     render_report_header,
     render_footer,
     render_base_css,
+    open_html_report_in_browser,
 )
 
 COMPACT_COLUMNS = [
@@ -444,6 +445,15 @@ def generate_year_by_year_report(
                 output_folder,
                 safe_report_id,
             )
+
+        if (
+            html_path
+            and report_data.report_options.get(
+                "open_report_in_browser",
+                False,
+            )
+        ):
+            open_html_report_in_browser(html_path)
 
         return ReportResult(
             success=True,

@@ -131,6 +131,13 @@ class RiskReportBaseFrame(ttk.Frame):
             left_row,
         )
 
+        left_row = self._add_check_path_to_frame(
+            left_frame,
+            "Open HTML report in web browser when complete",
+            ["output", "open_report_in_browser"],
+            left_row,
+        )
+
         right_row = self._build_method_specific_options(right_frame, right_row)
 
         row += 1

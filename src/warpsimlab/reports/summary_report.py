@@ -13,7 +13,9 @@ from src.warpsimlab.reports.report_common import (
     render_report_header,
     render_footer,
     render_base_css,
+    open_html_report_in_browser,
 )
+
 
 YEAR_KEYS = {
     "Year",
@@ -1062,6 +1064,12 @@ def generate_summary_report(report_data: SummaryReportData) -> ReportResult:
     try:
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(html_text)
+
+        if report_data.report_options.get(
+            "open_report_in_browser",
+            False,
+        ):
+            open_html_report_in_browser(report_path)
 
         return ReportResult(
             success=True,

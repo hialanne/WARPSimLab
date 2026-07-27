@@ -14,6 +14,7 @@ from src.warpsimlab.reports.report_common import (
     render_report_header,
     render_footer,
     render_base_css,
+    open_html_report_in_browser,
 )
 
 
@@ -1026,6 +1027,15 @@ def generate_risk_report(report_data) -> ReportResult:
                 output_folder,
                 safe_report_id,
             )
+
+        open_report_in_browser = _get_report_option(
+            report_data.report_options,
+            ["output", "open_report_in_browser"],
+            False,
+        )
+
+        if html_path and open_report_in_browser:
+            open_html_report_in_browser(html_path)
 
         return ReportResult(
             success=True,

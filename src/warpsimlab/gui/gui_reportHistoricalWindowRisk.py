@@ -31,6 +31,7 @@ class HistoricalWindowRiskReportFrame(RiskReportBaseFrame):
         "output": {
             "generate_html": True,
             "generate_csv": False,
+            "open_report_in_browser": False,
         },
     }
 

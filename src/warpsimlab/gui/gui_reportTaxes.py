@@ -10,6 +10,7 @@ class TaxReportFrame(ttk.Frame):
         "output": {
             "generate_html": True,
             "generate_csv": False,
+            "open_report_in_browser": False,
         },
         "sections": {
             "include_roth_analysis": True,
@@ -93,6 +94,13 @@ class TaxReportFrame(ttk.Frame):
             left_frame,
             "CSV Export",
             ["output", "generate_csv"],
+            left_row
+        )
+
+        left_row = self._add_check_path_to_frame(
+            left_frame,
+            "Open HTML report in web browser when complete",
+            ["output", "open_report_in_browser"],
             left_row
         )
 

@@ -11,6 +11,7 @@ class YearByYearDetailsReportFrame(ttk.Frame):
         "generate_csv": True,
         "table_detail": "Compact",
         "insert_5_year_breaks": True,
+        "open_report_in_browser": False,
     }
 
     def __init__(
@@ -81,6 +82,13 @@ class YearByYearDetailsReportFrame(ttk.Frame):
             left_frame,
             "Generate HTML report",
             ["generate_html"],
+            left_row,
+        )
+
+        left_row = self._add_check_path_to_frame(
+            left_frame,
+            "Open HTML report in web browser when complete",
+            ["open_report_in_browser"],
             left_row,
         )
 

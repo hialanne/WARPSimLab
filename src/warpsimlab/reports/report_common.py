@@ -4,6 +4,9 @@ import html
 import os
 from datetime import datetime
 
+from pathlib import Path
+import webbrowser
+
 
 def safe(text):
     return html.escape(str(text))
@@ -16,6 +19,27 @@ def get_report_output_folder():
         "WARPSimLab",
         "Reports",
     )
+
+
+def open_html_report_in_browser(report_path):
+    if not report_path:
+        return False
+
+    try:
+        path = Path(report_path).resolve()
+
+        if not path.is_file():
+            return False
+
+        return bool(
+            webbrowser.open(
+                path.as_uri(),
+                new=2,
+            )
+        )
+
+    except Exception:
+        return False
 
 
 def safe_report_id(report_id):
