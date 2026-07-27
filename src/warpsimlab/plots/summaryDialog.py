@@ -23,7 +23,15 @@ class SummaryDialog(tk.Toplevel):
         height = 800
         self.geometry(f"{width}x{height}")
 
-        self.title(title)
+        value_basis = (
+            "Real"
+            if self.sim_config.plot_mode == "real"
+            else "Nominal"
+        )
+
+        self.display_title = f"{title} ({value_basis})"
+
+        self.title(self.display_title)
         self._build_ui()
 
     def _build_ui(self):
@@ -56,7 +64,7 @@ class SummaryDialog(tk.Toplevel):
 
         ttk.Label(
             container,
-            text="Simulation Summary",
+            text=self.display_title,
             font=title_font,
             anchor="center",
             justify="center"
@@ -572,7 +580,13 @@ class SummaryDialog(tk.Toplevel):
 
             row_idx += 1
 
-        add_row("Wages", "wages")
+        add_combined_row(
+            "Gross Wages",
+            (
+                "wages",
+                "employee_401k_contributions",
+            ),
+        )
         add_row("RMD", "rmd")
         add_row("Social Security", "social_security")
 

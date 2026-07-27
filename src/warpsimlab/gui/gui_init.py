@@ -1,5 +1,9 @@
 # gui_init.py
 
+#
+# Version string is defined after imports.
+#
+
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
@@ -43,6 +47,8 @@ from src.warpsimlab.gui.gui_tutorial_definitions import (
     build_advanced_analysis_tutorial_steps,
 )
 
+WARPSIMLAB_VERSION = "4.0.2"
+WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin):
     def __init__(self, root):
@@ -58,13 +64,13 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             y = (screen_height // 2) - (height // 2)
             window.geometry(f"{width}x{height}+{x}+{y}")
 
-        root.title("WARPSimLab version 4.0.1")
-
+        root.title(WARPSIMLAB_TITLE)
+        
         window_width = 1200
         window_height = 750
         center_window(root, window_width, window_height)
 
-        ttk.Label(root, text="WARPSimLab version 4.0.1", font=("Arial", 16)).pack(pady=10)
+        ttk.Label(root, text=WARPSIMLAB_TITLE, font=("Arial", 16), ).pack(pady=10)
 
         self.frame = ttk.Frame(root)
         self.frame.pack(pady=5, padx=10, fill="both", expand=True)

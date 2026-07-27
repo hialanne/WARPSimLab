@@ -115,19 +115,38 @@ def _build_portfolio_milestone(results, index):
     
 
 def _build_income_milestone(results, index):
+    employee_401k_contribution = _array_value(
+        results,
+        "employee_401k_contributions",
+        index,
+    )
+
+    gross_wages = (
+        _array_value(results, "wages", index)
+        + employee_401k_contribution
+    )
+
     pensions_and_annuities = (
         _array_value(results, "pensions", index)
         + _array_value(results, "annuities", index)
     )
 
+    investment_income = (
+        _array_value(results, "bond_interest", index)
+        + _array_value(results, "cash_interest", index)
+        + _array_value(results, "qualified_dividends", index)
+    )
+
     return {
         "Year": _array_value(results, "year", index),
-        "Wages": _array_value(results, "wages", index),
+        "Gross Wages": gross_wages,
+        "Special Income": _array_value(results, "special_income", index),
         "RMD": _array_value(results, "rmd", index),
         "Social Security": _array_value(results, "social_security", index),
         "Pensions and Annuities": pensions_and_annuities,
+        "Investment Income": investment_income,
         "Gross Income": _array_value(results, "gross_income", index),
-        "401k or IRA Contribution": _array_value(results, "ira_401k", index),
+        "Employee 401k Contribution": employee_401k_contribution,
         "Taxes": _array_value(results, "taxes", index),
         "Tax Bracket": _array_value(results, "tax_bracket", index),
         "Net Income": _array_value(results, "net_income", index),

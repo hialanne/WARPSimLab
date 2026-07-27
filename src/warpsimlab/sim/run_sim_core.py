@@ -1091,6 +1091,10 @@ def simulate_yearly_portfolios(
         results["expense_amt"]          = results["expense_amt"]        / discount_factors
         results["uncovered_expense"]    = (results["uncovered_expense"] / discount_factors)
         results["ira_401k"]             = results["ira_401k"]           / discount_factors
+        results["employee_401k_contributions"] = (
+            results["employee_401k_contributions"]
+            / discount_factors
+        )
         results["roth_ira_contributions"] = (
             results["roth_ira_contributions"]
             / discount_factors

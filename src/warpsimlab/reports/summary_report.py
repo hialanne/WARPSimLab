@@ -537,12 +537,14 @@ def _render_income_summary(report_data):
         return ""
 
     categories = [
-        "Wages",
+        "Gross Wages",
+        "Special Income",
         "RMD",
         "Social Security",
         "Pensions and Annuities",
+        "Investment Income",
         "Gross Income",
-        "401k or IRA Contribution",
+        "Employee 401k Contribution",
         "Taxes",
         "Tax Bracket",
         "Net Income",
