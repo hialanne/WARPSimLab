@@ -52,9 +52,9 @@ def test_initial_rows_created_from_model(tk_root, no_tooltip):
     assert frame.expensesDict is model
     assert len(frame.row_vars) == 2
 
-    # rows start at grid row 3
-    assert frame.row_vars[0]["row"] == 3
-    assert frame.row_vars[1]["row"] == 4
+    # rows start at grid row 2
+    assert frame.row_vars[0]["row"] == 2
+    assert frame.row_vars[1]["row"] == 3
 
     # add button positioned after rows
     assert int(frame.add_button.grid_info()["row"]) == frame.next_row
@@ -143,9 +143,9 @@ def test_regrid_rows_after_delete(tk_root, no_tooltip):
 
     assert len(frame.row_vars) == 2
 
-    # rows should compact to 3 and 4
-    assert frame.row_vars[0]["row"] == 3
-    assert frame.row_vars[1]["row"] == 4
+    # rows should compact to 2 and 3
+    assert frame.row_vars[0]["row"] == 2
+    assert frame.row_vars[1]["row"] == 3
 
     # add button should follow
     assert int(frame.add_button.grid_info()["row"]) == frame.next_row

@@ -107,7 +107,10 @@ def _make_dummy_gui(tmp_path: Path):
     gui.special_income_streams = []
     gui.roth_flows = []
 
-    gui.simulation_controls = {"enable_second_person": 0}
+    gui.simulation_controls = {
+        "enable_second_person": 0,
+        "state_of_residence": "Colorado",
+    }
     gui.simulation_settings = {"years_to_simulate": 30, "num_sims": 500, "fund_expense": 0.0}
 
     gui.enable_second_person = SimpleNamespace(get=lambda: False)
@@ -115,26 +118,44 @@ def _make_dummy_gui(tmp_path: Path):
     gui.edit_frame_container = None
 
     return gui
-def test_load_values_from_json_uses_default_file_when_present(monkeypatch, tmp_path):
-    """
-    If Desktop/WARPSimLab/financialDataWAS.json exists, load_values_from_json should load it
-    without prompting for a file.
-    """
+
+
+def test_load_examples_from_json_loads_financial_data_average(
+    monkeypatch,
+    tmp_path,
+):
     from src.warpsimlab.gui import gui_io as mod
 
     gui = _make_dummy_gui(tmp_path)
 
-    # Provide a fake default dir + default file
-    default_dir = tmp_path / "WARPSimLab"
-    default_dir.mkdir(parents=True, exist_ok=True)
-    default_file = default_dir / "financialDataWAS.json"
-    default_file.write_text("{}")
+    example_dir = (
+        tmp_path
+        / "src"
+        / "warpsimlab"
+        / "exampleFiles"
+    )
+    example_dir.mkdir(parents=True, exist_ok=True)
 
-    # Monkeypatch directory method to avoid touching the real Desktop
+    example_file = example_dir / "financialDataAverage.json"
+    example_file.write_text("{}", encoding="utf-8")
+
     monkeypatch.setattr(
         mod.PortfolioSimulatorGUI_IOMixin,
-        "get_default_warpsimlab_dir",
-        lambda self: default_dir,
+        "_get_examples_directory",
+        lambda self: str(example_dir),
+        raising=True,
+    )
+
+    dialog_args = {}
+
+    def fake_askopenfilename(**kwargs):
+        dialog_args.update(kwargs)
+        return str(example_file)
+
+    monkeypatch.setattr(
+        mod.filedialog,
+        "askopenfilename",
+        fake_askopenfilename,
         raising=True,
     )
 
@@ -143,12 +164,17 @@ def test_load_values_from_json_uses_default_file_when_present(monkeypatch, tmp_p
     def fake_load_from_json(self, file_path):
         loaded["path"] = Path(file_path)
 
-    monkeypatch.setattr(mod.PortfolioSimulatorGUI_IOMixin, "_load_from_json", fake_load_from_json, raising=True)
+    monkeypatch.setattr(
+        mod.PortfolioSimulatorGUI_IOMixin,
+        "_load_from_json",
+        fake_load_from_json,
+        raising=True,
+    )
 
-    # Must call bound method: mixin method expects 'self'
-    mod.PortfolioSimulatorGUI_IOMixin.load_values_from_json(gui)
+    mod.PortfolioSimulatorGUI_IOMixin.load_examples_from_json(gui)
 
-    assert loaded["path"] == default_file
+    assert Path(dialog_args["initialdir"]) == example_dir
+    assert loaded["path"] == example_file
 
 
 def test_load_values_from_json_prompts_when_default_missing(monkeypatch, tmp_path):
@@ -265,7 +291,7 @@ def test_save_values_to_json_writes_expected_keys(monkeypatch, tmp_path):
         raising=True,
     )
 
-    out_file = tmp_path / "financialDataWAS.json"
+    out_file = tmp_path / "savedFinancialData.json"
     monkeypatch.setattr(mod.filedialog, "asksaveasfilename", lambda **kwargs: str(out_file), raising=True)
 
     # Avoid GUI popups

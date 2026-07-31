@@ -52,13 +52,14 @@ def test_build_method_specific_analysis_options_adds_monte_carlo_insights(monkey
 
     calls = []
 
-    def fake_add_check_path_to_frame(parent, label, path, row):
+    def fake_add_check_path_to_frame(parent, label, path, row, tooltip_text):
         calls.append(
             {
                 "parent": parent,
                 "label": label,
                 "path": path,
                 "row": row,
+                "tooltip_text": tooltip_text,
             }
         )
         return row + 1
@@ -81,5 +82,9 @@ def test_build_method_specific_analysis_options_adds_monte_carlo_insights(monkey
             "label": "Include Monte Carlo Insights",
             "path": ["analysis", "include_monte_carlo_insights"],
             "row": 7,
+            "tooltip_text": (
+                "Include observations derived from simulated market return "
+                "paths across the Monte Carlo result set."
+            ),
         }
     ]

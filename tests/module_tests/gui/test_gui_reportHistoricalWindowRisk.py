@@ -47,18 +47,27 @@ def test_default_options_include_expected_output_sections():
     }
 
 
-def test_build_method_specific_analysis_options_adds_historical_window_insights(monkeypatch):
+def test_build_method_specific_analysis_options_adds_historical_window_insights(
+    monkeypatch,
+):
     frame = object.__new__(HistoricalWindowRiskReportFrame)
 
     calls = []
 
-    def fake_add_check_path_to_frame(parent, label, path, row):
+    def fake_add_check_path_to_frame(
+        parent,
+        label,
+        path,
+        row,
+        tooltip_text,
+    ):
         calls.append(
             {
                 "parent": parent,
                 "label": label,
                 "path": path,
                 "row": row,
+                "tooltip_text": tooltip_text,
             }
         )
         return row + 1
@@ -81,5 +90,9 @@ def test_build_method_specific_analysis_options_adds_historical_window_insights(
             "label": "Include Historical Window Insights",
             "path": ["analysis", "include_historical_window_insights"],
             "row": 7,
+            "tooltip_text": (
+                "Include observations derived from overlapping historical "
+                "market return windows."
+            ),
         }
     ]

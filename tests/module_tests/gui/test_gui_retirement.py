@@ -40,16 +40,24 @@ def mod_no_tooltip(monkeypatch):
 
 def _all_texts(widget: tk.Misc) -> list[str]:
     """
-    Collect 'text' strings from common text-bearing ttk widgets.
-    (Checkbuttons are important here.)
+    Recursively collect text strings from common text-bearing ttk widgets.
     """
     out: list[str] = []
-    for w in widget.winfo_children():
-        if isinstance(w, (ttk.Label, ttk.Checkbutton, ttk.Button, ttk.Radiobutton)):
-            try:
-                out.append(w.cget("text"))
-            except tk.TclError:
-                pass
+
+    def visit(node: tk.Misc):
+        for child in node.winfo_children():
+            if isinstance(
+                child,
+                (ttk.Label, ttk.Checkbutton, ttk.Button, ttk.Radiobutton),
+            ):
+                try:
+                    out.append(child.cget("text"))
+                except tk.TclError:
+                    pass
+
+            visit(child)
+
+    visit(widget)
     return out
 
 
