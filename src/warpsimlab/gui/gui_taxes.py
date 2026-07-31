@@ -28,9 +28,30 @@ class TaxesEditFrame(ttk.Frame):
 
         self.controls = control_vars["_controls_dict"]
 
-        ttk.Label(self, text=title, font=("Arial", 12, "bold")).grid(
-            row=0, column=0, sticky="w", pady=(0, 5)
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            sticky="w",
+            pady=(0, 8),
         )
+
+        ttk.Label(
+            header_frame,
+            text="Cash Flow > Taxes",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Configure federal, state, and payroll tax assumptions "
+                "used by the simulation."
+            ),
+            font=("Arial", 11),
+        ).pack(side="left")
+
+        self._row = 1
 
         self._row = 1
 

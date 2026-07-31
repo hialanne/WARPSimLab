@@ -49,7 +49,30 @@ class PortfolioSimulationEditFrame(ttk.Frame):
 
         row = 0
 
-        ttk.Label(self, text=title, font=("Arial", 12, "bold")).grid(row=row, column=0, sticky="w", pady=(0, 5))
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=row,
+            column=0,
+            columnspan=3,
+            sticky="w",
+            pady=(0, 8),
+        )
+
+        ttk.Label(
+            header_frame,
+            text="Simulation > Settings",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Configure the simulation period, Monte Carlo runs, "
+                "fund expenses, and portfolio rebalancing."
+            ),
+            font=("Arial", 11),
+        ).pack(side="left")
+
         row += 1
 
         ttk.Label(self, text="Start year to simulate:").grid(row=row, column=0, sticky="w")

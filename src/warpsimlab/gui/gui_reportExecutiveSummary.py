@@ -1,7 +1,10 @@
+# gui_reportExecutiveSummary.py
+
 import copy
 import tkinter as tk
 from tkinter import ttk
 
+from src.warpsimlab.utils.tooltip import Tooltip
 
 class ExecutiveSummaryReportFrame(ttk.Frame):
     DEFAULT_OPTIONS = {
@@ -125,16 +128,23 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             left_frame,
             "Include Simulation Summary",
             ["include_simulation_summary"],
-            left_row
+            left_row,
+            (
+                "Include summary tables for portfolio, income, cash flow, "
+                "and simulation results."
+            )
         )
 
         left_row += 1
-        left_row = self._add_section_label_to_frame(left_frame, "Appendices", left_row)
         left_row = self._add_check_path_to_frame(
             left_frame,
             "Include assumptions appendix",
             ["include_assumptions_appendix"],
-            left_row
+            left_row,
+            (
+                "Include the assumptions and configuration used to generate "
+                "the report."
+            )
         )
 
         left_row += 1
@@ -148,19 +158,31 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
         output_frame = ttk.Frame(left_frame)
         output_frame.grid(row=left_row, column=0, sticky="w", pady=2)
 
-        ttk.Radiobutton(
+        html_rb = ttk.Radiobutton(
             output_frame,
             text="HTML",
             variable=output_format_var,
             value="HTML"
-        ).pack(side="left", padx=(0, 20))
+        )
+        html_rb.pack(side="left", padx=(0, 20))
+        Tooltip(
+            html_rb,
+            "Generate the report as an HTML file.",
+            font=("Arial", 11)
+        )
 
-        ttk.Radiobutton(
+        pdf_rb = ttk.Radiobutton(
             output_frame,
             text="PDF (future)",
             variable=output_format_var,
             value="PDF"
-        ).pack(side="left")
+        )
+        pdf_rb.pack(side="left")
+        Tooltip(
+            pdf_rb,
+            "PDF report output is not currently implemented.",
+            font=("Arial", 11)
+        )
 
         output_format_var.trace_add(
             "write",
@@ -174,7 +196,11 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             left_frame,
             "Open HTML report in web browser when complete",
             ["open_report_in_browser"],
-            left_row
+            left_row,
+            (
+                "Open the generated HTML report in the default web browser "
+                "when report generation is complete."
+            )
         )
 
         right_row = self._add_section_label_to_frame(right_frame, "Portfolio Visuals", right_row)
@@ -182,25 +208,43 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             right_frame,
             "Include normal projection",
             ["portfolio_visuals", "include_normal_projection"],
-            right_row
+            right_row,
+            (
+                "Include the primary portfolio projection using the selected "
+                "simulation assumptions."
+            )
         )
+
         right_row = self._add_check_path_to_frame(
             right_frame,
             "Include sub-categories projection",
             ["portfolio_visuals", "include_subcategories_projection"],
-            right_row
+            right_row,
+            (
+                "Include portfolio results separated by asset and account "
+                "categories."
+            )
         )
+
         right_row = self._add_check_path_to_frame(
             right_frame,
             "Include Historical Windows analysis",
             ["portfolio_visuals", "include_historical_windows_analysis"],
-            right_row
+            right_row,
+            (
+                "Include results from overlapping historical market return "
+                "windows."
+            )
         )
+
         right_row = self._add_check_path_to_frame(
             right_frame,
             "Include Monte Carlo analysis",
             ["portfolio_visuals", "include_monte_carlo_analysis"],
-            right_row
+            right_row,
+            (
+                "Include results from simulated market return paths."
+            )
         )
 
         right_row += 1
@@ -209,34 +253,48 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             right_frame,
             "Include normal income",
             ["income_visuals", "include_normal_income"],
-            right_row
+            right_row,
+            (
+                "Include the primary net income visualization."
+            )
         )
+
         right_row = self._add_check_path_to_frame(
             right_frame,
             "Include sub-categories income",
             ["income_visuals", "include_subcategories_income"],
-            right_row
+            right_row,
+            (
+                "Include income separated into its component sources."
+            )
         )
 
         right_row += 1
+        right_row += 1
         right_row = self._add_section_label_to_frame(
             right_frame,
-            "Cashflow Visuals",
+            "Cash Flow Visuals",
             right_row
         )
 
         right_row = self._add_check_path_to_frame(
             right_frame,
-            "Include normal cashflow",
+            "Include normal cash flow",
             ["cashflow_visuals", "include_normal_cashflow"],
-            right_row
+            right_row,
+            (
+                "Include the primary cash flow visualization."
+            )
         )
 
         right_row = self._add_check_path_to_frame(
             right_frame,
-            "Include sub-categories cashflow",
+            "Include sub-categories cash flow",
             ["cashflow_visuals", "include_subcategories_cashflow"],
-            right_row
+            right_row,
+            (
+                "Include cash flow separated into its component sources."
+            )
         )
 
         right_row += 1
@@ -250,7 +308,11 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             right_frame,
             "Include cumulative operating balance",
             ["operating_balance_visuals", "include_cumulative_operating_balance"],
-            right_row
+            right_row,
+            (
+                "Include the accumulated difference between cash inflows "
+                "and outflows over time."
+            )
         )
 
         row += 1
@@ -386,7 +448,15 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
         ).grid(row=row, column=0, sticky="w", pady=(10, 4))
         return row + 1
 
-    def _add_check_path_to_frame(self, parent, label, path, row):
+
+    def _add_check_path_to_frame(
+        self,
+        parent,
+        label,
+        path,
+        row,
+        tooltip_text=None
+    ):
         var = tk.BooleanVar(value=self._get_option_path(path, False))
         self.vars[self._path_key(path)] = var
 
@@ -396,6 +466,9 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             variable=var
         )
         cb.grid(row=row, column=0, sticky="w", pady=2)
+
+        if tooltip_text:
+            Tooltip(cb, tooltip_text, font=("Arial", 11))
 
         var.trace_add(
             "write",

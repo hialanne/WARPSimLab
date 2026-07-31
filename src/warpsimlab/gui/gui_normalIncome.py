@@ -70,14 +70,29 @@ class NormalIncomeEditFrame(ttk.Frame):
                 ),
             }
 
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=6,
+            sticky="w",
+            pady=(0, 8),
+        )
 
         ttk.Label(
-            self,
-            text="Defines each person's age, income, and retirement timeline used in the simulation.",
+            header_frame,
+            text="Cash Flow > Normal Income",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Defines each person's age, income, and retirement timeline "
+                "used in the simulation."
+            ),
             font=("Arial", 11),
-            wraplength=600,
-            justify="left",
-        ).grid(row=0, column=0, columnspan=6, sticky="w", pady=(0, 8))
+        ).pack(side="left")
 
         self._build_fields()
 

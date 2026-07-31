@@ -1,6 +1,9 @@
+# gui_realEstate.py
+
 import tkinter as tk
 from tkinter import ttk
 
+from src.warpsimlab.utils.tooltip import Tooltip
 
 class RealEstateEditFrame(ttk.Frame):
     """
@@ -26,13 +29,29 @@ class RealEstateEditFrame(ttk.Frame):
         style = ttk.Style()
         style.configure("Derived.TEntry", foreground="#555555")
 
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=4,
+            sticky="w",
+            pady=(0, 8),
+        )
+
         ttk.Label(
-            self,
-            text="Defines real estate value used by the simulation and balance sheet calculations.  Represents actual worth after loans.",
+            header_frame,
+            text="Balance Sheet > Real Estate",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Defines real estate value used by the simulation and balance "
+                "sheet calculations. Represents actual worth after loans."
+            ),
             font=("Arial", 11),
-            wraplength=700,
-            justify="left",
-        ).grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 8))
+        ).pack(side="left")
 
         self._init_vars()
         self._build_fields()
@@ -101,13 +120,20 @@ class RealEstateEditFrame(ttk.Frame):
             "husband",
         )
 
-        ttk.Entry(
+        tooltip_text = (
+            "Current net real estate value after subtracting mortgages "
+            "and other property loans"
+        )
+
+        entry_h = ttk.Entry(
             self,
             textvariable=self.h_real_estate_var,
             width=14,
             validate="focusout",
             validatecommand=vcmd_h,
-        ).grid(row=row, column=1, sticky="w", padx=5)
+        )
+        entry_h.grid(row=row, column=1, sticky="w", padx=5)
+        Tooltip(entry_h, tooltip_text, font=("Arial", 11))
 
         if self.wife_portfolio:
             vcmd_w = (
@@ -116,13 +142,15 @@ class RealEstateEditFrame(ttk.Frame):
                 "wife",
             )
 
-            ttk.Entry(
+            entry_w = ttk.Entry(
                 self,
                 textvariable=self.w_real_estate_var,
                 width=14,
                 validate="focusout",
                 validatecommand=vcmd_w,
-            ).grid(row=row, column=2, sticky="w", padx=5)
+            )
+            entry_w.grid(row=row, column=2, sticky="w", padx=5)
+            Tooltip(entry_w, tooltip_text, font=("Arial", 11))
 
         ttk.Entry(
             self,

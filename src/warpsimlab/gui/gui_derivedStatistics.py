@@ -1,6 +1,9 @@
+# gui_desrivedStatistics.py
+
 import tkinter as tk
 from tkinter import ttk
 
+from src.warpsimlab.utils.tooltip import Tooltip
 
 class DerivedStatisticsFrame(ttk.Frame):
     """
@@ -25,13 +28,29 @@ class DerivedStatisticsFrame(ttk.Frame):
         style = ttk.Style()
         style.configure("Derived.TEntry", foreground="#555555")
 
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=3,
+            sticky="w",
+            pady=(0, 8),
+        )
+
         ttk.Label(
-            self,
-            text="Read-only derived statistics calculated from portfolio and real estate values.",
+            header_frame,
+            text="Balance Sheet > Derived Statistics",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Displays read-only statistics calculated from portfolio "
+                "and real estate values."
+            ),
             font=("Arial", 11),
-            wraplength=700,
-            justify="left",
-        ).grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 8))
+        ).pack(side="left")
 
         self.vars = {}
         self._build_fields()
@@ -75,12 +94,24 @@ class DerivedStatisticsFrame(ttk.Frame):
         )
         row += 1
 
-        for label, key in [
-            ("Investable Assets", "investable_assets"),
-            ("Real Estate", "real_estate"),
-            ("Total Wealth", "total_wealth"),
+        for label, key, tooltip_text in [
+            (
+                "Investable Assets",
+                "investable_assets",
+                "Total stocks, bonds, cash, and HSA assets; excludes real estate",
+            ),
+            (
+                "Real Estate",
+                "real_estate",
+                "Combined net real estate value after loans",
+            ),
+            (
+                "Total Wealth",
+                "total_wealth",
+                "Investable assets plus real estate",
+            ),
         ]:
-            self._add_readonly_row(row, label, key)
+            self._add_readonly_row(row, label, key, tooltip_text)
             row += 1
 
         row += 1
@@ -90,13 +121,29 @@ class DerivedStatisticsFrame(ttk.Frame):
         )
         row += 1
 
-        for label, key in [
-            ("Pre-Tax", "pct_pre"),
-            ("After-Tax", "pct_post"),
-            ("Roth", "pct_roth"),
-            ("HSA", "pct_hsa"),
+        for label, key, tooltip_text in [
+            (
+                "Pre-Tax",
+                "pct_pre",
+                "Pre-tax assets as a percentage of investable assets",
+            ),
+            (
+                "After-Tax",
+                "pct_post",
+                "Taxable assets as a percentage of investable assets",
+            ),
+            (
+                "Roth",
+                "pct_roth",
+                "Roth assets as a percentage of investable assets",
+            ),
+            (
+                "HSA",
+                "pct_hsa",
+                "HSA assets as a percentage of investable assets",
+            ),
         ]:
-            self._add_readonly_row(row, label, key)
+            self._add_readonly_row(row, label, key, tooltip_text)
             row += 1
 
         row += 1
@@ -106,29 +153,45 @@ class DerivedStatisticsFrame(ttk.Frame):
         )
         row += 1
 
-        for label, key in [
-            ("Stocks", "pct_equity"),
-            ("Bonds", "pct_bonds"),
-            ("Cash", "pct_cash"),
+        for label, key, tooltip_text in [
+            (
+                "Stocks",
+                "pct_equity",
+                "Stock assets, including HSA stocks, as a percentage of investable assets",
+            ),
+            (
+                "Bonds",
+                "pct_bonds",
+                "Bond assets, including HSA bonds, as a percentage of investable assets",
+            ),
+            (
+                "Cash",
+                "pct_cash",
+                "Cash assets, including HSA cash, as a percentage of investable assets",
+            ),
         ]:
-            self._add_readonly_row(row, label, key)
+            self._add_readonly_row(row, label, key, tooltip_text)
             row += 1
 
-    def _add_readonly_row(self, row, label_text, key):
-        ttk.Label(self, text=label_text).grid(
+    def _add_readonly_row(self, row, label_text, key, tooltip_text):
+        label = ttk.Label(self, text=label_text)
+        label.grid(
             row=row, column=0, sticky="w", padx=5, pady=2
         )
+        Tooltip(label, tooltip_text, font=("Arial", 11))
 
         var = tk.StringVar(value="--")
         self.vars[key] = var
 
-        ttk.Entry(
+        entry = ttk.Entry(
             self,
             textvariable=var,
             width=18,
             state="readonly",
             style="Derived.TEntry",
-        ).grid(row=row, column=1, sticky="w", padx=10)
+        )
+        entry.grid(row=row, column=1, sticky="w", padx=10)
+        Tooltip(entry, tooltip_text, font=("Arial", 11))
 
     def _safe_pct(self, numerator, denominator):
         if denominator <= 0:

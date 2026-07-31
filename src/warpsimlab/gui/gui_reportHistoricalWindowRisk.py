@@ -41,6 +41,10 @@ class HistoricalWindowRiskReportFrame(RiskReportBaseFrame):
             "Include Historical Window Insights",
             ["analysis", "include_historical_window_insights"],
             row,
+            (
+                "Include observations derived from overlapping historical "
+                "market return windows."
+            )
         )
 
         return row

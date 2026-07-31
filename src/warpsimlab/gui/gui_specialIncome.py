@@ -39,17 +39,30 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self.row_vars = []
         self.next_row = 0
 
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=self.next_row,
+            column=0,
+            columnspan=9,
+            sticky="w",
+            pady=(0, 10),
+        )
+
         ttk.Label(
-            self,
+            header_frame,
+            text="Cash Flow > Special Income",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
             text=(
-                "Special income streams are optional, age-based income items such as "
-                "alimony, inheritance payments, consulting income, or other non-standard income. "
-                "This screen stores the data for the simulation engine; it does not yet calculate income."
+                " - Special income streams include income items "
+                "such as alimony, inheritance payments, consulting income, or "
+                "other non-standard income. "
             ),
             font=("Arial", 11),
-            wraplength=900,
-            justify="left",
-        ).grid(row=self.next_row, column=0, columnspan=8, sticky="w", pady=(0, 10))
+        ).pack(side="left")
 
         self.next_row += 1
 

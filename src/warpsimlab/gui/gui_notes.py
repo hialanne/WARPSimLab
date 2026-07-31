@@ -28,13 +28,27 @@ class NotesFrame(ttk.Frame):
         style.configure("TutorialButton.TButton", font=("Arial", 13, "bold"), padding=(12, 10))
         style.configure("TutorialBorder.TLabelframe", borderwidth=4, relief="solid")
 
+        header_frame = ttk.Frame(self)
+        header_frame.pack(
+            anchor="w",
+            fill="x",
+            pady=(0, 8),
+        )
+
         ttk.Label(
-            self,
-            text="Provides notes and technical documentation describing the model.",
+            header_frame,
+            text="Home > Notes",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Provides notes and technical documentation describing "
+                "the model."
+            ),
             font=("Arial", 11),
-            wraplength=600,
-            justify="left",
-        ).pack(anchor="w", pady=(0, 8))
+        ).pack(side="left")
 
         # ---- Bordered container ----
         border = ttk.LabelFrame(self, style="TutorialBorder.TLabelframe")

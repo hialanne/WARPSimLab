@@ -19,13 +19,29 @@ class RetirementEditFrame(ttk.Frame):
         self.portfolio = portfolio
         self.title = title
 
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=2,
+            sticky="w",
+            pady=(0, 8),
+        )
+
         ttk.Label(
-            self,
-            text="Defines how the simulation models retirement spending withdrawals, RMDs, and optional sequence-of-returns scenarios.",
+            header_frame,
+            text="Retirement",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Defines how the simulation models retirement spending "
+                "withdrawals, RMDs, and optional sequence-of-returns scenarios."
+            ),
             font=("Arial", 11),
-            wraplength=900,
-            justify="left",
-        ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
+        ).pack(side="left")
 
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)

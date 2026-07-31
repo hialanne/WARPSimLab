@@ -4,6 +4,7 @@ import copy
 import tkinter as tk
 from tkinter import ttk
 
+from src.warpsimlab.utils.tooltip import Tooltip
 
 class RiskReportBaseFrame(ttk.Frame):
     REPORT_NAME = "Risk Report"
@@ -77,17 +78,27 @@ class RiskReportBaseFrame(ttk.Frame):
         right_row = 0
 
         left_row = self._add_section_label_to_frame(left_frame, "General", left_row)
+
         left_row = self._add_check_path_to_frame(
             left_frame,
             "Include executive summary",
             ["general", "include_executive_summary"],
             left_row,
+            (
+                "Include a concise summary of the report's main simulated "
+                "outcomes and observations."
+            )
         )
+
         left_row = self._add_check_path_to_frame(
             left_frame,
             "Include method explanation",
             ["general", "include_method_explanation"],
             left_row,
+            (
+                "Include an explanation of the simulation method used to "
+                "produce this risk report."
+            )
         )
 
         left_row += 1
@@ -98,6 +109,10 @@ class RiskReportBaseFrame(ttk.Frame):
             "Include Portfolio Projection",
             ["analysis", "include_portfolio_projection"],
             left_row,
+            (
+                "Include portfolio values over time across the simulated "
+                "or historical result set."
+            )
         )
 
         left_row = self._add_check_path_to_frame(
@@ -105,6 +120,10 @@ class RiskReportBaseFrame(ttk.Frame):
             "Include Portfolio Sustainability Analysis",
             ["analysis", "include_portfolio_sustainability"],
             left_row,
+            (
+                "Include analysis of how often the modeled portfolio remains "
+                "above zero through the simulation period."
+            )
         )
 
         left_row = self._build_method_specific_analysis_options(left_frame, left_row)
@@ -114,21 +133,32 @@ class RiskReportBaseFrame(ttk.Frame):
             "Include Percentile Portfolio Table",
             ["analysis", "include_percentile_table"],
             left_row,
+            (
+                "Include portfolio values at selected percentiles across the "
+                "Monte Carlo runs or historical windows."
+            )
         )
 
         left_row += 1
         left_row = self._add_section_label_to_frame(left_frame, "Output", left_row)
+
         left_row = self._add_check_path_to_frame(
             left_frame,
             "Generate HTML report",
             ["output", "generate_html"],
             left_row,
+            "Generate the risk report as a formatted HTML file."
         )
+
         left_row = self._add_check_path_to_frame(
             left_frame,
             "Generate CSV export",
             ["output", "generate_csv"],
             left_row,
+            (
+                "Generate a CSV file containing the report's underlying "
+                "risk-analysis data."
+            )
         )
 
         left_row = self._add_check_path_to_frame(
@@ -136,6 +166,10 @@ class RiskReportBaseFrame(ttk.Frame):
             "Open HTML report in web browser when complete",
             ["output", "open_report_in_browser"],
             left_row,
+            (
+                "Open the generated HTML report in the default web browser "
+                "when report generation is complete."
+            )
         )
 
         right_row = self._build_method_specific_options(right_frame, right_row)
@@ -207,13 +241,27 @@ class RiskReportBaseFrame(ttk.Frame):
         )
         return row + 1
 
-    def _add_check_path_to_frame(self, parent, label, path, row):
+
+    def _add_check_path_to_frame(
+        self,
+        parent,
+        label,
+        path,
+        row,
+        tooltip_text=None
+    ):
         var = tk.BooleanVar(value=self._get_option_path(path, False))
         self.vars[self._path_key(path)] = var
 
-        ttk.Checkbutton(parent, text=label, variable=var).grid(
-            row=row, column=0, sticky="w", pady=2
+        cb = ttk.Checkbutton(
+            parent,
+            text=label,
+            variable=var
         )
+        cb.grid(row=row, column=0, sticky="w", pady=2)
+
+        if tooltip_text:
+            Tooltip(cb, tooltip_text, font=("Arial", 11))
 
         var.trace_add(
             "write",
@@ -222,12 +270,14 @@ class RiskReportBaseFrame(ttk.Frame):
 
         return row + 1
 
+
     def apply_changes(self):
         self.options.clear()
         self.options.update(copy.deepcopy(self.working_options))
 
         self.parent_gui.edit_blank()
         self.parent_gui.run_simulation_from_gui(sim_type=self.RUN_SIM_TYPE)
+
 
     def cancel_changes(self):
         self.working_options = self._normalize_options(self.options)

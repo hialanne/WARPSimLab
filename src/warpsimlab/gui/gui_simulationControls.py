@@ -51,14 +51,29 @@ class SimulationControlsEditFrame(ttk.Frame):
         self.columnconfigure(2, weight=0)
         self.columnconfigure(3, weight=0)
 
-        # Description
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=4,
+            sticky="w",
+            pady=(0, 8),
+        )
+
         ttk.Label(
-            self,
-            text="Controls how simulation results are displayed, exported, and annotated.",
+            header_frame,
+            text="Simulation > Controls",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Controls how simulation results are displayed, "
+                "exported, and annotated."
+            ),
             font=("Arial", 11),
-            wraplength=900,
-            justify="left",
-        ).grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 8))
+        ).pack(side="left")
 
         # Top-level layout:
         # left_panel spans outer columns 0-1
@@ -297,6 +312,24 @@ class SimulationControlsEditFrame(ttk.Frame):
             "Pre / Post Tax Savings",
         ]
 
+        plot_style_tooltips = {
+            "Fill": (
+                "Display a single simulation result as filled plot areas."
+            ),
+            "Percentile Bands": (
+                "Display percentile bands from either Monte Carlo simulations "
+                "or rolling historical windows, depending on the selected "
+                "Percentile Bands Mode."
+            ),
+            "Sub Categories": (
+                "Display simulation results separated into detailed categories."
+            ),
+            "Pre / Post Tax Savings": (
+                "Display portfolio results separated into pre-tax and "
+                "after-tax savings."
+            ),
+        }
+
         for i, option in enumerate(plot_style_options):
             rb = ttk.Radiobutton(
                 plot_style_frame,
@@ -305,7 +338,11 @@ class SimulationControlsEditFrame(ttk.Frame):
                 value=option
             )
             rb.grid(row=i, column=0, sticky="w", pady=1)
-            Tooltip(rb, f"Use {option} plot style.", font=("Arial", 11))
+            Tooltip(
+                rb,
+                plot_style_tooltips[option],
+                font=("Arial", 11)
+            )
 
         def on_subplot_mode_changed(*_):
             previous_mode = self.controls.get("subplot_mode", "fill")
@@ -422,9 +459,13 @@ class SimulationControlsEditFrame(ttk.Frame):
             value="pathBasedAnnualSampling"
         )
         mc_mode_path_rb.grid(row=0, column=0, sticky="w", pady=1)
+        
         Tooltip(
             mc_mode_path_rb,
-            "Sample one full annual return path using the configured return assumptions.",
+            (
+                "Generate percentile bands from Monte Carlo simulations using "
+                "the configured return assumptions."
+            ),
             font=("Arial", 11)
         )
 
@@ -435,9 +476,13 @@ class SimulationControlsEditFrame(ttk.Frame):
             value="rollingHistoricalWindows"
         )
         mc_mode_historical_rb.grid(row=2, column=0, sticky="w", pady=1)
+
         Tooltip(
             mc_mode_historical_rb,
-            "Run all overlapping rolling historical return windows from the historical CSV file.",
+            (
+                "Generate percentile bands from all overlapping rolling "
+                "historical return windows in the historical CSV file."
+            ),
             font=("Arial", 11)
         )
 

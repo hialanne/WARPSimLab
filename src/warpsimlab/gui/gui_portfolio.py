@@ -1,3 +1,5 @@
+# gui_portfolio.py
+
 import tkinter as tk
 from tkinter import ttk
 
@@ -31,13 +33,29 @@ class PortfolioEditFrame(ttk.Frame):
         style = ttk.Style()
         style.configure("Derived.TEntry", foreground="#555555")
 
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=4,
+            sticky="w",
+            pady=(0, 8),
+        )
+
         ttk.Label(
-            self,
-            text="Defines investable portfolio balances used by the simulation. Real estate is entered separately.",
+            header_frame,
+            text="Balance Sheet > Portfolio",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Defines investable portfolio balances used by the simulation. "
+                "Real estate is entered separately."
+            ),
             font=("Arial", 11),
-            wraplength=700,
-            justify="left",
-        ).grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 8))
+        ).pack(side="left")
 
         self._init_vars()
         self._build_fields()
@@ -139,35 +157,80 @@ class PortfolioEditFrame(ttk.Frame):
 
         if self.mode == "Basic":
             fields = [
-                ("Savings", "cash_post"),
+                (
+                    "Savings",
+                    "cash_post",
+                    "Cash and savings held outside retirement accounts",
+                ),
             ]
         else:
             fields = [
-                ("Stocks Pre-Tax", "equity_pre"),
-                ("Stocks After-Tax", "equity_post"),
-                ("Stocks Roth", "equity_roth"),
-                ("", None),
+                (
+                    "Stocks Pre-Tax",
+                    "equity_pre",
+                    "Stock investments held in tax-deferred retirement accounts",
+                ),
+                (
+                    "Stocks After-Tax",
+                    "equity_post",
+                    "Stock investments held in taxable accounts",
+                ),
+                (
+                    "Stocks Roth",
+                    "equity_roth",
+                    "Stock investments held in Roth retirement accounts",
+                ),
+                ("", None, None),
 
-                ("Bonds Pre-Tax", "bond_pre"),
-                ("Bonds After-Tax", "bond_post"),
-                ("Bonds Roth", "bond_roth"),
-                ("", None),
+                (
+                    "Bonds Pre-Tax",
+                    "bond_pre",
+                    "Bond investments held in tax-deferred retirement accounts",
+                ),
+                (
+                    "Bonds After-Tax",
+                    "bond_post",
+                    "Bond investments held in taxable accounts",
+                ),
+                (
+                    "Bonds Roth",
+                    "bond_roth",
+                    "Bond investments held in Roth retirement accounts",
+                ),
+                ("", None, None),
 
-                ("Cash Pre-Tax", "cash_pre"),
-                ("Cash After-Tax", "cash_post"),
-                ("Cash Roth", "cash_roth"),
-                ("", None),
+                (
+                    "Cash Pre-Tax",
+                    "cash_pre",
+                    "Cash held in tax-deferred retirement accounts",
+                ),
+                (
+                    "Cash After-Tax",
+                    "cash_post",
+                    "Cash and savings held in taxable accounts",
+                ),
+                (
+                    "Cash Roth",
+                    "cash_roth",
+                    "Cash held in Roth retirement accounts",
+                ),
+                ("", None, None),
 
-                ("HSA", "hsa"),
+                (
+                    "HSA",
+                    "hsa",
+                    "Total HSA balance; currently stored and modeled as HSA cash",
+                ),
             ]
 
-        for label_text, key in fields:
+        for label_text, key, tooltip_text in fields:
             if key is None:
                 ttk.Label(self, text="").grid(row=row, column=0, pady=3)
                 row += 1
                 continue
 
-            self._add_money_row(row, label_text, key)
+            self._add_money_row(row, label_text, key, tooltip_text)
+
             row += 1
 
         ttk.Separator(self, orient="horizontal").grid(
@@ -221,7 +284,8 @@ class PortfolioEditFrame(ttk.Frame):
             foreground="#555555",
         ).grid(row=row, column=0, columnspan=4, sticky="w", padx=10, pady=(12, 0))
 
-    def _add_money_row(self, row, label_text, key):
+
+    def _add_money_row(self, row, label_text, key, tooltip_text):
         ttk.Label(self, text=label_text).grid(
             row=row, column=0, sticky="w", padx=5, pady=2
         )
@@ -233,13 +297,15 @@ class PortfolioEditFrame(ttk.Frame):
             key,
         )
 
-        ttk.Entry(
+        entry_h = ttk.Entry(
             self,
             textvariable=self.h_vars[key],
             width=14,
             validate="focusout",
             validatecommand=vcmd_h,
-        ).grid(row=row, column=1, sticky="w", padx=5)
+        )
+        entry_h.grid(row=row, column=1, sticky="w", padx=5)
+        Tooltip(entry_h, tooltip_text, font=("Arial", 11))
 
         if self.w_vars:
             vcmd_w = (
@@ -249,13 +315,15 @@ class PortfolioEditFrame(ttk.Frame):
                 key,
             )
 
-            ttk.Entry(
+            entry_w = ttk.Entry(
                 self,
                 textvariable=self.w_vars[key],
                 width=14,
                 validate="focusout",
                 validatecommand=vcmd_w,
-            ).grid(row=row, column=2, sticky="w", padx=5)
+            )
+            entry_w.grid(row=row, column=2, sticky="w", padx=5)
+            Tooltip(entry_w, tooltip_text, font=("Arial", 11))
 
         total_var = tk.StringVar(value="--")
         self.row_total_vars[key] = total_var
@@ -267,6 +335,7 @@ class PortfolioEditFrame(ttk.Frame):
             state="readonly",
             style="Derived.TEntry",
         ).grid(row=row, column=3, sticky="w", padx=5)
+
 
     def _validate_portfolio_field_on_focusout(self, proposed_value, person_key, field_key):
         portfolio = self.husband_portfolio if person_key == "husband" else self.wife_portfolio

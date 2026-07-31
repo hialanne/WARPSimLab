@@ -27,7 +27,6 @@ from src.warpsimlab.gui.gui_scenarioSnapshots import *
 from src.warpsimlab.gui.gui_io import *
 from src.warpsimlab.gui.gui_io import PortfolioSimulatorGUI_IOMixin
 from src.warpsimlab.gui.gui_scenarioController import ScenarioController
-from src.warpsimlab.gui.gui_expenses_taxes import ExpensesTaxesFrame
 from src.warpsimlab.gui.gui_utils import (noop,set_tk_button_soft_disabled,create_dropdown_button, create_top_button)
 from .gui_notes import NotesFrame
 from src.warpsimlab.gui.gui_expenses import ExpensesEditFrame
@@ -47,7 +46,7 @@ from src.warpsimlab.gui.gui_tutorial_definitions import (
     build_advanced_analysis_tutorial_steps,
 )
 
-WARPSIMLAB_VERSION = "4.0.2"
+WARPSIMLAB_VERSION = "4.0.3"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin):
@@ -1080,7 +1079,11 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             control_vars=control_vars,
             title="Controls"
         )
-        self.simulation_controls_editor_frame.pack(anchor="w", pady=(20, 10))
+        self.simulation_controls_editor_frame.pack(
+            padx=10,
+            pady=5,
+            fill="x",
+        )
 
 
     def _rebuild_reports_menu(self):

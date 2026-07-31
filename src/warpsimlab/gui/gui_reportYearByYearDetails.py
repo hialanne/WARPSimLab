@@ -4,6 +4,7 @@ import copy
 import tkinter as tk
 from tkinter import ttk
 
+from src.warpsimlab.utils.tooltip import Tooltip
 
 class YearByYearDetailsReportFrame(ttk.Frame):
     DEFAULT_OPTIONS = {
@@ -83,6 +84,10 @@ class YearByYearDetailsReportFrame(ttk.Frame):
             "Generate HTML report",
             ["generate_html"],
             left_row,
+            (
+                "Generate a formatted HTML version of the Year-by-Year "
+                "Details report."
+            )
         )
 
         left_row = self._add_check_path_to_frame(
@@ -90,6 +95,10 @@ class YearByYearDetailsReportFrame(ttk.Frame):
             "Open HTML report in web browser when complete",
             ["open_report_in_browser"],
             left_row,
+            (
+                "Open the generated HTML report in the default web browser "
+                "when report generation is complete."
+            )
         )
 
         left_row = self._add_check_path_to_frame(
@@ -97,6 +106,9 @@ class YearByYearDetailsReportFrame(ttk.Frame):
             "Generate CSV export",
             ["generate_csv"],
             left_row,
+            (
+                "Generate a CSV file containing the year-by-year report data."
+            )
         )
 
         left_row += 1
@@ -111,6 +123,10 @@ class YearByYearDetailsReportFrame(ttk.Frame):
             "Insert visual break every 5 years",
             ["insert_5_year_breaks"],
             left_row,
+            (
+                "Add a visual separator after every five simulation years "
+                "in the HTML table."
+            )
         )
 
         right_row = self._add_section_label_to_frame(
@@ -127,19 +143,36 @@ class YearByYearDetailsReportFrame(ttk.Frame):
         detail_frame = ttk.Frame(right_frame)
         detail_frame.grid(row=right_row, column=0, sticky="w", pady=2)
 
-        ttk.Radiobutton(
+        compact_rb = ttk.Radiobutton(
             detail_frame,
             text="Compact",
             variable=table_detail_var,
             value="Compact",
-        ).pack(anchor="w", pady=2)
+        )
+        compact_rb.pack(anchor="w", pady=2)
+        Tooltip(
+            compact_rb,
+            (
+                "Show a smaller set of high-level year-by-year columns."
+            ),
+            font=("Arial", 11)
+        )
 
-        ttk.Radiobutton(
+        detailed_rb = ttk.Radiobutton(
             detail_frame,
             text="Detailed",
             variable=table_detail_var,
             value="Detailed",
-        ).pack(anchor="w", pady=2)
+        )
+        detailed_rb.pack(anchor="w", pady=2)
+        Tooltip(
+            detailed_rb,
+            (
+                "Show expanded income, tax, cash flow, and portfolio columns "
+                "for each simulation year."
+            ),
+            font=("Arial", 11)
+        )
 
         table_detail_var.trace_add(
             "write",
@@ -225,7 +258,15 @@ class YearByYearDetailsReportFrame(ttk.Frame):
         ).grid(row=row, column=0, sticky="w", pady=(10, 4))
         return row + 1
 
-    def _add_check_path_to_frame(self, parent, label, path, row):
+
+    def _add_check_path_to_frame(
+        self,
+        parent,
+        label,
+        path,
+        row,
+        tooltip_text=None
+    ):
         var = tk.BooleanVar(value=self._get_option_path(path, False))
         self.vars[self._path_key(path)] = var
 
@@ -236,12 +277,16 @@ class YearByYearDetailsReportFrame(ttk.Frame):
         )
         cb.grid(row=row, column=0, sticky="w", pady=2)
 
+        if tooltip_text:
+            Tooltip(cb, tooltip_text, font=("Arial", 11))
+
         var.trace_add(
             "write",
             lambda *_args, p=path, v=var: self._set_option_path(p, v.get()),
         )
 
         return row + 1
+
 
     def apply_changes(self):
         self.options.clear()

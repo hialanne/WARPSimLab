@@ -41,6 +41,10 @@ class MonteCarloRiskReportFrame(RiskReportBaseFrame):
             "Include Monte Carlo Insights",
             ["analysis", "include_monte_carlo_insights"],
             row,
+            (
+                "Include observations derived from simulated market return "
+                "paths across the Monte Carlo result set."
+            )
         )
 
         return row

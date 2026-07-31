@@ -4,6 +4,8 @@ import copy
 import tkinter as tk
 from tkinter import ttk
 
+from src.warpsimlab.utils.tooltip import Tooltip
+
 
 class TaxReportFrame(ttk.Frame):
     DEFAULT_OPTIONS = {
@@ -84,50 +86,78 @@ class TaxReportFrame(ttk.Frame):
         right_row = 0
 
         left_row = self._add_section_label_to_frame(left_frame, "Output", left_row)
+
         left_row = self._add_check_path_to_frame(
             left_frame,
             "HTML Report",
             ["output", "generate_html"],
-            left_row
+            left_row,
+            "Generate the Tax Report as a formatted HTML file."
         )
+
         left_row = self._add_check_path_to_frame(
             left_frame,
             "CSV Export",
             ["output", "generate_csv"],
-            left_row
+            left_row,
+            "Generate a CSV file containing the report's yearly tax data."
         )
 
         left_row = self._add_check_path_to_frame(
             left_frame,
             "Open HTML report in web browser when complete",
             ["output", "open_report_in_browser"],
-            left_row
+            left_row,
+            (
+                "Open the generated HTML report in the default web browser "
+                "when report generation is complete."
+            )
         )
 
         right_row = self._add_section_label_to_frame(right_frame, "Sections", right_row)
+
         right_row = self._add_check_path_to_frame(
             right_frame,
             "Include Roth Analysis",
             ["sections", "include_roth_analysis"],
-            right_row
+            right_row,
+            (
+                "Include educational analysis of Roth account balances, "
+                "withdrawals, and their modeled tax treatment."
+            )
         )
+
         right_row = self._add_check_path_to_frame(
             right_frame,
             "Include HSA Analysis",
             ["sections", "include_hsa_analysis"],
-            right_row
+            right_row,
+            (
+                "Include educational analysis of HSA balances, withdrawals, "
+                "and their modeled tax treatment."
+            )
         )
+
         right_row = self._add_check_path_to_frame(
             right_frame,
             "Include RMD Analysis",
             ["sections", "include_rmd_analysis"],
-            right_row
+            right_row,
+            (
+                "Include educational analysis of required minimum "
+                "distributions modeled during the simulation."
+            )
         )
+
         right_row = self._add_check_path_to_frame(
             right_frame,
             "Include Educational Commentary",
             ["sections", "include_educational_commentary"],
-            right_row
+            right_row,
+            (
+                "Include explanatory commentary about the simulated tax "
+                "results. The commentary is educational and is not tax advice."
+            )
         )
 
         button_frame = ttk.Frame(self)
@@ -193,15 +223,27 @@ class TaxReportFrame(ttk.Frame):
         ).grid(row=row, column=0, sticky="w", pady=(10, 4))
         return row + 1
 
-    def _add_check_path_to_frame(self, parent, label, path, row):
+
+    def _add_check_path_to_frame(
+        self,
+        parent,
+        label,
+        path,
+        row,
+        tooltip_text=None
+    ):
         var = tk.BooleanVar(value=self._get_option_path(path, False))
         self.vars[self._path_key(path)] = var
 
-        ttk.Checkbutton(
+        cb = ttk.Checkbutton(
             parent,
             text=label,
             variable=var
-        ).grid(row=row, column=0, sticky="w", pady=2)
+        )
+        cb.grid(row=row, column=0, sticky="w", pady=2)
+
+        if tooltip_text:
+            Tooltip(cb, tooltip_text, font=("Arial", 11))
 
         var.trace_add(
             "write",
@@ -209,6 +251,7 @@ class TaxReportFrame(ttk.Frame):
         )
 
         return row + 1
+
 
     def apply_changes(self):
         self.options.clear()

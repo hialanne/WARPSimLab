@@ -27,11 +27,29 @@ class HistoricalEditFrame(ttk.Frame):
         super().__init__(parent, padding=10)
         self.data = historical_data
 
-        # --- Top title ---
-        if title:
-            ttk.Label(self, text=title, font=("Arial", 12, "bold")).grid(
-                row=0, column=0, columnspan=2, sticky="w", pady=(0, 10)
-            )
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=3,
+            sticky="w",
+            pady=(0, 10),
+        )
+
+        ttk.Label(
+            header_frame,
+            text="Simulation > Assumptions",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Configure historical return, volatility, inflation, "
+                "and market dataset assumptions used by the simulation."
+            ),
+            font=("Arial", 11),
+        ).pack(side="left")
 
         # --- Frames for side-by-side layout ---
         self.left_frame = ttk.Frame(self)

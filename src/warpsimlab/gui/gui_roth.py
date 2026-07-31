@@ -78,25 +78,29 @@ class RothEditFrame(ttk.Frame):
         self.row_vars = []
         self.next_row = 0
 
-        ttk.Label(
-            self,
-            text=(
-                "Roth flows define scheduled Roth IRA contributions, "
-                "Roth workplace-plan contributions, and Roth conversions. "
-                "This screen stores user-supplied Roth flow data for the "
-                "simulation engine; simulator behavior is implemented "
-                "separately."
-            ),
-            font=("Arial", 11),
-            wraplength=1050,
-            justify="left",
-        ).grid(
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
             row=self.next_row,
             column=0,
             columnspan=9,
             sticky="w",
             pady=(0, 10),
         )
+
+        ttk.Label(
+            header_frame,
+            text="Cash Flow > Roth Contributions / Conversions",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Roth flows define scheduled Roth IRA contributions, "
+                "Roth workplace-plan contributions, and Roth conversions. "
+            ),
+            font=("Arial", 11),
+        ).pack(side="left")
 
         self.next_row += 1
 

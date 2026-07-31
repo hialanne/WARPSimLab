@@ -13,34 +13,47 @@ class ExpensesEditFrame(ttk.Frame):
 
     def __init__(self, parent, expensesDict, title="Expenses"):
         super().__init__(parent, padding=10)
-        self.expensesDict = expensesDict  # DynamicExpenses instance
-
-        # Title
-        ttk.Label(self, text=title, font=("Arial", 12, "bold")).grid(row=0, column=0, columnspan=5, pady=(0,5))
-
-        INTRO_TEXT = (
-            "Expenses (not including federal or state taxes)\n"
-            "  Taxes are calculated by the simulator:\n"
+        self.expensesDict = expensesDict
+        
+        header_frame = ttk.Frame(self)
+        header_frame.grid(
+            row=0,
+            column=0,
+            columnspan=5,
+            sticky="w",
+            pady=(0, 8),
         )
 
-        # Intro label, italicized and wrapped
         ttk.Label(
-            self,
-            text=INTRO_TEXT,
-            justify="left",
-            wraplength=400,
-            font=("Arial", 11, "italic")
-        ).grid(row=1, column=0, columnspan=5, sticky="w", pady=(0, 8))
-        # Row 1: Headers
+            header_frame,
+            text="Cash Flow > Expenses",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=(
+                " - Enter recurring or temporary household expenses. "
+                "Federal and state taxes are calculated separately."
+            ),
+            font=("Arial", 11),
+        ).pack(side="left")
+
         headers = ["Start Year", "End Year", "Cost", "Comment", "Delete"]
+
         for col, header in enumerate(headers):
-            ttk.Label(self, text=header).grid(row=2, column=col, padx=5, pady=2)
+            ttk.Label(
+                self,
+                text=header,
+            ).grid(
+                row=1,
+                column=col,
+                padx=5,
+                pady=2,
+            )
 
-        # Storage for temporary variables per row
         self.row_vars = []
-
-        # Track next row index (start after title + header)
-        self.next_row = 3  # row 0: title, row 1: intro, row2: headers
+        self.next_row = 2
 
         # Populate initial expenses
         for exp in self.expensesDict.expenses:
@@ -316,13 +329,13 @@ class ExpensesEditFrame(ttk.Frame):
         Ensures Add button is immediately after last row.
         """
         for i, item in enumerate(self.row_vars):
-            row_index = 3 + i   # row 0: title, row 1: intro, row2: headers
+            row_index = 2 + i   # row 0: title, row 1: intro, row2: headers
             for col, widget in enumerate(item["widgets"]):
                 widget.grid_configure(row=row_index, column=col)
             item["row"] = row_index
 
         # Update next_row and reposition Add button
-        self.next_row = 3 + len(self.row_vars)
+        self.next_row = 2 + len(self.row_vars)
         self._update_add_button_position()
 
     def _update_add_button_position(self):

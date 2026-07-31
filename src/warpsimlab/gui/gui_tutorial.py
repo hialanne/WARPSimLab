@@ -50,10 +50,6 @@ class TutorialFrame(ttk.Frame):
         style = ttk.Style()
 
         style.configure(
-            "TutorialPageTitle.TLabel",
-            font=("Arial", 16, "bold"),
-        )
-        style.configure(
             "TutorialSectionTitle.TLabel",
             font=("Arial", 13, "bold"),
         )
@@ -68,23 +64,28 @@ class TutorialFrame(ttk.Frame):
             relief="solid",
         )
 
-        ttk.Label(
-            self,
-            text=self.title,
-            style="TutorialPageTitle.TLabel",
-        ).pack(anchor="w", pady=(0, 8))
+        header_frame = ttk.Frame(self)
+        header_frame.pack(
+            anchor="w",
+            fill="x",
+            pady=(0, 14),
+        )
 
         ttk.Label(
-            self,
+            header_frame,
+            text="Home > Tutorials",
+            font=("Arial", 11, "bold"),
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
             text=(
-                "Choose a guided tutorial based on what you want to learn. "
+                " - Choose a guided tutorial based on what you want to learn. "
                 "Tutorials use the financial data currently loaded and do not "
                 "reset your scenario."
             ),
             font=("Arial", 11),
-            wraplength=900,
-            justify="left",
-        ).pack(anchor="w", pady=(0, 14))
+        ).pack(side="left")
 
         tutorials_container = ttk.Frame(self)
         tutorials_container.pack(fill="x", expand=False)

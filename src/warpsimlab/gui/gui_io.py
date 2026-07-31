@@ -30,16 +30,11 @@ class PortfolioSimulatorGUI_IOMixin:
         Load financial data from the default location or allow user selection.
         """
 
-        default_file = self.get_default_warpsimlab_dir() / "financialDataWAS.json"
-
-        if default_file.exists():
-            file_path = default_file
-        else:
-            file_path = filedialog.askopenfilename(
-                title="Select Financial Data JSON",
-                initialdir=str(self.get_default_warpsimlab_dir()),
-                filetypes=[("JSON Files", "*.json")]
-            )
+        file_path = filedialog.askopenfilename(
+            title="Select Financial Data JSON",
+            initialdir=str(self.get_default_warpsimlab_dir()),
+            filetypes=[("JSON Files", "*.json")]
+        )
 
         if not file_path:
             return
@@ -168,7 +163,7 @@ class PortfolioSimulatorGUI_IOMixin:
             self.simulation_settings['years_to_simulate'] = data.get("DEFAULT_YEARS", 30)
             self.simulation_settings['num_sims'] = data.get("DEFAULT_SIMULATIONS", 500)
             self.simulation_settings['fund_expense'] = data.get("DEFAULT_FUND_EXPENSE", 0.0)
-
+            self.simulation_controls["state_of_residence"] = data.get("STATE_OF_RESIDENCE",self.simulation_controls["state_of_residence"],)
             # --- Expenses ---
             self.expensesDict.expenses.clear()
             for exp in data.get("EXPENSES", []):
@@ -323,8 +318,8 @@ class PortfolioSimulatorGUI_IOMixin:
                     "comment": exp["comment"]
                 }
                 for exp in getattr(self.expensesDict, "expenses", [])
-            ]
-
+            ],
+            "STATE_OF_RESIDENCE": self.simulation_controls["state_of_residence"],
         })
 
         # --- Ask user where to save ---
@@ -332,7 +327,6 @@ class PortfolioSimulatorGUI_IOMixin:
         file_path = filedialog.asksaveasfilename(
             title="Save Financial Data",
             initialdir=str(default_dir),      # Desktop/WARPSimLab Data
-            initialfile="financialDataWAS.json",
             defaultextension=".json",
             filetypes=[("JSON Files", "*.json")]
         )
