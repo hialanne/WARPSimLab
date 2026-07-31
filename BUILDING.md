@@ -249,6 +249,17 @@ SHA-256:
 ```
 
 
+## 12.1. Update the website.  Check it in.
+
+Update the website. Check it in.  Push after we are finished with this checklist and we are released.
+
+```
+git status
+```
+
+The working tree should be clean. Save the commit hash with the release records. 
+
+
 ## 13. Record the Release Commit
 
 Confirm that the repository still points to the commit used for the final build:
