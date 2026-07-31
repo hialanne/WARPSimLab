@@ -158,7 +158,7 @@ File to be zip'd should use the following file format: 'WARPSimLab-vX.Y.Z-Win-x8
 Create one canonical Windows ZIP file.  Create the ZIP from the completed `dist\WARPSimLab` directory using Windows File Explorer.
 
 ```text
-WARPSimLab-v[X.Y.Z]-Windows-x64.zip
+WARPSimLab-v4.0.3-Win-x86_64
 ```
 
 The ZIP should contain one top-level directory.
@@ -167,7 +167,7 @@ NOTICE: The LICENSE.txt file is manually moved up a level.
 NOTICE: Create the README-FIRST.txt file.
 
 ```text
-WARPSimLab-v[X.Y.Z]\
+WARPSimLab-v4.0.3-Win-x86_64\
     WARPSimLab.exe
     Internal\
     README-FIRST.txt
@@ -179,7 +179,7 @@ The user must extract the complete ZIP before running WARPSimLab.
 Suggested `README-FIRST.txt` contents:
 
 ```text
-WARPSimLab v[X.Y.Z]
+WARPSimLab v4.0.3
 
 INSTALLATION
 
@@ -187,6 +187,8 @@ INSTALLATION
 2. Keep WARPSimLab.exe and the Internal directory together.
 3. Run WARPSimLab.exe.
 4. Windows may display a warning for newly published software.
+5. Click More Info
+6. Click Run Anyway
 
 WARPSimLab is an educational personal-finance simulation tool.
 It does not provide financial, tax, legal, or investment advice.
@@ -195,7 +197,7 @@ Documentation:
 https://warpsimlab.org/
 
 Source code:
-https://github.com/[GITHUB-ACCOUNT]/[REPOSITORY]
+https://github.com/hialanne/warpsimlab
 ```
 
 ## 11. Scan the Release
@@ -203,7 +205,7 @@ https://github.com/[GITHUB-ACCOUNT]/[REPOSITORY]
 Scan the release files:
 
 * `WARPSimLab.exe`
-* `WARPSimLab-v[X.Y.Z]-Windows-x64.zip`
+* `WARPSimLab-v4.0.3-Win-x86_64.zip`
 
 Use:
 
@@ -225,7 +227,7 @@ Record:
 From PowerShell:
 
 ```
-Get-FileHash .\WARPSimLab-v4.0.2-Win-x86_64.zip -Algorithm SHA256
+Get-FileHash .\WARPSimLab-v4.0.3-Win-x86_64.zip -Algorithm SHA256
 ```
 
 Save the result in:
@@ -265,7 +267,7 @@ The version tag created in the next step must point to this commit.
 Create an annotated tag for the exact release commit:
 
 ```
-git tag -a v[X.Y.Z] -m "WARPSimLab v[X.Y.Z]" (Note, get rid if the square braces)
+git tag -a v[X.Y.Z] -m "WARPSimLab v[X.Y.Z]" (Note, get rid of the square braces)
 git push origin main
 git push origin v[X.Y.Z]
 ```
