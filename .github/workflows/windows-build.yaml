@@ -71,9 +71,14 @@ jobs:
         run: |
           python -m PyInstaller --clean --noconfirm WARPSimLab.spec
 
-      - name: Verify expected build output
+      - name: Inspect and verify build output
         shell: pwsh
         run: |
+          Write-Host "Contents of dist:"
+          Get-ChildItem -Path "dist" -Recurse |
+              Select-Object FullName, Length |
+              Format-Table -AutoSize
+
           if (-not (Test-Path "dist\WARPSimLab\WARPSimLab.exe")) {
               throw "WARPSimLab.exe was not created."
           }
