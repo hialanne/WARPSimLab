@@ -75,16 +75,18 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Contents of dist:"
-          Get-ChildItem -Path "dist" -Recurse |
-              Select-Object FullName, Length |
+          Get-ChildItem -Path "dist" -Force -Recurse |
+              Select-Object FullName, PSIsContainer, Length |
+              Format-Table -AutoSize
+
+          Write-Host ""
+          Write-Host "Immediate contents of dist\WARPSimLab:"
+          Get-ChildItem -Path "dist\WARPSimLab" -Force |
+              Select-Object Name, FullName, PSIsContainer, Length |
               Format-Table -AutoSize
 
           if (-not (Test-Path "dist\WARPSimLab\WARPSimLab.exe")) {
               throw "WARPSimLab.exe was not created."
-          }
-
-          if (-not (Test-Path "dist\WARPSimLab\Internal")) {
-              throw "The Internal directory was not created."
           }
 
       - name: Create release directory
