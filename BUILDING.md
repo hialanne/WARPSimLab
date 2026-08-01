@@ -49,10 +49,10 @@ Use a clean Python virtual environment for local release testing. This helps det
 Create and activate the environment:
 
 ```powershell
-python -m venv .venv-release
+python3 -m venv .venv-release
 .\.venv-release\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
 ```
 
 The current required packages include:
@@ -67,7 +67,7 @@ pytest==9.0.1
 Run WARPSimLab from source:
 
 ```powershell
-python WARPSimLab.py
+python3 WARPSimLab.py
 ```
 
 If WARPSimLab fails because a required package is missing, add that package to `requirements.txt`, recreate the clean environment, and repeat the test.
@@ -79,14 +79,14 @@ The GitHub Actions workflow, rather than this local environment, produces the of
 Record the Python version and installed packages:
 
 ```powershell
-python --version 2>&1 | Tee-Object -FilePath build-environment.txt
-python -m pip freeze 2>&1 | Tee-Object -FilePath build-environment.txt -Append
+python3 --version 2>&1 | Tee-Object -FilePath build-environment.txt
+python3 -m pip freeze 2>&1 | Tee-Object -FilePath build-environment.txt -Append
 ```
 
 The PyInstaller version may also be recorded:
 
 ```powershell
-python -m PyInstaller --version 2>&1 | Tee-Object -FilePath build-environment.txt -Append
+python3 -m PyInstaller --version 2>&1 | Tee-Object -FilePath build-environment.txt -Append
 ```
 
 Keep `build-environment.txt` with the release records. Do not distribute it as part of the application.
@@ -98,7 +98,7 @@ The GitHub Actions run provides the authoritative record of the environment used
 Run:
 
 ```powershell
-python -m pytest 2>&1 | Tee-Object -FilePath test-results.txt
+python3 -m pytest 2>&1 | Tee-Object -FilePath test-results.txt
 ```
 
 Confirm that the results are acceptable before continuing.
