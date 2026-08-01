@@ -1,0 +1,195 @@
+name: Build Windows Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "WARPSimLab version, without the leading v"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Test and build Windows package
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13.14"
+          cache: "pip"
+
+      - name: Display Python version
+        shell: pwsh
+        run: |
+          python --version
+          python -m pip --version
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Record build environment
+        shell: pwsh
+        run: |
+          python --version 2>&1 |
+              Tee-Object -FilePath build-environment.txt
+
+          python -m PyInstaller --version 2>&1 |
+              Tee-Object -FilePath build-environment.txt -Append
+
+          python -m pip freeze 2>&1 |
+              Tee-Object -FilePath build-environment.txt -Append
+
+      - name: Run complete test suite
+        shell: pwsh
+        run: |
+          python -m pytest 2>&1 |
+              Tee-Object -FilePath test-results.txt
+
+          if ($LASTEXITCODE -ne 0) {
+              exit $LASTEXITCODE
+          }
+
+      - name: Remove previous build output
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force build, dist, package `
+              -ErrorAction SilentlyContinue
+
+      - name: Build with PyInstaller
+        shell: pwsh
+        run: |
+          python -m PyInstaller --clean --noconfirm WARPSimLab.spec
+
+      - name: Verify expected build output
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist\WARPSimLab\WARPSimLab.exe")) {
+              throw "WARPSimLab.exe was not created."
+          }
+
+          if (-not (Test-Path "dist\WARPSimLab\Internal")) {
+              throw "The Internal directory was not created."
+          }
+
+      - name: Create release directory
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          $packageName = "WARPSimLab-v$env:VERSION-Win-x86_64"
+          $packageRoot = Join-Path "package" $packageName
+
+          New-Item -ItemType Directory -Path $packageRoot -Force |
+              Out-Null
+
+          Copy-Item `
+              -Path "dist\WARPSimLab\*" `
+              -Destination $packageRoot `
+              -Recurse `
+              -Force
+
+          # The spec places LICENSE.txt inside Internal. The public package
+          # keeps it beside WARPSimLab.exe instead.
+          Remove-Item `
+              -Path (Join-Path $packageRoot "Internal\LICENSE.txt") `
+              -Force `
+              -ErrorAction SilentlyContinue
+
+          Copy-Item `
+              -Path "LICENSE.txt" `
+              -Destination (Join-Path $packageRoot "LICENSE.txt") `
+              -Force
+
+          $readme = @"
+          WARPSimLab v$env:VERSION
+
+          INSTALLATION
+
+          1. Extract the complete ZIP file.
+          2. Keep WARPSimLab.exe and the Internal directory together.
+          3. Run WARPSimLab.exe.
+          4. Windows may display a warning for newly published software.
+          5. Click More info.
+          6. Click Run anyway.
+
+          WARPSimLab is an educational personal-finance simulation tool.
+          It does not provide financial, tax, legal, or investment advice.
+
+          Documentation:
+          https://warpsimlab.org/
+
+          Source code:
+          https://github.com/hialanne/WARPSimLab
+          "@
+
+          Set-Content `
+              -Path (Join-Path $packageRoot "README-FIRST.txt") `
+              -Value $readme `
+              -Encoding ascii
+
+      - name: Create Windows ZIP
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          $packageName = "WARPSimLab-v$env:VERSION-Win-x86_64"
+          $packageRoot = Join-Path "package" $packageName
+          $zipPath = "$packageName.zip"
+
+          Compress-Archive `
+              -Path $packageRoot `
+              -DestinationPath $zipPath `
+              -CompressionLevel Optimal
+
+          if (-not (Test-Path $zipPath)) {
+              throw "The Windows ZIP was not created."
+          }
+
+      - name: Generate SHA-256 checksum
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          $zipName = "WARPSimLab-v$env:VERSION-Win-x86_64.zip"
+          $checksumName = "WARPSimLab-v$env:VERSION-SHA256.txt"
+          $hash = Get-FileHash $zipName -Algorithm SHA256
+
+          $contents = @"
+          WARPSimLab v$env:VERSION
+
+          File:
+          $zipName
+
+          SHA-256:
+          $($hash.Hash)
+          "@
+
+          Set-Content `
+              -Path $checksumName `
+              -Value $contents `
+              -Encoding ascii
+
+          Write-Host "SHA-256: $($hash.Hash)"
+
+      - name: Upload Windows release artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: WARPSimLab-v${{ inputs.version }}-Windows-release
+          path: |
+            WARPSimLab-v${{ inputs.version }}-Win-x86_64.zip
+            WARPSimLab-v${{ inputs.version }}-SHA256.txt
+            build-environment.txt
+            test-results.txt
+          if-no-files-found: error
+          retention-days: 30
