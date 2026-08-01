@@ -633,7 +633,20 @@ def build_covariance_factor(cov_matrix, atol=1e-12):
 
     eigvals = np.clip(eigvals, 0.0, None)
 
-    return eigvecs @ np.diag(np.sqrt(eigvals))
+    factor = eigvecs @ np.diag(np.sqrt(eigvals))
+
+    # A zero-variance asset must have no random component. Eigenvalue
+    # decomposition of a singular covariance matrix can otherwise leave tiny,
+    # platform-dependent floating-point values in that asset's factor row.
+    zero_variance_rows = np.isclose(
+        np.diag(cov_matrix),
+        0.0,
+        atol=atol,
+        rtol=0.0,
+    )
+    factor[zero_variance_rows, :] = 0.0
+
+    return factor
 
 
 def build_covariance_matrix(std_devs, corr_matrix):
