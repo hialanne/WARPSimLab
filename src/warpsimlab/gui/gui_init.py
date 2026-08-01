@@ -46,7 +46,7 @@ from src.warpsimlab.gui.gui_tutorial_definitions import (
     build_advanced_analysis_tutorial_steps,
 )
 
-WARPSIMLAB_VERSION = "4.0.3"
+WARPSIMLAB_VERSION = "4.0.4"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin):
