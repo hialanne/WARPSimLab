@@ -42,6 +42,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
+    contents_directory="Internal",
 )
 
 coll = COLLECT(
