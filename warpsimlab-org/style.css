@@ -453,6 +453,10 @@ p {
     transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
 }
 
+pre {
+    padding-left: 2rem;
+}
+
 .button:hover {
     transform: translateY(-1px);
     text-decoration: none;

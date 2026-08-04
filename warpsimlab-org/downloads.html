@@ -145,10 +145,11 @@
                 <div class="section-heading">
                     <h2>What You Get</h2>
                     <p>
-                        Downloads are available as either a Windows executable package or a source-code archive.
-                        The source archive is provided as a standard <code>.tar.gz</code> file suitable for
-                        developers and advanced users who wish to inspect, modify, or run WARPSimLab directly
-                        from source.
+                        Downloads are available as either a packaged Windows application or a
+                        source-code archive. Ubuntu users can run WARPSimLab directly from the
+                        Python source by following the instructions below. The source archive is
+                        also suitable for developers, educators, and users who wish to inspect or
+                        modify the software.
                     </p>
                 </div>
 
@@ -227,23 +228,90 @@
                 <div class="instruction-box"
                      style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
 
-                    <h2 style="margin-top: 0;">Using the Source Code Release</h2>
+                    <h2 style="margin-top: 0;">Running the Source Code on Ubuntu</h2>
 
                     <p>
-                        WARPSimLab is written in Python and is also available as a source-code release.
+                        WARPSimLab can be run directly from Python source code on Ubuntu.
+                        These instructions download the source release, install the required
+                        Ubuntu components, and create an isolated Python virtual environment.
                     </p>
 
-                    <ol>
-                        <li>Download the <strong>.tar.gz</strong> source archive.</li>
-                        <li>Extract the archive using your preferred extraction tool.</li>
-                        <li>Install any required Python dependencies.</li>
-                        <li>Run WARPSimLab using Python from the extracted source directory.</li>
-                    </ol>
+                    <h3>1. Download and extract WARPSimLab</h3>
 
                     <p>
-                        The source archive is intended for developers, educators, and advanced users who
-                        wish to inspect or modify the software.
+                        Open a terminal, and create and change to the directory where you want to install
+                        WARPSimLab. For example:
                     </p>
+
+                    <pre><code>mkdir -p ~/WARPSimLab</code></pre>
+                    <pre><code>cd ~/WARPSimLab</code></pre>
+
+                    <p>Download the current WARPSimLab source release.</p>  
+                    <p>In a terminal window, use the following command:</p>
+
+                    <pre><code>wget https://github.com/hialanne/warpsimlab/archive/refs/tags/v4.0.4.tar.gz -O WARPSimLab-4.0.4.tar.gz</code></pre>
+
+                    <p>
+                        Alternatively, download the
+                        <a href="https://github.com/hialanne/warpsimlab/archive/refs/tags/v4.0.4.tar.gz">
+                            WARPSimLab 4.0.4 source archive
+                        </a>
+                        using a web browser. The file will normally be saved in your
+                        <code>Downloads</code> directory. Move it into the WARPSimLab directory:
+                    </p>
+
+                    <pre><code>mv ~/Downloads/4.0.4.tar.gz ~/WARPSimLab/WARPSimLab-4.0.4.tar.gz</code></pre>
+
+                    <p>Extract the archive and enter the WARPSimLab source directory:</p>
+
+                    <pre><code>tar -xzf WARPSimLab-4.0.4.tar.gz
+cd WARPSimLab-4.0.4</code></pre>
+
+                    <h3>2. Install the Ubuntu prerequisites</h3>
+
+                    <p>Run:</p>
+
+                    <pre><code>sudo apt update
+sudo apt install python3 python3-venv python3-pip python3-tk</code></pre>
+
+                    <h3>3. Create and activate a virtual environment</h3>
+
+                    <pre><code>python3 -m venv .venv
+source .venv/bin/activate</code></pre>
+
+                    <p>
+                        After activation, the terminal prompt will normally begin with
+                        <code>(.venv)</code>.
+                    </p>
+
+                    <h3>4. Install the Python dependencies</h3>
+
+                    <pre><code>python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt</code></pre>
+
+                    <h3>5. Run WARPSimLab</h3>
+
+                    <pre><code>python3 WARPSimLab.py</code></pre>
+
+                    <h3>Running WARPSimLab again later</h3>
+
+                    <p>
+                        The Ubuntu prerequisites, virtual environment, and Python dependencies
+                        normally need to be installed only once. To run WARPSimLab again:
+                    </p>
+
+                    <pre><code>cd ~/WARPSimLab/warpsimlab-4.0.4
+source .venv/bin/activate
+python WARPSimLab.py</code></pre>
+
+                    <p>
+                        Change the directory in the first command if you installed WARPSimLab
+                        somewhere other than <code>~/WARPSimLab</code>.
+                    </p>
+
+                    <p>When finished, you can leave the virtual environment by running:</p>
+
+                    <pre><code>deactivate</code></pre>
 
                     <p>
                         WARPSimLab source code is released under the MIT License.
@@ -274,7 +342,7 @@
                             <p><strong>Version:</strong> 4.0.4</p>
                             <p><strong>Release date:</strong> July 26, 2026</p>
                             <p><strong>Author:</strong> Alan Scott</p>
-                            <p><strong>Checksum:</strong> SHA-256: <code>A5C9BBF18B4E1B8A87D0CD4D17D7156F3A71EEDE1DC52727C7FBB960AA9A4E3B</code></p>
+                            <p><strong>Checksum:</strong> SHA-256: <code>1724A67017D899E6747CB9FFCD250EF09285B2F0FD4E7AD4054FFA2E0055393E</code></p>
                         </div>
 
                         <a class="button button-primary button-full"
