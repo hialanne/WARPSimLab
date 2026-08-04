@@ -198,8 +198,12 @@ class MainHomeFrame(ttk.Frame):
         Fail silently if the file cannot be written.
         """
         try:
-            desktop = Path.home() / "Desktop"
-            target_dir = desktop / "WARPSimLab Data"
+            target_dir = (
+                Path.home()
+                / "Desktop"
+                / "WARPSimLab"
+                / "Administration"
+            )
             target_dir.mkdir(parents=True, exist_ok=True)
 
             log_file = target_dir / "legal_acceptance.log"
@@ -232,9 +236,13 @@ class MainHomeFrame(ttk.Frame):
         Returns True if a prior legal acceptance record exists.
         """
         try:
-            desktop = Path.home() / "Desktop"
-            log_file = desktop / "WARPSimLab Data" / "legal_acceptance.log"
+            log_file = (
+                Path.home()
+                / "Desktop"
+                / "WARPSimLab"
+                / "Administration"
+                / "legal_acceptance.log"
+            )
             return log_file.exists()
         except Exception:
             return False
-

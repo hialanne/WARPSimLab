@@ -19,8 +19,8 @@ class PortfolioSimulatorGUI_IOMixin:
     """Handles saving and loading GUI data to/from JSON."""
 
     def get_default_warpsimlab_dir(self):
-        """Return the default WARPSimLab directory on the Desktop."""
-        default_dir = Path.home() / "Desktop" / "WARPSimLab Data"
+        """Return the default WARPSimLab user data directory on the Desktop."""
+        default_dir = Path.home() / "Desktop" / "WARPSimLab" / "Data"
         default_dir.mkdir(parents=True, exist_ok=True)
         return default_dir
 
@@ -326,7 +326,7 @@ class PortfolioSimulatorGUI_IOMixin:
         default_dir = self.get_default_warpsimlab_dir()
         file_path = filedialog.asksaveasfilename(
             title="Save Financial Data",
-            initialdir=str(default_dir),      # Desktop/WARPSimLab Data
+            initialdir=str(default_dir),      # Desktop/WARPSimLab/Data
             defaultextension=".json",
             filetypes=[("JSON Files", "*.json")]
         )
