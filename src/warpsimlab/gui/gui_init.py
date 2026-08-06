@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 import os
+import sys
 
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.gui.gui_run import PortfolioSimulatorGUI_RunMixin
@@ -46,7 +47,19 @@ from src.warpsimlab.gui.gui_tutorial_definitions import (
     build_advanced_analysis_tutorial_steps,
 )
 
-WARPSIMLAB_VERSION = "4.0.4"
+from src.warpsimlab.gui.gui_settings import (
+    DisplaySettingsDialog,
+    MAIN_WINDOW_AUTOMATIC,
+    MAIN_WINDOW_CUSTOM,
+    MAIN_WINDOW_MAXIMIZED,
+    SCENARIO_LAYOUT_AUTOMATIC,
+    SCENARIO_LAYOUT_REMEMBER,
+    geometry_is_visible,
+    load_display_settings,
+    save_display_settings,
+)
+
+WARPSIMLAB_VERSION = "4.1.0"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin):
@@ -55,19 +68,10 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         self.legal_accepted = False
 
-        def center_window(window, width, height):
-            """Center a Tkinter window on the screen."""
-            screen_width = window.winfo_screenwidth()
-            screen_height = window.winfo_screenheight()
-            x = (screen_width // 2) - (width // 2)
-            y = (screen_height // 2) - (height // 2)
-            window.geometry(f"{width}x{height}+{x}+{y}")
-
         root.title(WARPSIMLAB_TITLE)
-        
-        window_width = 1200
-        window_height = 750
-        center_window(root, window_width, window_height)
+
+        self.display_settings = load_display_settings()
+        self._apply_main_window_startup_settings()
 
         ttk.Label(root, text=WARPSIMLAB_TITLE, font=("Arial", 16), ).pack(pady=10)
 
@@ -145,13 +149,251 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         # Guided tutorial controller
         self.guided_tutorial_controller = GuidedTutorialController(self)
 
-        # Scenario controller
         self.scenario_controller = ScenarioController(self)
+
+        self.root.protocol(
+            "WM_DELETE_WINDOW",
+            self._close_application,
+        )
 
         self._build_run_button()
 
         self.edit_main_home()
 
+
+    def _center_main_window(self, width, height):
+        """
+        Center the main window on the reported screen.
+        """
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+
+        self.root.geometry(
+            f"{width}x{height}+{x}+{y}"
+        )
+
+
+    def _set_main_window_normal(self):
+        """
+        Leave the maximized state before applying normal geometry.
+        """
+        try:
+            if sys.platform.startswith("win"):
+                self.root.state("normal")
+            elif sys.platform.startswith("linux"):
+                self.root.attributes("-zoomed", False)
+            else:
+                self.root.state("normal")
+        except tk.TclError:
+            pass
+
+
+    def _set_main_window_maximized(self):
+        """
+        Maximize the main window using the platform-supported operation.
+        """
+        try:
+            if sys.platform.startswith("win"):
+                self.root.state("zoomed")
+            elif sys.platform.startswith("linux"):
+                self.root.attributes("-zoomed", True)
+            else:
+                self.root.state("zoomed")
+        except tk.TclError:
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+
+            self.root.geometry(
+                f"{screen_width}x{screen_height}+0+0"
+            )
+
+
+    def _main_window_is_maximized(self):
+        """
+        Return True when the main window is currently maximized.
+        """
+        try:
+            if sys.platform.startswith("linux"):
+                return bool(
+                    self.root.attributes("-zoomed")
+                )
+
+            return self.root.state() == "zoomed"
+        except tk.TclError:
+            return False
+
+
+    def _apply_automatic_main_window_size(self):
+        """
+        Apply the existing automatic main-window sizing policy.
+        """
+        minimum_window_width = 1200
+        minimum_window_height = 750
+
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        window_width = int(screen_width * 0.80)
+        window_height = int(screen_height * 0.80)
+
+        if (
+            window_width < minimum_window_width
+            or window_height < minimum_window_height
+        ):
+            if (
+                sys.platform.startswith("win")
+                or sys.platform.startswith("linux")
+            ):
+                self._set_main_window_maximized()
+            else:
+                self._set_main_window_normal()
+                self._center_main_window(
+                    min(minimum_window_width, screen_width),
+                    min(minimum_window_height, screen_height),
+                )
+        else:
+            self._set_main_window_normal()
+            self._center_main_window(
+                window_width,
+                window_height,
+            )
+
+
+    def _apply_main_window_startup_settings(self):
+        """
+        Apply remembered geometry or the selected sizing policy at startup.
+        """
+        main_settings = self.display_settings["main_window"]
+
+        if main_settings.get("remember_geometry", False):
+            if main_settings.get("last_maximized", False):
+                self._set_main_window_maximized()
+                return
+
+            saved_geometry = main_settings.get("last_geometry")
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+
+            if geometry_is_visible(
+                saved_geometry,
+                screen_width,
+                screen_height,
+            ):
+                self._set_main_window_normal()
+                self.root.geometry(saved_geometry)
+                return
+
+        self._apply_selected_main_window_mode()
+
+
+    def _apply_selected_main_window_mode(self):
+        """
+        Apply the selected Automatic, Maximized, or Custom policy.
+        """
+        main_settings = self.display_settings["main_window"]
+        sizing_mode = main_settings.get(
+            "sizing_mode",
+            MAIN_WINDOW_AUTOMATIC,
+        )
+
+        if sizing_mode == MAIN_WINDOW_MAXIMIZED:
+            self._set_main_window_maximized()
+            return
+
+        if sizing_mode == MAIN_WINDOW_CUSTOM:
+            width = main_settings["custom_width"]
+            height = main_settings["custom_height"]
+
+            self._set_main_window_normal()
+            self._center_main_window(width, height)
+            return
+
+        self._apply_automatic_main_window_size()
+
+
+    def edit_display_settings(self):
+        """
+        Open the application display settings dialog.
+        """
+        DisplaySettingsDialog(
+            self.root,
+            self.display_settings,
+            self._apply_display_settings,
+        )
+
+
+    def _apply_display_settings(self, updated_settings):
+        """
+        Store and immediately apply settings returned by the dialog.
+        """
+        self.display_settings = updated_settings
+
+        self._apply_selected_main_window_mode()
+
+        scenario_controller = getattr(
+            self,
+            "scenario_controller",
+            None,
+        )
+
+        if (
+            scenario_controller is not None
+            and scenario_controller.session_active
+        ):
+            scenario_mode = self.display_settings[
+                "scenario_explorer"
+            ]["layout_mode"]
+
+            if scenario_mode == SCENARIO_LAYOUT_AUTOMATIC:
+                scenario_controller._position_windows()
+            elif scenario_mode == SCENARIO_LAYOUT_REMEMBER:
+                scenario_controller.capture_current_layout()
+                save_display_settings(self.display_settings)
+
+
+    def _save_main_window_geometry(self):
+        """
+        Save the current main-window layout when remembering is enabled.
+        """
+        main_settings = self.display_settings["main_window"]
+
+        if not main_settings.get("remember_geometry", False):
+            return
+
+        self.root.update_idletasks()
+
+        maximized = self._main_window_is_maximized()
+        main_settings["last_maximized"] = maximized
+
+        if not maximized:
+            main_settings["last_geometry"] = (
+                self.root.winfo_geometry()
+            )
+
+
+    def _close_application(self):
+        """
+        Save remembered display layouts and close WARPSimLab.
+        """
+        scenario_controller = getattr(
+            self,
+            "scenario_controller",
+            None,
+        )
+
+        if (
+            scenario_controller is not None
+            and scenario_controller.session_active
+        ):
+            scenario_controller.capture_current_layout()
+
+        self._save_main_window_geometry()
+        save_display_settings(self.display_settings)
+
+        self.root.destroy()
 
     # ------------------------
     # Initialize Variables
@@ -551,7 +793,8 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
                 ("Load Examples", self.load_examples_from_json),
                 ("Load Financial Data", self.load_values_from_json),
                 ("Save Financial Data", self.save_values_to_json),
-                ("Exit", self.root.destroy),
+                ("Settings", self.edit_display_settings),
+                ("Exit", self._close_application),
             ],
             row=0,
             column=0,

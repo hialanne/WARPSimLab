@@ -32,6 +32,11 @@ from src.warpsimlab.gui.gui_utils import set_tk_button_soft_disabled, noop
 
 from src.warpsimlab.gui.gui_annotations import build_scenario_explorer_annotations
 
+from src.warpsimlab.gui.gui_settings import (
+    SCENARIO_LAYOUT_REMEMBER,
+    geometry_is_visible,
+    save_display_settings,
+)
 
 class ScenarioController:
     """
@@ -121,13 +126,18 @@ class ScenarioController:
         self.window.title("Scenario Dashboard")
 
         # If user closes via X
-        self.window.protocol("WM_DELETE_WINDOW", self._stop_session)
+        self.window.protocol(
+            "WM_DELETE_WINDOW",
+            self._stop_session,
+        )
 
-        # Create persistent plot windows FIRST (axes must exist before any run)
+        # Create both Matplotlib plot windows.
+        # This method also restores or automatically positions them.
         self._create_persistent_plots()
 
         # Build snapshots + controls UI + run once
         self.resync()
+
 
     # ----------------------------------------------------------
     # Stop session
@@ -137,6 +147,8 @@ class ScenarioController:
             return
 
         self._cancel_pending_update()
+
+        self.capture_current_layout()
 
         self._needs_redraw = False
         self._is_redrawing = False
@@ -192,48 +204,208 @@ class ScenarioController:
         self.income_fig.canvas.mpl_connect("close_event", lambda event: self._stop_session())
         self.portfolio_fig.canvas.mpl_connect("close_event", lambda event: self._stop_session())
 
-        # Position windows
-        self._position_windows()
+        # Restore the remembered layout when valid.
+        # Otherwise use the automatic layout.
+        if not self._restore_saved_layout():
+            self._position_windows()
 
         try:
             plt.show(block=False)
         except Exception:
             pass
 
+    def _get_plot_window(self, figure):
+        """
+        Return the native Tk window owned by a Matplotlib figure.
+        """
+        if figure is None:
+            return None
+
+        canvas = getattr(figure, "canvas", None)
+        manager = getattr(canvas, "manager", None)
+
+        if manager is None:
+            return None
+
+        return getattr(manager, "window", None)
+
+
+    def capture_current_layout(self):
+        """
+        Save the three Scenario Explorer window geometries when enabled.
+        """
+        scenario_settings = self.main_gui.display_settings[
+            "scenario_explorer"
+        ]
+
+        if (
+            scenario_settings.get("layout_mode")
+            != SCENARIO_LAYOUT_REMEMBER
+        ):
+            return
+
+        income_window = self._get_plot_window(
+            self.income_fig
+        )
+        portfolio_window = self._get_plot_window(
+            self.portfolio_fig
+        )
+
+        if (
+            income_window is None
+            or portfolio_window is None
+            or self.window is None
+        ):
+            return
+
+        try:
+            income_window.update_idletasks()
+            portfolio_window.update_idletasks()
+            self.window.update_idletasks()
+
+            scenario_settings["layout"] = {
+                "income_plot": income_window.winfo_geometry(),
+                "portfolio_plot": (
+                    portfolio_window.winfo_geometry()
+                ),
+                "dashboard": self.window.winfo_geometry(),
+            }
+        except tk.TclError:
+            return
+
+        save_display_settings(
+            self.main_gui.display_settings
+        )
+
+
+    def _restore_saved_layout(self):
+        """
+        Restore the three saved Scenario Explorer geometries.
+
+        Returns True only when all three saved windows are valid and visible.
+        """
+        scenario_settings = self.main_gui.display_settings[
+            "scenario_explorer"
+        ]
+
+        if (
+            scenario_settings.get("layout_mode")
+            != SCENARIO_LAYOUT_REMEMBER
+        ):
+            return False
+
+        layout = scenario_settings.get("layout")
+        if not isinstance(layout, dict):
+            return False
+
+        income_geometry = layout.get("income_plot")
+        portfolio_geometry = layout.get("portfolio_plot")
+        dashboard_geometry = layout.get("dashboard")
+
+        screen_width = (
+            self.main_gui.root.winfo_screenwidth()
+        )
+        screen_height = (
+            self.main_gui.root.winfo_screenheight()
+        )
+
+        geometries = (
+            income_geometry,
+            portfolio_geometry,
+            dashboard_geometry,
+        )
+
+        if not all(
+            geometry_is_visible(
+                geometry,
+                screen_width,
+                screen_height,
+            )
+            for geometry in geometries
+        ):
+            scenario_settings["layout"] = None
+            save_display_settings(
+                self.main_gui.display_settings
+            )
+            return False
+
+        income_window = self._get_plot_window(
+            self.income_fig
+        )
+        portfolio_window = self._get_plot_window(
+            self.portfolio_fig
+        )
+
+        if (
+            income_window is None
+            or portfolio_window is None
+            or self.window is None
+        ):
+            return False
+
+        try:
+            income_window.geometry(income_geometry)
+            portfolio_window.geometry(
+                portfolio_geometry
+            )
+            self.window.geometry(dashboard_geometry)
+        except tk.TclError:
+            return False
+
+        return True
+
 
     def _position_windows(self):
         """
-        Position income and portfolio windows side-by-side,
-        and controls window below.
+        Position the two plot windows side-by-side and center the
+        Scenario Dashboard below them.
+
+        Window sizes are scaled from the Windows development layout.
         """
         try:
-            width = 850
-            height = 600
-            top_y = 20
+            screen_width = self.main_gui.root.winfo_screenwidth()
+            screen_height = self.main_gui.root.winfo_screenheight()
 
+            development_screen_width = 1707
+            development_screen_height = 1067
+
+            width_scale = screen_width / development_screen_width
+            height_scale = screen_height / development_screen_height
+
+            scale = min(width_scale, height_scale)
+
+            plot_width = int(850 * scale)
+            plot_height = int(600 * scale)
+
+            top_y = int(20 * scale)
             left_x = 0
-            right_x = left_x + width + 0
+            right_x = left_x + plot_width
 
             self.income_fig.canvas.manager.window.geometry(
-                f"{width}x{height}+{left_x}+{top_y}"
+                f"{plot_width}x{plot_height}+{left_x}+{top_y}"
             )
 
             self.portfolio_fig.canvas.manager.window.geometry(
-                f"{width}x{height}+{right_x}+{top_y}"
+                f"{plot_width}x{plot_height}+{right_x}+{top_y}"
             )
 
             if self.window is not None:
-                control_w = 1060
-                control_h = 280
-                control_y = top_y + height + 40
+                control_width = int(1060 * scale)
+                control_height = int(280 * scale)
+                control_gap = int(40 * scale)
 
-                # Total width occupied by both plots
-                total_plots_width = width * 2
+                control_y = top_y + plot_height + control_gap
 
-                # Center control window under both plots
-                control_x = left_x + (total_plots_width - control_w) // 2
+                total_plots_width = plot_width * 2
+                control_x = (
+                    left_x
+                    + (total_plots_width - control_width) // 2
+                )
 
-                self.window.geometry(f"{control_w}x{control_h}+{control_x}+{control_y}")
+                self.window.geometry(
+                    f"{control_width}x{control_height}"
+                    f"+{control_x}+{control_y}"
+                )
 
         except Exception:
             pass
