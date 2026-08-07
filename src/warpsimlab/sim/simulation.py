@@ -60,6 +60,7 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "hsa_withdrawals": r["hsa_withdrawals"][0],
         "expenses": r["expense_amt"][0],
         "net_cash_flow": r["net_profit"][0],
+        "cash_flow_shortfall": r["cash_flow_shortfall"][0],
         "wages": r["breakdown_by_class"]["work"][0],
         "rmd": r["breakdown_by_class"]["rmd"][0],
         "special_income": r["breakdown_by_class"]["special_income"][0],

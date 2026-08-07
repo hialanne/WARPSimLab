@@ -130,6 +130,7 @@ def simulate_yearly_portfolios(
         "hsa_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "expense_amt": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "uncovered_expense": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "cash_flow_shortfall": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "ira_401k": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "employee_401k_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_ira_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -393,6 +394,7 @@ def simulate_yearly_portfolios(
             emergency_pre_tax_used = 0.0
             uncovered_expense = 0.0
             net_cash_result = None
+            cash_flow_shortfall = 0.0
             baseline_total_tax = 0.0
             final_tax_delta = 0.0
             final_tax_delta_deducted = 0.0
@@ -681,6 +683,17 @@ def simulate_yearly_portfolios(
                 #    h_port.total_value_roth + w_port.total_value_roth,
                 #    net_cash_result["uncovered"],
                 #)
+                
+                cash_flow_shortfall = sum(
+                    net_cash_result.get(key, 0.0)
+                    for key in (
+                        "post_tax_used",
+                        "pre_tax_used",
+                        "roth_used",
+                        "hsa_used",
+                        "real_estate_used",
+                    )
+                )
 
                 emergency_pre_tax_used = net_cash_result["pre_tax_used"]
 
@@ -931,6 +944,7 @@ def simulate_yearly_portfolios(
             results["tax_bracket"][s,year] = federal_marginal_rate
             results["expense_amt"][s,year] = expense_amt
             results["uncovered_expense"][s, year] = uncovered_expense
+            results["cash_flow_shortfall"][s, year] = cash_flow_shortfall
             results["ira_401k"][s, year] = ira_401k
             results["employee_401k_contributions"][s, year] = employee_401k_total
 
@@ -1124,6 +1138,7 @@ def simulate_yearly_portfolios(
         results["medicare_tax"] = results["medicare_tax"] / discount_factors
         results["additional_medicare_tax"] = results["additional_medicare_tax"] / discount_factors
         results["emergency_pre_tax_used"] = results["emergency_pre_tax_used"] / discount_factors
+        results["cash_flow_shortfall"] = (results["cash_flow_shortfall"] / discount_factors)
         results["roth_withdrawals"] = (results["roth_withdrawals"] / discount_factors)
         results["hsa_withdrawals"] = (results["hsa_withdrawals"] / discount_factors)
         results["final_tax_delta"] = results["final_tax_delta"] / discount_factors

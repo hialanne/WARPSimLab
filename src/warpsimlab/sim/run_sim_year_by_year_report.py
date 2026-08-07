@@ -86,26 +86,79 @@ def _build_year_row(results, index, husband, wife, sim_config):
         + _array_value(results, "annuities", index)
     )
 
+    employee_401k_contributions = _array_value(
+        results,
+        "employee_401k_contributions",
+        index,
+    )
+
+    gross_wages = (
+        _array_value(results, "wages", index)
+        + employee_401k_contributions
+    )
+
     row = {
         "Year": _array_value(results, "year", index),
         "Age": _build_age_value(husband, index),
-        "Wages": _array_value(results, "wages", index),
-        "Social Security": _array_value(results, "social_security", index),
-        "Pensions & Annuities": pensions_and_annuities,
+
+        "Gross Wages": gross_wages,
         "RMD": _array_value(results, "rmd", index),
-        "Withdrawals": _array_value(results, "withdrawal", index),
+        "Social Security": _array_value(results, "social_security", index),
+        "Pensions and Annuities": pensions_and_annuities,
+        "Special Income": _array_value(results, "special_income", index),
+
+        "Bond Interest": _array_value(results, "bond_interest", index),
+        "Cash Interest": _array_value(results, "cash_interest", index),
+        "Qualified Dividends": _array_value(
+            results,
+            "qualified_dividends",
+            index,
+        ),
+        "Retirement Withdrawals": _array_value(
+            results,
+            "withdrawal",
+            index,
+        ),
+        "Cash Flow Shortfall": _array_value(
+            results,
+            "cash_flow_shortfall",
+            index,
+        ),
+        "Emergency Pre-Tax Withdrawal": _array_value(
+            results,
+            "emergency_pre_tax_used",
+            index,
+        ),
+
         "Gross Income": _array_value(results, "gross_income", index),
+
+        "Employee 401(k) / IRA": employee_401k_contributions,
         "Taxes": _array_value(results, "taxes", index),
+        "Tax Bracket": _array_value(results, "tax_bracket", index),
+        "Net Income": _array_value(results, "net_income", index),
+
+        "Roth IRA Contributions": _array_value(
+            results,
+            "roth_ira_contributions",
+            index,
+        ),
+        "Workplace Roth Contributions": _array_value(
+            results,
+            "roth_workplace_contributions",
+            index,
+        ),
         "Household Expenses": _array_value(results, "expenses", index),
         "Net Cash Flow": _array_value(results, "net_cash_flow", index),
+
         "Fund Expenses": _array_value(results, "fund_expenses", index),
+
         "Pre-Tax Assets": pre_tax_assets,
         "Post-Tax Assets": post_tax_assets,
         "Roth Assets": roth_assets,
         "HSA Assets": hsa_assets,
         "Real Estate": real_estate,
         "Total Portfolio": total_portfolio,
-        "Total Assets / Net Worth": total_portfolio + real_estate,
+        "Total Assets": total_portfolio + real_estate,
     }
 
     if getattr(sim_config, "second_person_enabled", False) and wife is not None:
