@@ -152,9 +152,57 @@ def _build_year_row(results, index, husband, wife, sim_config):
 
         "Fund Expenses": _array_value(results, "fund_expenses", index),
 
+        "Pre-Tax Equity": _array_value(
+            results,
+            "pre_tax_equity",
+            index,
+        ),
+        "Pre-Tax Bonds": _array_value(
+            results,
+            "pre_tax_bonds",
+            index,
+        ),
+        "Pre-Tax Cash": _array_value(
+            results,
+            "pre_tax_cash",
+            index,
+        ),
         "Pre-Tax Assets": pre_tax_assets,
+
+        "Post-Tax Equity": _array_value(
+            results,
+            "post_tax_equity",
+            index,
+        ),
+        "Post-Tax Bonds": _array_value(
+            results,
+            "post_tax_bonds",
+            index,
+        ),
+        "Post-Tax Cash": _array_value(
+            results,
+            "post_tax_cash",
+            index,
+        ),
         "Post-Tax Assets": post_tax_assets,
+
+        "Roth Equity": _array_value(
+            results,
+            "roth_equity",
+            index,
+        ),
+        "Roth Bonds": _array_value(
+            results,
+            "roth_bonds",
+            index,
+        ),
+        "Roth Cash": _array_value(
+            results,
+            "roth_cash",
+            index,
+        ),
         "Roth Assets": roth_assets,
+
         "HSA Assets": hsa_assets,
         "Real Estate": real_estate,
         "Total Portfolio": total_portfolio,

@@ -27,7 +27,7 @@ COMPACT_COLUMNS = [
     "Total Assets",
 ]
 
-DETAILED_COLUMNS = [
+DETAILED_INCOME_COLUMNS = [
     "Year",
     "Age",
     "Age 1",
@@ -57,16 +57,44 @@ DETAILED_COLUMNS = [
     "Household Expenses",
     "Net Cash Flow",
     "Cash Flow Shortfall",
+]
 
+
+DETAILED_PORTFOLIO_COLUMNS = [
+    "Year",
+    "Age",
+    "Age 1",
+    "Age 2",
+
+    "Net Cash Flow",
     "Fund Expenses",
 
+    "Pre-Tax Equity",
+    "Pre-Tax Bonds",
+    "Pre-Tax Cash",
     "Pre-Tax Assets",
+
+    "Post-Tax Equity",
+    "Post-Tax Bonds",
+    "Post-Tax Cash",
     "Post-Tax Assets",
+
+    "Roth Equity",
+    "Roth Bonds",
+    "Roth Cash",
     "Roth Assets",
+
     "HSA Assets",
     "Real Estate",
     "Total Portfolio",
     "Total Assets",
+]
+
+
+DETAILED_COLUMNS = DETAILED_INCOME_COLUMNS + [
+    column
+    for column in DETAILED_PORTFOLIO_COLUMNS
+    if column not in {"Year", "Age", "Age 1", "Age 2"}
 ]
 
 YEAR_KEYS = {"Year"}
@@ -201,8 +229,11 @@ def _render_summary_statistics(report_data):
 
 
 def _render_year_table(report_data):
-    columns = _selected_columns(report_data)
-    insert_breaks = report_data.report_options.get("insert_5_year_breaks", True)
+    detail = report_data.report_options.get("table_detail", "Compact")
+    insert_breaks = report_data.report_options.get(
+        "insert_5_year_breaks",
+        True,
+    )
 
     header_labels = {
         "Gross Wages": "Gross<br>Wages",
@@ -213,7 +244,6 @@ def _render_year_table(report_data):
         "Cash Interest": "Cash<br>Interest",
         "Qualified Dividends": "Qualified<br>Dividends",
         "Retirement Withdrawals": "Retirement<br>Withdrawals",
-        "Cash Flow Shortfall": "Cash Flow<br>Shortfall",
         "Emergency Pre-Tax Withdrawal": "Emergency<br>Pre-Tax<br>Withdrawal",
         "Gross Income": "Gross<br>Income",
         "Employee 401(k) / IRA": "Employee<br>401(k) /<br>IRA",
@@ -223,80 +253,89 @@ def _render_year_table(report_data):
         "Workplace Roth Contributions": "Workplace Roth<br>Contributions",
         "Household Expenses": "Household<br>Expenses",
         "Net Cash Flow": "Net Cash<br>Flow",
+        "Cash Flow Shortfall": "Cash Flow<br>Shortfall",
         "Fund Expenses": "Fund<br>Expenses",
-        "Pre-Tax Assets": "Pre-Tax<br>Assets",
-        "Post-Tax Assets": "Post-Tax<br>Assets",
-        "Roth Assets": "Roth<br>Assets",
+
+        "Pre-Tax Equity": "Pre-Tax<br>Equity",
+        "Pre-Tax Bonds": "Pre-Tax<br>Bonds",
+        "Pre-Tax Cash": "Pre-Tax<br>Cash",
+        "Pre-Tax Assets": "Pre-Tax<br>Total",
+
+        "Post-Tax Equity": "Post-Tax<br>Equity",
+        "Post-Tax Bonds": "Post-Tax<br>Bonds",
+        "Post-Tax Cash": "Post-Tax<br>Cash",
+        "Post-Tax Assets": "Post-Tax<br>Total",
+
+        "Roth Equity": "Roth<br>Equity",
+        "Roth Bonds": "Roth<br>Bonds",
+        "Roth Cash": "Roth<br>Cash",
+        "Roth Assets": "Roth<br>Total",
+        
         "HSA Assets": "HSA<br>Assets",
         "Real Estate": "Real<br>Estate",
         "Total Portfolio": "Total<br>Portfolio",
         "Total Assets": "Total<br>Assets",
     }
 
-    divider_columns = {
-        "Roth IRA Contributions",
-        "Fund Expenses",
-    }
+    available = set()
+    for row in report_data.year_rows:
+        available.update(row.keys())
 
-    header_html = "".join(
-        (
-            f"<th class='section-divider'>"
-            f"{header_labels.get(column, _safe(column))}</th>"
-            if column in divider_columns
-            else f"<th>{header_labels.get(column, _safe(column))}</th>"
+    def build_table(candidate_columns, divider_columns):
+        columns = [
+            column
+            for column in candidate_columns
+            if column in available
+        ]
+
+        header_html = "".join(
+            (
+                f"<th class='section-divider'>"
+                f"{header_labels.get(column, _safe(column))}</th>"
+                if column in divider_columns
+                else
+                f"<th>{header_labels.get(column, _safe(column))}</th>"
+            )
+            for column in columns
         )
-        for column in columns
-    )
 
-    body_rows = []
+        body_rows = []
 
-    for index, row in enumerate(report_data.year_rows):
-        row_class = ""
+        for index, row in enumerate(report_data.year_rows):
+            row_class = ""
 
-        if insert_breaks and index > 0 and index % 5 == 0:
-            row_class = " class='five-year-break'"
+            if insert_breaks and index > 0 and index % 5 == 0:
+                row_class = " class='five-year-break'"
 
-        cells = []
+            cells = []
 
-        for column in columns:
-            value = row.get(column)
+            for column in columns:
+                value = row.get(column)
+                css_classes = []
 
-            css_classes = []
+                if column in divider_columns:
+                    css_classes.append("section-divider")
 
-            if column in divider_columns:
-                css_classes.append("section-divider")
+                if isinstance(value, (int, float)) and value < 0:
+                    css_classes.append("negative")
 
-            if isinstance(value, (int, float)) and value < 0:
-                css_classes.append("negative")
+                class_attr = ""
 
-            class_attr = ""
+                if css_classes:
+                    class_attr = f" class='{' '.join(css_classes)}'"
 
-            if css_classes:
-                class_attr = f" class='{' '.join(css_classes)}'"
+                cells.append(
+                    f"<td{class_attr}>"
+                    f"{_safe(_fmt_value(value, key=column))}</td>"
+                )
 
-            cells.append(
-                f"<td{class_attr}>"
-                f"{_safe(_fmt_value(value, key=column))}</td>"
+            body_rows.append(
+                f"<tr{row_class}>"
+                + "".join(cells)
+                + "</tr>"
             )
 
-        body_rows.append(
-            f"<tr{row_class}>"
-            + "".join(cells)
-            + "</tr>"
-        )
-
-    return f"""
-<section>
-    <h2>Year-by-Year Details</h2>
-    <p class="section-intro">
-        This table shows one deterministic simulation path using the selected assumptions.
-        Retirement Withdrawals are amounts generated by the selected retirement withdrawal
-        strategy. Cash Flow Shortfall shows the amount funded from modeled assets when
-        household cash flow is insufficient to cover taxes, contributions, and household
-        expenses. These amounts are shown separately because they represent different ways
-        assets may be used during the simulation. Monte Carlo and Historical Window detail
-        rows are intentionally excluded from this report.
-    </p>
+        return f"""
     <div class="table-scroll">
         <table class="wide-table year-table">
             <thead>
@@ -307,6 +346,59 @@ def _render_year_table(report_data):
             </tbody>
         </table>
     </div>
+"""
+
+    if detail != "Detailed":
+        return f"""
+<section>
+    <h2>Year-by-Year Details</h2>
+    <p class="section-intro">
+        This table shows one deterministic simulation path using the selected assumptions.
+        Monte Carlo and Historical Window detail rows are intentionally excluded from this report.
+    </p>
+    {build_table(COMPACT_COLUMNS, set())}
+</section>
+"""
+
+    income_table = build_table(
+        DETAILED_INCOME_COLUMNS,
+        {
+            "Gross Wages",
+            "Roth IRA Contributions",
+        },
+    )
+
+    portfolio_table = build_table(
+        DETAILED_PORTFOLIO_COLUMNS,
+        {
+            "Net Cash Flow",
+            "Pre-Tax Equity",
+            "Post-Tax Equity",
+            "Roth Equity",
+            "HSA Assets",
+        },
+    )
+    return f"""
+<section>
+    <h2>Year-by-Year Income and Cash Flow</h2>
+    <p class="section-intro">
+        This table shows one deterministic simulation path using the selected assumptions.
+        Retirement Withdrawals are amounts generated by the selected retirement withdrawal
+        strategy. Cash Flow Shortfall shows the amount funded from modeled assets when
+        household cash flow is insufficient to cover taxes, contributions, and household
+        expenses. These amounts are shown separately because they represent different ways
+        assets may be used during the simulation.
+    </p>
+    {income_table}
+</section>
+
+<section>
+    <h2>Year-by-Year Portfolio</h2>
+    <p class="section-intro">
+        This table shows year-end portfolio balances and fund expenses for the same
+        deterministic simulation path.
+    </p>
+    {portfolio_table}
 </section>
 """
 

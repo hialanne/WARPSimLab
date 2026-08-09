@@ -20,6 +20,7 @@ from src.warpsimlab.reports.report_common import (
 YEAR_KEYS = {
     "Year",
     "Start Year",
+    "End Year",
     "Projection End Year",
     "Years Simulated",
     "Years To Simulate",
@@ -48,6 +49,16 @@ def _get_report_option(report_options, path, default=False):
 
 def _is_percent_key(key):
     key = str(key)
+
+    if key in {
+        "Cash Flow Shortfall",
+        "Total Cash Flow Shortfall",
+    }:
+        return False
+
+    if key == "Scenarios That Depleted Portfolio":
+        return True
+
     return any(hint in key for hint in PERCENT_KEY_HINTS)
 
 
@@ -141,11 +152,15 @@ def _render_simulation_highlights(report_data):
     highlights = {
         "Portfolio Start Value": totals.get("Portfolio Start"),
         "Portfolio End Value": totals.get("Portfolio End"),
-        "Simulated Shortfall Rate": totals.get("Simulated Shortfall Rate"),
         "Total Income Generated": totals.get("Total Income"),
         "Total Expenses": totals.get("Household Expenses"),
         "Years Simulated": snapshot.get("Years Simulated"),
     }
+
+    depletion_rate = totals.get("Scenarios That Depleted Portfolio")
+
+    if depletion_rate is not None:
+        highlights["Scenarios That Depleted Portfolio"] = depletion_rate
 
     cards = []
 
@@ -225,9 +240,10 @@ def _render_portfolio_projection_placeholder(report_data, output_folder=None):
     if include_monte_carlo:
         method_note = """
         <p class="section-intro">
-            Monte Carlo results use randomized market sampling and may vary between simulation runs.
-            Historical Windows results use fixed historical return sequences and will produce repeatable
-            results when run with the same assumptions and historical data.
+           Monte Carlo results use randomized market sampling with a fixed random seed,
+           making results repeatable.
+           Historical Windows results use fixed historical return sequences and are also
+           repeatable.
         </p>
         """
 
@@ -242,7 +258,7 @@ def _render_portfolio_projection_placeholder(report_data, output_folder=None):
             <div class="plot-card">
                 <h3>{_safe(asset.get("title", "Portfolio Projection"))}</h3>
                 <p>
-                    This chart shows the simulated portfolio path under the selected assumptions.
+                    This chart shows the simulated portfolio path.
                 </p>
                 <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Portfolio projection"))}">
             </div>
@@ -366,7 +382,7 @@ def _render_income_projection_placeholder(report_data, output_folder=None):
             <div class="plot-card">
                 <h3>{_safe(asset.get("title", "Income Projection"))}</h3>
                 <p>
-                    This chart shows simulated Income and Cash Flow values under the selected assumptions.
+                    This chart shows simulated income.
                 </p>
                 <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Income projection"))}">
             </div>
@@ -432,7 +448,7 @@ def _render_cashflow_projection_placeholder(report_data, output_folder=None):
             <div class="plot-card">
                 <h3>{_safe(asset.get("title", "Cash Flow Projection"))}</h3>
                 <p>
-                    This chart shows simulated household Cash Flow under the selected assumptions.
+                    This chart shows simulated household Cash Flow.
                 </p>
                 <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Cash Flow projection"))}">
             </div>
@@ -540,6 +556,7 @@ def _render_income_summary(report_data):
         "Gross Wages",
         "Special Income",
         "RMD",
+        "Retirement Withdrawals",
         "Social Security",
         "Pensions and Annuities",
         "Investment Income",
@@ -550,6 +567,7 @@ def _render_income_summary(report_data):
         "Net Income",
         "Household Expenses",
         "Net Cash Flow",
+        "Cash Flow Shortfall",
         "Fund Expenses",
     ]
 
@@ -619,18 +637,27 @@ def _render_simulation_summary(report_data):
                 "Taxes Paid": totals.get("Taxes Paid"),
                 "Household Expenses": totals.get("Household Expenses"),
                 "Net Cash Flow": totals.get("Net Cash Flow"),
+                "Total Cash Flow Shortfall": totals.get(
+                    "Total Cash Flow Shortfall"
+                ),
                 "Fund Expenses": totals.get("Fund Expenses"),
             },
             {"Net Cash Flow"},
         ),
-        (
-            "Risk Indicator",
-            {
-                "Simulated Shortfall Rate": totals.get("Simulated Shortfall Rate"),
-            },
-            {"Simulated Shortfall Rate"},
-        ),
     ]
+
+    depletion_rate = totals.get("Scenarios That Depleted Portfolio")
+
+    if depletion_rate is not None:
+        groups.append(
+            (
+                "Risk Indicator",
+                {
+                    "Scenarios That Depleted Portfolio": depletion_rate,
+                },
+                {"Scenarios That Depleted Portfolio"},
+            )
+        )
 
     cards = []
     for title, data, emphasize_keys in groups:
@@ -668,15 +695,31 @@ def _render_simple_table(table_data, empty_message="No entries."):
         # New explicit table format:
         # {"columns": [...], "rows": [[...], [...]]}
         if columns:
-            header_html = "".join(f"<th>{_safe(column)}</th>" for column in columns)
+            header_html = "".join(
+                f"<th>{_safe(column)}</th>"
+                for column in columns
+            )
 
             body_rows = []
             for row in rows:
                 cells = []
-                for value in row:
-                    css_class = " class='negative'" if isinstance(value, (int, float)) and value < 0 else ""
-                    cells.append(f"<td{css_class}>{_safe(_fmt_value(value))}</td>")
-                body_rows.append("<tr>" + "".join(cells) + "</tr>")
+
+                for column, value in zip(columns, row):
+                    css_class = (
+                        " class='negative'"
+                        if isinstance(value, (int, float)) and value < 0
+                        else ""
+                    )
+
+                    cells.append(
+                        f"<td{css_class}>"
+                        f"{_safe(_fmt_value(value, key=column))}"
+                        f"</td>"
+                    )
+
+                body_rows.append(
+                    "<tr>" + "".join(cells) + "</tr>"
+                )
 
             return f"""
             <table class="wide-table assumptions-table">
@@ -698,30 +741,54 @@ def _render_simple_table(table_data, empty_message="No entries."):
     if not rows:
         return f"<p>{_safe(empty_message)}</p>"
 
-    dict_rows = [row for row in rows if isinstance(row, dict)]
+    dict_rows = [
+        row
+        for row in rows
+        if isinstance(row, dict)
+    ]
 
     if not dict_rows:
-        items = "".join(f"<li>{_safe(_fmt_value(row))}</li>" for row in rows)
+        items = "".join(
+            f"<li>{_safe(_fmt_value(row))}</li>"
+            for row in rows
+        )
         return f"<ul>{items}</ul>"
 
     headers = []
+
     for row in dict_rows:
         for key in row.keys():
             if key not in headers:
                 headers.append(key)
 
-    header_html = "".join(f"<th>{_safe(header)}</th>" for header in headers)
+    header_html = "".join(
+        f"<th>{_safe(header)}</th>"
+        for header in headers
+    )
 
     body_rows = []
+
     for row in dict_rows:
         cells = []
+
         for header in headers:
             value = row.get(header)
-            css_class = " class='negative'" if isinstance(value, (int, float)) and value < 0 else ""
-            cells.append(
-                f"<td{css_class}>{_safe(_fmt_value(value, key=header))}</td>"
+
+            css_class = (
+                " class='negative'"
+                if isinstance(value, (int, float)) and value < 0
+                else ""
             )
-        body_rows.append("<tr>" + "".join(cells) + "</tr>")
+
+            cells.append(
+                f"<td{css_class}>"
+                f"{_safe(_fmt_value(value, key=header))}"
+                f"</td>"
+            )
+
+        body_rows.append(
+            "<tr>" + "".join(cells) + "</tr>"
+        )
 
     return f"""
     <table class="wide-table assumptions-table">
@@ -805,7 +872,7 @@ def _render_assumptions_appendix(report_data):
 <section class="appendix">
     <h2>Assumptions Appendix</h2>
     <p class="section-intro">
-        This appendix documents the user-provided assumptions and report settings used for the simulation.
+        This appendix documents the user-provided inputs and report settings used for the simulation.
     </p>
     {''.join(blocks)}
 </section>
@@ -908,7 +975,7 @@ def generate_summary_report(report_data: SummaryReportData) -> ReportResult:
 
     .summary-card .kv-table th {{
         width: auto;
-        white-space: nowrap;
+        white-space: normal;
         padding-right: 16px;
     }}
 
@@ -1038,10 +1105,6 @@ def generate_summary_report(report_data: SummaryReportData) -> ReportResult:
 
         {_render_simulation_highlights(report_data)}
 
-        {_render_portfolio_summary(report_data)}
-
-        {portfolio_plot_html}
-
         {_render_income_summary(report_data)}
 
         {income_plot_html}
@@ -1049,6 +1112,10 @@ def generate_summary_report(report_data: SummaryReportData) -> ReportResult:
         {cashflow_plot_html}
 
         {operating_balance_html}
+
+        {_render_portfolio_summary(report_data)}
+
+        {portfolio_plot_html}
 
         {simulation_summary_html}
 

@@ -142,6 +142,7 @@ def _build_income_milestone(results, index):
         "Gross Wages": gross_wages,
         "Special Income": _array_value(results, "special_income", index),
         "RMD": _array_value(results, "rmd", index),
+        "Retirement Withdrawals": _array_value(results, "withdrawal", index),
         "Social Security": _array_value(results, "social_security", index),
         "Pensions and Annuities": pensions_and_annuities,
         "Investment Income": investment_income,
@@ -150,8 +151,14 @@ def _build_income_milestone(results, index):
         "Taxes": _array_value(results, "taxes", index),
         "Tax Bracket": _array_value(results, "tax_bracket", index),
         "Net Income": _array_value(results, "net_income", index),
+
         "Household Expenses": _array_value(results, "expenses", index),
         "Net Cash Flow": _array_value(results, "net_cash_flow", index),
+        "Cash Flow Shortfall": _array_value(
+            results,
+            "cash_flow_shortfall",
+            index,
+        ),
         "Fund Expenses": _array_value(results, "fund_expenses", index),
     }
 
@@ -206,7 +213,7 @@ def _build_income_milestones(results, husband, wife, sim_config):
     end_index = _clamp_index(length - 1, length)
 
     return {
-        "Start Simulation": _build_income_milestone(results, start_index),
+        "First Income Year": _build_income_milestone(results, start_index),
         "Year Before Retirement": _build_income_milestone(
             results,
             before_retirement_index,
@@ -269,8 +276,15 @@ def _build_simulation_totals(results, simulated_shortfall_rate=None):
         "Taxes Paid": float(sum(results.get("taxes", []))),
         "Household Expenses": float(sum(results.get("expenses", []))),
         "Net Cash Flow": float(sum(results.get("net_cash_flow", []))),
+        "Total Cash Flow Shortfall": float(
+            sum(results.get("cash_flow_shortfall", []))
+        ),
         "Fund Expenses": float(sum(results.get("fund_expenses", []))),
-        "Simulated Shortfall Rate": simulated_shortfall_rate,
+        "Total Cash Flow Shortfall": float(
+            sum(results.get("cash_flow_shortfall", []))
+        ),
+        "Fund Expenses": float(sum(results.get("fund_expenses", []))),
+        "Scenarios That Depleted Portfolio": simulated_shortfall_rate,
     }
 
 
@@ -861,7 +875,9 @@ def _build_report_plot_assets(
     )
 
     plot_assets = {}
-    report_shortfall_rate = None
+    report_shortfall_rate = p["summary_results"].get(
+        "simulated_shortfall_rate"
+    )
 
     if _get_report_option(
         report_options,
@@ -884,7 +900,6 @@ def _build_report_plot_assets(
                 force_num_sims=1,
             )
             image_path = plot_result["image_path"]
-            report_shortfall_rate = plot_result.get("simulated_shortfall_rate")
             
             plot_assets["portfolio_projection"] = {
                 "path": image_path,
@@ -1013,13 +1028,13 @@ def _build_report_plot_assets(
 
             plot_assets["cashflow_projection"] = {
                 "path": image_path,
-                "title": "Cashflow Projection",
-                "alt": "Cashflow projection over the simulated period",
+                "title": "Cash Flow Projection",
+                "alt": "Cash Flow projection over the simulated period",
             }
 
         except Exception as exc:
             warnings.append(
-                f"Cashflow projection plot could not be generated: {exc}"
+                f"Cash Flow projection plot could not be generated: {exc}"
             )
 
     if _get_report_option(
@@ -1044,13 +1059,13 @@ def _build_report_plot_assets(
 
             plot_assets["cashflow_subcategories"] = {
                 "path": image_path,
-                "title": "Cashflow Breakdown",
-                "alt": "Cashflow projection broken down by source",
+                "title": "Cash Flow Breakdown",
+                "alt": "Cash Flow projection broken down by source",
             }
 
         except Exception as exc:
             warnings.append(
-                f"Cashflow subcategory plot could not be generated: {exc}"
+                f"Cash Flow subcategory plot could not be generated: {exc}"
             )
 
     if _get_report_option(

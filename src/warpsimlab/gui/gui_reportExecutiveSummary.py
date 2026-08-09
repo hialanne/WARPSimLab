@@ -203,50 +203,6 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             )
         )
 
-        right_row = self._add_section_label_to_frame(right_frame, "Portfolio Visuals", right_row)
-        right_row = self._add_check_path_to_frame(
-            right_frame,
-            "Include normal projection",
-            ["portfolio_visuals", "include_normal_projection"],
-            right_row,
-            (
-                "Include the primary portfolio projection using the selected "
-                "simulation assumptions."
-            )
-        )
-
-        right_row = self._add_check_path_to_frame(
-            right_frame,
-            "Include sub-categories projection",
-            ["portfolio_visuals", "include_subcategories_projection"],
-            right_row,
-            (
-                "Include portfolio results separated by asset and account "
-                "categories."
-            )
-        )
-
-        right_row = self._add_check_path_to_frame(
-            right_frame,
-            "Include Historical Windows analysis",
-            ["portfolio_visuals", "include_historical_windows_analysis"],
-            right_row,
-            (
-                "Include results from overlapping historical market return "
-                "windows."
-            )
-        )
-
-        right_row = self._add_check_path_to_frame(
-            right_frame,
-            "Include Monte Carlo analysis",
-            ["portfolio_visuals", "include_monte_carlo_analysis"],
-            right_row,
-            (
-                "Include results from simulated market return paths."
-            )
-        )
-
         right_row += 1
         right_row = self._add_section_label_to_frame(right_frame, "Income Visuals", right_row)
         right_row = self._add_check_path_to_frame(
@@ -312,6 +268,52 @@ class ExecutiveSummaryReportFrame(ttk.Frame):
             (
                 "Include the accumulated difference between cash inflows "
                 "and outflows over time."
+            )
+        )
+
+        right_row += 1
+
+        right_row = self._add_section_label_to_frame(right_frame, "Portfolio Visuals", right_row)
+        right_row = self._add_check_path_to_frame(
+            right_frame,
+            "Include normal projection",
+            ["portfolio_visuals", "include_normal_projection"],
+            right_row,
+            (
+                "Include the primary portfolio projection using the selected "
+                "simulation assumptions."
+            )
+        )
+
+        right_row = self._add_check_path_to_frame(
+            right_frame,
+            "Include sub-categories projection",
+            ["portfolio_visuals", "include_subcategories_projection"],
+            right_row,
+            (
+                "Include portfolio results separated by asset and account "
+                "categories."
+            )
+        )
+
+        right_row = self._add_check_path_to_frame(
+            right_frame,
+            "Include Historical Windows analysis",
+            ["portfolio_visuals", "include_historical_windows_analysis"],
+            right_row,
+            (
+                "Include results from overlapping historical market return "
+                "windows."
+            )
+        )
+
+        right_row = self._add_check_path_to_frame(
+            right_frame,
+            "Include Monte Carlo analysis",
+            ["portfolio_visuals", "include_monte_carlo_analysis"],
+            right_row,
+            (
+                "Include results from simulated market return paths."
             )
         )
 

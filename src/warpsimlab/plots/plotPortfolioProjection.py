@@ -176,7 +176,7 @@ def _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config):
             "show_simulated_shortfall_rate is True, but simulation_data.simulated_shortfall_rate is missing"
         )
 
-    label = f"{rate:.0f}% % of scenarios depleted the portfolio"
+    label = f"{rate:.0f}% of scenarios depleted the portfolio"
 
     ax.text(
         0.98,

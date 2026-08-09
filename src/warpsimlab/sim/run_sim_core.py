@@ -118,6 +118,19 @@ def simulate_yearly_portfolios(
         "total_assets": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "pre_tax_assets": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "post_tax_assets": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        
+        "pre_tax_equity": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "pre_tax_bonds": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "pre_tax_cash": np.zeros((effective_num_sims, years_to_simulate + 1)),
+
+        "post_tax_equity": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "post_tax_bonds": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "post_tax_cash": np.zeros((effective_num_sims, years_to_simulate + 1)),
+
+        "roth_equity": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "roth_bonds": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "roth_cash": np.zeros((effective_num_sims, years_to_simulate + 1)),
+
         "cash": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "bonds": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "real_estate": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -298,7 +311,21 @@ def simulate_yearly_portfolios(
         results["total_assets"][s,0] = h_port.total_value + (w_port.total_value if second_person_enabled else 0) + \
                                        (h_port.re_post + (w_port.re_post if second_person_enabled else 0) if sim_config.include_realestate else 0)
         results["pre_tax_assets"][s,0] = h_port.total_value_pre + (w_port.total_value_pre if second_person_enabled else 0)
+
+        results["pre_tax_equity"][s,0] = (h_port.eq_pre + (w_port.eq_pre if second_person_enabled else 0))
+        results["pre_tax_bonds"][s,0] = (h_port.bd_pre + (w_port.bd_pre if second_person_enabled else 0))
+        results["pre_tax_cash"][s,0] = (h_port.cs_pre + (w_port.cs_pre if second_person_enabled else 0))
+
+        results["post_tax_equity"][s,0] = (h_port.eq_post + (w_port.eq_post if second_person_enabled else 0))
+        results["post_tax_bonds"][s,0] = (h_port.bd_post + (w_port.bd_post if second_person_enabled else 0))
+        results["post_tax_cash"][s,0] = (h_port.cs_post + (w_port.cs_post if second_person_enabled else 0))
+
+        results["roth_equity"][s,0] = (h_port.eq_roth + (w_port.eq_roth if second_person_enabled else 0))
+        results["roth_bonds"][s,0] = (h_port.bd_roth + (w_port.bd_roth if second_person_enabled else 0))
+        results["roth_cash"][s,0] = (h_port.cs_roth+ (w_port.cs_roth if second_person_enabled else 0)) 
+        
         results["post_tax_assets"][s,0] = h_port.total_value_post + (w_port.total_value_post if second_person_enabled else 0)
+
         results["roth_assets"][s,0] = h_port.total_value_roth + (w_port.total_value_roth if second_person_enabled else 0)
         results["hsa_assets"][s,0] = h_port.total_value_hsa + (w_port.total_value_hsa if second_person_enabled else 0)
         results["cash"][s,0] = h_port.total_value_cash + (w_port.total_value_cash if second_person_enabled else 0)
@@ -886,6 +913,18 @@ def simulate_yearly_portfolios(
             roth = h_port.total_value_roth + (w_port.total_value_roth if second_person_enabled else 0)
             hsa = h_port.total_value_hsa + (w_port.total_value_hsa if second_person_enabled else 0)
 
+            pre_tax_equity = (h_port.eq_pre + (w_port.eq_pre if second_person_enabled else 0))
+            pre_tax_bonds = (h_port.bd_pre + (w_port.bd_pre if second_person_enabled else 0))
+            pre_tax_cash = (h_port.cs_pre + (w_port.cs_pre if second_person_enabled else 0))
+
+            post_tax_equity = (h_port.eq_post + (w_port.eq_post if second_person_enabled else 0))
+            post_tax_bonds = (h_port.bd_post + (w_port.bd_post if second_person_enabled else 0))
+            post_tax_cash = (h_port.cs_post + (w_port.cs_post if second_person_enabled else 0))
+
+            roth_equity = (h_port.eq_roth + (w_port.eq_roth if second_person_enabled else 0))
+            roth_bonds = (h_port.bd_roth + (w_port.bd_roth if second_person_enabled else 0))
+            roth_cash = (h_port.cs_roth + (w_port.cs_roth if second_person_enabled else 0))
+
             cash = h_port.total_value_cash + (w_port.total_value_cash if second_person_enabled else 0)
             bonds = h_port.total_value_bonds + (w_port.total_value_bonds if second_person_enabled else 0)
             real_estate = h_port.re_post + (w_port.re_post if second_person_enabled else 0)
@@ -932,6 +971,19 @@ def simulate_yearly_portfolios(
             results["total_assets"][s,year] = total_assets
             results["pre_tax_assets"][s,year] = pre_tax
             results["post_tax_assets"][s,year] = post_tax
+
+            results["pre_tax_equity"][s,year] = pre_tax_equity
+            results["pre_tax_bonds"][s,year] = pre_tax_bonds
+            results["pre_tax_cash"][s,year] = pre_tax_cash
+
+            results["post_tax_equity"][s,year] = post_tax_equity
+            results["post_tax_bonds"][s,year] = post_tax_bonds
+            results["post_tax_cash"][s,year] = post_tax_cash
+
+            results["roth_equity"][s,year] = roth_equity
+            results["roth_bonds"][s,year] = roth_bonds
+            results["roth_cash"][s,year] = roth_cash
+
             results["roth_assets"][s,year] = roth
             results["hsa_assets"][s,year] = hsa
             results["cash"][s,year] = cash
@@ -1091,7 +1143,20 @@ def simulate_yearly_portfolios(
         results["total_assets"]         = results["total_assets"]       / discount_factors
         results["pre_tax_assets"]       = results["pre_tax_assets"]     / discount_factors
         results["post_tax_assets"]      = results["post_tax_assets"]    / discount_factors
+        
+        results["pre_tax_equity"]       = results["pre_tax_equity"]     / discount_factors
+        results["pre_tax_bonds"]        = results["pre_tax_bonds"]      / discount_factors
+        results["pre_tax_cash"]         = results["pre_tax_cash"]       / discount_factors
+
+        results["post_tax_equity"]      = results["post_tax_equity"]    / discount_factors
+        results["post_tax_bonds"]       = results["post_tax_bonds"]     / discount_factors
+        results["post_tax_cash"]        = results["post_tax_cash"]      / discount_factors
+
+        results["roth_equity"]          = results["roth_equity"]        / discount_factors
+        results["roth_bonds"]           = results["roth_bonds"]         / discount_factors
+        results["roth_cash"]            = results["roth_cash"]          / discount_factors
         results["roth_assets"]          = results["roth_assets"]        / discount_factors
+
         results["hsa_assets"]           = results["hsa_assets"]         / discount_factors
         results["cash"]                 = results["cash"]               / discount_factors
         results["bonds"]                = results["bonds"]              / discount_factors

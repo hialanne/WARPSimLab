@@ -38,6 +38,19 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "total_assets": r["total_assets"][0],
         "pre_tax_assets": r["pre_tax_assets"][0],
         "post_tax_assets": r["post_tax_assets"][0],
+
+        "pre_tax_equity": r["pre_tax_equity"][0],
+        "pre_tax_bonds": r["pre_tax_bonds"][0],
+        "pre_tax_cash": r["pre_tax_cash"][0],
+
+        "post_tax_equity": r["post_tax_equity"][0],
+        "post_tax_bonds": r["post_tax_bonds"][0],
+        "post_tax_cash": r["post_tax_cash"][0],
+
+        "roth_equity": r["roth_equity"][0],
+        "roth_bonds": r["roth_bonds"][0],
+        "roth_cash": r["roth_cash"][0],
+
         "roth_assets": r["roth_assets"][0],
         "hsa_assets": r["hsa_assets"][0],
         "real_estate": r["real_estate"][0],
@@ -196,8 +209,9 @@ def _compute_simulated_shortfall_rate(
     num_sims=1000,
 ):
     """
-    Run Monte Carlo paths and compute the fraction of scenarios that ever
-    reach a portfolio balance of 0 or below at any simulated year.
+    Run Historical Window paths and compute the fraction of scenarios that
+    ever reach a portfolio balance of 0 or below at any simulated year.
+
     Returns a percentage in the range [0.0, 100.0].
     """
     if num_sims <= 0:
@@ -205,14 +219,16 @@ def _compute_simulated_shortfall_rate(
 
     original_subplot_mode = sim_config.subplot_mode
     original_sim_type = sim_config.sim_type
+    original_monte_carlo_mode = sim_config.monte_carlo_mode
+    original_include_realestate = sim_config.include_realestate
 
     try:
-        # Force the helper run to use the same Monte Carlo path-selection
-        # logic as the portfolio simulation, including rolling historical windows.
         sim_config.subplot_mode = "monte_carlo"
         sim_config.sim_type = "portfolio_sim"
+        sim_config.monte_carlo_mode = "rollingHistoricalWindows"
+        sim_config.include_realestate = False
 
-        mc_core = simulate_yearly_portfolios(
+        historical_core = simulate_yearly_portfolios(
             husband_portfolio,
             wife_portfolio,
             husband,
@@ -224,10 +240,14 @@ def _compute_simulated_shortfall_rate(
     finally:
         sim_config.subplot_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
+        sim_config.monte_carlo_mode = original_monte_carlo_mode
+        sim_config.include_realestate = original_include_realestate
 
-    total_assets = np.asarray(mc_core["total_assets"])
+    total_assets = np.asarray(historical_core["total_assets"])
     if total_assets.ndim != 2:
-        raise ValueError(f"Expected 2D total_assets array, got shape {total_assets.shape}")
+        raise ValueError(
+            f"Expected 2D total_assets array, got shape {total_assets.shape}"
+        )
 
     failed_mask = np.any(total_assets <= 0.0, axis=1)
     return float(failed_mask.mean() * 100.0)
