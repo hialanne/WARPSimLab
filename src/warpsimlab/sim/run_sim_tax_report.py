@@ -51,6 +51,11 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
 
     rows = []
 
+    second_person_enabled = (
+        getattr(sim_config, "second_person_enabled", False)
+        and wife is not None
+    )
+
     for i, year in enumerate(years):
         if i == 0:
             continue
@@ -64,20 +69,22 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
 
         husband_age = getattr(husband, "age", 0) + i
 
-        if getattr(sim_config, "second_person_enabled", False) and wife is not None:
-            wife_age = getattr(wife, "age", 0) + i
-            age_label = f"{husband_age} / {wife_age}"
-        else:
-            age_label = husband_age
-
         federal_income_tax = (
             _as_float(results.get("federal_ordinary_tax", [])[i])
             + _as_float(results.get("federal_qualified_dividend_tax", [])[i])
         )
 
-        rows.append({
+        row = {
             "Year": int(year),
-            "Age": age_label,
+        }
+
+        if second_person_enabled:
+            row["Husband Age"] = husband_age
+            row["Wife Age"] = getattr(wife, "age", 0) + i
+        else:
+            row["Age"] = husband_age
+
+        row.update({
             "Gross Income": gross_income,
             "Federal Income Tax": federal_income_tax,
             "Federal Ordinary Tax": _as_float(results.get("federal_ordinary_tax", [])[i]),
@@ -90,11 +97,22 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             "Total Taxes": total_taxes,
             "Effective Tax Rate": effective_tax_rate,
             "Marginal Tax Bracket": _as_float(results.get("tax_bracket", [])[i]),
-            "RMD": _as_float(results.get("rmd", [])[i]),
             "Traditional Withdrawals": _as_float(results.get("withdrawal", [])[i]),
+            "Emergency Pre-Tax Withdrawal": _as_float(results.get("emergency_pre_tax_used", [])[i]),
+            "Roth Conversions": _as_float(results.get("roth_conversions", [])[i]),
             "Roth Withdrawals": _as_float(results.get("roth_withdrawals", [])[i]),
             "HSA Withdrawals": _as_float(results.get("hsa_withdrawals", [])[i]),
+            "Qualified Dividends": _as_float(results.get("qualified_dividends", [])[i]),
         })
+
+        if second_person_enabled:
+            row["Husband RMD"] = _as_float(results.get("rmd_husband", [])[i])
+            row["Wife RMD"] = _as_float(results.get("rmd_wife", [])[i])
+            row["Total RMD"] = _as_float(results.get("rmd", [])[i])
+        else:
+            row["RMD"] = _as_float(results.get("rmd", [])[i])
+
+        rows.append(row)
 
     return rows
 
@@ -141,7 +159,12 @@ def _build_tax_source_summary(results):
         "Pensions": _sum(results, "pensions"),
         "Annuities": _sum(results, "annuities"),
         "Traditional Withdrawals": _sum(results, "withdrawal"),
+        "Emergency Pre-Tax Withdrawals": _sum(
+            results,
+            "emergency_pre_tax_used",
+        ),
         "RMDs": _sum(results, "rmd"),
+        "Roth Conversions": _sum(results, "roth_conversions"),
         "Bond Interest": _sum(results, "bond_interest"),
         "Cash Interest": _sum(results, "cash_interest"),
         "Qualified Dividends": _sum(results, "qualified_dividends"),
@@ -152,8 +175,17 @@ def _build_roth_summary(results):
     roth_assets = _safe_array(results, "roth_assets")
 
     return {
-        "Starting Roth Balance": _as_float(roth_assets[0]) if roth_assets else 0.0,
-        "Ending Roth Balance": _as_float(roth_assets[-1]) if roth_assets else 0.0,
+        "Starting Roth Balance": (
+            _as_float(roth_assets[0])
+            if roth_assets
+            else 0.0
+        ),
+        "Ending Roth Balance": (
+            _as_float(roth_assets[-1])
+            if roth_assets
+            else 0.0
+        ),
+        "Total Roth Conversions": _sum(results, "roth_conversions"),
         "Total Roth Withdrawals": _sum(results, "roth_withdrawals"),
     }
 
@@ -168,21 +200,39 @@ def _build_hsa_summary(results):
     }
 
 
-def _build_rmd_summary(results):
-    rmd_values = [_as_float(v) for v in _safe_array(results, "rmd")]
+def _build_rmd_summary(results, second_person_enabled):
     years = _safe_array(results, "year")
+    total_rmd = [_as_float(v) for v in _safe_array(results, "rmd")]
 
-    first_rmd_year = None
+    def first_rmd_year(values):
+        for i, value in enumerate(values):
+            if value > 0.0:
+                return int(years[i])
+        return None
 
-    for i, rmd in enumerate(rmd_values):
-        if rmd > 0.0:
-            first_rmd_year = int(years[i])
-            break
+    if second_person_enabled:
+        husband_rmd = [
+            _as_float(v)
+            for v in _safe_array(results, "rmd_husband")
+        ]
+        wife_rmd = [
+            _as_float(v)
+            for v in _safe_array(results, "rmd_wife")
+        ]
+
+        return {
+            "Husband First RMD Year": first_rmd_year(husband_rmd),
+            "Wife First RMD Year": first_rmd_year(wife_rmd),
+            "Largest Total RMD": max(total_rmd) if total_rmd else 0.0,
+            "Husband Lifetime RMD": sum(husband_rmd),
+            "Wife Lifetime RMD": sum(wife_rmd),
+            "Lifetime Total RMD": sum(total_rmd),
+        }
 
     return {
-        "First RMD Year": first_rmd_year,
-        "Largest RMD": max(rmd_values) if rmd_values else 0.0,
-        "Lifetime RMD Withdrawals": sum(rmd_values),
+        "First RMD Year": first_rmd_year(total_rmd),
+        "Largest RMD": max(total_rmd) if total_rmd else 0.0,
+        "Lifetime RMD Withdrawals": sum(total_rmd),
     }
 
 
@@ -209,6 +259,11 @@ def build_tax_report_data_from_pipeline(
 
     generated_timestamp = datetime.now()
     visible_report_id = generated_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
+    second_person_enabled = (
+        getattr(sim_config, "second_person_enabled", False)
+        and wife is not None
+    )
 
     return {
         "report_options": report_options,
@@ -239,7 +294,11 @@ def build_tax_report_data_from_pipeline(
         "tax_source_summary": _build_tax_source_summary(results),
         "roth_summary": _build_roth_summary(results),
         "hsa_summary": _build_hsa_summary(results),
-        "rmd_summary": _build_rmd_summary(results),
+
+        "rmd_summary": _build_rmd_summary(
+            results,
+            second_person_enabled,
+        ),
         "yearly_tax_rows": _build_yearly_tax_rows(
             results,
             husband,

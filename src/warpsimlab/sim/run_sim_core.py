@@ -145,6 +145,8 @@ def simulate_yearly_portfolios(
         "uncovered_expense": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "cash_flow_shortfall": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "ira_401k": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "rmd_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "rmd_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "employee_401k_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_ira_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_workplace_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -1021,6 +1023,8 @@ def simulate_yearly_portfolios(
                 + roth_conversion_total
             )
 
+            results["rmd_husband"][s, year] = rmd_h
+            results["rmd_wife"][s, year] = rmd_w
             results["fund_expenses"][s, year] = fund_expenses            
             results["bond_interest"][s, year] = bond_interest
             results["cash_interest"][s, year] = cash_interest
@@ -1190,6 +1194,8 @@ def simulate_yearly_portfolios(
             results["roth_total_flows"]
             / discount_factors
         )
+        results["rmd_husband"] = results["rmd_husband"] / discount_factors
+        results["rmd_wife"] = results["rmd_wife"] / discount_factors
         results["fund_expenses"]        = results["fund_expenses"]      / discount_factors
         results["bond_interest"]        = results["bond_interest"]      / discount_factors
         results["cash_interest"]        = results["cash_interest"]      / discount_factors

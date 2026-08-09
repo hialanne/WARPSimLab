@@ -28,6 +28,12 @@ PERCENT_KEY_HINTS = {
     "Bracket",
 }
 
+YEAR_KEYS = {
+    "Year",
+    "First RMD Year",
+    "Husband First RMD Year",
+    "Wife First RMD Year",
+}
 
 def _get_report_option(report_options, path, default=False):
     target = report_options
@@ -46,6 +52,13 @@ def _is_percent_key(key):
 
 def _fmt_value(value, key=None):
     if value is None:
+        if key in {
+            "First RMD Year",
+            "Husband First RMD Year",
+            "Wife First RMD Year",
+        }:
+            return "No RMD"
+
         return "N/A"
 
     if isinstance(value, bool):
@@ -53,6 +66,9 @@ def _fmt_value(value, key=None):
 
     if isinstance(value, str):
         return value
+
+    if key in YEAR_KEYS and isinstance(value, (int, float)):
+        return str(int(value))
 
     if key is not None and _is_percent_key(key):
         if isinstance(value, (int, float)):
@@ -70,7 +86,6 @@ def _fmt_value(value, key=None):
         return f"{value:,}"
 
     return str(value)
-
 
 def _render_kv_table(data, emphasize_keys=None):
     emphasize_keys = set(emphasize_keys or [])
@@ -275,42 +290,81 @@ def _render_yearly_tax_table(report_data):
     if not rows:
         return ""
 
+    first_row = rows[0]
+
     columns = [
         "Year",
-        "Age",
+    ]
+
+    if "Husband Age" in first_row:
+        columns.extend([
+            "Husband Age",
+            "Wife Age",
+        ])
+    else:
+        columns.append("Age")
+
+    columns.extend([
         "Gross Income",
+        "Qualified Dividends",
         "Federal Income Tax",
         "State Income Tax",
         "Payroll Tax",
         "Total Taxes",
         "Effective Tax Rate",
         "Marginal Tax Bracket",
-        "RMD",
+    ])
+
+    if "Husband RMD" in first_row:
+        columns.extend([
+            "Husband RMD",
+            "Wife RMD",
+            "Total RMD",
+        ])
+    else:
+        columns.append("RMD")
+
+    columns.extend([
+        "Traditional Withdrawals",
+        "Emergency Pre-Tax Withdrawal",
+        "Roth Conversions",
         "Roth Withdrawals",
         "HSA Withdrawals",
-    ]
+    ])
 
-    header_html = "".join(f"<th>{_safe(column)}</th>" for column in columns)
+    header_html = "".join(
+        f"<th>{_safe(column)}</th>"
+        for column in columns
+    )
 
     body_rows = []
 
     for row in rows:
         cells = []
+
         for column in columns:
             value = row.get(column)
-            css_class = " class='negative'" if isinstance(value, (int, float)) and value < 0 else ""
+
+            css_class = (
+                " class='negative'"
+                if isinstance(value, (int, float)) and value < 0
+                else ""
+            )
+
             cells.append(
                 f"<td{css_class}>{_safe(_fmt_value(value, key=column))}</td>"
             )
 
-        body_rows.append("<tr>" + "".join(cells) + "</tr>")
+        body_rows.append(
+            "<tr>" + "".join(cells) + "</tr>"
+        )
 
     return f"""
 <section>
     <h2>Year-by-Year Tax Details</h2>
     <p class="section-intro">
-        This detailed table provides the annual tax values used to generate the
-        summaries and charts presented earlier in the report.
+        This table shows annual income, taxes, retirement withdrawals,
+        and other tax-related flows.
     </p>
     <table class="wide-table">
         <thead>
@@ -322,8 +376,6 @@ def _render_yearly_tax_table(report_data):
     </table>
 </section>
 """
-
-
 
 
 def _render_tax_insights(report_data):
@@ -377,12 +429,39 @@ def _render_tax_insights(report_data):
     #
 
     first_rmd = rmd.get("First RMD Year")
+    husband_first_rmd = rmd.get("Husband First RMD Year")
+    wife_first_rmd = rmd.get("Wife First RMD Year")
 
     if first_rmd:
         observations.append(
             f"Required Minimum Distributions begin in {first_rmd}."
         )
 
+    elif husband_first_rmd and wife_first_rmd:
+        if husband_first_rmd == wife_first_rmd:
+            observations.append(
+                f"Required Minimum Distributions begin for both husband and wife "
+                f"in {husband_first_rmd}."
+            )
+        else:
+            observations.append(
+                f"Required Minimum Distributions begin for the husband in "
+                f"{husband_first_rmd} and for the wife in {wife_first_rmd}."
+            )
+
+    elif husband_first_rmd:
+        observations.append(
+            f"Required Minimum Distributions begin for the husband in "
+            f"{husband_first_rmd}."
+        )
+
+    elif wife_first_rmd:
+        observations.append(
+            f"Required Minimum Distributions begin for the wife in "
+            f"{wife_first_rmd}."
+        )
+
+    if first_rmd or husband_first_rmd or wife_first_rmd:
         observations.append(
             "Once RMDs begin, they increase taxable retirement income."
         )
@@ -667,6 +746,14 @@ def generate_tax_report(report_data) -> ReportResult:
     .wide-table th:not(:first-child) {{
         text-align: right;
     }}
+
+    .wide-table thead th {{
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f0f0f0;
+    }}
+
     </style>
 </head>
 <body>

@@ -223,7 +223,7 @@ def save_income_projection_report_plot(
     _ensure_output_folder(output_folder)
     image_path = os.path.join(output_folder, filename)
 
-    fig, ax = plt.subplots(figsize=(14, 7))
+    fig, ax = plt.subplots(figsize=(16, 9))
 
     try:
         draw_yearly_income(
@@ -280,7 +280,7 @@ def save_cumulative_operating_balance_report_plot(
         dtype=float,
     )
 
-    fig, ax = plt.subplots(figsize=(14, 7))
+    fig, ax = plt.subplots(figsize=(16, 9))
 
     try:
         draw_operating_balance(
@@ -362,7 +362,7 @@ def save_tax_by_year_report_plot(
     payroll = [row["Payroll Tax"] for row in yearly_tax_rows]
     total = [row["Total Taxes"] for row in yearly_tax_rows]
 
-    fig, ax = plt.subplots(figsize=(14, 7))
+    fig, ax = plt.subplots(figsize=(16, 9))
 
     try:
         ax.plot(years, federal, label="Federal Income Tax")
@@ -401,7 +401,7 @@ def save_effective_tax_rate_report_plot(
         for row in yearly_tax_rows
     ]
 
-    fig, ax = plt.subplots(figsize=(14, 7))
+    fig, ax = plt.subplots(figsize=(16, 9))
 
     try:
         ax.plot(years, effective_rates, linewidth=2)
@@ -432,16 +432,21 @@ def save_taxable_income_source_report_plot(
 
     years = [row["Year"] for row in yearly_tax_rows]
 
-    rmd = [row["RMD"] for row in yearly_tax_rows]
+    rmd = [
+        row["Total RMD"] if "Total RMD" in row else row["RMD"]
+        for row in yearly_tax_rows
+    ]
     traditional = [row["Traditional Withdrawals"] for row in yearly_tax_rows]
+    emergency = [row["Emergency Pre-Tax Withdrawal"] for row in yearly_tax_rows]
     roth = [row["Roth Withdrawals"] for row in yearly_tax_rows]
     hsa = [row["HSA Withdrawals"] for row in yearly_tax_rows]
 
-    fig, ax = plt.subplots(figsize=(14, 7))
+    fig, ax = plt.subplots(figsize=(16, 9))
 
     try:
         ax.plot(years, rmd, label="RMD")
         ax.plot(years, traditional, label="Traditional Withdrawals")
+        ax.plot(years, emergency, label="Emergency Pre-Tax Withdrawals")
         ax.plot(years, roth, label="Roth Withdrawals")
         ax.plot(years, hsa, label="HSA Withdrawals")
 
