@@ -293,28 +293,6 @@ def _render_portfolio_projection_placeholder(report_data, output_folder=None):
             </div>
             """)
 
-    if portfolio_visuals.get("include_monte_carlo_analysis", False):
-        asset = plot_assets.get("monte_carlo_analysis")
-
-        if asset and asset.get("path"):
-            image_src = _relative_asset_path(asset.get("path"), output_folder)
-            cards.append(f"""
-            <div class="plot-card">
-                <h3>{_safe(asset.get("title", "Monte Carlo Analysis"))}</h3>
-                <p>
-                    This chart shows the simulated range of portfolio outcomes across modeled market paths.
-                </p>
-                <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Monte Carlo analysis"))}">
-            </div>
-            """)
-        else:
-            cards.append("""
-            <div class="placeholder-card">
-                <h3>Monte Carlo Analysis</h3>
-                <p>Placeholder. The selected Monte Carlo plot was not available for this report.</p>
-            </div>
-            """)
-
     if portfolio_visuals.get("include_historical_windows_analysis", False):
         asset = plot_assets.get("historical_windows_analysis")
 
@@ -334,6 +312,28 @@ def _render_portfolio_projection_placeholder(report_data, output_folder=None):
             <div class="placeholder-card">
                 <h3>Historical Windows Analysis</h3>
                 <p>Placeholder. The selected Historical Windows plot was not available for this report.</p>
+            </div>
+            """)
+
+    if portfolio_visuals.get("include_monte_carlo_analysis", False):
+        asset = plot_assets.get("monte_carlo_analysis")
+
+        if asset and asset.get("path"):
+            image_src = _relative_asset_path(asset.get("path"), output_folder)
+            cards.append(f"""
+            <div class="plot-card">
+                <h3>{_safe(asset.get("title", "Monte Carlo Analysis"))}</h3>
+                <p>
+                    This chart shows the simulated range of portfolio outcomes across modeled market paths.
+                </p>
+                <img src="{_safe(image_src)}" alt="{_safe(asset.get("alt", "Monte Carlo analysis"))}">
+            </div>
+            """)
+        else:
+            cards.append("""
+            <div class="placeholder-card">
+                <h3>Monte Carlo Analysis</h3>
+                <p>Placeholder. The selected Monte Carlo plot was not available for this report.</p>
             </div>
             """)
 

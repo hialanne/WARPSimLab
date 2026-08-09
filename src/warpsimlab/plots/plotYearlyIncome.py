@@ -76,7 +76,7 @@ def draw_yearly_income(
             'withdrawal': "darkblue",
             'bond_interest': "saddlebrown",
             'cash_interest': "gray",
-            'qualified_dividends': "forestgreen",
+            'qualified_equity_distributions': "forestgreen",
             'special_income': "slateblue",
             'income': "skyblue",
         }
@@ -89,7 +89,7 @@ def draw_yearly_income(
             "withdrawal": "Portfolio Withdrawals",
             "bond_interest": "Bond Interest",
             "cash_interest": "Cash Interest",
-            "qualified_dividends": "Qualified Dividends",
+            "qualified_equity_distributions": "Qualified Equity Distributions",
             "special_income": "Special Income",
             "income": "Net Income",
         }
@@ -109,7 +109,7 @@ def draw_yearly_income(
                 'withdrawal',
                 'cash_interest',
                 'bond_interest',
-                'qualified_dividends',
+                'qualified_equity_distributions',
             ]
         else:
             plot_keys = list(breakdown.keys())

@@ -134,7 +134,7 @@ def _build_income_milestone(results, index):
     investment_income = (
         _array_value(results, "bond_interest", index)
         + _array_value(results, "cash_interest", index)
-        + _array_value(results, "qualified_dividends", index)
+        + _array_value(results, "qualified_equity_distributions", index)
     )
 
     return {
@@ -814,7 +814,7 @@ def _save_income_plot_with_temporary_modes(
             "withdrawal",
             "cash_interest",
             "bond_interest",
-            "qualified_dividends",
+            "qualified_equity_distributions",
         ]
 
         if sim_type == "income_sim":

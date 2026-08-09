@@ -161,16 +161,38 @@ def _render_tax_model_limitations(report_data):
 <section>
     <h2>Tax Model Limitations</h2>
     <p class="section-intro">
-        WARPSimLab uses simplified, planning-grade tax calculations. The goal is to
-        explain broad retirement tax behavior, not to reproduce a tax return.
+        WARPSimLab uses simplified tax calculations intended to model broad retirement
+        tax behavior rather than reproduce an individual tax return.
     </p>
     <ul>
-        <li>Social Security benefits are currently treated as ordinary taxable income rather than using the detailed federal provisional-income rules.</li>
-        <li>Qualified dividends and long-term capital gains are modeled with simplified tax handling and may not match an actual tax return.</li>
-        <li>Emergency pre-tax withdrawals use a one-pass approximation. A fully precise calculation would require an iterative withdrawal/tax solve.</li>
-        <li>Roth accounts are modeled as tax-free retirement buckets. The simulator does not currently optimize Roth withdrawal timing or Roth conversions.</li>
-        <li>HSA accounts are modeled as simplified tax-free buckets. The simulator does not currently distinguish qualified medical withdrawals from other uses.</li>
-        <li>State income taxes are planning-grade approximations and may omit deductions, credits, local taxes, and state-specific retirement income rules.</li>
+        <li>
+            Social Security benefits are currently treated as ordinary taxable income rather than
+            using the detailed federal provisional-income rules.
+        </li>
+        <li>
+            Taxable equity distributions: WARPSimLab assumes taxable equities are held primarily
+            in low-turnover U.S. stock funds or ETFs and that applicable holding-period requirements
+            are met. Qualified dividends and long-term capital gain distributions are combined into
+            a single simplified taxable-equity-distribution amount and taxed using the federal
+            preferential rate structure. The distribution amount is based on the simulator's
+            taxable-equity portfolio bucket rather than individual securities.
+        </li>
+        <li>
+            Emergency pre-tax withdrawals use a one-pass tax adjustment rather than repeatedly
+            recalculating taxes and withdrawals until they converge.
+        </li>
+        <li>
+            Roth accounts are modeled as tax-free retirement buckets. The simulator does not currently
+            optimize Roth withdrawal timing or Roth conversions.
+        </li>
+        <li>
+            HSA accounts are modeled as simplified tax-free buckets. The simulator does not currently
+            distinguish qualified medical withdrawals from other uses.
+        </li>
+        <li>
+            State income taxes are planning-grade approximations and may omit deductions, credits,
+            local taxes, and state-specific retirement income rules.
+        </li>
     </ul>
 </section>
 """
@@ -237,9 +259,12 @@ def _render_roth_analysis(report_data):
 <section>
     <h2>Roth Analysis</h2>
     <p class="section-intro">
-        WARPSimLab currently treats Roth accounts as tax-free retirement buckets.
-        Roth withdrawals occur only after post-tax and pre-tax assets are depleted
-        under the current withdrawal order.
+        WARPSimLab treats Roth accounts as tax-free retirement buckets. When additional
+        portfolio funding is needed for expenses, the simulator uses post-tax assets first,
+        then pre-tax assets, and then Roth assets. Roth withdrawals do not increase ordinary
+        taxable income. Roth conversions move assets from pre-tax accounts to Roth accounts
+        and increase ordinary taxable income, but the converted amount is not treated as
+        spendable household cash.
     </p>
     <div class="card-grid two-col">
         <div class="summary-card">
@@ -255,8 +280,11 @@ def _render_hsa_analysis(report_data):
 <section>
     <h2>HSA Analysis</h2>
     <p class="section-intro">
-        WARPSimLab currently treats HSA accounts as simplified tax-free buckets.
-        HSA withdrawals occur only after post-tax, pre-tax, and Roth assets are depleted.
+        WARPSimLab treats HSA accounts as simplified tax-free retirement buckets. When
+        additional portfolio funding is needed for expenses, the simulator uses post-tax
+        assets first, then pre-tax assets, then Roth assets, and finally HSA assets. HSA
+        withdrawals do not increase ordinary taxable income. The simulator does not currently
+        distinguish qualified medical withdrawals from other uses.
     </p>
     <div class="card-grid two-col">
         <div class="summary-card">
@@ -292,21 +320,20 @@ def _render_yearly_tax_table(report_data):
 
     first_row = rows[0]
 
-    columns = [
+    tax_columns = [
         "Year",
     ]
 
     if "Husband Age" in first_row:
-        columns.extend([
+        tax_columns.extend([
             "Husband Age",
             "Wife Age",
         ])
     else:
-        columns.append("Age")
+        tax_columns.append("Age")
 
-    columns.extend([
+    tax_columns.extend([
         "Gross Income",
-        "Qualified Dividends",
         "Federal Income Tax",
         "State Income Tax",
         "Payroll Tax",
@@ -315,16 +342,21 @@ def _render_yearly_tax_table(report_data):
         "Marginal Tax Bracket",
     ])
 
+    flow_columns = [
+        "Year",
+        "Qualified Equity Distributions",
+    ]
+
     if "Husband RMD" in first_row:
-        columns.extend([
+        flow_columns.extend([
             "Husband RMD",
             "Wife RMD",
             "Total RMD",
         ])
     else:
-        columns.append("RMD")
+        flow_columns.append("RMD")
 
-    columns.extend([
+    flow_columns.extend([
         "Traditional Withdrawals",
         "Emergency Pre-Tax Withdrawal",
         "Roth Conversions",
@@ -332,48 +364,58 @@ def _render_yearly_tax_table(report_data):
         "HSA Withdrawals",
     ])
 
-    header_html = "".join(
-        f"<th>{_safe(column)}</th>"
-        for column in columns
-    )
-
-    body_rows = []
-
-    for row in rows:
-        cells = []
-
-        for column in columns:
-            value = row.get(column)
-
-            css_class = (
-                " class='negative'"
-                if isinstance(value, (int, float)) and value < 0
-                else ""
-            )
-
-            cells.append(
-                f"<td{css_class}>{_safe(_fmt_value(value, key=column))}</td>"
-            )
-
-        body_rows.append(
-            "<tr>" + "".join(cells) + "</tr>"
+    def render_table(columns):
+        header_html = "".join(
+            f"<th>{_safe(column)}</th>"
+            for column in columns
         )
+
+        body_rows = []
+
+        for row in rows:
+            cells = []
+
+            for column in columns:
+                value = row.get(column)
+
+                css_class = (
+                    " class='negative'"
+                    if isinstance(value, (int, float)) and value < 0
+                    else ""
+                )
+
+                cells.append(
+                    f"<td{css_class}>{_safe(_fmt_value(value, key=column))}</td>"
+                )
+
+            body_rows.append(
+                "<tr>" + "".join(cells) + "</tr>"
+            )
+
+        return f"""
+        <table class="wide-table">
+            <thead>
+                <tr>{header_html}</tr>
+            </thead>
+            <tbody>
+                {''.join(body_rows)}
+            </tbody>
+        </table>
+        """
 
     return f"""
 <section>
     <h2>Year-by-Year Tax Details</h2>
     <p class="section-intro">
-        This table shows annual income, taxes, retirement withdrawals,
-        and other tax-related flows.
+        These tables show annual taxes and the taxable or retirement flows that
+        affect the simulation.
     </p>
-    <table class="wide-table">
-        <thead>
-            <tr>{header_html}</tr>
-        </thead>
-        <tbody>
-            {''.join(body_rows)}
-        </tbody>
-    </table>
+
+    <h3>Annual Tax Summary</h3>
+    {render_table(tax_columns)}
+
+    <h3>Annual Taxable and Retirement Flows</h3>
+    {render_table(flow_columns)}
 </section>
 """
 

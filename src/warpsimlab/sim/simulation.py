@@ -100,7 +100,7 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "fund_expenses": r["fund_expenses"][0],
         "bond_interest": r["breakdown_by_class"]["bond_interest"][0],
         "cash_interest": r["breakdown_by_class"]["cash_interest"][0],
-        "qualified_dividends": r["breakdown_by_class"]["qualified_dividends"][0],
+        "qualified_equity_distributions": r["breakdown_by_class"]["qualified_equity_distributions"][0],
         "simulated_shortfall_rate": simulated_shortfall_rate,
     }
 

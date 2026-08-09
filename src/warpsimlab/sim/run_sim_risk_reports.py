@@ -120,17 +120,62 @@ def _build_report_metadata(sim_config, method):
 
 
 def _build_simulation_snapshot(sim_config, method, scenario_count):
-    return {
+    snapshot = {
         "Analysis Method": method,
         "Scenario Count": scenario_count,
         "Start Year": getattr(sim_config, "start_year", None),
         "Years Simulated": getattr(sim_config, "years_to_simulate", None),
         "Plot Mode": getattr(sim_config, "plot_mode", None),
         "Monte Carlo Mode": getattr(sim_config, "monte_carlo_mode", None),
-        "Historical Asset Returns File": getattr(sim_config, "historical_asset_returns_file", None),
-        "Historical Inflation File": getattr(sim_config, "historical_inflation_file", None),
-        "Historical Window Mode": getattr(sim_config, "historical_window_mode", None),
+        "Historical Asset Returns File": getattr(
+            sim_config,
+            "historical_asset_returns_file",
+            None,
+        ),
+        "Historical Inflation File": getattr(
+            sim_config,
+            "historical_inflation_file",
+            None,
+        ),
+        "Historical Window Mode": getattr(
+            sim_config,
+            "historical_window_mode",
+            None,
+        ),
     }
+
+    if method == "Monte Carlo":
+        snapshot["Sampling Method"] = "Path-Based Annual Sampling"
+        snapshot["Correlated Returns"] = bool(
+            getattr(sim_config, "use_correlated_returns", True)
+        )
+        snapshot["Sequence Risk"] = bool(
+            getattr(sim_config, "sequence_risk_enabled", False)
+        )
+        snapshot["Random Seed"] = getattr(
+            sim_config,
+            "_mc_seed",
+            None,
+        )
+
+        if snapshot["Sequence Risk"]:
+            snapshot["Sequence Risk Timing"] = getattr(
+                sim_config,
+                "sequence_risk_timing",
+                None,
+            )
+            snapshot["Sequence Risk Length"] = getattr(
+                sim_config,
+                "sequence_risk_length",
+                None,
+            )
+            snapshot["Sequence Risk Depth"] = getattr(
+                sim_config,
+                "sequence_risk_depth",
+                None,
+            )
+
+    return snapshot
 
 
 def _first_failure_year(path, years):
@@ -316,100 +361,33 @@ def _generate_historical_commentary(failure_statistics, ending_values):
 
     comments = []
 
-    if shortfall_rate < 5:
+    if shortfall_rate == 0:
         comments.append(
-            "Historically, the retirement plan demonstrated strong resilience. "
-            "Only a small fraction of historical market sequences depleted the portfolio before the end of the projection period."
-        )
-    elif shortfall_rate < 20:
-        comments.append(
-            "Historical market conditions revealed some sensitivity in the retirement plan. "
-            "Most historical sequences remained sustainable, but a meaningful minority placed enough pressure on withdrawals to deplete the portfolio."
-        )
-    elif shortfall_rate < 40:
-        comments.append(
-            "Historical results showed moderate portfolio sustainability risk. "
-            "The plan remained funded across many historical periods, but unfavorable return and inflation sequences created material depletion risk."
-        )
-    elif shortfall_rate < 60:
-        comments.append(
-            "Historical results showed substantial variation in retirement outcomes. "
-            "A large share of historical sequences depleted the portfolio, suggesting sensitivity to difficult market environments."
+            "None of the evaluated historical windows depleted the portfolio before "
+            "the end of the projection period."
         )
     else:
         comments.append(
-            "Historical market conditions produced significant portfolio sustainability risk. "
-            "More than half of the evaluated historical sequences depleted the portfolio before the end of the projection period."
+            f"{shortfall_rate:.1f}% of the evaluated historical windows depleted the "
+            "portfolio before the end of the projection period."
         )
 
     if median > 0 and best >= median * 2:
         comments.append(
-            "The gap between stronger and middle-range outcomes was large. "
-            "This illustrates how favorable early market returns can create a portfolio cushion that supports withdrawals later in retirement."
+            "Ending portfolio values varied substantially across historical windows, "
+            "with the strongest outcomes finishing at more than twice the median "
+            "ending portfolio value."
         )
 
     if worst <= 0:
         comments.append(
-            "The weakest historical paths reached portfolio depletion. "
-            "These scenarios illustrate sequence-of-returns risk: poor investment returns early in retirement can have lasting effects because withdrawals continue while the portfolio is under pressure."
+            "The weakest historical paths reached portfolio depletion. These paths "
+            "illustrate sequence-of-returns risk because poor returns early in the "
+            "projection can reduce the portfolio while withdrawals continue."
         )
 
     return comments
 
-
-def _build_monte_carlo_insights(total_assets):
-    ending_values = np.asarray(total_assets[:, -1], dtype=float)
-
-    return {
-        "Tail Risk Summary": {
-            "5th Percentile Ending Portfolio": float(np.percentile(ending_values, 5)),
-            "10th Percentile Ending Portfolio": float(np.percentile(ending_values, 10)),
-            "25th Percentile Ending Portfolio": float(np.percentile(ending_values, 25)),
-            "Median Ending Portfolio": float(np.percentile(ending_values, 50)),
-        },
-        "Sequence Risk Discussion": (
-            "Monte Carlo analysis creates many possible return sequences. "
-            "Weak returns early in retirement can be especially damaging because withdrawals "
-            "continue while the portfolio is depressed."
-        ),
-    }
-
-
-def _build_risk_observations(failure_stats, ending_values, method):
-    observations = []
-
-    failure_rate = _as_float(failure_stats.get("Simulated Shortfall Rate"))
-
-    if failure_rate == 0:
-        observations.append("The portfolio survived every analyzed scenario.")
-    elif failure_rate < 5:
-        observations.append("Only a small fraction of analyzed scenarios depleted the portfolio.")
-    elif failure_rate < 20:
-        observations.append("The plan showed moderate depletion risk across the analyzed scenarios.")
-    else:
-        observations.append("The plan showed substantial depletion risk across the analyzed scenarios.")
-
-    if len(ending_values) > 0:
-        worst = float(np.min(ending_values))
-        median = float(np.median(ending_values))
-        best = float(np.max(ending_values))
-
-        if best > median * 2 and median > 0:
-            observations.append("Ending portfolio outcomes vary widely across scenarios.")
-
-        if worst <= 0:
-            observations.append("At least one scenario depleted the portfolio before the end of the projection.")
-
-    if method == "Historical Windows":
-        observations.append(
-            "Historical Window analysis is deterministic and ranks actual historical retirement start periods."
-        )
-    elif method == "Monte Carlo":
-        observations.append(
-            "Monte Carlo analysis explores synthetic return paths and may vary between runs unless random seeding is controlled."
-        )
-
-    return observations
 
 def _get_report_output_folder():
     return os.path.join(
@@ -528,12 +506,31 @@ def _build_and_generate_risk_report(
         "Years Simulated": getattr(sim_config, "years_to_simulate", None),
         "Simulated Shortfall Rate": failure_statistics.get("Simulated Shortfall Rate"),
         "Worst Ending Portfolio": float(np.min(ending_values)),
+        "10th Percentile Ending Portfolio": float(np.percentile(ending_values, 10)),
         "Median Ending Portfolio": float(np.median(ending_values)),
+        "90th Percentile Ending Portfolio": float(np.percentile(ending_values, 90)),
         "Best Ending Portfolio": float(np.max(ending_values)),
     }
 
+    if method == "Historical Windows":
+        start_years = np.asarray(
+            core.get("historical_window_start_year", []),
+            dtype=int,
+        )
+
+        valid_start_years = start_years[start_years >= 0]
+
+        analysis_summary["Historical Window Count"] = scenario_count
+
+        if len(valid_start_years) > 0:
+            analysis_summary["Earliest Retirement Start Year"] = int(
+                np.min(valid_start_years)
+            )
+            analysis_summary["Latest Retirement Start Year"] = int(
+                np.max(valid_start_years)
+            )
+
     historical_insights = {}
-    monte_carlo_insights = {}
 
     if method == "Historical Windows":
         historical_insights = _build_historical_insights(
@@ -542,16 +539,18 @@ def _build_and_generate_risk_report(
             failure_statistics,
         )
 
-    if method == "Monte Carlo":
-        monte_carlo_insights = _build_monte_carlo_insights(
-            total_assets,
-        )
+        best_years = historical_insights.get("Best Retirement Years", [])
+        worst_years = historical_insights.get("Worst Retirement Years", [])
 
-    risk_observations = _build_risk_observations(
-        failure_statistics,
-        ending_values,
-        method,
-    )
+        if best_years:
+            analysis_summary["Best Historical Retirement Start Year"] = (
+                best_years[0]["Retirement Start Year"]
+            )
+
+        if worst_years:
+            analysis_summary["Worst Historical Retirement Start Year"] = (
+                worst_years[0]["Retirement Start Year"]
+            )
 
     report_options = getattr(sim_config, "report_options", {})
 
@@ -584,8 +583,6 @@ def _build_and_generate_risk_report(
         analysis_summary=analysis_summary,
 
         historical_insights=historical_insights,
-        monte_carlo_insights=monte_carlo_insights,
-        risk_observations=risk_observations,
 
         percentile_table=_build_percentile_table(total_assets, years),
         failure_statistics=failure_statistics,

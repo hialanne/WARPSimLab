@@ -80,7 +80,7 @@ def render_report_header(report_data, *, title=None, market_wording="simulated m
     <div class="disclaimer">
         <p>This report is intended solely for educational purposes.</p>
         <p>It is not financial, investment, tax, legal, retirement, or other professional advice.</p>
-        <p>All results are generated from user-provided assumptions and {safe(market_wording)}.</p>
+        <p>All results are generated from user-provided data and {safe(market_wording)}.</p>
     </div>
 </section>
 """

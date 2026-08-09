@@ -109,9 +109,9 @@ def _build_year_row(results, index, husband, wife, sim_config):
 
         "Bond Interest": _array_value(results, "bond_interest", index),
         "Cash Interest": _array_value(results, "cash_interest", index),
-        "Qualified Dividends": _array_value(
+        "Qualified Equity Distribution": _array_value(
             results,
-            "qualified_dividends",
+            "qualified_equity_distributions",
             index,
         ),
         "Retirement Withdrawals": _array_value(

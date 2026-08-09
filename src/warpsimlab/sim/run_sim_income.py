@@ -36,7 +36,7 @@ def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, s
         "withdrawal",
         "bond_interest",
         "cash_interest",
-        "qualified_dividends",
+        "qualified_equity_distributions",
     ]
 
     if sim_config.sim_type == "income_sim":
@@ -82,7 +82,7 @@ def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, s
             round(p["breakdown_by_class"]["work"][i], 2),
             round(p["breakdown_by_class"]["bond_interest"][i], 2),
             round(p["breakdown_by_class"]["cash_interest"][i], 2),
-            round(p["breakdown_by_class"]["qualified_dividends"][i], 2),
+            round(p["breakdown_by_class"]["qualified_equity_distributions"][i], 2),
             round(p["expense_amt"][i], 2),
             round(p["net_profit"][i], 2),
         )

@@ -108,6 +108,8 @@ def prepare_market_path_sampling(sim_config):
       - sim_config._hist_num_windows
     """
 
+    sim_config._mc_seed = MONTE_CARLO_SEED
+
     sim_config._mc_rng = np.random.default_rng(
         MONTE_CARLO_SEED
     )

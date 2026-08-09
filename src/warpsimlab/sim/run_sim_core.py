@@ -166,7 +166,7 @@ def simulate_yearly_portfolios(
                 "withdrawal",
                 "bond_interest",
                 "cash_interest",
-                "qualified_dividends",
+                "qualified_equity_distributions",
                 "special_income",
                 "roth_conversion",
             ]
@@ -176,7 +176,7 @@ def simulate_yearly_portfolios(
         "net_income_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "bond_interest": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "cash_interest": np.zeros((effective_num_sims, years_to_simulate + 1)),
-        "qualified_dividends": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "qualified_equity_distributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "federal_ordinary_tax": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "federal_qualified_dividend_tax": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "payroll_tax": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -380,7 +380,7 @@ def simulate_yearly_portfolios(
             (
                 bond_interest,
                 cash_interest,
-                qualified_dividends,
+                qualified_equity_distributions,
                 post_tax_total,
                 husband_post_tax_total,
                 wife_post_tax_total,
@@ -394,7 +394,7 @@ def simulate_yearly_portfolios(
 
             income["by_class"]["bond_interest"] += bond_interest
             income["by_class"]["cash_interest"] += cash_interest
-            income["by_class"]["qualified_dividends"] += qualified_dividends
+            income["by_class"]["qualified_equity_distributions"] += qualified_equity_distributions
 
             income["total"] += post_tax_total
             income["by_person"]["husband"] += husband_post_tax_total
@@ -616,8 +616,8 @@ def simulate_yearly_portfolios(
                     + additional_withdrawal_cash
                 )
 
-            if qualified_dividends > (income["total"]):
-                print("qualified_dividends: "+str(qualified_dividends)+ " income-total: "+str(income["total"]))
+            if qualified_equity_distributions > (income["total"]):
+                print("qualified_equity_distributions: "+str(qualified_equity_distributions)+ " income-total: "+str(income["total"]))
                 raise RuntimeError("Qualified dividends exceed total income")
 
             # print("h_port: "+str(h_port.total_value))
@@ -640,11 +640,11 @@ def simulate_yearly_portfolios(
                 # avoids an iterative tax/withdrawal loop.
                 # ---------------------------------------------------------
 
-                qualified_dividends = income["by_class"].get("qualified_dividends", 0.0)
+                qualified_equity_distributions = income["by_class"].get("qualified_equity_distributions", 0.0)
 
                 baseline_ordinary_income = (
                     income["total"]
-                    - qualified_dividends
+                    - qualified_equity_distributions
                     - income.get("non_taxable_income", 0.0)
                     + wd_pre_tax
                     + roth_conversion_total
@@ -658,7 +658,7 @@ def simulate_yearly_portfolios(
                     baseline_federal_marginal_rate,
                 ) = taxEngine.calculate_total_income_tax_split(
                     ordinary_income=baseline_ordinary_income,
-                    qualified_dividends=qualified_dividends,
+                    qualified_equity_distributions=qualified_equity_distributions,
                     year_cache=year_cache,
                     sim_config=sim_config
                 )
@@ -769,7 +769,7 @@ def simulate_yearly_portfolios(
                         federal_marginal_rate,
                     ) = taxEngine.calculate_total_income_tax_split(
                         ordinary_income=ordinary_income,
-                        qualified_dividends=qualified_dividends,
+                        qualified_equity_distributions=qualified_equity_distributions,
                         year_cache=year_cache,
                         sim_config=sim_config
                     )
@@ -815,11 +815,11 @@ def simulate_yearly_portfolios(
                     raise RuntimeError("final_tax_delta_uncovered should never be negative")
 
             else:
-                qualified_dividends = income["by_class"].get("qualified_dividends", 0.0)
+                qualified_equity_distributions = income["by_class"].get("qualified_equity_distributions", 0.0)
 
                 ordinary_income = (
                     income["total"]
-                    - qualified_dividends
+                    - qualified_equity_distributions
                     - income.get("non_taxable_income", 0.0)
                     + wd_pre_tax
                     + roth_conversion_total
@@ -833,7 +833,7 @@ def simulate_yearly_portfolios(
                     federal_marginal_rate,
                 ) = taxEngine.calculate_total_income_tax_split(
                     ordinary_income=ordinary_income,
-                    qualified_dividends=qualified_dividends,
+                    qualified_equity_distributions=qualified_equity_distributions,
                     year_cache=year_cache,
                     sim_config=sim_config
                 )
@@ -1028,7 +1028,7 @@ def simulate_yearly_portfolios(
             results["fund_expenses"][s, year] = fund_expenses            
             results["bond_interest"][s, year] = bond_interest
             results["cash_interest"][s, year] = cash_interest
-            results["qualified_dividends"][s, year] = qualified_dividends
+            results["qualified_equity_distributions"][s, year] = qualified_equity_distributions
             results["federal_ordinary_tax"][s,year] = federal_ordinary_tax
             results["federal_qualified_dividend_tax"][s,year] = federal_qualified_dividend_tax
             results["payroll_tax"][s,year] = payroll_tax
@@ -1199,7 +1199,7 @@ def simulate_yearly_portfolios(
         results["fund_expenses"]        = results["fund_expenses"]      / discount_factors
         results["bond_interest"]        = results["bond_interest"]      / discount_factors
         results["cash_interest"]        = results["cash_interest"]      / discount_factors
-        results["qualified_dividends"]  = results["qualified_dividends"] / discount_factors
+        results["qualified_equity_distributions"]  = results["qualified_equity_distributions"] / discount_factors
 
         results["federal_ordinary_tax"] = results["federal_ordinary_tax"] / discount_factors
         results["federal_qualified_dividend_tax"] = results["federal_qualified_dividend_tax"] / discount_factors
@@ -1225,7 +1225,7 @@ def simulate_yearly_portfolios(
         results["breakdown_by_class"]["special_income"] = results["breakdown_by_class"]["special_income"] / discount_factors
         results["breakdown_by_class"]["bond_interest"] = (results["breakdown_by_class"]["bond_interest"] / discount_factors)
         results["breakdown_by_class"]["cash_interest"] = (results["breakdown_by_class"]["cash_interest"] / discount_factors)
-        results["breakdown_by_class"]["qualified_dividends"] = (results["breakdown_by_class"]["qualified_dividends"] / discount_factors)
+        results["breakdown_by_class"]["qualified_equity_distributions"] = (results["breakdown_by_class"]["qualified_equity_distributions"] / discount_factors)
 
     return results
 

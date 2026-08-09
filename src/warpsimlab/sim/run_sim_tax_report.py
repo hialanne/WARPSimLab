@@ -102,7 +102,7 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             "Roth Conversions": _as_float(results.get("roth_conversions", [])[i]),
             "Roth Withdrawals": _as_float(results.get("roth_withdrawals", [])[i]),
             "HSA Withdrawals": _as_float(results.get("hsa_withdrawals", [])[i]),
-            "Qualified Dividends": _as_float(results.get("qualified_dividends", [])[i]),
+            "Qualified Equity Distributions": _as_float(results.get("qualified_equity_distributions", [])[i]),
         })
 
         if second_person_enabled:
@@ -136,7 +136,7 @@ def _build_lifetime_tax_summary(results):
 
     return {
         "Lifetime Federal Ordinary Tax": lifetime_federal_ordinary,
-        "Lifetime Federal Qualified Dividend Tax": lifetime_federal_qd,
+        "Lifetime Federal Qualified Equity Distribution Tax": lifetime_federal_qd,
         "Lifetime Federal Income Tax": lifetime_federal,
         "Lifetime State Income Tax": lifetime_state,
         "Lifetime Payroll Tax": lifetime_payroll,
@@ -167,7 +167,7 @@ def _build_tax_source_summary(results):
         "Roth Conversions": _sum(results, "roth_conversions"),
         "Bond Interest": _sum(results, "bond_interest"),
         "Cash Interest": _sum(results, "cash_interest"),
-        "Qualified Dividends": _sum(results, "qualified_dividends"),
+        "Qualified Equity Distributions": _sum(results, "qualified_equity_distributions"),
     }
 
 

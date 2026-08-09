@@ -243,19 +243,19 @@ def estimate_post_tax_income_components(sim_portfolio, sim_config):
     bd_post = sim_portfolio.bd_post
     cs_post = sim_portfolio.cs_post
 
-    qualified_dividends = eq_post * equity_div_yield
+    qualified_equity_distributions = eq_post * equity_div_yield
     bond_interest = bd_post * bond_yield
     cash_interest = cs_post * cash_yield
 
     ordinary_total = bond_interest + cash_interest
-    total = ordinary_total + qualified_dividends
+    total = ordinary_total + qualified_equity_distributions
 
     return {
         "bond_interest": bond_interest,
         "cash_interest": cash_interest,
-        "qualified_dividends": qualified_dividends,
+        "qualified_equity_distributions": qualified_equity_distributions,
         "ordinary_total": ordinary_total,
-        "qualified_total": qualified_dividends,
+        "qualified_total": qualified_equity_distributions,
         "total": total,
     }
 
@@ -272,7 +272,7 @@ def apply_post_tax_income_components_to_income(income, post_tax_income, second_p
     """
     income["by_class"]["bond_interest"] += post_tax_income["bond_interest"]
     income["by_class"]["cash_interest"] += post_tax_income["cash_interest"]
-    income["by_class"]["qualified_dividends"] += post_tax_income["qualified_dividends"]
+    income["by_class"]["qualified_equity_distributions"] += post_tax_income["qualified_equity_distributions"]
 
     income["by_person"]["husband"] += post_tax_income["by_person"]["husband"]["total"]
     if second_person_enabled:
@@ -325,21 +325,21 @@ def estimate_household_post_tax_income_components(
 
     bond_interest = h_bi + w_bi
     cash_interest = h_ci + w_ci
-    qualified_dividends = h_qd + w_qd
+    qualified_equity_distributions = h_qd + w_qd
 
     if -EPS < bond_interest < 0.0:
         bond_interest = 0.0
     if -EPS < cash_interest < 0.0:
         cash_interest = 0.0
-    if -EPS < qualified_dividends < 0.0:
-        qualified_dividends = 0.0
+    if -EPS < qualified_equity_distributions < 0.0:
+        qualified_equity_distributions = 0.0
 
-    total = bond_interest + cash_interest + qualified_dividends
+    total = bond_interest + cash_interest + qualified_equity_distributions
 
     return (
         bond_interest,
         cash_interest,
-        qualified_dividends,
+        qualified_equity_distributions,
         total,
         h_total,
         w_total,

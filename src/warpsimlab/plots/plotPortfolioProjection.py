@@ -173,10 +173,24 @@ def _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config):
     rate = getattr(simulation_data, "simulated_shortfall_rate", None)
     if rate is None:
         raise ValueError(
-            "show_simulated_shortfall_rate is True, but simulation_data.simulated_shortfall_rate is missing"
+            "show_simulated_shortfall_rate is True, but "
+            "simulation_data.simulated_shortfall_rate is missing"
         )
 
-    label = f"{rate:.0f}% of scenarios depleted the portfolio"
+    subplot_mode = getattr(sim_config, "subplot_mode", "")
+    market_mode = getattr(
+        sim_config,
+        "monte_carlo_mode",
+        "pathBasedAnnualSampling",
+    )
+
+    if (
+        subplot_mode == "monte_carlo"
+        and market_mode == "rollingHistoricalWindows"
+    ):
+        label = f"{rate:.0f}% of historical windows depleted the portfolio"
+    else:
+        label = f"{rate:.0f}% of scenarios depleted the portfolio"
 
     ax.text(
         0.98,
@@ -186,9 +200,15 @@ def _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config):
         ha="right",
         va="top",
         fontsize=12,
-        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="gray", alpha=0.85),
+        bbox=dict(
+            boxstyle="round,pad=0.3",
+            facecolor="white",
+            edgecolor="gray",
+            alpha=0.85,
+        ),
         zorder=10,
     )
+
 
 def _plot_assets(years_list, simulation_data, total_color=COLOR_TOTAL_REAL, sim_config=None):
     """

@@ -87,7 +87,7 @@ def calculate_employee_payroll_tax_split(
     )
 
 
-def calculate_total_income_tax_split(ordinary_income, qualified_dividends, year_cache, sim_config):
+def calculate_total_income_tax_split(ordinary_income, qualified_equity_distributions, year_cache, sim_config):
     """
     Calculates total tax using split treatment and returns component detail.
 
@@ -97,10 +97,10 @@ def calculate_total_income_tax_split(ordinary_income, qualified_dividends, year_
         (federal_ordinary_tax, federal_qualified_dividend_tax, state_income_tax, total_tax)
     """
 
-    if ordinary_income < 0 or qualified_dividends < 0:
+    if ordinary_income < 0 or qualified_equity_distributions < 0:
         raise RuntimeError(
             f"Tax engine received negative income inputs: "
-            f"ordinary_income={ordinary_income}, qualified_dividends={qualified_dividends}"
+            f"ordinary_income={ordinary_income}, qualified_equity_distributions={qualified_equity_distributions}"
         )
 
     federal_ordinary_tax = 0.0
@@ -113,11 +113,11 @@ def calculate_total_income_tax_split(ordinary_income, qualified_dividends, year_
             ordinary_income, year_cache
         )
         federal_qualified_dividend_tax = calculate_us_federal_qualified_dividend_tax(
-            ordinary_income, qualified_dividends, year_cache
+            ordinary_income, qualified_equity_distributions, year_cache
         )
 
     if sim_config.calculate_state_taxes:
-        state_taxable_income = ordinary_income + qualified_dividends
+        state_taxable_income = ordinary_income + qualified_equity_distributions
         state_income_tax = calculate_state_income_tax(
             state_taxable_income, year_cache, sim_config
         )
@@ -335,7 +335,7 @@ def calculate_us_federal_income_tax(total_income, year_cache):
     return tax, marginal_rate
 
 
-def calculate_us_federal_qualified_dividend_tax(ordinary_income, qualified_dividends, year_cache):
+def calculate_us_federal_qualified_dividend_tax(ordinary_income, qualified_equity_distributions, year_cache):
     """
     Calculates federal tax on qualified dividends using cached,
     inflation-adjusted LTCG / qualified dividend thresholds.
@@ -345,7 +345,7 @@ def calculate_us_federal_qualified_dividend_tax(ordinary_income, qualified_divid
       - 15%
       - 20%
     """
-    if qualified_dividends <= 0.0:
+    if qualified_equity_distributions <= 0.0:
         return 0.0
 
     taxable_ordinary_income = ordinary_income - year_cache["ordinary_standard_deduction"]
@@ -360,12 +360,12 @@ def calculate_us_federal_qualified_dividend_tax(ordinary_income, qualified_divid
     zero_band_room = upper_0 - taxable_ordinary_income
     if zero_band_room <= 0.0:
         zero_taxed = 0.0
-    elif qualified_dividends <= zero_band_room:
-        zero_taxed = qualified_dividends
+    elif qualified_equity_distributions <= zero_band_room:
+        zero_taxed = qualified_equity_distributions
     else:
         zero_taxed = zero_band_room
 
-    remaining_after_zero = qualified_dividends - zero_taxed
+    remaining_after_zero = qualified_equity_distributions - zero_taxed
     if remaining_after_zero <= 0.0:
         return 0.0
 

@@ -260,7 +260,7 @@ def calculate_income_breakdown(husband, wife,
     withdrawal = 0.0
     bond_interest = 0.0
     cash_interest = 0.0
-    qualified_dividends = 0.0
+    qualified_equity_distributions = 0.0
     special_income_amt = 0.0
     non_taxable_income = 0.0
 
@@ -348,7 +348,7 @@ def calculate_income_breakdown(husband, wife,
             "withdrawal": withdrawal,
             "bond_interest": bond_interest,
             "cash_interest": cash_interest,
-            "qualified_dividends": qualified_dividends,
+            "qualified_equity_distributions": qualified_equity_distributions,
             "special_income": special_income_amt,
         },
         

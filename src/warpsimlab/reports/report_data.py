@@ -34,12 +34,8 @@ class RiskReportData:
     # These should contain only scalar display values.
     analysis_summary: dict[str, Any]
 
-    # Historical / Monte Carlo specific sections.
+    # Historical  specific sections.
     historical_insights: dict[str, Any] = field(default_factory=dict)
-    monte_carlo_insights: dict[str, Any] = field(default_factory=dict)
-
-    # Educational observations shown later in the report.
-    risk_observations: list[str] = field(default_factory=list)
 
     percentile_table: list[dict[str, Any]] = field(default_factory=list)
     failure_statistics: dict[str, Any] = field(default_factory=dict)

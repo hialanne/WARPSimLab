@@ -17,7 +17,6 @@ from src.warpsimlab.reports.report_common import (
     open_html_report_in_browser,
 )
 
-
 YEAR_KEYS = {
     "Year",
     "Start Year",
@@ -25,7 +24,13 @@ YEAR_KEYS = {
     "Retirement Start Year",
     "Historical Window Start Year",
     "Historical Window End Year",
-}
+    "Earliest Retirement Start Year",
+    "Latest Retirement Start Year",
+    "Earliest Portfolio Depletion Year",
+    "Median Portfolio Depletion Year",
+    "Latest Portfolio Depletion Year",
+    "Best Historical Retirement Start Year",
+    "Worst Historical Retirement Start Year",}
 
 PERCENT_KEY_HINTS = {
     "Rate",
@@ -188,14 +193,40 @@ def _render_executive_summary(report_data):
 
     summary = report_data.analysis_summary or {}
 
-    keys = [
-        "Scenario Count",
-        "Years Simulated",
-        "Simulated Shortfall Rate",
-        "Worst Ending Portfolio",
-        "Median Ending Portfolio",
-        "Best Ending Portfolio",
-    ]
+    method = str(
+        summary.get("Analysis Method", "")
+    ).lower()
+
+    if "historical" in method:
+        keys = [
+            "Historical Window Count",
+            "Years Simulated",
+            "Earliest Retirement Start Year",
+            "Latest Retirement Start Year",
+            "Simulated Shortfall Rate",
+            "Worst Historical Retirement Start Year",
+            "Median Ending Portfolio",
+            "Best Historical Retirement Start Year",
+            "Best Ending Portfolio",
+        ]
+    elif "monte" in method:
+        keys = [
+            "Scenario Count",
+            "Years Simulated",
+            "Simulated Shortfall Rate",
+            "10th Percentile Ending Portfolio",
+            "Median Ending Portfolio",
+            "90th Percentile Ending Portfolio",
+        ]
+    else:
+        keys = [
+            "Scenario Count",
+            "Years Simulated",
+            "Simulated Shortfall Rate",
+            "Worst Ending Portfolio",
+            "Median Ending Portfolio",
+            "Best Ending Portfolio",
+        ]
 
     cards = []
     for key in keys:
@@ -303,46 +334,20 @@ def _render_sustainability_interpretation(report_data):
     except (TypeError, ValueError):
         return ""
 
-    if shortfall_rate == 0:
-        message = (
-            "Every analyzed scenario remained funded through the end of the "
-            "projection period. These results suggest that your financial plan "
-            "had a strong margin of safety across the market conditions "
-            "evaluated in this report."
-        )
-    elif shortfall_rate < 5:
-        message = (
-            "Only a small fraction of scenarios depleted the portfolio before "
-            "the end of the projection period. Overall, your financial plan "
-            "demonstrated strong resilience across the analyzed market "
-            "conditions."
-        )
-    elif shortfall_rate < 20:
-        message = (
-            "Most scenarios remained funded through the end of the projection "
-            "period, although some experienced portfolio depletion. These "
-            "results suggest moderate sensitivity to unfavorable market "
-            "conditions."
-        )
-    elif shortfall_rate < 50:
-        message = (
-            "A meaningful share of scenarios depleted the portfolio before the "
-            "end of the projection period. These results suggest that your "
-            "financial plan may be sensitive to adverse market conditions."
-        )
-    else:
-        message = (
-            "Most analyzed scenarios depleted the portfolio before the end of "
-            "the projection period. These results suggest that your financial "
-            "plan is highly sensitive to adverse market conditions and may "
-            "benefit from changes such as lower withdrawals, additional "
-            "savings, or a different investment strategy."
-        )
-
     if "historical" in method:
-        heading = "What History Suggests"
+        heading = "Historical Outcome Summary"
+        message = (
+            f"{shortfall_rate:.1f}% of the evaluated historical windows depleted "
+            "the portfolio before the end of the projection period."
+        )
+    elif "monte" in method:
+        heading = "Monte Carlo Outcome Summary"
+        message = (
+            f"{shortfall_rate:.1f}% of the analyzed Monte Carlo paths depleted "
+            "the portfolio before the end of the projection period."
+        )
     else:
-        heading = "What Monte Carlo Suggests"
+        return ""
 
     return f"""
     <div class="summary-card interpretation-card">
@@ -350,7 +355,6 @@ def _render_sustainability_interpretation(report_data):
         <p>{_safe(message)}</p>
     </div>
 """
-
 
 def _render_failure_statistics(report_data):
     if not _get_report_option(
@@ -373,27 +377,14 @@ def _render_failure_statistics(report_data):
         intro = """
         <p class="section-intro">
             This section summarizes how often the modeled portfolio was depleted
-            before the end of the projection period.
-        </p>
-        <p class="section-intro">
-            Historical Window Analysis evaluates your financial plan using actual
-            historical sequences of market returns and inflation. Because every
-            scenario represents conditions that actually occurred, the results
-            illustrate how your plan would have performed across a wide range of
-            historical market environments.
+            before the end of the projection period across the historical windows.
         </p>
         """
     elif "monte" in method:
         intro = """
         <p class="section-intro">
             This section summarizes how often the modeled portfolio was depleted
-            before the end of the projection period.
-        </p>
-        <p class="section-intro">
-            Monte Carlo Analysis evaluates your financial plan using many
-            statistically generated sequences of market returns and inflation.
-            The resulting statistics estimate how sensitive your plan may be
-            across a broad range of possible future market conditions.
+            before the end of the projection period across the Monte Carlo paths.
         </p>
         """
     else:
@@ -430,24 +421,48 @@ def _render_percentile_table(report_data):
     if not rows:
         return ""
 
+    method = str(
+        report_data.analysis_summary.get("Analysis Method", "")
+    ).lower()
+
+    if "historical" in method:
+        explanation = """
+        <p class="section-intro">
+            This table summarizes how portfolio values varied across all historical
+            windows during each year of the projection. Each row represents one
+            projection year, while the percentile columns show the distribution of
+            portfolio values across the historical windows at that point in time.
+        </p>
+
+        <p>
+            For example, the 10th percentile is the portfolio value below which
+            approximately 10% of historical windows fell at that point in the
+            projection. The median represents the middle historical-window outcome,
+            while the 90th percentile represents a stronger historical-window
+            outcome.
+        </p>
+        """
+    else:
+        explanation = """
+        <p class="section-intro">
+            This table summarizes how portfolio values varied across all simulated
+            scenarios during each year of the projection. Each row represents one
+            projection year, while the percentile columns show the distribution of
+            portfolio values across the simulations at that point in time.
+        </p>
+
+        <p>
+            For example, the 10th percentile is the portfolio value below which
+            approximately 10% of simulations fell at that point in the projection.
+            The median represents the middle simulated outcome, while the 90th
+            percentile represents a stronger simulated outcome.
+        </p>
+        """
+
     return f"""
 <section>
     <h2>Percentile Portfolio Table</h2>
-    <p class="section-intro">
-    This table summarizes how portfolio values varied across all simulated scenarios
-    during each year of the simulation. Each row represents one year of the projection,
-    while the percentile columns show the distribution of portfolio values across all
-    historical windows or Monte Carlo simulations at that point in time.
-    </p>
-
-    <p>
-    For example, the 10th percentile represents a relatively poor outcome in which
-    approximately 10% of scenarios produced a lower portfolio value and 90% produced
-    a higher value. Likewise, the median represents the middle outcome, while the
-    90th percentile represents one of the stronger outcomes. Together, these
-    percentiles illustrate how the range of possible portfolio values changes
-    over time.
-    </p>
+    {explanation}
     <div class="table-scroll">
         {_render_simple_table(rows)}
     </div>
@@ -557,8 +572,8 @@ def _render_historical_insights(report_data):
             <div class="summary-card">
                 <h3>Worst Historical Retirement Start Years</h3>
                 <p>
-                    These retirement start years produced the weakest long-term
-                    portfolio outcomes.
+                    These retirement start years produced the weakest portfolio
+                    outcomes, with earlier portfolio depletion ranked as more severe.
                 </p>
                 {_render_year_list(
                     worst_rows,
@@ -573,17 +588,8 @@ def _render_historical_insights(report_data):
     <h2>Historical Window Insights</h2>
 
     <p class="section-intro">
-        Historical Window Analysis evaluates your financial plan by analyzing numerous
-        scenarios using rolling periods of actual historical market returns and
-        inflation data. Each scenario applies one historical sequence of market
-        returns and inflation to your financial plan.
-    </p>
-
-    <p class="section-intro">
-        This method illustrates how your financial plan would have
-        performed across a wide range of real-world market environments,
-        including periods of strong market growth, prolonged downturns,
-        elevated inflation, and challenging early-return sequences.
+        This section highlights the strongest and weakest historical retirement
+        start years and shows how portfolio outcomes varied across historical windows.
     </p>
 
     {plot_html}
@@ -598,26 +604,19 @@ def _render_historical_insights(report_data):
     <div class="summary-card">
         <h3>Sequence-of-Returns Risk</h3>
         <p>
-            Historical Window Analysis naturally incorporates sequence-of-returns
-            risk because each historical scenario follows the actual chronological
-            order of historical market returns. Early bear markets generally place
-            greater stress on portfolios than identical losses occurring
-            later in retirement.
+            Historical Window Analysis includes sequence-of-returns effects because
+            each historical window preserves the chronological order of market
+            returns. Losses that occur early in retirement can reduce the portfolio
+            while withdrawals continue, leaving a smaller portfolio to participate
+            in later market recoveries.
         </p>
     </div>
 
     {best_worst_html}
 
     <div class="summary-card interpretation-card">
-        <h3>What History Suggests</h3>
+        <h3>Historical Outcome Summary</h3>
         {commentary_html}
-        <p>
-            Unlike Monte Carlo Analysis, Historical Window Analysis evaluates
-            your financial plan using actual historical market and inflation
-            sequences. This makes it useful for understanding how specific
-            historical market environments influenced your projected financial
-            outcomes.
-        </p>
     </div>
 </section>
 """
@@ -638,70 +637,59 @@ def _render_monte_carlo_insights(report_data):
     ):
         return ""
 
+    snapshot = report_data.simulation_snapshot or {}
+
+    settings = {
+        "Sampling Method": snapshot.get("Sampling Method"),
+        "Correlated Returns": snapshot.get("Correlated Returns"),
+        "Sequence Risk": snapshot.get("Sequence Risk"),
+        "Random Seed": snapshot.get("Random Seed"),
+    }
+
+    if snapshot.get("Sequence Risk"):
+        settings["Sequence Risk Timing"] = snapshot.get(
+            "Sequence Risk Timing"
+        )
+        settings["Sequence Risk Length"] = snapshot.get(
+            "Sequence Risk Length"
+        )
+        settings["Sequence Risk Depth"] = snapshot.get(
+            "Sequence Risk Depth"
+        )
+
     return f"""
 <section>
     <h2>Monte Carlo Insights</h2>
 
     <div class="summary-card">
+        <h3>Monte Carlo Run Settings</h3>
+        {_render_kv_table(settings)}
+    </div>
+
+    <div class="summary-card interpretation-card">
         <h3>Sequence-of-Returns Risk</h3>
 
         <p>
-            During retirement, the order in which investment returns occur can
-            have a significant impact on long-term portfolio sustainability.
-            Poor market returns early in retirement reduce the portfolio while
-            withdrawals continue, leaving less capital available to benefit from
-            future market recoveries.
+            Monte Carlo paths naturally include sequence-of-returns effects because
+            each path contains an ordered series of annual investment returns. Losses
+            that occur early in retirement can reduce the portfolio while withdrawals
+            continue, leaving a smaller portfolio to participate in later market
+            recoveries.
         </p>
 
         <p>
-            If Sequence Risk is enabled, Monte Carlo simulations preserve this
-            effect by applying annual returns in chronological order. As a
-            result, two simulations with the same long-term average return may
-            produce substantially different retirement outcomes depending upon
-            when gains and losses occur.
+            WARPSimLab's optional Sequence Risk feature adds a deliberate downturn
+            pattern to the generated market path. When enabled, the configured
+            downturn replaces sampled equity, bond, and real-estate returns for the
+            affected years while leaving cash returns unchanged.
         </p>
     </div>
 
     {_render_sustainability_interpretation(report_data)}
 
-    <div class="summary-card interpretation-card">
-        <p>
-            Unlike Historical Window Analysis, Monte Carlo Analysis evaluates
-            your financial plan using statistically generated sequences of
-            market returns and inflation rather than actual historical periods.
-            This makes it useful for understanding the range of possible future
-            outcomes and the sensitivity of your financial plan to uncertain
-            market conditions.
-        </p>
-    </div>
-
 </section>
 """
 
-
-def _render_risk_observations(report_data):
-    if not _get_report_option(
-        report_data.report_options,
-        ["analysis", "include_risk_observations"],
-        True,
-    ):
-        return ""
-
-    observations = report_data.analysis_summary.get("Risk Observations", [])
-
-    if not observations:
-        return ""
-
-    items = "".join(f"<li>{_safe(item)}</li>" for item in observations)
-
-    return f"""
-<section>
-    <h2>Risk Observations</h2>
-    <ul class="observations">
-        {items}
-    </ul>
-</section>
-"""
 
 def _render_plot_assets(report_data):
     assets = report_data.plot_assets or {}
@@ -742,8 +730,8 @@ def _render_plot_assets(report_data):
         intro = (
             "This chart summarizes portfolio outcomes generated from simulated market "
             "paths. Each scenario represents one possible sequence of investment returns "
-            "and inflation, illustrating a range of potential outcomes rather than "
-            "replaying actual market history."
+            "using the configured inflation assumption, illustrating a range of potential "
+            "outcomes rather than replaying actual market history."
         )
     else:
         raise ValueError(f"Unknown risk analysis method: {method}")
@@ -858,7 +846,6 @@ def _build_html_document(report_data):
 {_render_historical_insights(report_data)}
 {_render_monte_carlo_insights(report_data)}
 {_render_percentile_table(report_data)}
-{_render_risk_observations(report_data)}
 {_render_warnings(report_data)}
 
 {render_footer()}

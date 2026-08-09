@@ -41,7 +41,7 @@ DETAILED_INCOME_COLUMNS = [
 
     "Bond Interest",
     "Cash Interest",
-    "Qualified Dividends",
+    "Qualified Equity Distribution",
     "Retirement Withdrawals",
     "Emergency Pre-Tax Withdrawal",
 
@@ -242,7 +242,7 @@ def _render_year_table(report_data):
         "Special Income": "Special<br>Income",
         "Bond Interest": "Bond<br>Interest",
         "Cash Interest": "Cash<br>Interest",
-        "Qualified Dividends": "Qualified<br>Dividends",
+        "Qualified Equity Distribution": "Qualified<br>Equity<br>Distribution",
         "Retirement Withdrawals": "Retirement<br>Withdrawals",
         "Emergency Pre-Tax Withdrawal": "Emergency<br>Pre-Tax<br>Withdrawal",
         "Gross Income": "Gross<br>Income",
