@@ -51,7 +51,7 @@ def make_report_data(**overrides):
                 "Household Expenses": 30000.0,
                 "Net Cash Flow": 20000.0,
                 "Fund Expenses": 100.0,
-                "Simulated Shortfall Rate": 0.0,
+                "Scenarios That Depleted Portfolio": 0.0,
             },
             "portfolio_milestones": {
                 "Start of Simulation": {
@@ -227,7 +227,7 @@ def test_render_simulation_highlights_includes_shortfall_and_negative_class():
             "simulation_totals": {
                 "Portfolio Start": 100.0,
                 "Portfolio End": 0.0,
-                "Simulated Shortfall Rate": 12.5,
+                "Scenarios That Depleted Portfolio": 12.5,
                 "Total Income": 50.0,
                 "Household Expenses": 40.0,
             }
@@ -240,7 +240,7 @@ def test_render_simulation_highlights_includes_shortfall_and_negative_class():
     html = mod._render_simulation_highlights(report_data)
 
     assert "Portfolio End Value" in html
-    assert "Simulated Shortfall Rate" in html
+    assert "Scenarios That Depleted Portfolio" in html
     assert "12.50%" in html
     assert "negative" in html
 
@@ -451,7 +451,7 @@ def test_render_simple_table_dict_rows_collects_headers():
     assert "<th>End Year</th>" in html
     assert "Rent" in html
     assert "$1,000" in html
-    assert "2,030" in html
+    assert "2030" in html
 
 def test_render_simple_table_plain_list_returns_ul():
     html = mod._render_simple_table(["A", "B"])

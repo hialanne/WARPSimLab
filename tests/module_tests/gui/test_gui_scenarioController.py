@@ -29,6 +29,12 @@ def dummy_gui():
         temp_overrides_btn=DummyBtn(),
         simulation_controls={"enable_second_person": False},
         simulation_settings={"fund_expense": 0.5},
+        display_settings={
+            "scenario_explorer": {
+                "layout_mode": None,
+                "layout": None,
+            }
+        },
         husband=SimpleNamespace(retire_age=65),
         wife=SimpleNamespace(retire_age=63),
         husband_portfolio=SimpleNamespace(),

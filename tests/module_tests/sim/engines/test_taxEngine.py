@@ -164,7 +164,7 @@ def test_qualified_dividend_tax_zero_when_no_dividends():
 
     tax = taxEngine.calculate_us_federal_qualified_dividend_tax(
         ordinary_income=50000.0,
-        qualified_dividends=0.0,
+        qualified_equity_distributions=0.0,
         year_cache=year_cache,
     )
     assert tax == pytest.approx(0.0)
@@ -180,7 +180,7 @@ def test_qualified_dividend_tax_single_all_in_zero_percent_band():
 
     tax = taxEngine.calculate_us_federal_qualified_dividend_tax(
         ordinary_income=30000.0,
-        qualified_dividends=10000.0,
+        qualified_equity_distributions=10000.0,
         year_cache=year_cache,
     )
     assert tax == pytest.approx(0.0)
@@ -194,12 +194,12 @@ def test_qualified_dividend_tax_single_crosses_from_zero_to_fifteen_percent():
     )
     year_cache = init_year(cfg, 0)
 
-    qualified_dividends = 30000.0
-    expected = (qualified_dividends - 24450.0) * 0.15
+    qualified_equity_distributions = 30000.0
+    expected = (qualified_equity_distributions - 24450.0) * 0.15
 
     tax = taxEngine.calculate_us_federal_qualified_dividend_tax(
         ordinary_income=40000.0,
-        qualified_dividends=qualified_dividends,
+        qualified_equity_distributions=qualified_equity_distributions,
         year_cache=year_cache,
     )
     assert tax == pytest.approx(expected)
@@ -215,7 +215,7 @@ def test_qualified_dividend_tax_single_crosses_into_twenty_percent_band():
 
     tax = taxEngine.calculate_us_federal_qualified_dividend_tax(
         ordinary_income=600000.0,
-        qualified_dividends=10000.0,
+        qualified_equity_distributions=10000.0,
         year_cache=year_cache,
     )
     assert tax == pytest.approx(10000.0 * 0.20)
@@ -330,7 +330,7 @@ def test_total_income_tax_split_returns_all_zero_when_flags_off():
     federal_ordinary_tax, federal_qualified_dividend_tax, state_income_tax, total_tax, federal_marginal_rate = (
         taxEngine.calculate_total_income_tax_split(
             ordinary_income=999999.0,
-            qualified_dividends=50000.0,
+            qualified_equity_distributions=50000.0,
             year_cache=year_cache,
             sim_config=cfg,
         )
@@ -354,7 +354,7 @@ def test_total_income_tax_split_federal_only():
     federal_ordinary_tax, federal_qualified_dividend_tax, state_income_tax, total_tax, federal_marginal_rate = (
         taxEngine.calculate_total_income_tax_split(
             ordinary_income=16100.0 + 12400.0,
-            qualified_dividends=0.0,
+            qualified_equity_distributions=0.0,
             year_cache=year_cache,
             sim_config=cfg,
         )
@@ -378,7 +378,7 @@ def test_total_income_tax_split_state_only():
     federal_ordinary_tax, federal_qualified_dividend_tax, state_income_tax, total_tax, federal_marginal_rate = (
         taxEngine.calculate_total_income_tax_split(
             ordinary_income=90000.0,
-            qualified_dividends=10000.0,
+            qualified_equity_distributions=10000.0,
             year_cache=year_cache,
             sim_config=cfg,
         )
@@ -405,7 +405,7 @@ def test_total_income_tax_split_negative_inputs_raise_runtime_error():
     with pytest.raises(RuntimeError, match="negative income inputs"):
         taxEngine.calculate_total_income_tax_split(
             ordinary_income=-100.0,
-            qualified_dividends=-50.0,
+            qualified_equity_distributions=-50.0,
             year_cache=year_cache,
             sim_config=cfg,
         )

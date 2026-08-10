@@ -164,7 +164,7 @@ def _income(*, total=100.0, husband=60.0, wife=40.0):
             "withdrawal": 0.0,
             "bond_interest": 0.0,
             "cash_interest": 0.0,
-            "qualified_dividends": 0.0,
+            "qualified_equity_distributions": 0.0,
             "special_income": 0.0,
         },
         "by_person": {"husband": husband, "wife": wife},
@@ -175,15 +175,15 @@ def _post_tax_tuple(
     *,
     bond_interest=0.0,
     cash_interest=0.0,
-    qualified_dividends=0.0,
+    qualified_equity_distributions=0.0,
     husband_total=0.0,
     wife_total=0.0,
 ):
-    total = bond_interest + cash_interest + qualified_dividends
+    total = bond_interest + cash_interest + qualified_equity_distributions
     return (
         bond_interest,
         cash_interest,
-        qualified_dividends,
+        qualified_equity_distributions,
         total,
         husband_total,
         wife_total,
@@ -440,7 +440,7 @@ def test_stores_post_tax_income_components(mod, monkeypatch):
         lambda *a, **k: _post_tax_tuple(
             bond_interest=3.0,
             cash_interest=2.0,
-            qualified_dividends=5.0,
+            qualified_equity_distributions=5.0,
             husband_total=6.0,
             wife_total=4.0,
         ),
@@ -458,10 +458,10 @@ def test_stores_post_tax_income_components(mod, monkeypatch):
 
     assert results["bond_interest"][0, 1] == pytest.approx(3.0)
     assert results["cash_interest"][0, 1] == pytest.approx(2.0)
-    assert results["qualified_dividends"][0, 1] == pytest.approx(5.0)
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(5.0)
     assert results["breakdown_by_class"]["bond_interest"][0, 1] == pytest.approx(3.0)
     assert results["breakdown_by_class"]["cash_interest"][0, 1] == pytest.approx(2.0)
-    assert results["breakdown_by_class"]["qualified_dividends"][0, 1] == pytest.approx(5.0)
+    assert results["breakdown_by_class"]["qualified_equity_distributions"][0, 1] == pytest.approx(5.0)
 
 
 def test_no_income_tax_keeps_net_income_equal_to_total_income(mod, monkeypatch):
@@ -566,7 +566,8 @@ def test_retirement_withdrawal_branch_adds_pre_tax_to_ordinary_income(mod, monke
 
     def fake_tax_split(*args, **kwargs):
         seen["ordinary_income"] = kwargs["ordinary_income"]
-        seen["qualified_dividends"] = kwargs["qualified_dividends"]
+        seen["qualified_equity_distributions"] = kwargs["qualified_equity_distributions"]
+
         return _tax_split(
             federal_ordinary_tax=10.0,
             federal_qualified_dividend_tax=1.0,
@@ -587,7 +588,7 @@ def test_retirement_withdrawal_branch_adds_pre_tax_to_ordinary_income(mod, monke
     )
 
     assert seen["ordinary_income"] == pytest.approx(120.0)
-    assert seen["qualified_dividends"] == pytest.approx(0.0)
+    assert seen["qualified_equity_distributions"] == pytest.approx(0.0)
     assert results["breakdown_by_class"]["withdrawal"][0, 1] == pytest.approx(30.0)
     assert results["taxes"][0, 1] == pytest.approx(12.0)
 

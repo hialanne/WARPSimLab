@@ -226,12 +226,13 @@ def test_record_legal_acceptance_once_writes_file(tmp_path, monkeypatch):
 
     inst._record_legal_acceptance_once()
 
-    log_file = tmp_path / "Desktop" / "WARPSimLab Data" / "legal_acceptance.log"
+    log_file = tmp_path / "Desktop" / "WARPSimLab" / "Administration" / "legal_acceptance.log"
+    
     assert log_file.exists()
 
     content = log_file.read_text(encoding="utf-8")
     assert "WARPSimLab Legal Acceptance Record" in content
-    assert "Accepted on: 2000-01-02 03:04:05" in content
+    assert "Accepted on: 2000-01-02 03:04:05 (local time)" in content
     assert "OS User: tester" in content
 
 
@@ -240,7 +241,7 @@ def test_record_legal_acceptance_once_does_not_overwrite_if_exists(tmp_path, mon
 
     monkeypatch.setattr(mod.Path, "home", lambda: tmp_path, raising=True)
 
-    log_file = tmp_path / "Desktop" / "WARPSimLab Data" / "legal_acceptance.log"
+    log_file = tmp_path / "Desktop" / "WARPSimLab" / "Administration" / "legal_acceptance.log"
     log_file.parent.mkdir(parents=True, exist_ok=True)
     log_file.write_text("PREEXISTING", encoding="utf-8")
 
@@ -273,7 +274,7 @@ def test_legal_acceptance_exists_true_false(tmp_path, monkeypatch):
     assert inst._legal_acceptance_exists() is False
 
     # Create file
-    log_file = tmp_path / "Desktop" / "WARPSimLab Data" / "legal_acceptance.log"
+    log_file = tmp_path / "Desktop" / "WARPSimLab" / "Administration" / "legal_acceptance.log"
     log_file.parent.mkdir(parents=True, exist_ok=True)
     log_file.write_text("x", encoding="utf-8")
 

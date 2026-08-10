@@ -299,7 +299,7 @@ def test_qualified_dividend_tax_is_calculated_separately(
 
     assert expected_dividend_tax == pytest.approx(247.50)
 
-    assert results["qualified_dividends"][0, 1] == pytest.approx(
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(
         expected_dividends
     )
     assert results["federal_ordinary_tax"][0, 1] == (

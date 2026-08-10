@@ -240,7 +240,7 @@ def test_zero_return_preserves_all_four_equity_buckets(monkeypatch):
     assert results["total_assets"][0, 1] == pytest.approx(100_000.0)
 
     assert results["gross_income"][0, 1] == pytest.approx(0.0)
-    assert results["qualified_dividends"][0, 1] == pytest.approx(0.0)
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(0.0)
 
 
 def test_pre_tax_equity_receives_total_return(monkeypatch):
@@ -266,7 +266,7 @@ def test_pre_tax_equity_receives_total_return(monkeypatch):
     assert results["roth_assets"][0, 1] == pytest.approx(0.0)
     assert results["hsa_assets"][0, 1] == pytest.approx(0.0)
 
-    assert results["qualified_dividends"][0, 1] == pytest.approx(0.0)
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(0.0)
     assert results["gross_income"][0, 1] == pytest.approx(0.0)
 
 
@@ -293,7 +293,7 @@ def test_roth_equity_receives_total_return(monkeypatch):
     assert results["post_tax_assets"][0, 1] == pytest.approx(0.0)
     assert results["hsa_assets"][0, 1] == pytest.approx(0.0)
 
-    assert results["qualified_dividends"][0, 1] == pytest.approx(0.0)
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(0.0)
     assert results["gross_income"][0, 1] == pytest.approx(0.0)
 
 
@@ -320,7 +320,7 @@ def test_hsa_equity_receives_total_return(monkeypatch):
     assert results["post_tax_assets"][0, 1] == pytest.approx(0.0)
     assert results["roth_assets"][0, 1] == pytest.approx(0.0)
 
-    assert results["qualified_dividends"][0, 1] == pytest.approx(0.0)
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(0.0)
     assert results["gross_income"][0, 1] == pytest.approx(0.0)
 
 
@@ -340,11 +340,11 @@ def test_taxable_equity_reports_qualified_dividend_income(monkeypatch):
         STARTING_BALANCE * EQUITY_DIVIDEND_YIELD
     )
 
-    assert results["qualified_dividends"][0, 1] == pytest.approx(
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(
         expected_dividends
     )
     assert (
-        results["breakdown_by_class"]["qualified_dividends"][0, 1]
+        results["breakdown_by_class"]["qualified_equity_distributions"][0, 1]
         == pytest.approx(expected_dividends)
     )
 
@@ -418,7 +418,7 @@ def test_taxable_equity_current_order_adds_120_of_same_year_growth(
     )
 
     ending_balance = results["post_tax_assets"][0, 1]
-    reported_dividends = results["qualified_dividends"][0, 1]
+    reported_dividends = results["qualified_equity_distributions"][0, 1]
 
     original_equity_price_gain = (
         STARTING_BALANCE * EQUITY_PRICE_RETURN
@@ -561,7 +561,7 @@ def test_taxable_positive_bond_return_becomes_income(monkeypatch):
     )
 
     assert results["cash_interest"][0, 1] == pytest.approx(0.0)
-    assert results["qualified_dividends"][0, 1] == pytest.approx(0.0)
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(0.0)
 
 
 def test_taxable_positive_bond_return_is_not_applied_to_bond_balance(
@@ -782,7 +782,7 @@ def test_taxable_positive_cash_return_becomes_income(monkeypatch):
     )
 
     assert results["bond_interest"][0, 1] == pytest.approx(0.0)
-    assert results["qualified_dividends"][0, 1] == pytest.approx(0.0)
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(0.0)
 
 
 def test_taxable_positive_cash_return_is_not_applied_to_cash_balance(

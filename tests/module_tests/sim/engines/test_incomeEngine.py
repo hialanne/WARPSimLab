@@ -357,7 +357,7 @@ def test_income_breakdown_sums_by_class_and_tracks_by_person():
         "withdrawal",
         "bond_interest",
         "cash_interest",
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "special_income",
     }
 
@@ -371,7 +371,7 @@ def test_income_breakdown_sums_by_class_and_tracks_by_person():
     assert out["by_class"]["withdrawal"] == pytest.approx(0.0)
     assert out["by_class"]["bond_interest"] == pytest.approx(0.0)
     assert out["by_class"]["cash_interest"] == pytest.approx(0.0)
-    assert out["by_class"]["qualified_dividends"] == pytest.approx(0.0)
+    assert out["by_class"]["qualified_equity_distributions"] == pytest.approx(0.0)
 
     assert out["by_person"]["husband"] == pytest.approx(100.0 + 20.0 + rmd_h)
     assert out["by_person"]["wife"] == pytest.approx(200.0 + 50.0 + rmd_w)
@@ -624,7 +624,7 @@ def test_apply_employee_401k_to_income_mutates_expected_fields():
             "withdrawal": 0.0,
             "bond_interest": 0.0,
             "cash_interest": 0.0,
-            "qualified_dividends": 0.0,
+            "qualified_equity_distributions": 0.0,
         },
     }
 
@@ -644,7 +644,7 @@ def test_apply_employee_401k_to_income_mutates_expected_fields():
     assert gross_income["by_class"]["withdrawal"] == pytest.approx(0.0)
     assert gross_income["by_class"]["bond_interest"] == pytest.approx(0.0)
     assert gross_income["by_class"]["cash_interest"] == pytest.approx(0.0)
-    assert gross_income["by_class"]["qualified_dividends"] == pytest.approx(0.0)
+    assert gross_income["by_class"]["qualified_equity_distributions"] == pytest.approx(0.0)
 
 
 def test_apply_employee_401k_to_income_noop_when_nonpositive():
@@ -660,7 +660,7 @@ def test_apply_employee_401k_to_income_noop_when_nonpositive():
             "withdrawal": 0.0,
             "bond_interest": 0.0,
             "cash_interest": 0.0,
-            "qualified_dividends": 0.0,
+            "qualified_equity_distributions": 0.0,
         },
     }
 
@@ -679,4 +679,4 @@ def test_apply_employee_401k_to_income_noop_when_nonpositive():
     assert gross_income["by_class"]["withdrawal"] == pytest.approx(0.0)
     assert gross_income["by_class"]["bond_interest"] == pytest.approx(0.0)
     assert gross_income["by_class"]["cash_interest"] == pytest.approx(0.0)
-    assert gross_income["by_class"]["qualified_dividends"] == pytest.approx(0.0)
+    assert gross_income["by_class"]["qualified_equity_distributions"] == pytest.approx(0.0)

@@ -27,7 +27,7 @@ def _fake_pipeline_output():
             "withdrawal": np.array([0.0, 0.0, 20.0]),
             "bond_interest": np.array([0.0, 0.0, 0.0]),
             "cash_interest": np.array([0.0, 0.0, 0.0]),
-            "qualified_dividends": np.array([0.0, 0.0, 0.0]),
+            "qualified_equity_distributions": np.array([0.0, 0.0, 0.0]),
         },
         "taxes": np.array([0.0, 10.0, 5.0]),
         "expense_amt": np.array([0.0, 60.0, 0.0]),

@@ -133,7 +133,7 @@ def test_build_income_milestone_combines_pensions_and_annuities():
         "annuities": [30.0],
         "bond_interest": [2.0],
         "cash_interest": [1.0],
-        "qualified_dividends": [4.0],
+        "qualified_equity_distributions": [4.0],
         "gross_income": [175.0],
         "taxes": [15.0],
         "tax_bracket": [0.22],
@@ -202,7 +202,7 @@ def test_build_simulation_totals_sums_series_and_portfolio_values():
     assert totals["Household Expenses"] == pytest.approx(125.0)
     assert totals["Net Cash Flow"] == pytest.approx(54.0)
     assert totals["Fund Expenses"] == pytest.approx(3.0)
-    assert totals["Simulated Shortfall Rate"] == pytest.approx(0.25)
+    assert totals["Scenarios That Depleted Portfolio"] == pytest.approx(0.25)
 
 
 def test_build_simulation_snapshot_includes_payroll_tax_setting():

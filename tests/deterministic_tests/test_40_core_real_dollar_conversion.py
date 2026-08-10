@@ -331,7 +331,7 @@ def test_expense_mode_monetary_results_are_deflated(
         "ira_401k",
         "taxes",
         "fund_expenses",
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "bond_interest",
         "cash_interest",
         "net_income_husband",
@@ -377,7 +377,7 @@ def test_expense_mode_income_breakdown_is_deflated(
         "rmd",
         "withdrawal",
         "special_income",
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "bond_interest",
         "cash_interest",
     ]
@@ -481,7 +481,7 @@ def test_real_mode_does_not_modify_nominal_raw_run(
         "expense_amt",
         "ira_401k",
         "fund_expenses",
-        "qualified_dividends",
+        "qualified_equity_distributions",
     ]
 
     for key in keys:

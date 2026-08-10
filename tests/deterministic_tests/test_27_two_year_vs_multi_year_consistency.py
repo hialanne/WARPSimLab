@@ -139,7 +139,7 @@ def test_two_year_vs_multi_year_consistency():
         "net_income_wife",
         "bond_interest",
         "cash_interest",
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "ira_401k",
         "fund_expenses",
         "emergency_pre_tax_used",
@@ -159,7 +159,7 @@ def test_two_year_vs_multi_year_consistency():
         "withdrawal",
         "bond_interest",
         "cash_interest",
-        "qualified_dividends",
+        "qualified_equity_distributions",
     ]
 
     for key in class_keys:

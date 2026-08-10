@@ -141,17 +141,17 @@ def test_taxable_account_income_components_nominal():
     federal_ordinary_tax, federal_qualified_dividend_tax, state_income_tax, total_tax, *_ = (
         taxEngine.calculate_total_income_tax_split(
             ordinary_income=expected_ordinary,
-            qualified_dividends=expected_qd,
+            qualified_equity_distributions=expected_qd,
             year_cache=year_cache,
             sim_config=cfg,
         )
     )
 
-    assert row(results, "qualified_dividends") == pytest.approx([0.0, expected_qd])
+    assert row(results, "qualified_equity_distributions") == pytest.approx([0.0, expected_qd])
     assert row(results, "bond_interest") == pytest.approx([0.0, expected_bond_interest])
     assert row(results, "cash_interest") == pytest.approx([0.0, expected_cash_interest])
 
-    assert results["breakdown_by_class"]["qualified_dividends"][0] == pytest.approx([0.0, expected_qd])
+    assert results["breakdown_by_class"]["qualified_equity_distributions"][0] == pytest.approx([0.0, expected_qd])
     assert results["breakdown_by_class"]["bond_interest"][0] == pytest.approx([0.0, expected_bond_interest])
     assert results["breakdown_by_class"]["cash_interest"][0] == pytest.approx([0.0, expected_cash_interest])
 
@@ -177,7 +177,7 @@ def test_taxable_account_income_components_real_mode_deflates_correctly():
     real_results = run_sim(real_cfg, husband_portfolio)
 
     for key in [
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "bond_interest",
         "cash_interest",
         "gross_income",

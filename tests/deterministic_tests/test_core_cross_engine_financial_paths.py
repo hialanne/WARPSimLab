@@ -344,7 +344,7 @@ def test_rmd_and_roth_conversion_are_both_included_once_in_ordinary_income(
     )
     ordinary_income_calls = []
 
-    def capture_tax_split(*, ordinary_income, qualified_dividends, year_cache, sim_config):
+    def capture_tax_split(*, ordinary_income, qualified_equity_distributions, year_cache, sim_config):
         ordinary_income_calls.append(ordinary_income)
         return 0.0, 0.0, 0.0, 0.0, 0.0
 
@@ -403,7 +403,7 @@ def test_ordinary_income_qualified_dividends_and_state_tax_reconcile_exactly(
     )
 
     assert results["gross_income"][0, 1] == pytest.approx(70_000.0)
-    assert results["qualified_dividends"][0, 1] == pytest.approx(10_000.0)
+    assert results["qualified_equity_distributions"][0, 1] == pytest.approx(10_000.0)
     assert results["state_income_tax"][0, 1] == pytest.approx(expected_state_tax)
     assert results["taxes"][0, 1] == pytest.approx(component_total)
     assert results["net_income"][0, 1] == pytest.approx(

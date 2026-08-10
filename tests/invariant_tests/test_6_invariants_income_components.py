@@ -21,7 +21,7 @@ def run_case(make_case, **overrides):
 def test_qualified_dividends_non_negative(make_case):
     core, cfg = run_case(make_case)
 
-    qd = core["breakdown_by_class"]["qualified_dividends"]
+    qd = core["breakdown_by_class"]["qualified_equity_distributions"]
 
     assert np.all(qd >= 0.0)
 
@@ -40,10 +40,10 @@ def test_qualified_dividends_not_exceed_total_income(make_case):
         + breakdown["withdrawal"]
         + breakdown["bond_interest"]
         + breakdown["cash_interest"]
-        + breakdown["qualified_dividends"]
+        + breakdown["qualified_equity_distributions"]
     )
 
-    assert np.all(breakdown["qualified_dividends"] <= total_income + 1e-8)
+    assert np.all(breakdown["qualified_equity_distributions"] <= total_income + 1e-8)
 
 
 def test_gross_income_identity(make_case):
@@ -64,7 +64,7 @@ def test_gross_income_identity(make_case):
         + breakdown["withdrawal"]
         + breakdown["bond_interest"]
         + breakdown["cash_interest"]
-        + breakdown["qualified_dividends"]
+        + breakdown["qualified_equity_distributions"]
     )
 
     np.testing.assert_allclose(

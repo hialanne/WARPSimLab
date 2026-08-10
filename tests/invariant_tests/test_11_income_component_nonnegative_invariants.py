@@ -33,7 +33,7 @@ def test_reported_interest_and_dividend_series_are_never_negative(make_case):
 
     assert np.all(core["bond_interest"] >= -EPS)
     assert np.all(core["cash_interest"] >= -EPS)
-    assert np.all(core["qualified_dividends"] >= -EPS)
+    assert np.all(core["qualified_equity_distributions"] >= -EPS)
 
 
 def test_net_income_never_exceeds_gross_income(make_case):

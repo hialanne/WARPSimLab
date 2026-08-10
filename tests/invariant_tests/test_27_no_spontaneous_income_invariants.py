@@ -74,7 +74,7 @@ def test_all_income_series_stay_zero_when_all_income_sources_and_yields_are_zero
     assert np.allclose(core["taxes"], 0.0)
     assert np.allclose(core["bond_interest"], 0.0)
     assert np.allclose(core["cash_interest"], 0.0)
-    assert np.allclose(core["qualified_dividends"], 0.0)
+    assert np.allclose(core["qualified_equity_distributions"], 0.0)
 
     for key, arr in core["breakdown_by_class"].items():
         assert np.allclose(arr, 0.0), key

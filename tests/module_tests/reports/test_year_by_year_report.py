@@ -29,7 +29,7 @@ def make_report_data(**overrides):
                 "Age": 60,
                 "Age 1": 60,
                 "Age 2": 58,
-                "Wages": 1000.0,
+                "Gross Wages": 1000.0,
                 "Social Security": 0.0,
                 "Pensions & Annuities": 0.0,
                 "RMD": 0.0,
@@ -52,7 +52,7 @@ def make_report_data(**overrides):
                 "Age": 61,
                 "Age 1": 61,
                 "Age 2": 59,
-                "Wages": 1100.0,
+                "Gross Wages": 1100.0,
                 "Social Security": 0.0,
                 "Pensions & Annuities": 0.0,
                 "RMD": 0.0,
@@ -129,7 +129,7 @@ def test_selected_columns_uses_detailed_columns_and_includes_roth_hsa():
 
     columns = mod._selected_columns(report_data)
 
-    assert "Wages" in columns
+    assert "Gross Wages" in columns
     assert "Roth Assets" in columns
     assert "HSA Assets" in columns
     assert "Total Assets" in columns
@@ -304,7 +304,7 @@ def test_write_csv_writes_selected_columns_and_rows(tmp_path):
     assert len(rows) == 2
     assert "Year" in rows[0]
     assert "Gross Income" in rows[0]
-    assert "Wages" not in rows[0]
+    assert "Gross Wages" not in rows[0]
     assert rows[0]["Year"] == "2026"
     assert rows[0]["Gross Income"] == "1000.0"
 

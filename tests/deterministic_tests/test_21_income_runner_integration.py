@@ -21,7 +21,7 @@ def test_run_sim_income_plots_pipeline_outputs_exactly(monkeypatch):
         "withdrawal": np.array([0.0, 7.0, 8.0, 9.0, 10.0]),
         "bond_interest": np.array([0.0, 0.5, 0.5, 0.5, 0.5]),
         "cash_interest": np.array([0.0, 0.2, 0.2, 0.2, 0.2]),
-        "qualified_dividends": np.array([0.0, 0.3, 0.3, 0.3, 0.3]),
+        "qualified_equity_distributions": np.array([0.0, 0.3, 0.3, 0.3, 0.3]),
     }
 
     pipeline_payload = {
@@ -97,7 +97,7 @@ def test_run_sim_income_plots_pipeline_outputs_exactly(monkeypatch):
         + breakdown["withdrawal"]
         + breakdown["bond_interest"]
         + breakdown["cash_interest"]
-        + breakdown["qualified_dividends"]
+        + breakdown["qualified_equity_distributions"]
     )
 
     np.testing.assert_array_equal(captured["net_income"], expected_plot_income)    
@@ -116,7 +116,7 @@ def test_run_sim_income_plots_pipeline_outputs_exactly(monkeypatch):
         "withdrawal": breakdown["withdrawal"],
         "bond_interest": breakdown["bond_interest"],
         "cash_interest": breakdown["cash_interest"],
-        "qualified_dividends": breakdown["qualified_dividends"],
+        "qualified_equity_distributions": breakdown["qualified_equity_distributions"],
     }
 
     assert set(captured["breakdown"]) == set(expected_plot_breakdown)

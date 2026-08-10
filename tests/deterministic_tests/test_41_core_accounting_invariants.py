@@ -395,7 +395,7 @@ def test_all_asset_and_shortfall_results_remain_nonnegative(
         "roth_withdrawals",
         "hsa_withdrawals",
         "fund_expenses",
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "bond_interest",
         "cash_interest",
     ]
@@ -473,7 +473,7 @@ def test_income_components_reconcile_without_contributions_or_withdrawals(
         + breakdown["rmd"]
         + breakdown["withdrawal"]
         + breakdown["special_income"]
-        + breakdown["qualified_dividends"]
+        + breakdown["qualified_equity_distributions"]
         + breakdown["bond_interest"]
         + breakdown["cash_interest"]
     )
@@ -510,7 +510,7 @@ def test_withdrawal_only_gross_income_matches_actual_withdrawal(
 
     expected_gross_income = (
         actual_withdrawal
-        + results["breakdown_by_class"]["qualified_dividends"]
+        + results["breakdown_by_class"]["qualified_equity_distributions"]
     )
 
     assert results["gross_income"] == pytest.approx(
@@ -538,7 +538,7 @@ def test_withdrawal_only_gross_income_matches_actual_withdrawal(
     )
 
     assert (
-        results["breakdown_by_class"]["qualified_dividends"][0, 1]
+        results["breakdown_by_class"]["qualified_equity_distributions"][0, 1]
         == pytest.approx(400.0)
     )
 
@@ -606,7 +606,7 @@ def test_result_arrays_have_expected_shape(monkeypatch):
         "ira_401k",
         "taxes",
         "fund_expenses",
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "bond_interest",
         "cash_interest",
         "net_income_husband",

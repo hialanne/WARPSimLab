@@ -140,8 +140,6 @@ def test_risk_report_data_preserves_required_fields_and_defaults():
     }
 
     assert data.historical_insights == {}
-    assert data.monte_carlo_insights == {}
-    assert data.risk_observations == []
     assert data.percentile_table == []
     assert data.failure_statistics == {}
     assert data.plot_assets == {}
@@ -155,8 +153,6 @@ def test_risk_report_data_accepts_optional_sections():
         simulation_snapshot={},
         analysis_summary={},
         historical_insights={"Best Retirement Years": []},
-        monte_carlo_insights={"Commentary": []},
-        risk_observations=["observation"],
         percentile_table=[{"Year": 2026, "Median": 100000.0}],
         failure_statistics={"Simulated Shortfall Rate": 5.0},
         plot_assets={"portfolio_range_projection": {"path": "risk.png"}},
@@ -164,8 +160,6 @@ def test_risk_report_data_accepts_optional_sections():
     )
 
     assert data.historical_insights == {"Best Retirement Years": []}
-    assert data.monte_carlo_insights == {"Commentary": []}
-    assert data.risk_observations == ["observation"]
     assert data.percentile_table == [{"Year": 2026, "Median": 100000.0}]
     assert data.failure_statistics == {"Simulated Shortfall Rate": 5.0}
     assert data.plot_assets == {"portfolio_range_projection": {"path": "risk.png"}}
@@ -187,16 +181,12 @@ def test_risk_report_data_default_mutable_fields_are_independent():
     )
 
     first.historical_insights["x"] = 1
-    first.monte_carlo_insights["y"] = 2
-    first.risk_observations.append("observation")
     first.percentile_table.append({"Year": 2026})
     first.failure_statistics["rate"] = 1.0
     first.plot_assets["plot"] = {"path": "plot.png"}
     first.warnings.append("warning")
 
     assert second.historical_insights == {}
-    assert second.monte_carlo_insights == {}
-    assert second.risk_observations == []
     assert second.percentile_table == []
     assert second.failure_statistics == {}
     assert second.plot_assets == {}

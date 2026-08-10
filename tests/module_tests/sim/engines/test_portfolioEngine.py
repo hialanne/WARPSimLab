@@ -379,7 +379,7 @@ def test_estimate_post_tax_income_components_uses_post_tax_yields():
 
     assert out["bond_interest"] == pytest.approx(100.0)
     assert out["cash_interest"] == pytest.approx(10.0)
-    assert out["qualified_dividends"] == pytest.approx(30.0)
+    assert out["qualified_equity_distributions"] == pytest.approx(30.0)
     assert out["ordinary_total"] == pytest.approx(110.0)
     assert out["qualified_total"] == pytest.approx(30.0)
     assert out["total"] == pytest.approx(140.0)
@@ -407,7 +407,7 @@ def test_estimate_household_post_tax_income_components_two_people():
         post_tax_equity_dividend_yield=0.03,
     )
 
-    bond_interest, cash_interest, qualified_dividends, total, h_total, w_total = (
+    bond_interest, cash_interest, qualified_equity_distributions, total, h_total, w_total = (
         pe.estimate_household_post_tax_income_components(
             h,
             w,
@@ -419,7 +419,7 @@ def test_estimate_household_post_tax_income_components_two_people():
 
     assert bond_interest == pytest.approx(40.0 + 20.0)
     assert cash_interest == pytest.approx(20.0 + 10.0)
-    assert qualified_dividends == pytest.approx(30.0 + 15.0)
+    assert qualified_equity_distributions == pytest.approx(30.0 + 15.0)
     assert total == pytest.approx(135.0)
     assert h_total == pytest.approx(90.0)
     assert w_total == pytest.approx(45.0)
@@ -430,7 +430,7 @@ def test_apply_post_tax_income_components_to_income_updates_structure():
         "by_class": {
             "bond_interest": 1.0,
             "cash_interest": 2.0,
-            "qualified_dividends": 3.0,
+            "qualified_equity_distributions": 3.0,
         },
         "by_person": {
             "husband": 10.0,
@@ -442,7 +442,7 @@ def test_apply_post_tax_income_components_to_income_updates_structure():
     post_tax_income = {
         "bond_interest": 5.0,
         "cash_interest": 6.0,
-        "qualified_dividends": 7.0,
+        "qualified_equity_distributions": 7.0,
         "total": 18.0,
         "by_person": {
             "husband": {"total": 11.0},
@@ -458,7 +458,7 @@ def test_apply_post_tax_income_components_to_income_updates_structure():
 
     assert out["by_class"]["bond_interest"] == pytest.approx(6.0)
     assert out["by_class"]["cash_interest"] == pytest.approx(8.0)
-    assert out["by_class"]["qualified_dividends"] == pytest.approx(10.0)
+    assert out["by_class"]["qualified_equity_distributions"] == pytest.approx(10.0)
     assert out["by_person"]["husband"] == pytest.approx(21.0)
     assert out["by_person"]["wife"] == pytest.approx(27.0)
     assert out["total"] == pytest.approx(118.0)

@@ -11,6 +11,12 @@ from src.warpsimlab.reports import risk_report as mod
 
 def make_report_data(**overrides):
     base = dict(
+        simulation_snapshot={
+            "Sampling Method": "Path-Based Annual Sampling",
+            "Correlated Returns": True,
+            "Sequence Risk": False,
+            "Random Seed": 12345,
+        },
         report_options={
             "general": {
                 "include_executive_summary": True,
@@ -21,7 +27,6 @@ def make_report_data(**overrides):
                 "include_percentile_table": True,
                 "include_historical_window_insights": True,
                 "include_monte_carlo_insights": True,
-                "include_risk_observations": True,
                 "include_portfolio_projection": True,
             },
             "output": {
@@ -44,6 +49,8 @@ def make_report_data(**overrides):
             "Worst Ending Portfolio": 0.0,
             "Median Ending Portfolio": 100000.0,
             "Best Ending Portfolio": 250000.0,
+            "10th Percentile Ending Portfolio": 0.0,
+            "90th Percentile Ending Portfolio": 250000.0,
             "Risk Observations": [
                 "Some scenarios depleted the portfolio.",
                 "<unsafe observation>",
@@ -250,8 +257,7 @@ def test_render_executive_summary_contains_cards_and_negative_risk_class():
     assert "100" in html
     assert "Simulated Shortfall Rate" in html
     assert "10.00%" in html
-    assert "Worst Ending Portfolio" in html
-    assert "negative-risk" in html
+    assert "10th Percentile Ending Portfolio" in html
 
 
 def test_render_method_explanation_historical_and_monte_carlo():
@@ -291,16 +297,10 @@ def test_render_method_explanation_raises_for_unknown_method():
 
 
 @pytest.mark.parametrize(
-    "shortfall_rate, expected_text",
-    [
-        (0.0, "Every analyzed scenario remained funded"),
-        (2.0, "Only a small fraction of scenarios depleted"),
-        (10.0, "Most scenarios remained funded"),
-        (30.0, "A meaningful share of scenarios depleted"),
-        (60.0, "Most analyzed scenarios depleted"),
-    ],
+    "shortfall_rate",
+    [0.0, 2.0, 10.0, 30.0, 60.0],
 )
-def test_render_sustainability_interpretation_thresholds(shortfall_rate, expected_text):
+def test_render_sustainability_interpretation_thresholds(shortfall_rate):
     report_data = make_report_data(
         failure_statistics={
             "Simulated Shortfall Rate": shortfall_rate,
@@ -309,8 +309,8 @@ def test_render_sustainability_interpretation_thresholds(shortfall_rate, expecte
 
     html = mod._render_sustainability_interpretation(report_data)
 
-    assert expected_text in html
-    assert "What Monte Carlo Suggests" in html
+    assert f"{shortfall_rate:.1f}% of the analyzed Monte Carlo paths depleted" in html
+    assert "Monte Carlo Outcome Summary" in html
 
 
 def test_render_sustainability_interpretation_historical_heading():
@@ -322,7 +322,7 @@ def test_render_sustainability_interpretation_historical_heading():
 
     html = mod._render_sustainability_interpretation(report_data)
 
-    assert "What History Suggests" in html
+    assert "Historical Outcome Summary" in html
 
 
 def test_render_sustainability_interpretation_returns_empty_for_invalid_rate():
@@ -354,10 +354,10 @@ def test_render_failure_statistics_historical_and_monte_text():
     monte_html = mod._render_failure_statistics(make_report_data())
 
     assert "Portfolio Sustainability Analysis" in historical_html
-    assert "Historical Window Analysis evaluates your financial plan" in historical_html
+    assert "across the historical windows" in historical_html
 
     assert "Portfolio Sustainability Analysis" in monte_html
-    assert "Monte Carlo Analysis evaluates your financial plan" in monte_html
+    assert "across the Monte Carlo paths" in monte_html
 
 
 def test_render_failure_statistics_raises_for_unknown_method():
@@ -394,7 +394,7 @@ def test_render_percentile_table_contains_rows_and_explanation():
     assert "10th Percentile" in html
     assert "Median" in html
     assert "$90,000" in html
-    assert "approximately 10% of scenarios" in html
+    assert "approximately 10% of simulations" in html
 
 
 def test_render_year_list_empty_and_populated():
@@ -476,7 +476,7 @@ def test_render_monte_carlo_insights_only_for_monte_method():
 
     assert "Monte Carlo Insights" in html
     assert "Sequence-of-Returns Risk" in html
-    assert "What Monte Carlo Suggests" in html
+    assert "Monte Carlo Outcome Summary" in html
 
 
 def test_render_monte_carlo_insights_can_be_disabled():
@@ -489,33 +489,6 @@ def test_render_monte_carlo_insights_can_be_disabled():
     )
 
     assert mod._render_monte_carlo_insights(report_data) == ""
-
-
-def test_render_risk_observations_can_be_disabled_or_empty():
-    disabled = make_report_data(
-        report_options={
-            "analysis": {
-                "include_risk_observations": False,
-            }
-        }
-    )
-    empty = make_report_data(
-        analysis_summary={
-            "Analysis Method": "Monte Carlo Analysis",
-            "Risk Observations": [],
-        }
-    )
-
-    assert mod._render_risk_observations(disabled) == ""
-    assert mod._render_risk_observations(empty) == ""
-
-
-def test_render_risk_observations_escapes_items():
-    html = mod._render_risk_observations(make_report_data())
-
-    assert "Risk Observations" in html
-    assert "Some scenarios depleted the portfolio." in html
-    assert "&lt;unsafe observation&gt;" in html
 
 
 def test_render_plot_assets_returns_empty_without_asset_or_when_disabled(tmp_path):
@@ -611,7 +584,6 @@ def test_build_html_document_contains_core_sections():
     assert "Portfolio Sustainability Analysis" in html
     assert "Monte Carlo Insights" in html
     assert "Percentile Portfolio Table" in html
-    assert "Risk Observations" in html
     assert "WARPSimLab" in html
 
 

@@ -42,7 +42,7 @@ def test_core_yearly_series_have_expected_shapes(make_case):
     assert core["net_income_wife"].shape == expected_shape
     assert core["bond_interest"].shape == expected_shape
     assert core["cash_interest"].shape == expected_shape
-    assert core["qualified_dividends"].shape == expected_shape
+    assert core["qualified_equity_distributions"].shape == expected_shape
     assert core["federal_ordinary_tax"].shape == expected_shape
     assert core["federal_qualified_dividend_tax"].shape == expected_shape
     assert core["state_income_tax"].shape == expected_shape

@@ -135,6 +135,6 @@ def test_real_dollar_deflation_mode_nominal_to_real_conversion():
         "ira_401k",
         "bond_interest",
         "cash_interest",
-        "qualified_dividends",
+        "qualified_equity_distributions",
     ]:
         assert row(real_results, key) == pytest.approx(row(raw_results, key) / discount)

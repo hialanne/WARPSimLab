@@ -476,7 +476,7 @@ def test_identical_simulations_do_not_leak_state_between_rows(
         "uncovered_expense",
         "ira_401k",
         "fund_expenses",
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "bond_interest",
         "cash_interest",
     ]
@@ -624,7 +624,7 @@ def test_repeated_runs_with_same_inputs_are_identical(
         "ira_401k",
         "taxes",
         "fund_expenses",
-        "qualified_dividends",
+        "qualified_equity_distributions",
         "bond_interest",
         "cash_interest",
     ]

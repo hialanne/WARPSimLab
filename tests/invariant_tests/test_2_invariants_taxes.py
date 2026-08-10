@@ -62,7 +62,7 @@ def test_income_plus_taxes_equals_total_income_components(make_case):
         + breakdown["withdrawal"]
         + breakdown["bond_interest"]
         + breakdown["cash_interest"]
-        + breakdown["qualified_dividends"]
+        + breakdown["qualified_equity_distributions"]
     )
 
     np.testing.assert_allclose(

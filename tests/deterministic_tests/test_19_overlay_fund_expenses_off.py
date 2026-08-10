@@ -25,6 +25,18 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
             "total_assets": baseline_total_assets.copy(),
             "pre_tax_assets": np.array([[55.0, 54.0, 53.0, 52.0]]),
             "post_tax_assets": np.array([[45.0, 45.0, 45.0, 45.0]]),
+            "pre_tax_equity": zeros.copy(),
+            "pre_tax_bonds": zeros.copy(),
+            "pre_tax_cash": zeros.copy(),
+
+            "post_tax_equity": zeros.copy(),
+            "post_tax_bonds": zeros.copy(),
+            "post_tax_cash": zeros.copy(),
+
+            "roth_equity": zeros.copy(),
+            "roth_bonds": zeros.copy(),
+            "roth_cash": zeros.copy(),
+
             "roth_assets": zeros.copy(),
             "hsa_assets": zeros.copy(),
             "cash": np.array([[5.0, 5.0, 5.0, 5.0]]),
@@ -33,6 +45,9 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
             "gross_income": np.array([[30.0, 30.0, 30.0, 30.0]]),
             "net_income": np.array([[27.0, 27.0, 27.0, 27.0]]),
             "net_profit": np.array([[2.0, 2.0, 2.0, 2.0]]),
+            "cash_flow_shortfall": zeros.copy(),
+            "rmd_husband": zeros.copy(),
+            "rmd_wife": zeros.copy(),
             "taxes": np.array([[3.0, 3.0, 3.0, 3.0]]),
             "payroll_tax": zeros.copy(),
             "social_security_payroll_tax": zeros.copy(),
@@ -65,7 +80,7 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
                 "withdrawal": zeros.copy(),
                 "bond_interest": zeros.copy(),
                 "cash_interest": zeros.copy(),
-                "qualified_dividends": zeros.copy(),
+                "qualified_equity_distributions": zeros.copy(),
                 "special_income": zeros.copy(),
             },
         }

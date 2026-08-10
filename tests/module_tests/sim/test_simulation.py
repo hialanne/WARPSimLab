@@ -14,6 +14,7 @@ class DummySimConfig:
     years_to_simulate: int = 3
     num_sims: int = 25
     subplot_mode: str = "monte_carlo"
+    monte_carlo_mode: str = "pathBasedAnnualSampling"
     inflation_rate: float = 0.0
     include_realestate: bool = True
 
@@ -67,7 +68,7 @@ def _core_for_extracts() -> dict:
             "withdrawal": np.array([[1.0, 1.0, 1.0, 1.0]]),
             "bond_interest": np.array([[2.0, 2.0, 2.0, 2.0]]),
             "cash_interest": np.array([[3.0, 3.0, 3.0, 3.0]]),
-            "qualified_dividends": np.array([[4.0, 4.0, 4.0, 4.0]]),
+            "qualified_equity_distributions": np.array([[4.0, 4.0, 4.0, 4.0]]),
         },
         "taxes": np.array([[7.0, 7.0, 8.0, 9.0]]),
         "payroll_tax": np.array([[2.0, 2.0, 2.0, 2.0]]),
@@ -75,10 +76,24 @@ def _core_for_extracts() -> dict:
         "medicare_tax": np.array([[0.8, 0.8, 0.8, 0.8]]),
         "additional_medicare_tax": np.array([[0.2, 0.2, 0.2, 0.2]]),
         "expense_amt": np.array([[50.0, 51.0, 52.0, 53.0]]),
+        "cash_flow_shortfall": np.array([[0.0, 0.0, 0.0, 0.0]]),
+        "rmd_husband": np.array([[0.0, 0.0, 0.0, 0.0]]),
+        "rmd_wife": np.array([[0.0, 0.0, 0.0, 0.0]]),
         "year": np.array([[0.0, 1.0, 2.0, 3.0]]),
         "total_assets": np.array([[1000.0, 1100.0, 1200.0, 1300.0]]),
         "pre_tax_assets": np.array([[600.0, 650.0, 700.0, 750.0]]),
         "post_tax_assets": np.array([[400.0, 450.0, 500.0, 550.0]]),
+        "pre_tax_equity": np.array([[300.0, 325.0, 350.0, 375.0]]),
+        "pre_tax_bonds": np.array([[200.0, 215.0, 230.0, 245.0]]),
+        "pre_tax_cash": np.array([[100.0, 110.0, 120.0, 130.0]]),
+
+        "post_tax_equity": np.array([[200.0, 225.0, 250.0, 275.0]]),
+        "post_tax_bonds": np.array([[125.0, 140.0, 155.0, 170.0]]),
+        "post_tax_cash": np.array([[75.0, 85.0, 95.0, 105.0]]),
+
+        "roth_equity": np.array([[50.0, 52.0, 55.0, 57.0]]),
+        "roth_bonds": np.array([[30.0, 32.0, 33.0, 35.0]]),
+        "roth_cash": np.array([[20.0, 21.0, 22.0, 23.0]]),
         "roth_assets": np.array([[100.0, 105.0, 110.0, 115.0]]),
         "hsa_assets": np.array([[50.0, 55.0, 60.0, 65.0]]),
 
@@ -191,7 +206,7 @@ def test_extract_summary_single_run_builds_expected_keys():
     np.testing.assert_allclose(summary["fund_expenses"], core["fund_expenses"][0])
     np.testing.assert_allclose(summary["bond_interest"], core["breakdown_by_class"]["bond_interest"][0])
     np.testing.assert_allclose(summary["cash_interest"], core["breakdown_by_class"]["cash_interest"][0])
-    np.testing.assert_allclose(summary["qualified_dividends"], core["breakdown_by_class"]["qualified_dividends"][0])
+    np.testing.assert_allclose(summary["qualified_equity_distributions"],core["breakdown_by_class"]["qualified_equity_distributions"][0],)
     np.testing.assert_allclose(summary["payroll_tax"],core["payroll_tax"][0])
     np.testing.assert_allclose(summary["social_security_payroll_tax"],core["social_security_payroll_tax"][0])
     np.testing.assert_allclose(summary["medicare_tax"],core["medicare_tax"][0])
