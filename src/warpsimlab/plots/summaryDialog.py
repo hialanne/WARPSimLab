@@ -616,8 +616,8 @@ class SummaryDialog(tk.Toplevel):
         )
 
         add_row(
-            "Qualified Dividends",
-            "qualified_dividends"
+            "Qualified Equity Distributions",
+            "qualified_equity_distributions"
         )
 
         add_row(

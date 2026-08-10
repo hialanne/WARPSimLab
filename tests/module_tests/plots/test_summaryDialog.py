@@ -36,7 +36,7 @@ def make_results(n=5, start_year=2025):
         "emergency_pre_tax_used": np.zeros(n),
         "bond_interest": np.zeros(n),
         "cash_interest": np.zeros(n),
-        "qualified_dividends": np.zeros(n),
+        "qualified_equity_distributions": np.zeros(n),
         "gross_income": np.linspace(80, 40, n),
         "ira_401k": np.zeros(n),
         "employee_401k_contributions": np.zeros(n),

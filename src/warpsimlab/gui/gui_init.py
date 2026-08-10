@@ -59,7 +59,7 @@ from src.warpsimlab.gui.gui_settings import (
     save_display_settings,
 )
 
-WARPSIMLAB_VERSION = "4.1.0"
+WARPSIMLAB_VERSION = "4.1.1"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin):

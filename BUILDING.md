@@ -79,14 +79,14 @@ The GitHub Actions workflow, rather than this local environment, produces the of
 Record the Python version and installed packages:
 
 ```powershell
-python3 --version 2>&1 | Tee-Object -FilePath build-environment.txt
-python3 -m pip freeze 2>&1 | Tee-Object -FilePath build-environment.txt -Append
+python3 --version 2>&1 | Tee-Object -FilePath build-environment-4.1.0.txt
+python3 -m pip freeze 2>&1 | Tee-Object -FilePath build-environment-4.1.0.txt -Append
 ```
 
 The PyInstaller version may also be recorded:
 
 ```powershell
-python3 -m PyInstaller --version 2>&1 | Tee-Object -FilePath build-environment.txt -Append
+python3 -m PyInstaller --version 2>&1 | Tee-Object -FilePath build-environment-4.1.0.txt -Append
 ```
 
 Keep `build-environment.txt` with the release records. Do not distribute it as part of the application.
@@ -98,7 +98,7 @@ The GitHub Actions run provides the authoritative record of the environment used
 Run:
 
 ```powershell
-python3 -m pytest 2>&1 | Tee-Object -FilePath test-results.txt
+python3 -m pytest 2>&1 | Tee-Object -FilePath test-results-4.1.0.txt
 ```
 
 Confirm that the results are acceptable before continuing.
@@ -156,8 +156,8 @@ git push origin vX.Y.Z
 For example:
 
 ```powershell
-git tag -a v4.0.3 -m "WARPSimLab v4.0.3"
-git push origin v4.0.3
+git tag -a v4.1.0 -m "WARPSimLab v4.1.0"
+git push origin v4.1.0
 ```
 
 Confirm that the tag points to the intended commit:
@@ -176,7 +176,7 @@ Do not move or reuse a published release tag.
 Open the WARPSimLab repository on GitHub.
 
 1. Select **Actions**.
-2. Select the Windows release-build workflow.
+2. Select the Build Windows Release workflow.
 3. Select **Run workflow**.
 4. Select the correct release tag or enter the requested version.
 5. Use the release tag as the build version when the workflow requests one.

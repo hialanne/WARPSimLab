@@ -600,7 +600,7 @@ class ScenarioController:
                 "withdrawal",
                 "cash_interest",
                 "bond_interest",
-                "qualified_dividends",
+                "qualified_equity_distributions",
             ]
 
             cashflow_total = sum(
