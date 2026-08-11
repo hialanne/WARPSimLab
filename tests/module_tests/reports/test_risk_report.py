@@ -39,7 +39,7 @@ def make_report_data(**overrides):
             "Projection Period": "2026-2031 (5 Years)",
             "Report Basis": "Raw Dollars",
             "Report ID": "test-report",
-            "Report Title": "WARPSimLab Risk Analysis Report",
+            "Report Title": "Risk Analysis Report",
         },
         analysis_summary={
             "Analysis Method": "Monte Carlo Analysis",
@@ -596,7 +596,7 @@ def test_build_html_document_escapes_title():
 
     html = mod._build_html_document(report_data)
 
-    assert "<title>&lt;Unsafe Risk Report&gt;</title>" in html
+    assert "<title>WARPSimLab &lt;Unsafe Risk Report&gt;</title>" in html
 
 
 def test_write_html_uses_method_specific_prefix(tmp_path):
