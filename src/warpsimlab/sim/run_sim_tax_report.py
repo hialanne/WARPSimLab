@@ -130,13 +130,18 @@ def _build_lifetime_tax_summary(results):
     lifetime_total = _sum(results, "taxes")
     lifetime_gross_income = _sum(results, "gross_income")
 
+    annual_taxes = [
+        _as_float(value)
+        for value in _safe_array(results, "taxes")[1:]
+    ]
+
     average_effective_rate = 0.0
     if lifetime_gross_income > 0.0:
         average_effective_rate = lifetime_total / lifetime_gross_income
 
     return {
         "Lifetime Federal Ordinary Tax": lifetime_federal_ordinary,
-        "Lifetime Federal Qualified Equity Distribution Tax": lifetime_federal_qd,
+        "Lifetime Tax on Dividends and Capital Gains": lifetime_federal_qd,
         "Lifetime Federal Income Tax": lifetime_federal,
         "Lifetime State Income Tax": lifetime_state,
         "Lifetime Payroll Tax": lifetime_payroll,
@@ -146,8 +151,8 @@ def _build_lifetime_tax_summary(results):
         "Lifetime Total Tax": lifetime_total,
         "Lifetime Gross Income": lifetime_gross_income,
         "Average Effective Tax Rate": average_effective_rate,
-        "Highest Annual Tax Bill": _max(results, "taxes"),
-        "Lowest Annual Tax Bill": _min(results, "taxes"),
+        "Highest Annual Tax Bill": max(annual_taxes) if annual_taxes else 0.0,
+        "Lowest Annual Tax Bill": min(annual_taxes) if annual_taxes else 0.0,
         "Highest Marginal Tax Bracket": _max(results, "tax_bracket"),
     }
 

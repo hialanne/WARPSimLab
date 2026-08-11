@@ -523,10 +523,10 @@ def _build_and_generate_risk_report(
         analysis_summary["Historical Window Count"] = scenario_count
 
         if len(valid_start_years) > 0:
-            analysis_summary["Earliest Retirement Start Year"] = int(
+            analysis_summary["Earliest Simulation Start Year"] = int(
                 np.min(valid_start_years)
             )
-            analysis_summary["Latest Retirement Start Year"] = int(
+            analysis_summary["Latest Simulation Start Year"] = int(
                 np.max(valid_start_years)
             )
 

@@ -414,6 +414,9 @@ def _render_yearly_tax_table(report_data):
     <h3>Annual Tax Summary</h3>
     {render_table(tax_columns)}
 
+    <br>
+    <br>
+
     <h3>Annual Taxable and Retirement Flows</h3>
     {render_table(flow_columns)}
 </section>
