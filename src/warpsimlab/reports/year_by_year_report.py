@@ -505,6 +505,14 @@ def _render_css():
         font-size: 10px;
     }}
 
+    .year-table thead {{
+        display: table-header-group;
+    }}
+
+    .year-table thead th {{
+        position: static;
+    }}
+
 }}
 
 </style>

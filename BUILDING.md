@@ -79,14 +79,14 @@ The GitHub Actions workflow, rather than this local environment, produces the of
 Record the Python version and installed packages:
 
 ```powershell
-python3 --version 2>&1 | Tee-Object -FilePath build-environment-4.1.0.txt
-python3 -m pip freeze 2>&1 | Tee-Object -FilePath build-environment-4.1.0.txt -Append
+python3 --version 2>&1 | Tee-Object -FilePath build-environment-4.1.1.txt
+python3 -m pip freeze 2>&1 | Tee-Object -FilePath build-environment-4.1.1.txt -Append
 ```
 
 The PyInstaller version may also be recorded:
 
 ```powershell
-python3 -m PyInstaller --version 2>&1 | Tee-Object -FilePath build-environment-4.1.0.txt -Append
+python3 -m PyInstaller --version 2>&1 | Tee-Object -FilePath build-environment-4.1.1.txt -Append
 ```
 
 Keep `build-environment.txt` with the release records. Do not distribute it as part of the application.
@@ -98,7 +98,7 @@ The GitHub Actions run provides the authoritative record of the environment used
 Run:
 
 ```powershell
-python3 -m pytest 2>&1 | Tee-Object -FilePath test-results-4.1.0.txt
+python3 -m pytest 2>&1 | Tee-Object -FilePath test-results-4.1.1.txt
 ```
 
 Confirm that the results are acceptable before continuing.
@@ -156,8 +156,8 @@ git push origin vX.Y.Z
 For example:
 
 ```powershell
-git tag -a v4.1.0 -m "WARPSimLab v4.1.0"
-git push origin v4.1.0
+git tag -a v4.1.1 -m "WARPSimLab v4.1.1"
+git push origin v4.1.1
 ```
 
 Confirm that the tag points to the intended commit:

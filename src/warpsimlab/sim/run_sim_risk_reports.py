@@ -103,8 +103,9 @@ def _build_report_metadata(sim_config, method):
     years = int(getattr(sim_config, "years_to_simulate", 0))
     end_year = start_year + years
 
-    timestamp = datetime.now().isoformat(timespec="seconds")
-    report_id = f"{method.lower().replace(' ', '_')}_{timestamp.replace(':', '').replace('-', '')}"
+    now = datetime.now()
+    timestamp = now.isoformat(timespec="seconds")
+    report_id = now.strftime("%Y-%m-%d_%H_%M_%S")
 
     return {
         "Report Title": f"{method} Risk Report",

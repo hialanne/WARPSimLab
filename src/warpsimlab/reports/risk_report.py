@@ -820,14 +820,15 @@ def _render_css():
 def _build_html_document(report_data):
     title = report_data.report_metadata.get(
         "Report Title",
-        "WARPSimLab Risk Analysis Report",
+        "Risk Analysis Report",
     )
+    document_title = f"WARPSimLab {title}"
 
     return f"""<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>{_safe(title)}</title>
+<title>{_safe(document_title)}</title>
 {_render_css()}
 </head>
 <body>
