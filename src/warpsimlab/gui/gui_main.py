@@ -107,14 +107,14 @@ class MainHomeFrame(ttk.Frame):
         ).pack(anchor="w", pady=(0, 10))
 
         # Introduction text directly on the frame
-        intro_label = ttk.Label(
+        self.intro_label = ttk.Label(
             self,
             text=INTRO_TEXT,
-            wraplength=800,  # adjust width as needed
+            wraplength=800,
             justify="left",
             font=("Arial", 12)
         )
-        intro_label.pack(anchor="w", pady=(0, 10))
+        self.intro_label.pack(anchor="w", pady=(0, 10))
 
         if self.legal_already_accepted:
             if self.acceptance_timestamp:

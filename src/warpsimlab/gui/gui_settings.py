@@ -386,7 +386,7 @@ class DisplaySettingsDialog(tk.Toplevel):
 
         ttk.Radiobutton(
             main_frame,
-            text="Automatic - 80% of reported screen size",
+            text="Automatic -  scale to WARPSimLab design size",
             variable=self.main_sizing_mode,
             value=MAIN_WINDOW_AUTOMATIC,
             command=self._update_custom_field_state,

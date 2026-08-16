@@ -4,6 +4,8 @@
 # Version string is defined after imports.
 #
 
+import tkinter.font as tkfont
+
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
@@ -72,6 +74,9 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         self.display_settings = load_display_settings()
         self._apply_main_window_startup_settings()
+
+        # Diagnostic prints for dialog and subdialog diagnostics.  Comment out in production.
+        self._print_display_diagnostics()
 
         ttk.Label(root, text=WARPSIMLAB_TITLE, font=("Arial", 16), ).pack(pady=10)
 
@@ -160,7 +165,11 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         self.edit_main_home()
 
+        # This should be commented out in production.
+        self._print_content_geometry_diagnostics()
 
+
+    '''
     def _center_main_window(self, width, height):
         """
         Center the main window on the reported screen.
@@ -174,6 +183,323 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self.root.geometry(
             f"{width}x{height}+{x}+{y}"
         )
+    '''
+
+    def _center_main_window(self, width, height):
+        if sys.platform == "win32":
+            import ctypes
+            from ctypes import wintypes
+
+            user32 = ctypes.windll.user32
+
+            MONITOR_DEFAULTTONEAREST = 2
+
+            cursor = wintypes.POINT()
+            user32.GetCursorPos(ctypes.byref(cursor))
+
+            monitor = user32.MonitorFromPoint(
+                cursor,
+                MONITOR_DEFAULTTONEAREST,
+            )
+
+            class MONITORINFO(ctypes.Structure):
+                _fields_ = [
+                    ("cbSize", wintypes.DWORD),
+                    ("rcMonitor", wintypes.RECT),
+                    ("rcWork", wintypes.RECT),
+                    ("dwFlags", wintypes.DWORD),
+                ]
+
+            info = MONITORINFO()
+            info.cbSize = ctypes.sizeof(MONITORINFO)
+
+            user32.GetMonitorInfoW(
+                monitor,
+                ctypes.byref(info),
+            )
+
+            work_left = info.rcWork.left
+            work_top = info.rcWork.top
+            work_right = info.rcWork.right
+            work_bottom = info.rcWork.bottom
+
+            work_width = work_right - work_left
+            work_height = work_bottom - work_top
+
+            x = work_left + (work_width - width) // 2
+            y = work_top + (work_height - height) // 2
+
+            self.root.geometry(
+                f"{width}x{height}+{x}+{y}"
+            )
+            return
+
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+
+        self.root.geometry(
+            f"{width}x{height}+{x}+{y}"
+        )
+
+    def _print_display_diagnostics(self):
+        """
+        Print Tk display and geometry information for debugging.
+        """
+        self.root.update_idletasks()
+
+        print("")
+        print("WARPSimLab display diagnostics")
+        print("------------------------------")
+        print(f"platform: {sys.platform}")
+        print(f"screen width: {self.root.winfo_screenwidth()}")
+        print(f"screen height: {self.root.winfo_screenheight()}")
+        print(f"screen width mm: {self.root.winfo_screenmmwidth()}")
+        print(f"screen height mm: {self.root.winfo_screenmmheight()}")
+        print(f"pixels per inch: {self.root.winfo_fpixels('1i')}")
+        print(f"tk scaling: {self.root.tk.call('tk', 'scaling')}")
+        print(f"root width: {self.root.winfo_width()}")
+        print(f"root height: {self.root.winfo_height()}")
+        print(f"root x: {self.root.winfo_x()}")
+        print(f"root y: {self.root.winfo_y()}")
+        print(f"root geometry: {self.root.winfo_geometry()}")
+
+        font_14 = tkfont.Font(
+            root=self.root,
+            family="Arial",
+            size=14,
+        )
+
+        font_16 = tkfont.Font(
+            root=self.root,
+            family="Arial",
+            size=16,
+        )
+
+        print("")
+        print("Font diagnostics")
+        print("----------------")
+        print(f"Arial 14 linespace: {font_14.metrics('linespace')}")
+        print(f"Arial 14 ascent: {font_14.metrics('ascent')}")
+        print(f"Arial 14 descent: {font_14.metrics('descent')}")
+        print(f"Arial 14 width of 'WARPSimLab': {font_14.measure('WARPSimLab')}")
+        print(f"Arial 16 linespace: {font_16.metrics('linespace')}")
+        print(f"Arial 16 ascent: {font_16.metrics('ascent')}")
+        print(f"Arial 16 descent: {font_16.metrics('descent')}")
+        print(f"Arial 16 width of 'WARPSimLab': {font_16.measure('WARPSimLab')}")
+        print("")
+        print("Additional Tk diagnostics")
+        print("-------------------------")
+
+        print(f"Arial 14 actual: {font_14.actual()}")
+        print(f"Arial 16 actual: {font_16.actual()}")
+
+        default_font = tkfont.nametofont("TkDefaultFont")
+        print(f"TkDefaultFont actual: {default_font.actual()}")
+        print(
+            f"TkDefaultFont linespace: "
+            f"{default_font.metrics('linespace')}"
+        )
+
+        test_label = ttk.Label(
+            self.root,
+            text="WARPSimLab",
+            font=("Arial", 16),
+        )
+
+        test_button = ttk.Button(
+            self.root,
+            text="Test Button",
+        )
+
+        test_label.update_idletasks()
+        test_button.update_idletasks()
+
+        print(
+            f"Arial 16 label requested size: "
+            f"{test_label.winfo_reqwidth()}x"
+            f"{test_label.winfo_reqheight()}"
+        )
+        print(
+            f"TTK button requested size: "
+            f"{test_button.winfo_reqwidth()}x"
+            f"{test_button.winfo_reqheight()}"
+        )
+
+        test_label.destroy()
+        test_button.destroy()
+        print("")
+        if sys.platform == "win32":
+            import ctypes
+            from ctypes import wintypes
+
+            user32 = ctypes.windll.user32
+
+            class MONITORINFO(ctypes.Structure):
+                _fields_ = [
+                    ("cbSize", wintypes.DWORD),
+                    ("rcMonitor", wintypes.RECT),
+                    ("rcWork", wintypes.RECT),
+                    ("dwFlags", wintypes.DWORD),
+                ]
+
+            monitor_data = []
+
+            MONITORENUMPROC = ctypes.WINFUNCTYPE(
+                ctypes.c_int,
+                wintypes.HMONITOR,
+                wintypes.HDC,
+                ctypes.POINTER(wintypes.RECT),
+                wintypes.LPARAM,
+            )
+
+            def monitor_enum_proc(
+                monitor,
+                hdc,
+                rect_pointer,
+                data,
+            ):
+                info = MONITORINFO()
+                info.cbSize = ctypes.sizeof(MONITORINFO)
+
+                user32.GetMonitorInfoW(
+                    monitor,
+                    ctypes.byref(info),
+                )
+
+                monitor_data.append(
+                    (
+                        info.rcMonitor.left,
+                        info.rcMonitor.top,
+                        info.rcMonitor.right,
+                        info.rcMonitor.bottom,
+                        info.rcWork.left,
+                        info.rcWork.top,
+                        info.rcWork.right,
+                        info.rcWork.bottom,
+                        info.dwFlags,
+                    )
+                )
+
+                return 1
+
+            callback = MONITORENUMPROC(monitor_enum_proc)
+
+            user32.EnumDisplayMonitors(
+                None,
+                None,
+                callback,
+                0,
+            )
+
+            cursor = wintypes.POINT()
+            user32.GetCursorPos(ctypes.byref(cursor))
+
+            print("\nWindows monitor diagnostics")
+            print("---------------------------")
+            print(f"cursor: {cursor.x}, {cursor.y}")
+
+            for index, monitor in enumerate(monitor_data):
+                print(f"monitor {index}: {monitor}")
+
+
+    def _print_content_geometry_diagnostics(self):
+        """
+        Print requested and actual GUI geometry after the GUI is built.
+        """
+        self.root.update_idletasks()
+
+        print("")
+        print("WARPSimLab content geometry diagnostics")
+        print("---------------------------------------")
+
+        print(
+            f"root requested size: "
+            f"{self.root.winfo_reqwidth()}x"
+            f"{self.root.winfo_reqheight()}"
+        )
+        print(
+            f"root actual size: "
+            f"{self.root.winfo_width()}x"
+            f"{self.root.winfo_height()}"
+        )
+
+        print(
+            f"main frame requested size: "
+            f"{self.frame.winfo_reqwidth()}x"
+            f"{self.frame.winfo_reqheight()}"
+        )
+        print(
+            f"main frame actual size: "
+            f"{self.frame.winfo_width()}x"
+            f"{self.frame.winfo_height()}"
+        )
+
+        print(
+            f"top frame requested size: "
+            f"{self.top_frame.winfo_reqwidth()}x"
+            f"{self.top_frame.winfo_reqheight()}"
+        )
+        print(
+            f"top frame actual size: "
+            f"{self.top_frame.winfo_width()}x"
+            f"{self.top_frame.winfo_height()}"
+        )
+
+        print(
+            f"button frame requested size: "
+            f"{self.button_frame.winfo_reqwidth()}x"
+            f"{self.button_frame.winfo_reqheight()}"
+        )
+        print(
+            f"button frame actual size: "
+            f"{self.button_frame.winfo_width()}x"
+            f"{self.button_frame.winfo_height()}"
+        )
+
+        print(
+            f"editor container requested size: "
+            f"{self.edit_frame_container.winfo_reqwidth()}x"
+            f"{self.edit_frame_container.winfo_reqheight()}"
+        )
+        print(
+            f"editor container actual size: "
+            f"{self.edit_frame_container.winfo_width()}x"
+            f"{self.edit_frame_container.winfo_height()}"
+        )
+
+        if hasattr(self, "home_frame"):
+            print(
+                f"home frame requested size: "
+                f"{self.home_frame.winfo_reqwidth()}x"
+                f"{self.home_frame.winfo_reqheight()}"
+            )
+            print(
+                f"home frame actual size: "
+                f"{self.home_frame.winfo_width()}x"
+                f"{self.home_frame.winfo_height()}"
+            )
+            if hasattr(self.home_frame, "intro_label"):
+                intro_label = self.home_frame.intro_label
+
+                print(
+                    f"intro label requested size: "
+                    f"{intro_label.winfo_reqwidth()}x"
+                    f"{intro_label.winfo_reqheight()}"
+                )
+                print(
+                    f"intro label actual size: "
+                    f"{intro_label.winfo_width()}x"
+                    f"{intro_label.winfo_height()}"
+                )
+                print(
+                    f"intro label wraplength: "
+                    f"{intro_label.cget('wraplength')}"
+                )
+
+        print("")
 
 
     def _set_main_window_normal(self):
@@ -228,38 +554,104 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
     def _apply_automatic_main_window_size(self):
         """
-        Apply the existing automatic main-window sizing policy.
+        Scale the main window from the original Windows development layout.
         """
-        minimum_window_width = 1200
-        minimum_window_height = 750
+        development_screen_width = 1707
+        development_screen_height = 1067
+
+        development_window_width = 1200
+        development_window_height = 750
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
 
-        window_width = int(screen_width * 0.80)
-        window_height = int(screen_height * 0.80)
+        width_scale = screen_width / development_screen_width
+        height_scale = screen_height / development_screen_height
 
-        if (
-            window_width < minimum_window_width
-            or window_height < minimum_window_height
-        ):
-            if (
-                sys.platform.startswith("win")
-                or sys.platform.startswith("linux")
-            ):
-                self._set_main_window_maximized()
-            else:
-                self._set_main_window_normal()
-                self._center_main_window(
-                    min(minimum_window_width, screen_width),
-                    min(minimum_window_height, screen_height),
-                )
+        # bad scale = min(width_scale, height_scale)
+
+
+        # good development_font_linespace = 24
+
+        #reference_font = tkfont.Font(
+        #    family="Arial",
+        #    size=16,
+        #)
+        #current_font_linespace = reference_font.metrics("linespace")
+
+        #scale = current_font_linespace / development_font_linespace
+
+        # diagnostic print.  Turn off for production.
+        # print(f"automatic main-window scale: {scale}")
+
+        #window_width = int(development_window_width * scale)
+        #window_height = int(development_window_height * scale)
+
+        development_screen_width = 1707
+        development_screen_height = 1067
+
+        development_window_width = 1200
+        development_window_height = 750
+
+        development_font_linespace = 24
+
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        reference_font = tkfont.Font(
+            family="Arial",
+            size=16,
+        )
+        current_font_linespace = reference_font.metrics("linespace")
+
+        gui_scale = (
+            current_font_linespace
+            / development_font_linespace
+        )
+
+        effective_screen_width = screen_width / gui_scale
+        effective_screen_height = screen_height / gui_scale
+
+        width_scale = (
+            effective_screen_width
+            / development_screen_width
+        )
+        height_scale = (
+            effective_screen_height
+            / development_screen_height
+        )
+
+        desktop_scale = min(width_scale, height_scale)
+
+        if desktop_scale > 1.0:
+            #large_display_factor = 1.0 / (desktop_scale ** 0.5)
+            large_display_factor = 1.0 / (desktop_scale ** 0.5)
         else:
-            self._set_main_window_normal()
-            self._center_main_window(
-                window_width,
-                window_height,
-            )
+            large_display_factor = 1.0
+
+        scale = gui_scale * large_display_factor
+
+        window_width = int(development_window_width * scale)
+        window_height = int(development_window_height * scale)
+
+        minimum_window_width = 1100
+
+        window_width = max(
+            window_width,
+            minimum_window_width,
+        )
+
+        print(f"automatic GUI scale: {gui_scale}")
+        print(f"effective desktop scale: {desktop_scale}")
+        print(f"large display factor: {large_display_factor}")
+        print(f"automatic main-window scale: {scale}")
+
+
+        self._set_main_window_normal()
+        self._center_main_window(
+            window_width,
+            window_height,
+        )
 
 
     def _apply_main_window_startup_settings(self):
