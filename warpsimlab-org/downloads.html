@@ -146,10 +146,10 @@
                     <h2>What You Get</h2>
                     <p>
                         Downloads are available as either a packaged Windows application or a
-                        source-code archive. Ubuntu users can run WARPSimLab directly from the
-                        Python source by following the instructions below. The source archive is
-                        also suitable for developers, educators, and users who wish to inspect or
-                        modify the software.
+                        source-code archive. Ubuntu and macOS users can run WARPSimLab directly
+                        from the Python source by following the instructions below. The source
+                        archive is also suitable for developers, educators, and users who wish to
+                        inspect or modify the software.
                     </p>
                 </div>
 
@@ -233,7 +233,8 @@
                     <p>
                         WARPSimLab can be run directly from Python source code on Ubuntu.
                         These instructions download the source release, install the required
-                        Ubuntu components, and create an isolated Python virtual environment.
+                        Ubuntu components, and create an isolated Python virtual environment.  
+                        The commands below are for version 4.1.1.
                     </p>
 
                     <h3>1. Download and extract WARPSimLab</h3>
@@ -245,9 +246,6 @@
 
                     <pre><code>mkdir -p ~/WARPSimLab</code></pre>
                     <pre><code>cd ~/WARPSimLab</code></pre>
-
-                    <p>Download the current WARPSimLab source release.</p>  
-                    <p>In a terminal window, use the following command:</p>
 
                     <pre><code>wget https://github.com/hialanne/warpsimlab/archive/refs/tags/v4.1.1.tar.gz -O WARPSimLab-4.1.1.tar.gz</code></pre>
 
@@ -318,16 +316,112 @@ python WARPSimLab.py</code></pre>
                     </p>
 
                 </div>
+                <div class="instruction-box"
+                     style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #d97706;">
+
+                    <h2 style="margin-top: 0;">Running the Source Code on macOS</h2>
+
+                    <p>
+                        WARPSimLab can be run directly from Python source code on macOS.
+                        These instructions download the source release, verify that a suitable
+                        version of Python is installed, and create an isolated Python virtual
+                        environment. The commands below are for version 4.1.1.
+
+                    </p>
+
+                    <h3>1. Check the installed Python version</h3>
+
+                    <p>Open Terminal and run:</p>
+
+                    <pre><code>python3 --version</code></pre>
+
+                    <p>
+                        WARPSimLab requires Python 3.10 or newer. If Python is not installed,
+                        or the installed version is older than Python 3.10, download and install
+                        a current Python 3 release from
+                        <a href="https://www.python.org/downloads/macos/">python.org</a>.
+                    </p>
+
+                    <p>
+                        After installing Python, close the Terminal.
+                    </p>
+
+                    <h3>2. Download and extract WARPSimLab</h3>
+
+                    <p>
+                        Download the current WARPSimLab source release:
+                    </p>
+
+                    <p>
+                        <a href="https://github.com/hialanne/warpsimlab/archive/refs/tags/v4.1.1.tar.gz">
+                            WARPSimLab 4.1.1 source archive
+                        </a>
+                    </p>
+
+                    <p>
+                        The file will normally be saved in your <code>Downloads</code>
+                        directory. Extract the archive, then open the Terminal again and change to the
+                        extracted WARPSimLab directory. For example:
+                    </p>
+
+                    <pre><code>cd ~/Downloads/warpsimlab-4.1.1</code></pre>
+
+                    <h3>3. Create and activate a virtual environment</h3>
+
+                    <pre><code>python3 -m venv .venv
+source .venv/bin/activate</code></pre>
+
+                    <p>
+                        After activation, the Terminal prompt will normally begin with
+                        <code>(.venv)</code>.
+                    </p>
+
+                    <h3>4. Install the Python dependencies</h3>
+
+                    <pre><code>python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt</code></pre>
+
+                    <h3>5. Run WARPSimLab</h3>
+
+                    <pre><code>python3 WARPSimLab.py</code></pre>
+
+                    <h3>Running WARPSimLab again later</h3>
+
+                    <p>
+                        Python, the virtual environment, and the Python dependencies normally
+                        need to be installed only once. To run WARPSimLab again:
+                    </p>
+
+                    <pre><code>cd ~/Downloads/warpsimlab-4.1.1
+source .venv/bin/activate
+python3 WARPSimLab.py</code></pre>
+
+                    <p>
+                        Change the directory in the first command if you installed WARPSimLab
+                        somewhere other than your <code>Downloads</code> directory.
+                    </p>
+
+                    <p>When finished, you can leave the virtual environment by running:</p>
+
+                    <pre><code>deactivate</code></pre>
+
+                    <p>
+                        WARPSimLab source code is released under the MIT License.
+                    </p>
+
+                </div>
+
             </div>
         </section>
 
         <section class="section section-soft">
             <div class="container">
                 <div class="section-heading">
-                    <h2>Download for Windows</h2>
+                    <h2>Download WARPSimLab</h2>
                     <p>
-                        WARPSimLab currently provides a packaged Windows build. macOS and Linux users can run
-                        the source release; packaged builds may be added later.
+                        WARPSimLab currently provides a packaged Windows build.
+                        Ubuntu and macOS users can run the Python source release by following
+                        the instructions above; packaged builds may be added later.
                     </p>
                 </div>
 
@@ -342,7 +436,7 @@ python WARPSimLab.py</code></pre>
                             <p><strong>Version:</strong> 4.1.1</p>
                             <p><strong>Release date:</strong> August 10, 2026</p>
                             <p><strong>Author:</strong> Alan Scott</p>
-                            <p><strong>Checksum:</strong> SHA-256: <code>1724A67017D899E6747CB9FFCD250EF09285B2F0FD4E7AD4054FFA2E0055393E</code></p>
+                            <p><strong>Checksum:</strong> SHA-256: <code>3CFB4A8DC52731EE3F9D32753116BB7A7878548678CECD46007E7554503038CF</code></p>
                         </div>
 
                         <a class="button button-primary button-full"
