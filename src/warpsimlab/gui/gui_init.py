@@ -583,6 +583,23 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
     def _apply_mode_to_top_buttons(self):
         is_basic = (self.mode_var.get() == "Basic")
         legal_enabled = getattr(self, "legal_accepted", False)
+        # Before legal acceptance, File remains available only for Exit.
+        if hasattr(self, "file_menu"):
+            file_state = "normal" if legal_enabled else "disabled"
+
+            self.file_menu.entryconfig(0, state=file_state)
+            self.file_menu.entryconfig(1, state=file_state)
+            self.file_menu.entryconfig(2, state=file_state)
+            self.file_menu.entryconfig(3, state=file_state)
+
+            # Exit must always remain available.
+            self.file_menu.entryconfig(4, state="normal")
+
+        # Prevent changing Basic/Advanced mode before legal acceptance.
+        if hasattr(self, "mode_button"):
+            self.mode_button.configure(
+                state="normal" if legal_enabled else "disabled"
+            )
 
         basic_enabled = legal_enabled
         advanced_enabled = (not is_basic) and legal_enabled

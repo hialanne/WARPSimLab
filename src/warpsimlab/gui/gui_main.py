@@ -21,7 +21,10 @@ INTRO_TEXT = (
     "educational personal finance simulator designed to help users explore long-term "
     "financial trends, budgets, assets, and portfolio dynamics in a safe, interactive "
     "environment. This tool is not financial advice and is intended for learning and "
-    "experimentation only.\n\n"
+    "experimentation only.\n"
+)
+
+FIRST_USE_TEXT = (
     "New users: Accept the terms below, then select Start Tutorials.\n"
 )
 
@@ -75,13 +78,23 @@ class MainHomeFrame(ttk.Frame):
         """
         super().__init__(parent, padding=10, **kwargs)
         self.title = title
-        self.parent_gui = parent_gui  # store reference
-        self.agree_var = tk.BooleanVar(value=False)
+
+        self.parent_gui = parent_gui
+        self.legal_already_accepted = self._legal_acceptance_exists()
+
+        self.acceptance_timestamp = None
+        if self.legal_already_accepted:
+            self.acceptance_timestamp = (
+                self._read_legal_acceptance_timestamp()
+            )
+
+        self.agree_var = tk.BooleanVar(
+            value=self.legal_already_accepted
+        )
+
         self._build_fields()
 
-        # Restore prior legal acceptance, if present
-        if self._legal_acceptance_exists():
-            self.agree_var.set(True)
+        if self.legal_already_accepted:
             self._update_run_buttons(enabled=True)
             self._update_nav_buttons(enabled=True)
 
@@ -102,6 +115,43 @@ class MainHomeFrame(ttk.Frame):
             font=("Arial", 12)
         )
         intro_label.pack(anchor="w", pady=(0, 10))
+
+        if self.legal_already_accepted:
+            if self.acceptance_timestamp:
+                acceptance_text = (
+                    "Terms of Use accepted on "
+                    f"{self.acceptance_timestamp}"
+                )
+            else:
+                acceptance_text = "Terms of Use previously accepted."
+
+            ttk.Label(
+                self,
+                text=acceptance_text,
+            ).pack(anchor="w", pady=(5, 5))
+
+            ttk.Button(
+                self,
+                text="View Terms of Use",
+                command=self._view_terms_of_use,
+            ).pack(anchor="w", pady=(0, 10))
+
+            self.tutorial_button = ttk.Button(
+                self,
+                text="Start Tutorials",
+                command=self._open_tutorials,
+            )
+            self.tutorial_button.pack(anchor="w", pady=(10, 0))
+            return
+
+        first_use_label = ttk.Label(
+            self,
+            text=FIRST_USE_TEXT,
+            wraplength=800,
+            justify="left",
+            font=("Arial", 12),
+        )
+        first_use_label.pack(anchor="w", pady=(0, 10))
 
         # Scrollable legal text
         container = ttk.Frame(self)
@@ -148,6 +198,50 @@ class MainHomeFrame(ttk.Frame):
             self._update_nav_buttons(enabled=False)
 
 
+    def _view_terms_of_use(self):
+        """
+        Display the current WARPSimLab Terms of Use.
+        """
+        dialog = tk.Toplevel(self)
+        dialog.title("WARPSimLab Terms of Use")
+        dialog.geometry("800x600")
+        dialog.transient(self.winfo_toplevel())
+
+        container = ttk.Frame(dialog, padding=10)
+        container.pack(fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(
+            container,
+            orient="vertical",
+        )
+        scrollbar.pack(side="right", fill="y")
+
+        text_widget = tk.Text(
+            container,
+            wrap="word",
+            yscrollcommand=scrollbar.set,
+            borderwidth=0,
+            relief="flat",
+            highlightthickness=0,
+        )
+        text_widget.pack(
+            side="left",
+            fill="both",
+            expand=True,
+        )
+
+        scrollbar.config(command=text_widget.yview)
+
+        text_widget.insert("1.0", LEGAL_TEXT)
+        text_widget.config(state="disabled")
+
+        ttk.Button(
+            dialog,
+            text="Close",
+            command=dialog.destroy,
+        ).pack(pady=(0, 10))
+
+
     def _open_tutorials(self):
         if not self.parent_gui:
             return
@@ -163,6 +257,9 @@ class MainHomeFrame(ttk.Frame):
             enabled = self.agree_var.get()
             self._update_run_buttons(enabled)
             self._update_nav_buttons(enabled)
+
+            if enabled:
+                self.parent_gui.edit_main_home()
 
 
     def _update_run_buttons(self, enabled):
@@ -230,6 +327,34 @@ class MainHomeFrame(ttk.Frame):
         except Exception:
             # Intentionally fail silently
             pass
+
+
+    def _read_legal_acceptance_timestamp(self):
+        """
+        Return the recorded legal acceptance timestamp, or None.
+        """
+        try:
+            log_file = (
+                Path.home()
+                / "Desktop"
+                / "WARPSimLab"
+                / "Administration"
+                / "legal_acceptance.log"
+            )
+
+            if not log_file.exists():
+                return None
+
+            with open(log_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("Accepted on:"):
+                        return line[len("Accepted on:"):].strip()
+
+        except Exception:
+            pass
+
+        return None
+
 
     def _legal_acceptance_exists(self):
         """
