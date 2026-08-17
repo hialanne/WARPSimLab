@@ -50,6 +50,7 @@ class DummyParentGUI:
 
     apply_temp_called: int = 0
     apply_opbal_called: int = 0
+    edit_main_home_called: int = 0
     legal_accepted: bool = False
 
     def _apply_mode_to_temp_overrides_button(self):
@@ -57,6 +58,7 @@ class DummyParentGUI:
 
     def _apply_mode_to_operating_balance_button(self):
         self.apply_opbal_called += 1
+
 
     def _apply_mode_to_results_button(self):
         state = "normal" if self.legal_accepted else "disabled"
@@ -68,6 +70,7 @@ class DummyParentGUI:
             self.temp_overrides_btn,
         ]:
             btn.config(state=state)
+
 
     def _apply_mode_to_top_buttons(self):
         state = "normal" if self.legal_accepted else "disabled"
@@ -81,6 +84,10 @@ class DummyParentGUI:
             self.edit_tutorial_button,
         ]:
             btn.config(state=state)
+
+
+    def edit_main_home(self):
+        self.edit_main_home_called += 1
 
 
 @pytest.fixture
@@ -150,6 +157,7 @@ def test_on_agree_changed_enables_then_disables_buttons(tk_root, parent_gui, mon
     frame._on_agree_changed()
 
     assert recorded["called"] == 1
+    assert parent_gui.edit_main_home_called == 1
     for btn in [
         parent_gui.income_btn,
         parent_gui.operating_balance_btn,
