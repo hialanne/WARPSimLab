@@ -8,7 +8,7 @@ from tkinter import ttk
 
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.dataClasses.portfolioState import *
-
+from src.warpsimlab.plots.plotUtils import center_plot_window_on_main
 
 # Color constants
 COLOR_HUSBAND = "blue"
@@ -275,6 +275,12 @@ def plot_yearly_income(
     )
 
     plt.show(block=False)
+
+    center_plot_window_on_main(
+        fig,
+        sim_config,
+    )
+
 
 
 # -------------------

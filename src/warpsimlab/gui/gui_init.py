@@ -76,7 +76,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self._apply_main_window_startup_settings()
 
         # Diagnostic prints for dialog and subdialog diagnostics.  Comment out in production.
-        self._print_display_diagnostics()
+        # self._print_display_diagnostics()
 
         ttk.Label(root, text=WARPSIMLAB_TITLE, font=("Arial", 16), ).pack(pady=10)
 
@@ -166,39 +166,32 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self.edit_main_home()
 
         # This should be commented out in production.
-        self._print_content_geometry_diagnostics()
+        # self._print_content_geometry_diagnostics()
 
 
-    '''
-    def _center_main_window(self, width, height):
+    def _get_monitor_work_area(self, x, y):
         """
-        Center the main window on the reported screen.
+        Return the usable monitor rectangle containing the supplied point.
+
+        Returns:
+            (left, top, right, bottom)
+
+        On Windows, this uses the native monitor work area so taskbars are
+        excluded and secondary-monitor coordinates are handled correctly.
+
+        Other platforms currently fall back to Tk's reported screen.
         """
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
-
-        self.root.geometry(
-            f"{width}x{height}+{x}+{y}"
-        )
-    '''
-
-    def _center_main_window(self, width, height):
         if sys.platform == "win32":
             import ctypes
             from ctypes import wintypes
 
             user32 = ctypes.windll.user32
-
             MONITOR_DEFAULTTONEAREST = 2
 
-            cursor = wintypes.POINT()
-            user32.GetCursorPos(ctypes.byref(cursor))
+            point = wintypes.POINT(x, y)
 
             monitor = user32.MonitorFromPoint(
-                cursor,
+                point,
                 MONITOR_DEFAULTTONEAREST,
             )
 
@@ -218,31 +211,52 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
                 ctypes.byref(info),
             )
 
-            work_left = info.rcWork.left
-            work_top = info.rcWork.top
-            work_right = info.rcWork.right
-            work_bottom = info.rcWork.bottom
-
-            work_width = work_right - work_left
-            work_height = work_bottom - work_top
-
-            x = work_left + (work_width - width) // 2
-            y = work_top + (work_height - height) // 2
-
-            self.root.geometry(
-                f"{width}x{height}+{x}+{y}"
+            return (
+                info.rcWork.left,
+                info.rcWork.top,
+                info.rcWork.right,
+                info.rcWork.bottom,
             )
-            return
 
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
+        return (
+            0,
+            0,
+            self.root.winfo_screenwidth(),
+            self.root.winfo_screenheight(),
+        )
 
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
+
+    def _center_main_window(self, width, height):
+        if sys.platform == "win32":
+            import ctypes
+            from ctypes import wintypes
+
+            cursor = wintypes.POINT()
+            ctypes.windll.user32.GetCursorPos(
+                ctypes.byref(cursor)
+            )
+
+            work_left, work_top, work_right, work_bottom = (
+                self._get_monitor_work_area(
+                    cursor.x,
+                    cursor.y,
+                )
+            )
+        else:
+            work_left, work_top, work_right, work_bottom = (
+                self._get_monitor_work_area(0, 0)
+            )
+
+        work_width = work_right - work_left
+        work_height = work_bottom - work_top
+
+        x = work_left + (work_width - width) // 2
+        y = work_top + (work_height - height) // 2
 
         self.root.geometry(
             f"{width}x{height}+{x}+{y}"
         )
+
 
     def _print_display_diagnostics(self):
         """
@@ -641,11 +655,13 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             minimum_window_width,
         )
 
+        # Diagnostic code.  Comment out in production.
+        '''
         print(f"automatic GUI scale: {gui_scale}")
         print(f"effective desktop scale: {desktop_scale}")
         print(f"large display factor: {large_display_factor}")
         print(f"automatic main-window scale: {scale}")
-
+        '''
 
         self._set_main_window_normal()
         self._center_main_window(

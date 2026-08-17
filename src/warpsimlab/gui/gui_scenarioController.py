@@ -361,32 +361,71 @@ class ScenarioController:
         Scenario Dashboard below them.
 
         Window sizes are scaled from the Windows development layout.
+        Windows are positioned on the monitor containing the main
+        WARPSimLab window.
         """
         try:
-            screen_width = self.main_gui.root.winfo_screenwidth()
-            screen_height = self.main_gui.root.winfo_screenheight()
+            root = self.main_gui.root
+            root.update_idletasks()
+
+            root_center_x = (
+                root.winfo_rootx()
+                + root.winfo_width() // 2
+            )
+            root_center_y = (
+                root.winfo_rooty()
+                + root.winfo_height() // 2
+            )
+
+            (
+                work_left,
+                work_top,
+                work_right,
+                work_bottom,
+            ) = self.main_gui._get_monitor_work_area(
+                root_center_x,
+                root_center_y,
+            )
+
+            screen_width = work_right - work_left
+            screen_height = work_bottom - work_top
 
             development_screen_width = 1707
             development_screen_height = 1067
 
-            width_scale = screen_width / development_screen_width
-            height_scale = screen_height / development_screen_height
+            width_scale = (
+                screen_width
+                / development_screen_width
+            )
+            height_scale = (
+                screen_height
+                / development_screen_height
+            )
 
             scale = min(width_scale, height_scale)
 
             plot_width = int(850 * scale)
             plot_height = int(600 * scale)
 
-            top_y = int(20 * scale)
-            left_x = 0
+            top_y = work_top + int(20 * scale)
+
+            total_plots_width = plot_width * 2
+
+            left_x = (
+                work_left
+                + (screen_width - total_plots_width) // 2
+            )
+
             right_x = left_x + plot_width
 
             self.income_fig.canvas.manager.window.geometry(
-                f"{plot_width}x{plot_height}+{left_x}+{top_y}"
+                f"{plot_width}x{plot_height}"
+                f"+{left_x}+{top_y}"
             )
 
             self.portfolio_fig.canvas.manager.window.geometry(
-                f"{plot_width}x{plot_height}+{right_x}+{top_y}"
+                f"{plot_width}x{plot_height}"
+                f"+{right_x}+{top_y}"
             )
 
             if self.window is not None:
@@ -394,12 +433,18 @@ class ScenarioController:
                 control_height = int(280 * scale)
                 control_gap = int(40 * scale)
 
-                control_y = top_y + plot_height + control_gap
+                control_y = (
+                    top_y
+                    + plot_height
+                    + control_gap
+                )
 
-                total_plots_width = plot_width * 2
                 control_x = (
                     left_x
-                    + (total_plots_width - control_width) // 2
+                    + (
+                        total_plots_width
+                        - control_width
+                    ) // 2
                 )
 
                 self.window.geometry(

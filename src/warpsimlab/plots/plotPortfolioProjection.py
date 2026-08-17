@@ -10,7 +10,7 @@ from tkinter import ttk
 
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.dataClasses.portfolioState import *
-
+from src.warpsimlab.plots.plotUtils import center_plot_window_on_main
 
 # Color constants
 COLOR_TOTAL_REAL = "blue"
@@ -63,6 +63,12 @@ def plot_portfolio_projection(  years_list,
     )
 
     plt.show(block=False)
+
+    center_plot_window_on_main(
+        fig,
+        sim_config,
+    )
+
 
 
 def draw_portfolio_projection(

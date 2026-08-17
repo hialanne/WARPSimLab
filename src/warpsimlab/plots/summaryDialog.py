@@ -21,7 +21,22 @@ class SummaryDialog(tk.Toplevel):
 
         width = 1100
         height = 800
-        self.geometry(f"{width}x{height}")
+
+        parent = sim_config.root
+        parent.update_idletasks()
+
+        x = (
+            parent.winfo_rootx()
+            + (parent.winfo_width() - width) // 2
+        )
+        y = (
+            parent.winfo_rooty()
+            + (parent.winfo_height() - height) // 2
+        )
+
+        self.geometry(
+            f"{width}x{height}+{x}+{y}"
+        )
 
         value_basis = (
             "Real"

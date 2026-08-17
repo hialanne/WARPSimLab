@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 from matplotlib.patches import Patch
+from src.warpsimlab.plots.plotUtils import center_plot_window_on_main
+
 
 def _plot_retirement_age_overlay(husband, wife, years_to_simulate, sim_config, plot_func_container):
     if not (getattr(sim_config, "overlay_retirement_age", False) and husband is not None):
@@ -170,3 +172,7 @@ def plot_operating_balance(
         sim_config
     )
     plt.show(block=False)
+
+    center_plot_window_on_main(
+    fig,
+    sim_config,)
