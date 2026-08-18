@@ -61,66 +61,111 @@ def _find_baseline_case(report_data):
     return None
 
 
+def _find_spending_case(report_data, spending_percentage):
+    target = float(spending_percentage)
+
+    for case in report_data.comparison_cases:
+        if float(case.get("spending_percentage", 0.0)) == target:
+            return case
+
+    return None
+
+
 def _render_highlights(report_data):
-    baseline = _find_baseline_case(report_data)
-
-    if baseline is None:
-        return ""
-
-    depletion = baseline.get("depletion", {})
-    ending_portfolio = baseline.get(
-        "ending_portfolio",
-        {},
+    highlight_percentages = (
+        80.0,
+        100.0,
+        120.0,
     )
+
+    rows = []
+
+    for spending_percentage in highlight_percentages:
+        case = _find_spending_case(
+            report_data,
+            spending_percentage,
+        )
+
+        if case is None:
+            continue
+
+        depletion = case.get(
+            "depletion",
+            {},
+        )
+
+        ending_portfolio = case.get(
+            "ending_portfolio",
+            {},
+        )
+
+        first_year_expenses = case.get(
+            "first_year_expenses",
+            {},
+        )
+
+        spending_label = _fmt_spending_percent(
+            case.get("spending_percentage")
+        )
+
+        if case.get("is_current_spending", False):
+            spending_label += " - Current Spending"
+
+        rows.append(
+            f"""
+            <div class="highlight-grid spending-highlight-row">
+
+                <div class="highlight-card">
+                    <div class="highlight-label">
+                        {_safe(spending_label)}
+                    </div>
+                    <div class="highlight-value">
+                        {_safe(_fmt_currency(
+                            first_year_expenses.get("median")
+                        ))}
+                    </div>
+                    <div class="highlight-note">
+                        First-Year Spending
+                    </div>
+                </div>
+
+                <div class="highlight-card">
+                    <div class="highlight-label">
+                        Median Ending Portfolio
+                    </div>
+                    <div class="highlight-value">
+                        {_safe(_fmt_currency(
+                            ending_portfolio.get("median")
+                        ))}
+                    </div>
+                </div>
+
+                <div class="highlight-card">
+                    <div class="highlight-label">
+                        Scenarios That Depleted Portfolio
+                    </div>
+                    <div class="highlight-value">
+                        {_safe(_fmt_percent(
+                            depletion.get(
+                                "windows_reaching_zero_percent"
+                            )
+                        ))}
+                    </div>
+                </div>
+
+            </div>
+            """
+        )
+
+    if not rows:
+        return ""
 
     return f"""
 <section>
-    <h2>Current Spending Highlights</h2>
+    <h2>Spending Highlights</h2>
 
-    <p class="section-intro">
-        The 100% case represents the household spending entered in the
-        current WARPSimLab scenario. Other spending levels are compared
-        with this baseline.
-    </p>
+    {''.join(rows)}
 
-    <div class="highlight-grid">
-
-        <div class="highlight-card">
-            <div class="highlight-label">
-                Current Spending
-            </div>
-            <div class="highlight-value">
-                {_safe(_fmt_spending_percent(
-                    baseline.get("spending_percentage")
-                ))}
-            </div>
-        </div>
-
-        <div class="highlight-card">
-            <div class="highlight-label">
-                Historical Windows Reaching Zero
-            </div>
-            <div class="highlight-value">
-                {_safe(_fmt_percent(
-                    depletion.get(
-                        "windows_reaching_zero_percent"
-                    )
-                ))}
-            </div>
-        </div>
-
-        <div class="highlight-card">
-            <div class="highlight-label">
-                Median Ending Portfolio
-            </div>
-            <div class="highlight-value">
-                {_safe(_fmt_currency(
-                    ending_portfolio.get("median")
-                ))}
-            </div>
-        </div>
-
-    </div>
 </section>
 """
 
@@ -138,8 +183,21 @@ def _baseline_row_class(case, baseline_percentage):
 def _render_portfolio_durability(report_data):
     rows = []
 
+    baseline = _find_baseline_case(report_data)
+
+    baseline_first_year_spending = None
+
+    if baseline is not None:
+        baseline_first_year_spending = baseline.get(
+            "first_year_expenses",
+            {},
+        ).get("median")
+
     for case in report_data.comparison_cases:
-        depletion = case.get("depletion", {})
+        depletion = case.get(
+            "depletion",
+            {},
+        )
 
         row_class = _baseline_row_class(
             case,
@@ -153,17 +211,31 @@ def _render_portfolio_durability(report_data):
         if case.get("is_current_spending", False):
             spending_text += " - Current Spending"
 
+        first_year_spending = case.get(
+            "first_year_expenses",
+            {},
+        ).get("median")
+
+        spending_delta = None
+
+        if (
+            first_year_spending is not None
+            and baseline_first_year_spending is not None
+        ):
+            spending_delta = (
+                float(first_year_spending)
+                - float(baseline_first_year_spending)
+            )
+
         rows.append(
             f"""
             <tr{row_class}>
                 <td>{_safe(spending_text)}</td>
-                <td>{_safe(depletion.get(
-                    "historical_window_count",
-                    "N/A",
+                <td>{_safe(_fmt_currency(
+                    first_year_spending
                 ))}</td>
-                <td>{_safe(depletion.get(
-                    "windows_reaching_zero_count",
-                    "N/A",
+                <td>{_safe(_fmt_currency(
+                    spending_delta
                 ))}</td>
                 <td>{_safe(_fmt_percent(
                     depletion.get(
@@ -176,11 +248,10 @@ def _render_portfolio_durability(report_data):
 
     return f"""
 <section>
-    <h2>Portfolio Durability</h2>
+    <h2>Spending and Portfolio Health</h2>
 
     <p class="section-intro">
-        This table compares how often the modeled portfolio reached zero
-        across the historical windows evaluated at each spending level.
+        This table compares how often scenarios depleted the portfolio evaluated at each spending level.
         The 100% row represents current modeled household spending.
     </p>
 
@@ -188,9 +259,9 @@ def _render_portfolio_durability(report_data):
         <thead>
             <tr>
                 <th>Spending Level</th>
-                <th>Historical Windows</th>
-                <th>Windows Reaching Zero</th>
-                <th>Reaching Zero</th>
+                <th>First-Year Spending</th>
+                <th>Delta from Baseline</th>
+                <th>Scenarios That Depleted Portfolio</th>
             </tr>
         </thead>
         <tbody>
@@ -253,11 +324,15 @@ def _render_portfolio_outcomes(report_data):
 
     return f"""
 <section>
-    <h2>Portfolio Outcomes</h2>
+    <h2>Portfolio Risk by Spending Level</h2>
 
     <p class="section-intro">
-        Ending portfolio values show the distribution of modeled outcomes
-        across the same set of historical windows for each spending level.
+        These results show how different spending levels affect the range of
+        possible ending portfolio values. Lower-percentile results represent
+        less favorable market conditions, while higher-percentile results
+        represent more favorable conditions. The table
+        shows how spending levels depend on market performance
+        and how much financial cushion remains for down markets.
     </p>
 
     <div class="table-scroll">
@@ -376,16 +451,16 @@ def _render_financial_effects(report_data):
 
     return f"""
 <section>
-    <h2>Financial Effects</h2>
+    <h2>Lifetime Financial Effects</h2>
 
     <p class="section-intro">
-        These values show median cumulative financial amounts across the
-        historical windows evaluated for each spending level. Cash Flow
-        Shortfall represents modeled amounts drawn from portfolio assets
-        to cover negative household Cash Flow.
+        These values show the cumulative lifetime financial effects of each
+        spending level. They compare total household expenses, taxes, the amount
+        of portfolio assets needed to cover negative Cash Flow (withdrawals from
+        the portfolio), and expenses that could not be covered after the portfolio
+        was empty. 
     </p>
-
-    <table class="wide-table comparison-table">
+    <table class="wide-table comparison-table lifetime-effects-table">
         <thead>
             <tr>
                 <th>Spending Level</th>
@@ -460,6 +535,12 @@ def generate_spending_comparison_report(
         background: #eef6ee;
     }}
 
+    .highlight-note {{
+        margin-top: 4px;
+        color: #666;
+        font-size: 13px;
+    }}
+
     .baseline-row td:first-child {{
         border-left: 4px solid #2e7d32;
     }}
@@ -471,6 +552,17 @@ def generate_spending_comparison_report(
     .outcome-table th,
     .outcome-table td {{
         white-space: nowrap;
+    }}
+
+    .lifetime-effects-table {{
+        table-layout: fixed;
+    }}
+
+    .lifetime-effects-table thead th {{
+        height: 54px;
+        white-space: normal;
+        line-height: 1.25;
+        vertical-align: middle;
     }}
 
     .table-scroll {{

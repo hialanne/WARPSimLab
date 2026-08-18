@@ -435,6 +435,7 @@ def _build_case_result(
     pipeline_result,
     *,
     is_current_allocation=False,
+    highlight_only=False,
 ):
     core = pipeline_result["core"]
 
@@ -512,7 +513,9 @@ def _build_case_result(
         "is_current_allocation": bool(
             is_current_allocation
         ),
-
+        "highlight_only": bool(
+            highlight_only
+        ),
         "depletion": (
             _build_depletion_statistics(
                 total_assets,
@@ -579,6 +582,11 @@ def run_sim_asset_allocation_comparison_report(
         )
     )
 
+    requested_equity_percentages = [
+        float(value)
+        for value in equity_percentages
+    ]
+
     current_allocation = (
         _current_household_allocation(
             husband_portfolio,
@@ -586,6 +594,37 @@ def run_sim_asset_allocation_comparison_report(
             sim_config,
         )
     )
+
+    current_equity_percentage = (
+        100.0 * current_allocation["equity"]
+    )
+
+    highlight_equity_percentages = [
+        max(
+            0.0,
+            current_equity_percentage - 20.0,
+        ),
+        min(
+            100.0,
+            current_equity_percentage + 20.0,
+        ),
+    ]
+
+    simulation_equity_percentages = list(
+        requested_equity_percentages
+    )
+
+    for equity_percentage in highlight_equity_percentages:
+        if not any(
+            abs(
+                equity_percentage - existing_percentage
+            ) < 1e-9
+            for existing_percentage
+            in simulation_equity_percentages
+        ):
+            simulation_equity_percentages.append(
+                equity_percentage
+            )
 
     original_subplot_mode = getattr(
         sim_config,
@@ -699,7 +738,7 @@ def run_sim_asset_allocation_comparison_report(
             "custom"
         )
 
-        for equity_percentage in equity_percentages:
+        for equity_percentage in simulation_equity_percentages:
             allocation = _derive_allocation(
                 float(equity_percentage)
                 / 100.0,
@@ -728,11 +767,21 @@ def run_sim_asset_allocation_comparison_report(
                 force_num_sims=None,
             )
 
+            highlight_only = not any(
+                abs(
+                    float(equity_percentage)
+                    - requested_percentage
+                ) < 1e-9
+                for requested_percentage
+                in requested_equity_percentages
+            )
+
             cases.append(
                 _build_case_result(
                     allocation,
                     pipeline_result,
                     is_current_allocation=False,
+                    highlight_only=highlight_only,
                 )
             )
 

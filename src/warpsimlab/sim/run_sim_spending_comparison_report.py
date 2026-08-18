@@ -155,8 +155,19 @@ def _build_case_result(
         axis=1,
     )
 
+    expense_values = np.asarray(
+        core["expense_amt"],
+        dtype=float,
+    )
+
+    first_year_expenses = (
+        expense_values[:, 1]
+        if expense_values.shape[1] > 1
+        else np.zeros(expense_values.shape[0], dtype=float)
+    )
+
     lifetime_expenses = np.sum(
-        np.asarray(core["expense_amt"], dtype=float),
+        expense_values,
         axis=1,
     )
 
@@ -201,6 +212,10 @@ def _build_case_result(
 
         "minimum_portfolio": _distribution(
             minimum_portfolios
+        ),
+
+        "first_year_expenses": _distribution(
+            first_year_expenses
         ),
 
         "lifetime_expenses": _distribution(

@@ -60,6 +60,38 @@ def _find_current_case(report_data):
     return None
 
 
+def _find_equity_case(
+    report_data,
+    equity_percentage,
+):
+    target = float(equity_percentage)
+
+    for case in report_data.comparison_cases:
+        if abs(
+            float(
+                case.get(
+                    "equity_percentage",
+                    0.0,
+                )
+            )
+            - target
+        ) < 1e-6:
+            return case
+
+    return None
+
+
+def _table_cases(report_data):
+    return [
+        case
+        for case in report_data.comparison_cases
+        if not case.get(
+            "highlight_only",
+            False,
+        )
+    ]
+
+
 def _current_row_class(case):
     if case.get(
         "is_current_allocation",
@@ -94,94 +126,124 @@ def _render_current_allocation_highlights(
     if current_case is None:
         return ""
 
-    current_allocation = (
-        report_data.current_allocation
+    current_equity = float(
+        current_case.get(
+            "equity_percentage",
+            0.0,
+        )
     )
 
-    depletion = current_case.get(
-        "depletion",
-        {},
+    highlight_equity_percentages = (
+        max(
+            0.0,
+            current_equity - 20.0,
+        ),
+        current_equity,
+        min(
+            100.0,
+            current_equity + 20.0,
+        ),
     )
 
-    ending_portfolio = current_case.get(
-        "ending_portfolio",
-        {},
-    )
+    rows = []
+
+    for equity_percentage in highlight_equity_percentages:
+        if abs(
+            equity_percentage - current_equity
+        ) < 1e-6:
+            case = current_case
+        else:
+            case = _find_equity_case(
+                report_data,
+                equity_percentage,
+            )
+
+        if case is None:
+            continue
+
+        depletion = case.get(
+            "depletion",
+            {},
+        )
+
+        ending_portfolio = case.get(
+            "ending_portfolio",
+            {},
+        )
+
+        equity_text = _fmt_allocation_percent(
+            case.get(
+                "equity_percentage"
+            )
+        )
+
+        if case.get(
+            "is_current_allocation",
+            False,
+        ):
+            equity_text += " - Current"
+
+        bonds_text = _fmt_allocation_percent(
+            case.get(
+                "bond_percentage"
+            )
+        )
+
+        cash_text = _fmt_allocation_percent(
+            case.get(
+                "cash_percentage"
+            )
+        )
+
+        rows.append(
+            f"""
+            <div class="highlight-grid">
+
+                <div class="highlight-card">
+                    <div class="highlight-label">
+                        {_safe(equity_text)} Equity
+                    </div>
+                    <div class="highlight-value allocation-components">
+                        {_safe(bonds_text)} Bonds /
+                        {_safe(cash_text)} Cash
+                    </div>
+                </div>
+
+                <div class="highlight-card">
+                    <div class="highlight-label">
+                        Median Ending Portfolio
+                    </div>
+                    <div class="highlight-value">
+                        {_safe(_fmt_currency(
+                            ending_portfolio.get(
+                                "median"
+                            )
+                        ))}
+                    </div>
+                </div>
+
+                <div class="highlight-card">
+                    <div class="highlight-label">
+                        Scenarios That Depleted Portfolio
+                    </div>
+                    <div class="highlight-value">
+                        {_safe(_fmt_percent(
+                            depletion.get(
+                                "windows_reaching_zero_percent"
+                            )
+                        ))}
+                    </div>
+                </div>
+
+            </div>
+            """
+        )
 
     return f"""
 <section>
-    <h2>Current Allocation Highlights</h2>
+    <h2>Allocation Highlights</h2>
 
-    <p class="section-intro">
-        The Current Allocation case represents the household
-        investment allocation in the current WARPSimLab scenario.
-        Other equity allocations are compared with this baseline.
-    </p>
-
-    <div class="highlight-grid">
-
-        <div class="highlight-card">
-            <div class="highlight-label">
-                Current Equity Allocation
-            </div>
-            <div class="highlight-value">
-                {_safe(_fmt_allocation_percent(
-                    current_allocation.get(
-                        "equity_percentage"
-                    )
-                ))}
-            </div>
-        </div>
-
-        <div class="highlight-card">
-            <div class="highlight-label">
-                Historical Windows Reaching Zero
-            </div>
-            <div class="highlight-value">
-                {_safe(_fmt_percent(
-                    depletion.get(
-                        "windows_reaching_zero_percent"
-                    )
-                ))}
-            </div>
-        </div>
-
-        <div class="highlight-card">
-            <div class="highlight-label">
-                Median Ending Portfolio
-            </div>
-            <div class="highlight-value">
-                {_safe(_fmt_currency(
-                    ending_portfolio.get(
-                        "median"
-                    )
-                ))}
-            </div>
-        </div>
-
-    </div>
-
-    <div class="current-allocation-detail">
-        <strong>Current modeled allocation:</strong>
-        Equity
-        {_safe(_fmt_allocation_percent(
-            current_allocation.get(
-                "equity_percentage"
-            )
-        ))},
-        Bonds
-        {_safe(_fmt_allocation_percent(
-            current_allocation.get(
-                "bond_percentage"
-            )
-        ))},
-        Cash
-        {_safe(_fmt_allocation_percent(
-            current_allocation.get(
-                "cash_percentage"
-            )
-        ))}.
-    </div>
+    {''.join(rows)}
 
 </section>
 """
@@ -192,9 +254,14 @@ def _render_portfolio_durability(
 ):
     rows = []
 
-    for case in report_data.comparison_cases:
+    for case in _table_cases(report_data):
         depletion = case.get(
             "depletion",
+            {},
+        )
+
+        ending_portfolio = case.get(
+            "ending_portfolio",
             {},
         )
 
@@ -208,17 +275,14 @@ def _render_portfolio_durability(
                 <td>{_safe(_fmt_allocation_percent(
                     case.get("cash_percentage")
                 ))}</td>
-                <td>{_safe(depletion.get(
-                    "historical_window_count",
-                    "N/A",
-                ))}</td>
-                <td>{_safe(depletion.get(
-                    "windows_reaching_zero_count",
-                    "N/A",
-                ))}</td>
                 <td>{_safe(_fmt_percent(
                     depletion.get(
                         "windows_reaching_zero_percent"
+                    )
+                ))}</td>
+                <td>{_safe(_fmt_currency(
+                    ending_portfolio.get(
+                        "median"
                     )
                 ))}</td>
             </tr>
@@ -227,24 +291,22 @@ def _render_portfolio_durability(
 
     return f"""
 <section>
-    <h2>Portfolio Durability</h2>
+    <h2>Portfolio Results by Allocation</h2>
 
     <p class="section-intro">
-        This table compares how often the modeled portfolio reached
-        zero across the historical windows evaluated for each
-        allocation. The Current row represents the household's
-        current modeled allocation.
+        This table compares portfolio depletion and median ending portfolio
+        values across the modeled asset allocations. The Current row
+        represents the household's current modeled allocation.
     </p>
 
-    <table class="wide-table comparison-table">
+    <table class="wide-table comparison-table allocation-results-table">
         <thead>
             <tr>
                 <th>Equity Allocation</th>
                 <th>Bonds</th>
                 <th>Cash</th>
-                <th>Historical Windows</th>
-                <th>Windows Reaching Zero</th>
-                <th>Reaching Zero</th>
+                <th>Scenarios That Depleted Portfolio</th>
+                <th>Median Ending Portfolio</th>
             </tr>
         </thead>
         <tbody>
@@ -260,7 +322,7 @@ def _render_portfolio_outcomes(
 ):
     rows = []
 
-    for case in report_data.comparison_cases:
+    for case in _table_cases(report_data):
         outcomes = case.get(
             "ending_portfolio",
             {},
@@ -270,9 +332,6 @@ def _render_portfolio_outcomes(
             f"""
             <tr{_current_row_class(case)}>
                 <td>{_safe(_allocation_label(case))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("minimum")
-                ))}</td>
                 <td>{_safe(_fmt_currency(
                     outcomes.get(
                         "10th_percentile"
@@ -296,21 +355,20 @@ def _render_portfolio_outcomes(
                         "90th_percentile"
                     )
                 ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("maximum")
-                ))}</td>
             </tr>
             """
         )
 
     return f"""
 <section>
-    <h2>Portfolio Outcomes</h2>
+    <h2>Portfolio Risk by Allocation</h2>
 
     <p class="section-intro">
-        Ending portfolio values show the distribution of modeled
-        outcomes across the same historical windows for each
-        allocation.
+        These results show how different asset allocations affect the range of
+        possible ending portfolio values. Lower-percentile results represent
+        less favorable market conditions, while higher-percentile results
+        represent more favorable conditions. The table shows how portfolio
+        outcomes change across a range of market conditions.
     </p>
 
     <div class="table-scroll">
@@ -318,13 +376,11 @@ def _render_portfolio_outcomes(
             <thead>
                 <tr>
                     <th>Equity Allocation</th>
-                    <th>Lowest</th>
                     <th>10th Percentile</th>
                     <th>25th Percentile</th>
                     <th>Median</th>
                     <th>75th Percentile</th>
                     <th>90th Percentile</th>
-                    <th>Highest</th>
                 </tr>
             </thead>
             <tbody>
@@ -332,90 +388,6 @@ def _render_portfolio_outcomes(
             </tbody>
         </table>
     </div>
-</section>
-"""
-
-
-def _render_tradeoff_effects(
-    report_data,
-):
-    rows = []
-
-    for case in report_data.comparison_cases:
-        minimum_portfolio = case.get(
-            "minimum_portfolio",
-            {},
-        )
-
-        ending_portfolio = case.get(
-            "ending_portfolio",
-            {},
-        )
-
-        depletion = case.get(
-            "depletion",
-            {},
-        )
-
-        rows.append(
-            f"""
-            <tr{_current_row_class(case)}>
-                <td>{_safe(_allocation_label(case))}</td>
-                <td>{_safe(_fmt_percent(
-                    depletion.get(
-                        "windows_reaching_zero_percent"
-                    )
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    minimum_portfolio.get(
-                        "10th_percentile"
-                    )
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    ending_portfolio.get(
-                        "10th_percentile"
-                    )
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    ending_portfolio.get(
-                        "median"
-                    )
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    ending_portfolio.get(
-                        "90th_percentile"
-                    )
-                ))}</td>
-            </tr>
-            """
-        )
-
-    return f"""
-<section>
-    <h2>Risk and Outcome Tradeoffs</h2>
-
-    <p class="section-intro">
-        This section places lower-end, median, and upper-end modeled
-        outcomes together. It is intended to show how allocation
-        changes can affect different parts of the historical outcome
-        distribution rather than identify a preferred allocation.
-    </p>
-
-    <table class="wide-table comparison-table">
-        <thead>
-            <tr>
-                <th>Equity Allocation</th>
-                <th>Reaching Zero</th>
-                <th>10th Percentile Minimum Portfolio</th>
-                <th>10th Percentile Ending Portfolio</th>
-                <th>Median Ending Portfolio</th>
-                <th>90th Percentile Ending Portfolio</th>
-            </tr>
-        </thead>
-        <tbody>
-            {''.join(rows)}
-        </tbody>
-    </table>
 </section>
 """
 
@@ -523,6 +495,10 @@ def generate_asset_allocation_comparison_report(
         border-left: 4px solid #2e7d32;
     }}
 
+    .allocation-components {{
+        font-size: 16px;
+    }}
+
     .outcome-table {{
         font-size: 12px;
     }}
@@ -532,16 +508,19 @@ def generate_asset_allocation_comparison_report(
         white-space: nowrap;
     }}
 
-    .table-scroll {{
-        overflow-x: auto;
+    .allocation-results-table {{
+        table-layout: fixed;
     }}
 
-    .current-allocation-detail {{
-        margin-top: 12px;
-        padding: 10px 12px;
-        border: 1px solid #ccc;
-        background: #fafafa;
-        border-radius: 6px;
+    .allocation-results-table thead th {{
+        height: 54px;
+        white-space: normal;
+        line-height: 1.25;
+        vertical-align: middle;
+    }}
+
+    .table-scroll {{
+        overflow-x: auto;
     }}
 
     </style>
@@ -569,10 +548,6 @@ def generate_asset_allocation_comparison_report(
         )}
 
         {_render_portfolio_outcomes(
-            report_data
-        )}
-
-        {_render_tradeoff_effects(
             report_data
         )}
 
