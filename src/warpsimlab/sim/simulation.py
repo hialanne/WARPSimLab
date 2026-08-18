@@ -7,7 +7,6 @@ from .run_sim_core import simulate_yearly_portfolios
 from .engines.statsCollector import compute_portfolio_statistics, optional_stats
 from .run_sim_risk_reports import (run_sim_historical_window_risk_report,run_sim_monte_carlo_risk_report,)
 
-
 def _is_historical_window_mode(sim_config):
     return (
         sim_config.subplot_mode == "monte_carlo"
@@ -385,6 +384,9 @@ def run_simulation(husband_portfolio, wife_portfolio, husband, wife, expenses, s
     from .run_sim_summary_report import run_sim_summary_report
     from .run_sim_year_by_year_report import run_sim_year_by_year_report
     from .run_sim_tax_report import run_sim_tax_report
+    from .run_sim_spending_comparison_report import (run_sim_spending_comparison_report,)
+    from .run_sim_asset_allocation_comparison_report import (run_sim_asset_allocation_comparison_report,)
+    from .run_sim_retirement_ss_comparison_report import (run_sim_retirement_ss_comparison_report,)
 
     # debug_dump_simulation(sim_config)
 
@@ -442,6 +444,36 @@ def run_simulation(husband_portfolio, wife_portfolio, husband, wife, expenses, s
 
     if sim_config.sim_type == "monte_carlo_risk_report":
         return run_sim_monte_carlo_risk_report(
+            husband_portfolio,
+            wife_portfolio,
+            husband,
+            wife,
+            expenses,
+            sim_config,
+        )
+
+    if sim_config.sim_type == "spending_comparison_report":
+        return run_sim_spending_comparison_report(
+            husband_portfolio,
+            wife_portfolio,
+            husband,
+            wife,
+            expenses,
+            sim_config,
+        )
+
+    if sim_config.sim_type == "asset_allocation_comparison_report":
+        return run_sim_asset_allocation_comparison_report(
+            husband_portfolio,
+            wife_portfolio,
+            husband,
+            wife,
+            expenses,
+            sim_config,
+        )
+
+    if sim_config.sim_type == "retirement_ss_comparison_report":
+        return run_sim_retirement_ss_comparison_report(
             husband_portfolio,
             wife_portfolio,
             husband,

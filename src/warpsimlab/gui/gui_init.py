@@ -60,6 +60,10 @@ from src.warpsimlab.gui.gui_settings import (
     load_display_settings,
     save_display_settings,
 )
+from src.warpsimlab.gui.gui_reportSpendingComparison import SpendingComparisonReportFrame
+from src.warpsimlab.gui.gui_reportAssetAllocationComparison import (AssetAllocationComparisonReportFrame,)
+from src.warpsimlab.gui.gui_reportRetirementSSComparison import (RetirementSSComparisonReportFrame,)
+
 
 WARPSIMLAB_VERSION = "4.1.1"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
@@ -964,6 +968,55 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
                     "include_educational_commentary": True,
                 },
             },
+            "spending_comparison": {
+                "spending_percentages": [
+                    70,
+                    80,
+                    90,
+                    100,
+                    110,
+                    120,
+                    130,
+                ],
+                "output": {
+                    "generate_html": True,
+                    "open_report_in_browser": False,
+                },
+            },
+            "asset_allocation_comparison": {
+                "equity_percentages": [
+                    0,
+                    20,
+                    40,
+                    60,
+                    80,
+                    100,
+                ],
+                "output": {
+                    "generate_html": True,
+                    "open_report_in_browser": False,
+                },
+            },
+            "retirement_ss_comparison": {
+                "retirement_ages": [
+                    62,
+                    64,
+                    66,
+                    68,
+                    70,
+                ],
+                "social_security_ages": [
+                    62,
+                    64,
+                    66,
+                    68,
+                    70,
+                ],
+                "output": {
+                    "generate_html": True,
+                    "open_report_in_browser": False,
+                },
+            },
         }
 
         # Dynamic expenses
@@ -1786,6 +1839,30 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             label="Monte Carlo Risk Report",
             command=self.edit_report_monte_carlo_risk
         )
+
+        self.reports_menu.add_separator()
+
+        spending_state = (
+            "normal"
+            if self.simulation_controls.get("use_mode", "expenses") == "expenses"
+            else "disabled"
+        )
+
+        self.reports_menu.add_command(
+            label="Spending Comparison Report",
+            command=self.edit_report_spending_comparison,
+            state=spending_state,
+        )
+
+        self.reports_menu.add_command(
+            label="Asset Allocation Comparison Report",
+            command=self.edit_report_asset_allocation_comparison,
+        )
+
+        self.reports_menu.add_command(
+            label="Retirement & Social Security Timing Comparison Report",
+            command=self.edit_report_retirement_ss_comparison,
+        )
         
 
     def edit_report_executive_summary(self):
@@ -1866,6 +1943,75 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             title="Monte Carlo Risk Report"
         )
         frame.pack(padx=10, pady=5, fill="x")
+
+
+    def edit_report_spending_comparison(self):
+        if not self._advanced_only():
+            return
+
+        if self.simulation_controls.get("use_mode", "expenses") != "expenses":
+            return
+
+        for widget in self.edit_frame_container.winfo_children():
+            widget.destroy()
+
+        frame = SpendingComparisonReportFrame(
+            self.edit_frame_container,
+            report_options=self.report_options["spending_comparison"],
+            parent_gui=self,
+            title="Spending Comparison Report",
+        )
+        frame.pack(padx=10, pady=5, fill="x")
+
+
+    def edit_report_asset_allocation_comparison(self):
+        if not self._advanced_only():
+            return
+
+        for widget in self.edit_frame_container.winfo_children():
+            widget.destroy()
+
+        frame = AssetAllocationComparisonReportFrame(
+            self.edit_frame_container,
+            report_options=self.report_options[
+                "asset_allocation_comparison"
+            ],
+            parent_gui=self,
+            title="Asset Allocation Comparison Report",
+        )
+
+        frame.pack(
+            padx=10,
+            pady=5,
+            fill="x",
+        )
+
+
+    def edit_report_retirement_ss_comparison(self):
+        if not self._advanced_only():
+            return
+
+        for widget in self.edit_frame_container.winfo_children():
+            widget.destroy()
+
+        frame = RetirementSSComparisonReportFrame(
+            self.edit_frame_container,
+            report_options=self.report_options[
+                "retirement_ss_comparison"
+            ],
+            parent_gui=self,
+            title=(
+                "Retirement & Social Security "
+                "Timing Comparison Report"
+            ),
+        )
+
+        frame.pack(
+            padx=10,
+            pady=5,
+            fill="x",
+        )
+
 
     def _apply_mode_to_reports_button(self):
         if not hasattr(self, "reports_button"):

@@ -47,6 +47,21 @@ class PortfolioSimulatorGUI_RunMixin:
                 self.report_options["monte_carlo_risk"]
             )
 
+        if sim_type == "spending_comparison_report":
+            return copy.deepcopy(
+                self.report_options["spending_comparison"]
+            )
+
+        if sim_type == "asset_allocation_comparison_report":
+            return copy.deepcopy(
+                self.report_options["asset_allocation_comparison"]
+            )
+
+        if sim_type == "retirement_ss_comparison_report":
+            return copy.deepcopy(
+                self.report_options["retirement_ss_comparison"]
+            )
+
         return {}
 
 

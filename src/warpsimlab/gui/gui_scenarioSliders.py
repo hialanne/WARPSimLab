@@ -198,7 +198,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.fund_expense_label = ttk.Label(cell01, textvariable=self.fund_expense_label_var)
         self.fund_expense_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
         self.fund_expense_slider = ttk.Scale(
-            cell01, from_=0, to=5, orient="horizontal",
+            cell01, from_=0, to=2.5, orient="horizontal",
             variable=self.fund_expense_value,
             command=self._update_fund_expenses_label
         )
@@ -456,7 +456,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
         if manual:
             # Expense Multiplier Mode
-            self.dynamic_slider.configure(from_=50, to=150)
+            self.dynamic_slider.configure(from_=50, to=200)
 
             if self.retirement_snapshots.scenario_expense_multiplier is None:
                 self.dynamic_value.set(100)

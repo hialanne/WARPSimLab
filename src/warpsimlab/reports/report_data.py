@@ -59,9 +59,40 @@ class TaxReportData:
 
 
 @dataclass
+class SpendingComparisonReportData:
+    report_options: dict[str, Any]
+    report_metadata: dict[str, Any]
+    comparison_cases: list[dict[str, Any]]
+    baseline_percentage: float = 100.0
+    warnings: list[str] = field(default_factory=list)
+
+
+@dataclass
+class AssetAllocationComparisonReportData:
+    report_options: dict[str, Any]
+    report_metadata: dict[str, Any]
+    current_allocation: dict[str, Any]
+    comparison_cases: list[dict[str, Any]]
+    warnings: list[str] = field(default_factory=list)
+
+
+@dataclass
+class RetirementSSComparisonReportData:
+    report_options: dict[str, Any]
+    report_metadata: dict[str, Any]
+    baseline: dict[str, Any]
+    retirement_ages: list[int]
+    social_security_ages: list[int]
+    comparison_cases: list[dict[str, Any]]
+    warnings: list[str] = field(default_factory=list)
+
+
+@dataclass
 class ReportResult:
     success: bool
     report_path: Optional[str] = None
     output_folder: Optional[str] = None
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+
+
