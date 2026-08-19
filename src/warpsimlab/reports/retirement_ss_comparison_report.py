@@ -195,8 +195,10 @@ def _render_methodology(report_data):
 
         <p>
             Each timing combination uses the same household assumptions and
-            is evaluated across historical market conditions. Only retirement
-            timing and Social Security claiming timing are changed.
+            deterministic market-return assumptions. Historical return
+            sequences are evaluated separately for portfolio depletion risk.
+            Only retirement timing and Social Security claiming timing are
+            changed.
         </p>
     </div>
 </section>
@@ -236,8 +238,8 @@ def _render_retirement_comparison(report_data):
                 <td>{_safe(label)}</td>
                 <td>{_safe(_fmt_currency(
                     case[
-                        "portfolio_at_retirement"
-                    ]["median"]
+                        "deterministic_portfolio_at_retirement"
+                    ]
                 ))}</td>
                 <td>{_safe(_fmt_percent(
                     case["depletion"][
@@ -245,7 +247,9 @@ def _render_retirement_comparison(report_data):
                     ]
                 ))}</td>
                 <td>{_safe(_fmt_currency(
-                    case["ending_portfolio"]["median"]
+                    case[
+                        "deterministic_ending_portfolio"
+                    ]
                 ))}</td>
             </tr>
             """
@@ -265,9 +269,9 @@ def _render_retirement_comparison(report_data):
         <thead>
             <tr>
                 <th>Household Retirement Age</th>
-                <th>Median Portfolio at Retirement</th>
+                <th>Portfolio at Retirement</th>
                 <th>Scenarios That Depleted Portfolio</th>
-                <th>Median Ending Portfolio</th>
+                <th>Ending Portfolio</th>
             </tr>
         </thead>
         <tbody>
@@ -344,30 +348,32 @@ def _render_social_security_comparison(
                 )}</td>
                 <td>{_safe(_fmt_currency(
                     case[
-                        "total_social_security"
-                    ]["median"]
+                        "deterministic_total_social_security"
+                    ]
                 ))}</td>
                 <td>{_safe(_fmt_currency(
                     case[
-                        "monthly_retirement_income"
-                    ]["median"]
+                        "deterministic_monthly_retirement_income"
+                    ]
                 ))}</td>
                 <td>{_safe(_fmt_currency(
                     case[
-                        "final_monthly_retirement_income"
-                    ]["median"]
+                        "deterministic_final_monthly_retirement_income"
+                    ]
                 ))}</td>
                 <td>{_safe(_fmt_currency(
                     case[
-                        "lifetime_cash_flow_shortfall"
-                    ]["median"]
+                        "deterministic_lifetime_cash_flow_shortfall"
+                    ]
                 ))}</td>
             </tr>
             """
         )
+
     return f"""
 <section>
     <h2>Social Security Timing Comparison</h2>
+
     <p class="section-intro">
         This comparison changes Social Security claiming timing while
         holding retirement timing at the household's current setting of
@@ -386,7 +392,7 @@ def _render_social_security_comparison(
                 <th>Total Social Security During Simulation</th>
                 <th>Monthly Retirement Income at Age 70</th>
                 <th>Monthly Retirement Income in Final Simulation Year</th>
-                <th>Median Portfolio Support Needed</th>
+                <th>Portfolio Support Needed</th>
             </tr>
         </thead>
         <tbody>
@@ -444,14 +450,14 @@ def _render_interaction_matrix(report_data):
             )
 
             monthly_income = _fmt_currency(
-                case["monthly_retirement_income"][
-                    "median"
+                case[
+                    "deterministic_monthly_retirement_income"
                 ]
             )
 
             ending_value = case[
-                "ending_portfolio"
-            ]["median"]
+                "deterministic_ending_portfolio"
+            ]
 
             ending_text = _fmt_currency(
                 ending_value
@@ -516,7 +522,10 @@ def _render_interaction_matrix(report_data):
             Monthly Retirement Income at Age 70
         </span>
         <span class="matrix-portfolio-positive">
-            Median Ending Portfolio
+            Ending Portfolio
+        </span>
+        <span class="matrix-portfolio-zero">
+            $0 Ending Portfolio
         </span>
         <span class="matrix-portfolio-zero">
             $0 Median Ending Portfolio
@@ -702,7 +711,7 @@ def generate_retirement_ss_comparison_report(
                 "Retirement & Social Security Comparison Report"
             ),
             market_wording=(
-                "historical market return sequences"
+                "modeled and historical market conditions"
             ),
         )}
 

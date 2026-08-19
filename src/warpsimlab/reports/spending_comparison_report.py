@@ -95,13 +95,11 @@ def _render_highlights(report_data):
         )
 
         ending_portfolio = case.get(
-            "ending_portfolio",
-            {},
+            "deterministic_ending_portfolio"
         )
 
         first_year_expenses = case.get(
-            "first_year_expenses",
-            {},
+            "deterministic_first_year_expenses"
         )
 
         spending_label = _fmt_spending_percent(
@@ -121,7 +119,7 @@ def _render_highlights(report_data):
                     </div>
                     <div class="highlight-value">
                         {_safe(_fmt_currency(
-                            first_year_expenses.get("median")
+                            first_year_expenses
                         ))}
                     </div>
                     <div class="highlight-note">
@@ -131,11 +129,11 @@ def _render_highlights(report_data):
 
                 <div class="highlight-card">
                     <div class="highlight-label">
-                        Median Ending Portfolio
+                        Ending Portfolio
                     </div>
                     <div class="highlight-value">
                         {_safe(_fmt_currency(
-                            ending_portfolio.get("median")
+                            ending_portfolio
                         ))}
                     </div>
                 </div>
@@ -189,9 +187,8 @@ def _render_portfolio_durability(report_data):
 
     if baseline is not None:
         baseline_first_year_spending = baseline.get(
-            "first_year_expenses",
-            {},
-        ).get("median")
+            "deterministic_first_year_expenses"
+        )
 
     for case in report_data.comparison_cases:
         depletion = case.get(
@@ -212,9 +209,8 @@ def _render_portfolio_durability(report_data):
             spending_text += " - Current Spending"
 
         first_year_spending = case.get(
-            "first_year_expenses",
-            {},
-        ).get("median")
+            "deterministic_first_year_expenses"
+        )
 
         spending_delta = None
 
@@ -251,7 +247,8 @@ def _render_portfolio_durability(report_data):
     <h2>Spending and Portfolio Health</h2>
 
     <p class="section-intro">
-        This table compares how often scenarios depleted the portfolio evaluated at each spending level.
+        This table compares modeled first-year spending and how often
+        historical scenarios depleted the portfolio at each spending level.
         The 100% row represents current modeled household spending.
     </p>
 
@@ -360,12 +357,12 @@ def _render_portfolio_outcomes(report_data):
 
 def _has_uncovered_expenses(report_data):
     for case in report_data.comparison_cases:
-        distribution = case.get(
-            "lifetime_uncovered_expense",
-            {},
+        uncovered = case.get(
+            "deterministic_lifetime_uncovered_expense",
+            0.0,
         )
 
-        if float(distribution.get("maximum", 0.0)) > 0.0:
+        if float(uncovered or 0.0) > 0.0:
             return True
 
     return False
@@ -392,23 +389,19 @@ def _render_financial_effects(report_data):
             spending_text += " - Current"
 
         expenses = case.get(
-            "lifetime_expenses",
-            {},
+            "deterministic_lifetime_expenses"
         )
 
         taxes = case.get(
-            "lifetime_taxes",
-            {},
+            "deterministic_lifetime_taxes"
         )
 
         cash_flow_shortfall = case.get(
-            "lifetime_cash_flow_shortfall",
-            {},
+            "deterministic_lifetime_cash_flow_shortfall"
         )
 
         uncovered = case.get(
-            "lifetime_uncovered_expense",
-            {},
+            "deterministic_lifetime_uncovered_expense"
         )
 
         uncovered_cell = ""
@@ -418,7 +411,7 @@ def _render_financial_effects(report_data):
                 "<td>"
                 + _safe(
                     _fmt_currency(
-                        uncovered.get("median")
+                        uncovered
                     )
                 )
                 + "</td>"
@@ -429,13 +422,13 @@ def _render_financial_effects(report_data):
             <tr{row_class}>
                 <td>{_safe(spending_text)}</td>
                 <td>{_safe(_fmt_currency(
-                    expenses.get("median")
+                    expenses
                 ))}</td>
                 <td>{_safe(_fmt_currency(
-                    taxes.get("median")
+                    taxes
                 ))}</td>
                 <td>{_safe(_fmt_currency(
-                    cash_flow_shortfall.get("median")
+                    cash_flow_shortfall
                 ))}</td>
                 {uncovered_cell}
             </tr>
@@ -446,7 +439,7 @@ def _render_financial_effects(report_data):
 
     if include_uncovered:
         uncovered_header = (
-            "<th>Median Uncovered Expenses</th>"
+            "<th>Uncovered Expenses</th>"
         )
 
     return f"""
@@ -458,15 +451,16 @@ def _render_financial_effects(report_data):
         spending level. They compare total household expenses, taxes, the amount
         of portfolio assets needed to cover negative Cash Flow (withdrawals from
         the portfolio), and expenses that could not be covered after the portfolio
-        was empty. 
+        was empty.
     </p>
+
     <table class="wide-table comparison-table lifetime-effects-table">
         <thead>
             <tr>
                 <th>Spending Level</th>
-                <th>Median Household Expenses</th>
-                <th>Median Taxes</th>
-                <th>Median Cash Flow Shortfall</th>
+                <th>Household Expenses</th>
+                <th>Taxes</th>
+                <th>Cash Flow Shortfall</th>
                 {uncovered_header}
             </tr>
         </thead>

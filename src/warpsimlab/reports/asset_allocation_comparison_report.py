@@ -167,8 +167,7 @@ def _render_current_allocation_highlights(
         )
 
         ending_portfolio = case.get(
-            "ending_portfolio",
-            {},
+            "deterministic_ending_portfolio"
         )
 
         equity_text = _fmt_allocation_percent(
@@ -211,13 +210,11 @@ def _render_current_allocation_highlights(
 
                 <div class="highlight-card">
                     <div class="highlight-label">
-                        Median Ending Portfolio
+                        Ending Portfolio
                     </div>
                     <div class="highlight-value">
                         {_safe(_fmt_currency(
-                            ending_portfolio.get(
-                                "median"
-                            )
+                            ending_portfolio
                         ))}
                     </div>
                 </div>
@@ -261,8 +258,7 @@ def _render_portfolio_durability(
         )
 
         ending_portfolio = case.get(
-            "ending_portfolio",
-            {},
+            "deterministic_ending_portfolio"
         )
 
         rows.append(
@@ -281,9 +277,7 @@ def _render_portfolio_durability(
                     )
                 ))}</td>
                 <td>{_safe(_fmt_currency(
-                    ending_portfolio.get(
-                        "median"
-                    )
+                    ending_portfolio
                 ))}</td>
             </tr>
             """
@@ -294,7 +288,7 @@ def _render_portfolio_durability(
     <h2>Portfolio Results by Allocation</h2>
 
     <p class="section-intro">
-        This table compares portfolio depletion and median ending portfolio
+        This table compares portfolio depletion and ending portfolio
         values across the modeled asset allocations. The Current row
         represents the household's current modeled allocation.
     </p>
@@ -306,7 +300,7 @@ def _render_portfolio_durability(
                 <th>Bonds</th>
                 <th>Cash</th>
                 <th>Scenarios That Depleted Portfolio</th>
-                <th>Median Ending Portfolio</th>
+                <th>Ending Portfolio</th>
             </tr>
         </thead>
         <tbody>
@@ -400,9 +394,10 @@ def _render_method_note(
     <h2>Comparison Method</h2>
 
     <p class="section-intro">
-        Each allocation case uses the same historical return windows
-        and the same household assumptions. Only the modeled
-        Stock/Bond/Cash allocation is changed.
+        Each allocation case uses the same household assumptions and
+        deterministic market-return assumptions. Historical return
+        windows are evaluated separately for portfolio risk. Only the
+        modeled Stock/Bond/Cash allocation is changed.
     </p>
 
     <p class="section-intro">
@@ -535,7 +530,7 @@ def generate_asset_allocation_comparison_report(
                 "Asset Allocation Comparison Report"
             ),
             market_wording=(
-                "historical market conditions"
+                "modeled and historical market conditions"
             ),
         )}
 

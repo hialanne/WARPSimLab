@@ -135,106 +135,125 @@ def _build_depletion_statistics(total_assets, years):
 
 def _build_case_result(
     spending_percentage,
-    pipeline_result,
+    deterministic_pipeline_result,
+    historical_pipeline_result,
 ):
-    core = pipeline_result["core"]
+    deterministic_core = deterministic_pipeline_result["core"]
+    historical_core = historical_pipeline_result["core"]
 
-    total_assets = np.asarray(
-        core["total_assets"],
+    # ---------------------------------------------------------
+    # Deterministic financial quantities
+    # ---------------------------------------------------------
+
+    deterministic_total_assets = np.asarray(
+        deterministic_core["total_assets"],
         dtype=float,
     )
 
-    years = np.asarray(
-        core["year"][0]
-    )
-
-    ending_portfolios = total_assets[:, -1]
-
-    minimum_portfolios = np.min(
-        total_assets,
-        axis=1,
-    )
-
-    expense_values = np.asarray(
-        core["expense_amt"],
+    deterministic_expenses = np.asarray(
+        deterministic_core["expense_amt"],
         dtype=float,
     )
 
-    first_year_expenses = (
-        expense_values[:, 1]
-        if expense_values.shape[1] > 1
-        else np.zeros(expense_values.shape[0], dtype=float)
+    deterministic_taxes = np.asarray(
+        deterministic_core["taxes"],
+        dtype=float,
     )
 
-    lifetime_expenses = np.sum(
-        expense_values,
-        axis=1,
+    deterministic_cash_flow_shortfall = np.asarray(
+        deterministic_core["cash_flow_shortfall"],
+        dtype=float,
     )
 
-    lifetime_taxes = np.sum(
-        np.asarray(core["taxes"], dtype=float),
-        axis=1,
+    deterministic_uncovered_expense = np.asarray(
+        deterministic_core["uncovered_expense"],
+        dtype=float,
     )
 
-    lifetime_cash_flow_shortfall = np.sum(
-        np.asarray(
-            core["cash_flow_shortfall"],
-            dtype=float,
-        ),
-        axis=1,
+    deterministic_ending_portfolio = float(
+        deterministic_total_assets[0, -1]
     )
 
-    lifetime_uncovered_expense = np.sum(
-        np.asarray(
-            core["uncovered_expense"],
-            dtype=float,
-        ),
-        axis=1,
+    deterministic_first_year_expenses = (
+        float(deterministic_expenses[0, 1])
+        if deterministic_expenses.shape[1] > 1
+        else 0.0
+    )
+
+    deterministic_lifetime_expenses = float(
+        np.sum(deterministic_expenses[0])
+    )
+
+    deterministic_lifetime_taxes = float(
+        np.sum(deterministic_taxes[0])
+    )
+
+    deterministic_lifetime_cash_flow_shortfall = float(
+        np.sum(deterministic_cash_flow_shortfall[0])
+    )
+
+    deterministic_lifetime_uncovered_expense = float(
+        np.sum(deterministic_uncovered_expense[0])
+    )
+
+    # ---------------------------------------------------------
+    # Historical Window risk quantities
+    # ---------------------------------------------------------
+
+    historical_total_assets = np.asarray(
+        historical_core["total_assets"],
+        dtype=float,
+    )
+
+    historical_years = np.asarray(
+        historical_core["year"][0]
+    )
+
+    historical_ending_portfolios = (
+        historical_total_assets[:, -1]
     )
 
     return {
         "spending_percentage": float(spending_percentage),
+
         "scenario_expense_multiplier": (
             float(spending_percentage) / 100.0
         ),
+
         "is_current_spending": (
             float(spending_percentage) == 100.0
         ),
 
+        # Deterministic quantities
+        "deterministic_ending_portfolio": (
+            deterministic_ending_portfolio
+        ),
+        "deterministic_first_year_expenses": (
+            deterministic_first_year_expenses
+        ),
+        "deterministic_lifetime_expenses": (
+            deterministic_lifetime_expenses
+        ),
+        "deterministic_lifetime_taxes": (
+            deterministic_lifetime_taxes
+        ),
+        "deterministic_lifetime_cash_flow_shortfall": (
+            deterministic_lifetime_cash_flow_shortfall
+        ),
+        "deterministic_lifetime_uncovered_expense": (
+            deterministic_lifetime_uncovered_expense
+        ),
+
+        # Historical Window risk quantities
         "depletion": _build_depletion_statistics(
-            total_assets,
-            years,
+            historical_total_assets,
+            historical_years,
         ),
 
         "ending_portfolio": _distribution(
-            ending_portfolios
-        ),
-
-        "minimum_portfolio": _distribution(
-            minimum_portfolios
-        ),
-
-        "first_year_expenses": _distribution(
-            first_year_expenses
-        ),
-
-        "lifetime_expenses": _distribution(
-            lifetime_expenses
-        ),
-
-        "lifetime_taxes": _distribution(
-            lifetime_taxes
-        ),
-
-        "lifetime_cash_flow_shortfall": _distribution(
-            lifetime_cash_flow_shortfall
-        ),
-
-        "lifetime_uncovered_expense": _distribution(
-            lifetime_uncovered_expense
+            historical_ending_portfolios
         ),
     }
-
 
 def run_sim_spending_comparison_report(
     husband_portfolio,
@@ -306,21 +325,17 @@ def run_sim_spending_comparison_report(
     cases = []
 
     try:
-        sim_config.subplot_mode = "monte_carlo"
-        sim_config.sim_type = "portfolio_sim"
-        sim_config.monte_carlo_mode = (
-            "rollingHistoricalWindows"
-        )
-
-        # Match the existing Historical Window risk analysis.
+        # Spending Comparison evaluates the investment portfolio.
+        # Real estate is excluded to match the existing portfolio
+        # risk analysis.
         sim_config.include_realestate = False
 
-        # We calculate depletion statistics directly from the
-        # primary Historical Window run.
+        # The report calculates depletion directly from the
+        # Historical Window run.
         sim_config.show_simulated_shortfall_rate = False
 
-        # Prevent run_pipeline() from launching additional
-        # deterministic overlay simulations for each case.
+        # Prevent run_pipeline() from launching unrelated
+        # overlay simulations for every comparison case.
         sim_config.overlay_tax_impacts = False
         sim_config.overlay_fund_expense_impacts = False
 
@@ -329,7 +344,34 @@ def run_sim_spending_comparison_report(
                 float(spending_percentage) / 100.0
             )
 
-            pipeline_result = run_pipeline(
+            # -------------------------------------------------
+            # Deterministic projection
+            # -------------------------------------------------
+
+            sim_config.subplot_mode = "fill"
+            sim_config.sim_type = "portfolio_sim"
+
+            deterministic_pipeline_result = run_pipeline(
+                husband_portfolio,
+                wife_portfolio,
+                husband,
+                wife,
+                expenses,
+                sim_config,
+                force_num_sims=1,
+            )
+
+            # -------------------------------------------------
+            # Historical Window risk analysis
+            # -------------------------------------------------
+
+            sim_config.subplot_mode = "monte_carlo"
+            sim_config.sim_type = "portfolio_sim"
+            sim_config.monte_carlo_mode = (
+                "rollingHistoricalWindows"
+            )
+
+            historical_pipeline_result = run_pipeline(
                 husband_portfolio,
                 wife_portfolio,
                 husband,
@@ -342,7 +384,8 @@ def run_sim_spending_comparison_report(
             cases.append(
                 _build_case_result(
                     spending_percentage,
-                    pipeline_result,
+                    deterministic_pipeline_result,
+                    historical_pipeline_result,
                 )
             )
 
@@ -367,15 +410,6 @@ def run_sim_spending_comparison_report(
         sim_config.overlay_fund_expense_impacts = (
             original_overlay_fund_expense_impacts
         )
-
-    #print("diagnostics in run_sim_spending_comparison_report.py")
-    #for case in cases:
-    #    print(
-    #        case["spending_percentage"],
-    #        case["depletion"]["windows_reaching_zero_percent"],
-    #        case["ending_portfolio"]["median"],
-    #        case["lifetime_expenses"]["median"],
-    #    )
 
     report_data = SpendingComparisonReportData(
         report_options=report_options,

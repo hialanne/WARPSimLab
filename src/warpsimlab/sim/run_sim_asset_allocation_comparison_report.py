@@ -432,69 +432,48 @@ def _derive_allocation(
 
 def _build_case_result(
     allocation,
-    pipeline_result,
+    deterministic_pipeline_result,
+    historical_pipeline_result,
     *,
     is_current_allocation=False,
     highlight_only=False,
 ):
-    core = pipeline_result["core"]
+    deterministic_core = (
+        deterministic_pipeline_result["core"]
+    )
 
-    total_assets = np.asarray(
-        core["total_assets"],
+    historical_core = (
+        historical_pipeline_result["core"]
+    )
+
+    # ---------------------------------------------------------
+    # Deterministic financial quantities
+    # ---------------------------------------------------------
+
+    deterministic_total_assets = np.asarray(
+        deterministic_core["total_assets"],
         dtype=float,
     )
 
-    years = np.asarray(
-        core["year"][0]
+    deterministic_ending_portfolio = float(
+        deterministic_total_assets[0, -1]
     )
 
-    ending_portfolios = (
-        total_assets[:, -1]
+    # ---------------------------------------------------------
+    # Historical Window risk quantities
+    # ---------------------------------------------------------
+
+    historical_total_assets = np.asarray(
+        historical_core["total_assets"],
+        dtype=float,
     )
 
-    minimum_portfolios = np.min(
-        total_assets,
-        axis=1,
+    historical_years = np.asarray(
+        historical_core["year"][0]
     )
 
-    lifetime_expenses = np.sum(
-        np.asarray(
-            core["expense_amt"],
-            dtype=float,
-        ),
-        axis=1,
-    )
-
-    lifetime_taxes = np.sum(
-        np.asarray(
-            core["taxes"],
-            dtype=float,
-        ),
-        axis=1,
-    )
-
-    lifetime_cash_flow_shortfall = (
-        np.sum(
-            np.asarray(
-                core[
-                    "cash_flow_shortfall"
-                ],
-                dtype=float,
-            ),
-            axis=1,
-        )
-    )
-
-    lifetime_uncovered_expense = (
-        np.sum(
-            np.asarray(
-                core[
-                    "uncovered_expense"
-                ],
-                dtype=float,
-            ),
-            axis=1,
-        )
+    historical_ending_portfolios = (
+        historical_total_assets[:, -1]
     )
 
     return {
@@ -510,52 +489,31 @@ def _build_case_result(
             100.0
             * allocation["cash"]
         ),
+
         "is_current_allocation": bool(
             is_current_allocation
         ),
+
         "highlight_only": bool(
             highlight_only
         ),
+
+        # Deterministic quantity
+        "deterministic_ending_portfolio": (
+            deterministic_ending_portfolio
+        ),
+
+        # Historical Window risk quantities
         "depletion": (
             _build_depletion_statistics(
-                total_assets,
-                years,
+                historical_total_assets,
+                historical_years,
             )
         ),
 
         "ending_portfolio": (
             _distribution(
-                ending_portfolios
-            )
-        ),
-
-        "minimum_portfolio": (
-            _distribution(
-                minimum_portfolios
-            )
-        ),
-
-        "lifetime_expenses": (
-            _distribution(
-                lifetime_expenses
-            )
-        ),
-
-        "lifetime_taxes": (
-            _distribution(
-                lifetime_taxes
-            )
-        ),
-
-        "lifetime_cash_flow_shortfall": (
-            _distribution(
-                lifetime_cash_flow_shortfall
-            )
-        ),
-
-        "lifetime_uncovered_expense": (
-            _distribution(
-                lifetime_uncovered_expense
+                historical_ending_portfolios
             )
         ),
     }
@@ -703,36 +661,23 @@ def run_sim_asset_allocation_comparison_report(
     cases = []
 
     try:
-        sim_config.subplot_mode = (
-            "monte_carlo"
-        )
-
-        sim_config.sim_type = (
-            "portfolio_sim"
-        )
-
-        sim_config.monte_carlo_mode = (
-            "rollingHistoricalWindows"
-        )
-
-        # Match existing Historical Window
-        # risk-report semantics.
+        # Asset Allocation Comparison operates on the
+        # investable portfolio. Real estate is excluded
+        # from both deterministic and Historical Window
+        # comparisons.
         sim_config.include_realestate = False
 
-        sim_config.show_simulated_shortfall_rate = (
-            False
-        )
+        # Depletion is calculated directly from the
+        # Historical Window results.
+        sim_config.show_simulated_shortfall_rate = False
 
         # Prevent run_pipeline() from performing
-        # additional overlay simulations for
-        # every ensemble member.
+        # unrelated overlay simulations for every case.
         sim_config.overlay_tax_impacts = False
 
-        sim_config.overlay_fund_expense_impacts = (
-            False
-        )
+        sim_config.overlay_fund_expense_impacts = False
 
-        # All comparison cases use the same
+        # All comparison cases use the same custom
         # allocation semantics.
         sim_config.sim_initial_allocation_mode = (
             "custom"
@@ -757,7 +702,43 @@ def run_sim_asset_allocation_comparison_report(
                 allocation["cash"]
             )
 
-            pipeline_result = run_pipeline(
+            # -------------------------------------------------
+            # Deterministic projection
+            # -------------------------------------------------
+
+            sim_config.subplot_mode = "fill"
+
+            sim_config.sim_type = (
+                "portfolio_sim"
+            )
+
+            deterministic_pipeline_result = run_pipeline(
+                husband_portfolio,
+                wife_portfolio,
+                husband,
+                wife,
+                expenses,
+                sim_config,
+                force_num_sims=1,
+            )
+
+            # -------------------------------------------------
+            # Historical Window risk analysis
+            # -------------------------------------------------
+
+            sim_config.subplot_mode = (
+                "monte_carlo"
+            )
+
+            sim_config.sim_type = (
+                "portfolio_sim"
+            )
+
+            sim_config.monte_carlo_mode = (
+                "rollingHistoricalWindows"
+            )
+
+            historical_pipeline_result = run_pipeline(
                 husband_portfolio,
                 wife_portfolio,
                 husband,
@@ -779,14 +760,17 @@ def run_sim_asset_allocation_comparison_report(
             cases.append(
                 _build_case_result(
                     allocation,
-                    pipeline_result,
+                    deterministic_pipeline_result,
+                    historical_pipeline_result,
                     is_current_allocation=False,
                     highlight_only=highlight_only,
                 )
             )
 
-        # Run the user's actual current allocation
-        # as the baseline case.
+        # -----------------------------------------------------
+        # User's actual current allocation
+        # -----------------------------------------------------
+
         sim_config.custom_stock = (
             current_allocation["equity"]
         )
@@ -799,7 +783,39 @@ def run_sim_asset_allocation_comparison_report(
             current_allocation["cash"]
         )
 
-        pipeline_result = run_pipeline(
+        # Deterministic projection
+
+        sim_config.subplot_mode = "fill"
+
+        sim_config.sim_type = (
+            "portfolio_sim"
+        )
+
+        deterministic_pipeline_result = run_pipeline(
+            husband_portfolio,
+            wife_portfolio,
+            husband,
+            wife,
+            expenses,
+            sim_config,
+            force_num_sims=1,
+        )
+
+        # Historical Window risk analysis
+
+        sim_config.subplot_mode = (
+            "monte_carlo"
+        )
+
+        sim_config.sim_type = (
+            "portfolio_sim"
+        )
+
+        sim_config.monte_carlo_mode = (
+            "rollingHistoricalWindows"
+        )
+
+        historical_pipeline_result = run_pipeline(
             husband_portfolio,
             wife_portfolio,
             husband,
@@ -812,7 +828,8 @@ def run_sim_asset_allocation_comparison_report(
         cases.append(
             _build_case_result(
                 current_allocation,
-                pipeline_result,
+                deterministic_pipeline_result,
+                historical_pipeline_result,
                 is_current_allocation=True,
             )
         )

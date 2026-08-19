@@ -312,67 +312,7 @@ def _build_case_persons(
     )
 
 
-def _lifetime_distribution(
-    values,
-):
-    values = np.asarray(
-        values,
-        dtype=float,
-    )
-
-    if values.ndim != 2:
-        raise ValueError(
-            "Expected a 2D Historical Windows "
-            f"array, got shape {values.shape}"
-        )
-
-    lifetime_values = np.sum(
-        values,
-        axis=1,
-    )
-
-    return _distribution(
-        lifetime_values
-    )
-
-
-def _minimum_portfolio_distribution(
-    total_assets,
-):
-    total_assets = np.asarray(
-        total_assets,
-        dtype=float,
-    )
-
-    minimum_values = np.min(
-        total_assets,
-        axis=1,
-    )
-
-    return _distribution(
-        minimum_values
-    )
-
-
-def _ending_portfolio_distribution(
-    total_assets,
-):
-    total_assets = np.asarray(
-        total_assets,
-        dtype=float,
-    )
-
-    ending_values = total_assets[
-        :,
-        -1,
-    ]
-
-    return _distribution(
-        ending_values
-    )
-
-
-def _portfolio_at_retirement_distribution(
+def _deterministic_portfolio_at_retirement(
     total_assets,
     case_husband,
     case_wife,
@@ -383,67 +323,47 @@ def _portfolio_at_retirement_distribution(
         dtype=float,
     )
 
-    reference_person = case_husband
+    if total_assets.ndim != 2:
+        raise ValueError(
+            "Expected a 2D deterministic portfolio array, "
+            f"got shape {total_assets.shape}"
+        )
+
+    retirement_index = (
+        int(case_husband.retire_age)
+        - int(case_husband.age)
+    )
 
     if (
         second_person_enabled
         and case_wife is not None
     ):
-        husband_retirement_years = (
-            _years_until_event(
-                case_husband,
-                "retire_age",
-            )
+        wife_retirement_index = (
+            int(case_wife.retire_age)
+            - int(case_wife.age)
         )
 
-        wife_retirement_years = (
-            _years_until_event(
-                case_wife,
-                "retire_age",
-            )
+        retirement_index = max(
+            retirement_index,
+            wife_retirement_index,
         )
 
-        if (
-            wife_retirement_years
-            > husband_retirement_years
-        ):
-            reference_person = case_wife
-
-    years_until_retirement = (
-        int(reference_person.retire_age)
-        - int(reference_person.age)
+    retirement_index = min(
+        max(retirement_index, 0),
+        total_assets.shape[1] - 1,
     )
 
-    year_index = (
-        years_until_retirement
-        + 1
-    )
-
-    if (
-        year_index < 1
-        or year_index >= total_assets.shape[1]
-    ):
-        return _distribution([])
-
-    return _distribution(
-        total_assets[
-            :,
-            year_index,
-        ]
+    return float(
+        total_assets[0, retirement_index]
     )
 
 
-def _monthly_retirement_income_distribution(
+def _deterministic_monthly_retirement_income(
     core,
     case_husband,
     case_wife,
     second_person_enabled,
 ):
-    work = np.asarray(
-        core["breakdown_by_class"]["work"],
-        dtype=float,
-    )
-
     social_security = np.asarray(
         core["breakdown_by_class"]["ss"],
         dtype=float,
@@ -503,24 +423,16 @@ def _monthly_retirement_income_distribution(
 
     if (
         year_index < 1
-        or year_index >= work.shape[1]
+        or year_index >= retirement_income.shape[1]
     ):
-        return _distribution([])
+        return None
 
-    monthly_values = (
-        retirement_income[
-            :,
-            year_index,
-        ]
+    return float(
+        retirement_income[0, year_index]
         / 12.0
     )
 
-    return _distribution(
-        monthly_values
-    )
-
-
-def _final_monthly_retirement_income_distribution(
+def _deterministic_final_monthly_retirement_income(
     core,
 ):
     social_security = np.asarray(
@@ -544,18 +456,34 @@ def _final_monthly_retirement_income_distribution(
         + annuity
     )
 
-    monthly_values = (
-        retirement_income[:, -1]
+    return float(
+        retirement_income[0, -1]
         / 12.0
     )
 
-    return _distribution(
-        monthly_values
+
+def _deterministic_lifetime_total(
+    values,
+):
+    values = np.asarray(
+        values,
+        dtype=float,
+    )
+
+    if values.ndim != 2:
+        raise ValueError(
+            "Expected a 2D deterministic array, "
+            f"got shape {values.shape}"
+        )
+
+    return float(
+        np.sum(values[0])
     )
 
 
 def _build_case_result(
-    pipeline_result,
+    deterministic_pipeline_result,
+    historical_pipeline_result,
     case_husband,
     case_wife,
     second_person_enabled,
@@ -564,7 +492,13 @@ def _build_case_result(
     baseline_retirement_age,
     baseline_ss_age,
 ):
-    core = pipeline_result["core"]
+    deterministic_core = (
+        deterministic_pipeline_result["core"]
+    )
+
+    historical_core = (
+        historical_pipeline_result["core"]
+    )
 
     actual_retirement_age = (
         _household_event_age(
@@ -620,141 +554,110 @@ def _build_case_result(
             ),
         }
 
+    deterministic_total_assets = np.asarray(
+        deterministic_core["total_assets"],
+        dtype=float,
+    )
+
+    deterministic_ending_portfolio = float(
+        deterministic_total_assets[0, -1]
+    )
+
     return {
         "requested_retirement_age": int(
             requested_retirement_age
         ),
+
         "requested_social_security_age": int(
             requested_ss_age
         ),
+
         "actual_household_retirement_age": int(
             actual_retirement_age
         ),
+
         "actual_household_social_security_age": int(
             actual_ss_age
         ),
+
         "is_current_retirement_timing": (
             int(requested_retirement_age)
             == int(baseline_retirement_age)
         ),
+
         "is_current_social_security_timing": (
             int(requested_ss_age)
             == int(baseline_ss_age)
         ),
+
         "is_current_timing": (
             int(requested_retirement_age)
             == int(baseline_retirement_age)
             and int(requested_ss_age)
             == int(baseline_ss_age)
         ),
+
         "husband": husband_timing,
         "wife": wife_timing,
-        "depletion": (
-            _build_depletion_statistics(
-                core["total_assets"],
-                pipeline_result["years_list"],
-            )
+
+        # -----------------------------------------------------
+        # Deterministic financial quantities
+        # -----------------------------------------------------
+
+        "deterministic_ending_portfolio": (
+            deterministic_ending_portfolio
         ),
-        "ending_portfolio": (
-            _ending_portfolio_distribution(
-                core["total_assets"]
-            )
-        ),
-        "portfolio_at_retirement": (
-            _portfolio_at_retirement_distribution(
-                core["total_assets"],
+
+        "deterministic_portfolio_at_retirement": (
+            _deterministic_portfolio_at_retirement(
+                deterministic_core["total_assets"],
                 case_husband,
                 case_wife,
                 second_person_enabled,
             )
         ),
-        "monthly_retirement_income": (
-            _monthly_retirement_income_distribution(
-                core,
-                case_husband,
-                case_wife,
-                second_person_enabled,
-            )
-        ),
-        "final_monthly_retirement_income": (
-            _final_monthly_retirement_income_distribution(
-                core
-            )
-        ),
-        "minimum_portfolio": (
-            _minimum_portfolio_distribution(
-                core["total_assets"]
-            )
-        ),
-        "lifetime_wages": (
-            _lifetime_distribution(
-                core[
-                    "breakdown_by_class"
-                ]["work"]
-            )
-        ),
-        "total_social_security": (
-            _lifetime_distribution(
-                core[
+
+        "deterministic_total_social_security": (
+            _deterministic_lifetime_total(
+                deterministic_core[
                     "breakdown_by_class"
                 ]["ss"]
             )
         ),
-        "lifetime_traditional_retirement_contributions": (
-            _lifetime_distribution(
-                core["ira_401k"]
+
+        "deterministic_monthly_retirement_income": (
+            _deterministic_monthly_retirement_income(
+                deterministic_core,
+                case_husband,
+                case_wife,
+                second_person_enabled,
             )
         ),
-        "lifetime_employee_401k_contributions": (
-            _lifetime_distribution(
-                core[
-                    "employee_401k_contributions"
-                ]
+
+        "deterministic_final_monthly_retirement_income": (
+            _deterministic_final_monthly_retirement_income(
+                deterministic_core
             )
         ),
-        "lifetime_roth_ira_contributions": (
-            _lifetime_distribution(
-                core[
-                    "roth_ira_contributions"
-                ]
-            )
-        ),
-        "lifetime_roth_workplace_contributions": (
-            _lifetime_distribution(
-                core[
-                    "roth_workplace_contributions"
-                ]
-            )
-        ),
-        "lifetime_taxes": (
-            _lifetime_distribution(
-                core["taxes"]
-            )
-        ),
-        "lifetime_expenses": (
-            _lifetime_distribution(
-                core["expense_amt"]
-            )
-        ),
-        "lifetime_cash_flow_shortfall": (
-            _lifetime_distribution(
-                core[
+
+        "deterministic_lifetime_cash_flow_shortfall": (
+            _deterministic_lifetime_total(
+                deterministic_core[
                     "cash_flow_shortfall"
                 ]
             )
         ),
-        "lifetime_uncovered_expense": (
-            _lifetime_distribution(
-                core[
-                    "uncovered_expense"
-                ]
-            )
-        ),
-        "lifetime_withdrawal_income": (
-            _lifetime_distribution(
-                core[
-                    "breakdown_by_class"
-                ]["withdrawal"]
+
+        # -----------------------------------------------------
+        # Historical Window risk quantity
+        # -----------------------------------------------------
+
+        "depletion": (
+            _build_depletion_statistics(
+                historical_core["total_assets"],
+                historical_pipeline_result[
+                    "years_list"
+                ],
             )
         ),
     }
@@ -917,24 +820,15 @@ def run_sim_retirement_ss_comparison_report(
     cases = []
 
     try:
-        sim_config.subplot_mode = (
-            "monte_carlo"
-        )
-
-        sim_config.sim_type = (
-            "portfolio_sim"
-        )
-
-        sim_config.monte_carlo_mode = (
-            "rollingHistoricalWindows"
-        )
-
+        # This report compares the investment portfolio.
+        # Keep real estate excluded, matching the existing
+        # Retirement / Social Security comparison semantics.
         sim_config.include_realestate = False
 
-        sim_config.show_simulated_shortfall_rate = (
-            False
-        )
+        # Historical Window depletion is calculated directly.
+        sim_config.show_simulated_shortfall_rate = False
 
+        # Prevent unrelated overlay runs for every timing case.
         sim_config.overlay_tax_impacts = False
 
         sim_config.overlay_fund_expense_impacts = (
@@ -957,9 +851,13 @@ def run_sim_retirement_ss_comparison_report(
                     )
                 )
 
+                # ---------------------------------------------
+                # Deterministic case
+                # ---------------------------------------------
+
                 (
-                    case_husband,
-                    case_wife,
+                    deterministic_husband,
+                    deterministic_wife,
                 ) = _build_case_persons(
                     husband,
                     wife,
@@ -968,21 +866,71 @@ def run_sim_retirement_ss_comparison_report(
                     social_security_shift,
                 )
 
-                pipeline_result = run_pipeline(
-                    husband_portfolio,
-                    wife_portfolio,
-                    case_husband,
-                    case_wife,
-                    expenses,
-                    sim_config,
-                    force_num_sims=None,
+                sim_config.subplot_mode = (
+                    "fill"
+                )
+
+                sim_config.sim_type = (
+                    "portfolio_sim"
+                )
+
+                deterministic_pipeline_result = (
+                    run_pipeline(
+                        husband_portfolio,
+                        wife_portfolio,
+                        deterministic_husband,
+                        deterministic_wife,
+                        expenses,
+                        sim_config,
+                        force_num_sims=1,
+                    )
+                )
+
+                # ---------------------------------------------
+                # Historical Window case
+                # ---------------------------------------------
+
+                (
+                    historical_husband,
+                    historical_wife,
+                ) = _build_case_persons(
+                    husband,
+                    wife,
+                    second_person_enabled,
+                    retirement_shift,
+                    social_security_shift,
+                )
+
+                sim_config.subplot_mode = (
+                    "monte_carlo"
+                )
+
+                sim_config.sim_type = (
+                    "portfolio_sim"
+                )
+
+                sim_config.monte_carlo_mode = (
+                    "rollingHistoricalWindows"
+                )
+
+                historical_pipeline_result = (
+                    run_pipeline(
+                        husband_portfolio,
+                        wife_portfolio,
+                        historical_husband,
+                        historical_wife,
+                        expenses,
+                        sim_config,
+                        force_num_sims=None,
+                    )
                 )
 
                 cases.append(
                     _build_case_result(
-                        pipeline_result,
-                        case_husband,
-                        case_wife,
+                        deterministic_pipeline_result,
+                        historical_pipeline_result,
+                        deterministic_husband,
+                        deterministic_wife,
                         second_person_enabled,
                         retirement_age,
                         ss_age,
