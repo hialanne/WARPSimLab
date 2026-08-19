@@ -76,6 +76,9 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         root.title(WARPSIMLAB_TITLE)
 
+        # Diagnostic code to replicate a Mac's dark mode.
+        # self._apply_dark_mode_diagnostic_theme()
+
         self.display_settings = load_display_settings()
         self._apply_main_window_startup_settings()
 
@@ -171,6 +174,69 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         # This should be commented out in production.
         # self._print_content_geometry_diagnostics()
+
+
+    def _apply_dark_mode_diagnostic_theme(self):
+        """
+        TEMPORARY: Force TTK into a dark palette for GUI diagnostics.
+        Remove or disable before production release.
+        """
+        style = ttk.Style(self.root)
+        style.theme_use("clam")
+
+        style.configure(
+            ".",
+            background="#2b2b2b",
+            foreground="#f0f0f0",
+            fieldbackground="#3a3a3a",
+        )
+
+        style.configure(
+            "TFrame",
+            background="#2b2b2b",
+        )
+
+        style.configure(
+            "TLabel",
+            background="#2b2b2b",
+            foreground="#f0f0f0",
+        )
+
+        style.configure(
+            "TLabelframe",
+            background="#2b2b2b",
+            foreground="#f0f0f0",
+        )
+
+        style.configure(
+            "TLabelframe.Label",
+            background="#2b2b2b",
+            foreground="#f0f0f0",
+        )
+
+        style.configure(
+            "TCheckbutton",
+            background="#2b2b2b",
+            foreground="#f0f0f0",
+        )
+
+        style.configure(
+            "TRadiobutton",
+            background="#2b2b2b",
+            foreground="#f0f0f0",
+        )
+
+        style.configure(
+            "TEntry",
+            fieldbackground="#3a3a3a",
+            foreground="#f0f0f0",
+        )
+
+        style.configure(
+            "TCombobox",
+            fieldbackground="#3a3a3a",
+            foreground="#f0f0f0",
+        )
 
 
     def _get_monitor_work_area(self, x, y):
@@ -1860,7 +1926,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         )
 
         self.reports_menu.add_command(
-            label="Retirement & Social Security Timing Comparison Report",
+            label="Retirement & Social Security Comparison Report",
             command=self.edit_report_retirement_ss_comparison,
         )
         
@@ -2001,8 +2067,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             ],
             parent_gui=self,
             title=(
-                "Retirement & Social Security "
-                "Timing Comparison Report"
+                "Retirement & Social Security Comparison Report"
             ),
         )
 

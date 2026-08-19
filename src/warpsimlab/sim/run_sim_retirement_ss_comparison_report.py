@@ -1,8 +1,4 @@
 import copy
-
-import numpy as np
-
-import copy
 from datetime import datetime
 
 import numpy as np
@@ -376,6 +372,188 @@ def _ending_portfolio_distribution(
     )
 
 
+def _portfolio_at_retirement_distribution(
+    total_assets,
+    case_husband,
+    case_wife,
+    second_person_enabled,
+):
+    total_assets = np.asarray(
+        total_assets,
+        dtype=float,
+    )
+
+    reference_person = case_husband
+
+    if (
+        second_person_enabled
+        and case_wife is not None
+    ):
+        husband_retirement_years = (
+            _years_until_event(
+                case_husband,
+                "retire_age",
+            )
+        )
+
+        wife_retirement_years = (
+            _years_until_event(
+                case_wife,
+                "retire_age",
+            )
+        )
+
+        if (
+            wife_retirement_years
+            > husband_retirement_years
+        ):
+            reference_person = case_wife
+
+    years_until_retirement = (
+        int(reference_person.retire_age)
+        - int(reference_person.age)
+    )
+
+    year_index = (
+        years_until_retirement
+        + 1
+    )
+
+    if (
+        year_index < 1
+        or year_index >= total_assets.shape[1]
+    ):
+        return _distribution([])
+
+    return _distribution(
+        total_assets[
+            :,
+            year_index,
+        ]
+    )
+
+
+def _monthly_retirement_income_distribution(
+    core,
+    case_husband,
+    case_wife,
+    second_person_enabled,
+):
+    work = np.asarray(
+        core["breakdown_by_class"]["work"],
+        dtype=float,
+    )
+
+    social_security = np.asarray(
+        core["breakdown_by_class"]["ss"],
+        dtype=float,
+    )
+
+    pension = np.asarray(
+        core["breakdown_by_class"]["pension"],
+        dtype=float,
+    )
+
+    annuity = np.asarray(
+        core["breakdown_by_class"]["annuity"],
+        dtype=float,
+    )
+
+    retirement_income = (
+        social_security
+        + pension
+        + annuity
+    )
+
+    reference_person = case_husband
+
+    if (
+        second_person_enabled
+        and case_wife is not None
+    ):
+        husband_retirement_years = (
+            _years_until_event(
+                case_husband,
+                "retire_age",
+            )
+        )
+
+        wife_retirement_years = (
+            _years_until_event(
+                case_wife,
+                "retire_age",
+            )
+        )
+
+        if (
+            wife_retirement_years
+            > husband_retirement_years
+        ):
+            reference_person = case_wife
+
+    years_until_age_70 = (
+        70
+        - int(reference_person.age)
+    )
+
+    year_index = (
+        years_until_age_70
+        + 1
+    )
+
+    if (
+        year_index < 1
+        or year_index >= work.shape[1]
+    ):
+        return _distribution([])
+
+    monthly_values = (
+        retirement_income[
+            :,
+            year_index,
+        ]
+        / 12.0
+    )
+
+    return _distribution(
+        monthly_values
+    )
+
+
+def _final_monthly_retirement_income_distribution(
+    core,
+):
+    social_security = np.asarray(
+        core["breakdown_by_class"]["ss"],
+        dtype=float,
+    )
+
+    pension = np.asarray(
+        core["breakdown_by_class"]["pension"],
+        dtype=float,
+    )
+
+    annuity = np.asarray(
+        core["breakdown_by_class"]["annuity"],
+        dtype=float,
+    )
+
+    retirement_income = (
+        social_security
+        + pension
+        + annuity
+    )
+
+    monthly_values = (
+        retirement_income[:, -1]
+        / 12.0
+    )
+
+    return _distribution(
+        monthly_values
+    )
+
+
 def _build_case_result(
     pipeline_result,
     case_husband,
@@ -482,6 +660,27 @@ def _build_case_result(
                 core["total_assets"]
             )
         ),
+        "portfolio_at_retirement": (
+            _portfolio_at_retirement_distribution(
+                core["total_assets"],
+                case_husband,
+                case_wife,
+                second_person_enabled,
+            )
+        ),
+        "monthly_retirement_income": (
+            _monthly_retirement_income_distribution(
+                core,
+                case_husband,
+                case_wife,
+                second_person_enabled,
+            )
+        ),
+        "final_monthly_retirement_income": (
+            _final_monthly_retirement_income_distribution(
+                core
+            )
+        ),
         "minimum_portfolio": (
             _minimum_portfolio_distribution(
                 core["total_assets"]
@@ -494,7 +693,7 @@ def _build_case_result(
                 ]["work"]
             )
         ),
-        "lifetime_social_security": (
+        "total_social_security": (
             _lifetime_distribution(
                 core[
                     "breakdown_by_class"
@@ -849,10 +1048,18 @@ def run_sim_retirement_ss_comparison_report(
                 ),
                 "Output Format": "HTML",
                 "Projection Period": (
-                    f"{int(sim_config.years_to_simulate)} years"
+                    f"{int(sim_config.start_year)}-"
+                    f"{int(sim_config.start_year) + int(sim_config.years_to_simulate)} "
+                    f"({int(sim_config.years_to_simulate)} Years)"
                 ),
                 "Report Basis": (
-                    "Historical Windows"
+                    "Real Dollars (Inflation Adjusted)"
+                    if getattr(
+                        sim_config,
+                        "plot_mode",
+                        None,
+                    ) == "real"
+                    else "Raw Dollars (Future Nominal Values)"
                 ),
             },
             baseline=baseline,

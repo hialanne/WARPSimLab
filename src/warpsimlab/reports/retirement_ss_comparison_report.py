@@ -62,14 +62,6 @@ def _find_case(
     return None
 
 
-def _current_case(report_data):
-    for case in report_data.comparison_cases:
-        if case.get("is_current_timing", False):
-            return case
-
-    return None
-
-
 def _current_row_class(case):
     if case.get("is_current_timing", False):
         return " class='current-row'"
@@ -91,21 +83,6 @@ def _render_current_timing(report_data):
 
     husband = baseline["husband"]
     wife = baseline.get("wife")
-
-    rows = [
-        f"""
-        <tr>
-            <th>Household Retirement Age</th>
-            <td>{_safe(_fmt_age(baseline["household_retirement_age"]))}</td>
-        </tr>
-        """,
-        f"""
-        <tr>
-            <th>Household Social Security Age</th>
-            <td>{_safe(_fmt_age(baseline["household_social_security_age"]))}</td>
-        </tr>
-        """,
-    ]
 
     person_rows = [
         f"""
@@ -134,41 +111,39 @@ def _render_current_timing(report_data):
 
     return f"""
 <section>
-    <h2>Current Timing</h2>
+    <h2>Retirement and Social Security Timing</h2>
 
-    <p class="section-intro">
-        The current household timing is the baseline used for comparison
-        throughout this report.
-    </p>
-
-    <div class="card-grid two-col">
-        <div class="summary-card current-card">
-            <h3>Household Timing</h3>
-            <table class="kv-table">
-                <tbody>
-                    {''.join(rows)}
-                </tbody>
-            </table>
+    <div class="current-timing-summary">
+        <div>
+            <strong>Household Retirement Age</strong>
+            <span>{_safe(_fmt_age(baseline["household_retirement_age"]))}</span>
         </div>
-
-        <div class="summary-card">
-            <h3>Individual Timing</h3>
-            <table class="wide-table timing-table">
-                <thead>
-                    <tr>
-                        <th>Person</th>
-                        <th>Current Age</th>
-                        <th>Retirement Age</th>
-                        <th>Social Security Age</th>
-                        <th>Annual Social Security</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {''.join(person_rows)}
-                </tbody>
-            </table>
+        <div>
+            <strong>Household Social Security Age</strong>
+            <span>{_safe(_fmt_age(baseline["household_social_security_age"]))}</span>
         </div>
     </div>
+
+    <table class="wide-table timing-table compact-timing-table">
+        <thead>
+            <tr>
+                <th>Person</th>
+                <th>Current Age</th>
+                <th>Retirement Age</th>
+                <th>Social Security Age</th>
+                <th>Annual Social Security</th>
+            </tr>
+        </thead>
+        <tbody>
+            {''.join(person_rows)}
+        </tbody>
+    </table>
+    <p class="section-intro timing-definition">
+        Household Retirement Age is the age when the household has no
+        remaining wage earners. Household Social Security Age is the
+        comparison age used to shift Social Security claiming ages for
+        the household.
+    </p>
 </section>
 """
 
@@ -199,7 +174,7 @@ def _render_methodology(report_data):
 
     return f"""
 <section>
-    <h2>How Timing Alternatives Are Modeled</h2>
+    <h2>Comparison Method</h2>
 
     <div class="explanation-card">
         <p>
@@ -219,9 +194,9 @@ def _render_methodology(report_data):
         </p>
 
         <p>
-            Each timing combination is evaluated using the same Historical
-            Windows methodology and the household's other modeled assumptions
-            are left unchanged.
+            Each timing combination uses the same household assumptions and
+            is evaluated across historical market conditions. Only retirement
+            timing and Social Security claiming timing are changed.
         </p>
     </div>
 </section>
@@ -259,24 +234,10 @@ def _render_retirement_comparison(report_data):
             f"""
             <tr{_current_row_class(case)}>
                 <td>{_safe(label)}</td>
-                <td>{_safe(_fmt_age(case["husband"]["retirement_age"]))}</td>
-                <td>{_safe(
-                    _fmt_age(
-                        case["wife"]["retirement_age"]
-                    )
-                    if case["wife"] is not None
-                    else "N/A"
-                )}</td>
-                <td>{_safe(_fmt_currency(
-                    case["lifetime_wages"]["median"]
-                ))}</td>
                 <td>{_safe(_fmt_currency(
                     case[
-                        "lifetime_cash_flow_shortfall"
+                        "portfolio_at_retirement"
                     ]["median"]
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    case["lifetime_taxes"]["median"]
                 ))}</td>
                 <td>{_safe(_fmt_percent(
                     case["depletion"][
@@ -304,12 +265,8 @@ def _render_retirement_comparison(report_data):
         <thead>
             <tr>
                 <th>Household Retirement Age</th>
-                <th>Husband Retirement Age</th>
-                <th>Wife Retirement Age</th>
-                <th>Median Lifetime Wages</th>
-                <th>Median Portfolio Cash Needed</th>
-                <th>Median Lifetime Taxes</th>
-                <th>Historical Windows Reaching Zero</th>
+                <th>Median Portfolio at Retirement</th>
+                <th>Scenarios That Depleted Portfolio</th>
                 <th>Median Ending Portfolio</th>
             </tr>
         </thead>
@@ -350,41 +307,54 @@ def _render_social_security_comparison(
             ),
         )
 
+        husband_monthly_ss = (
+            float(
+                case["husband"][
+                    "social_security_amount"
+                ]
+            )
+            / 12.0
+        )
+
+        wife_monthly_ss = None
+
+        if case["wife"] is not None:
+            wife_monthly_ss = (
+                float(
+                    case["wife"][
+                        "social_security_amount"
+                    ]
+                )
+                / 12.0
+            )
+
         rows.append(
             f"""
             <tr{_current_row_class(case)}>
                 <td>{_safe(label)}</td>
-                <td>{_safe(_fmt_age(
-                    case["husband"][
-                        "social_security_age"
-                    ]
-                ))}</td>
-                <td>{_safe(
-                    _fmt_age(
-                        case["wife"][
-                            "social_security_age"
-                        ]
-                    )
-                    if case["wife"] is not None
-                    else "N/A"
-                )}</td>
                 <td>{_safe(_fmt_currency(
-                    case["husband"][
-                        "social_security_amount"
-                    ]
+                    husband_monthly_ss
                 ))}</td>
                 <td>{_safe(
                     _fmt_currency(
-                        case["wife"][
-                            "social_security_amount"
-                        ]
+                        wife_monthly_ss
                     )
-                    if case["wife"] is not None
+                    if wife_monthly_ss is not None
                     else "N/A"
                 )}</td>
                 <td>{_safe(_fmt_currency(
                     case[
-                        "lifetime_social_security"
+                        "total_social_security"
+                    ]["median"]
+                ))}</td>
+                <td>{_safe(_fmt_currency(
+                    case[
+                        "monthly_retirement_income"
+                    ]["median"]
+                ))}</td>
+                <td>{_safe(_fmt_currency(
+                    case[
+                        "final_monthly_retirement_income"
                     ]["median"]
                 ))}</td>
                 <td>{_safe(_fmt_currency(
@@ -392,40 +362,31 @@ def _render_social_security_comparison(
                         "lifetime_cash_flow_shortfall"
                     ]["median"]
                 ))}</td>
-                <td>{_safe(_fmt_percent(
-                    case["depletion"][
-                        "reaching_zero_percent"
-                    ]
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    case["ending_portfolio"]["median"]
-                ))}</td>
             </tr>
             """
         )
-
     return f"""
 <section>
     <h2>Social Security Timing Comparison</h2>
-
     <p class="section-intro">
         This comparison changes Social Security claiming timing while
         holding retirement timing at the household's current setting of
-        age {_safe(baseline_retirement_age)}.
+        age {_safe(baseline_retirement_age)}. Monthly Social Security
+        amounts reflect the modeled benefit at each claiming age. Total
+        Social Security is the amount received during the simulation
+        period, not over the household's lifetime.
     </p>
 
     <table class="wide-table comparison-table">
         <thead>
             <tr>
                 <th>Household Social Security Age</th>
-                <th>Husband Actual SS Age</th>
-                <th>Wife Actual SS Age</th>
-                <th>Husband Annual SS</th>
-                <th>Wife Annual SS</th>
-                <th>Median Lifetime SS</th>
-                <th>Median Portfolio Cash Needed</th>
-                <th>Historical Windows Reaching Zero</th>
-                <th>Median Ending Portfolio</th>
+                <th>Husband Monthly SS</th>
+                <th>Wife Monthly SS</th>
+                <th>Total Social Security During Simulation</th>
+                <th>Monthly Retirement Income at Age 70</th>
+                <th>Monthly Retirement Income in Final Simulation Year</th>
+                <th>Median Portfolio Support Needed</th>
             </tr>
         </thead>
         <tbody>
@@ -482,6 +443,26 @@ def _render_interaction_matrix(report_data):
                 ]
             )
 
+            monthly_income = _fmt_currency(
+                case["monthly_retirement_income"][
+                    "median"
+                ]
+            )
+
+            ending_value = case[
+                "ending_portfolio"
+            ]["median"]
+
+            ending_text = _fmt_currency(
+                ending_value
+            )
+
+            ending_class = (
+                "matrix-portfolio-zero"
+                if float(ending_value) <= 0.0
+                else "matrix-portfolio-positive"
+            )
+
             current_class = ""
 
             if (
@@ -496,7 +477,15 @@ def _render_interaction_matrix(report_data):
 
             cells.append(
                 f"<td{current_class}>"
+                f"<div class='matrix-depletion'>"
                 f"{_safe(value)}"
+                "</div>"
+                f"<div class='matrix-income'>"
+                f"{_safe(monthly_income)}/mo"
+                "</div>"
+                f"<div class='{ending_class}'>"
+                f"{_safe(ending_text)}"
+                "</div>"
                 "</td>"
             )
 
@@ -509,13 +498,30 @@ def _render_interaction_matrix(report_data):
     return f"""
 <section>
     <h2>Retirement and Social Security Interaction</h2>
-
     <p class="section-intro">
-        Each cell shows the percentage of Historical Windows in which the
-        modeled portfolio reaches zero for that retirement and Social
-        Security timing combination. The current household timing is
-        highlighted.
+        Each cell shows three results for that retirement and Social
+        Security combination. Monthly Retirement Income at Age 70 includes
+        Social Security, pensions, and annuities being received at that age,
+        and excludes wages, portfolio withdrawals, and investment income.
+        Pension and annuity start dates remain unchanged. For couples,
+        age 70 refers to the same person whose retirement defines Household
+        Retirement Age. The current household timing is outlined.
     </p>
+
+    <div class="matrix-legend">
+        <span class="matrix-depletion">
+            Scenarios That Depleted Portfolio
+        </span>
+        <span class="matrix-income">
+            Monthly Retirement Income at Age 70
+        </span>
+        <span class="matrix-portfolio-positive">
+            Median Ending Portfolio
+        </span>
+        <span class="matrix-portfolio-zero">
+            $0 Median Ending Portfolio
+        </span>
+    </div>
 
     <table class="wide-table matrix-table">
         <thead>
@@ -527,87 +533,6 @@ def _render_interaction_matrix(report_data):
             {''.join(rows)}
         </tbody>
     </table>
-</section>
-"""
-
-
-def _render_portfolio_outcomes(report_data):
-    current_case = _current_case(
-        report_data
-    )
-
-    if current_case is None:
-        return ""
-
-    ending = current_case[
-        "ending_portfolio"
-    ]
-
-    minimum = current_case[
-        "minimum_portfolio"
-    ]
-
-    return f"""
-<section>
-    <h2>Current Timing Historical Portfolio Outcomes</h2>
-
-    <p class="section-intro">
-        These values provide additional context for the current timing
-        configuration. They summarize the range of outcomes across the
-        Historical Windows used by this report.
-    </p>
-
-    <div class="card-grid two-col">
-        <div class="summary-card">
-            <h3>Ending Portfolio</h3>
-
-            <table class="kv-table">
-                <tbody>
-                    <tr>
-                        <th>10th Percentile</th>
-                        <td>{_safe(_fmt_currency(ending["p10"]))}</td>
-                    </tr>
-                    <tr>
-                        <th>Median</th>
-                        <td>{_safe(_fmt_currency(ending["median"]))}</td>
-                    </tr>
-                    <tr>
-                        <th>90th Percentile</th>
-                        <td>{_safe(_fmt_currency(ending["p90"]))}</td>
-                    </tr>
-                    <tr>
-                        <th>Minimum</th>
-                        <td>{_safe(_fmt_currency(ending["minimum"]))}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="summary-card">
-            <h3>Minimum Portfolio During Projection</h3>
-
-            <table class="kv-table">
-                <tbody>
-                    <tr>
-                        <th>10th Percentile</th>
-                        <td>{_safe(_fmt_currency(minimum["p10"]))}</td>
-                    </tr>
-                    <tr>
-                        <th>Median</th>
-                        <td>{_safe(_fmt_currency(minimum["median"]))}</td>
-                    </tr>
-                    <tr>
-                        <th>Historical Windows Reaching Zero</th>
-                        <td>{_safe(_fmt_percent(
-                            current_case["depletion"][
-                                "reaching_zero_percent"
-                            ]
-                        ))}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 </section>
 """
 
@@ -646,6 +571,37 @@ def generate_retirement_ss_comparison_report(
         border: 2px solid #2e7d32;
     }
 
+    .current-timing-summary {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+        margin-top: 14px;
+        margin-bottom: 14px;
+    }
+
+    .current-timing-summary > div {
+        border: 1px solid #ccc;
+        border-top: 4px solid #2e7d32;
+        background: #fafafa;
+        border-radius: 6px;
+        padding: 12px 14px;
+    }
+
+    .current-timing-summary strong,
+    .current-timing-summary span {
+        display: block;
+    }
+
+    .current-timing-summary span {
+        margin-top: 6px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .compact-timing-table {
+        margin-top: 0;
+    }
+
     .current-row td {
         background: #e8f5e9;
         font-weight: bold;
@@ -679,6 +635,43 @@ def generate_retirement_ss_comparison_report(
         text-align: center;
     }
 
+    .matrix-depletion {
+        color: #222;
+        font-weight: bold;
+    }
+
+    .matrix-income {
+        color: #1565c0;
+        margin-top: 3px;
+    }
+
+    .matrix-portfolio-positive {
+        color: #2e7d32;
+        margin-top: 3px;
+    }
+
+    .matrix-portfolio-zero {
+        color: #b00020;
+        margin-top: 3px;
+    }
+
+    .timing-definition {
+        margin-top: 12px;
+    }
+
+    .matrix-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 22px;
+        margin: 10px 0 14px 0;
+        font-size: 13px;
+    }
+
+    .matrix-legend span {
+        font-weight: bold;
+        margin-top: 0;
+    }
+
     @media print {
         .comparison-table,
         .matrix-table {
@@ -692,7 +685,7 @@ def generate_retirement_ss_comparison_report(
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>WARPSimLab Retirement &amp; Social Security Timing Comparison Report</title>
+    <title>WARPSimLab Retirement &amp; Social Security Comparison Report</title>
 
     <style>
         {render_base_css()}
@@ -706,8 +699,7 @@ def generate_retirement_ss_comparison_report(
         {render_report_header(
             report_data,
             title=(
-                "Retirement & Social Security "
-                "Timing Comparison Report"
+                "Retirement & Social Security Comparison Report"
             ),
             market_wording=(
                 "historical market return sequences"
@@ -715,10 +707,6 @@ def generate_retirement_ss_comparison_report(
         )}
 
         {_render_current_timing(
-            report_data
-        )}
-
-        {_render_methodology(
             report_data
         )}
 
@@ -734,7 +722,7 @@ def generate_retirement_ss_comparison_report(
             report_data
         )}
 
-        {_render_portfolio_outcomes(
+        {_render_methodology(
             report_data
         )}
 

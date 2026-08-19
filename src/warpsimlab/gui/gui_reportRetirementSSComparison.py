@@ -34,8 +34,7 @@ class RetirementSSComparisonReportFrame(ttk.Frame):
         report_options,
         parent_gui,
         title=(
-            "Retirement & Social Security "
-            "Timing Comparison Report"
+            "Retirement & Social Security Comparison Report"
         ),
     ):
         super().__init__(
@@ -107,8 +106,7 @@ class RetirementSSComparisonReportFrame(ttk.Frame):
         ttk.Label(
             note_frame,
             text=(
-                "NOTE: Retirement & Social Security Timing "
-                "Comparison Reports are written to: "
+                "NOTE: Retirement & Social Security Reports are written to: "
             ),
             font=("Arial", 11, "italic"),
         ).pack(

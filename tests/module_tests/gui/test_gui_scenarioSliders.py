@@ -271,9 +271,9 @@ def test_dynamic_slider_manual_expenses_config_and_update_stores_multiplier(tk_r
         snapshots=snapshots,
     )
 
-    # Manual mode config: from 50 to 150, default value 100 if None. :contentReference[oaicite:6]{index=6}
+    # Manual mode config: from 50 to 200, default value 100 if None. :contentReference[oaicite:6]{index=6}
     assert float(frame.dynamic_slider.cget("from")) == 50.0
-    assert float(frame.dynamic_slider.cget("to")) == 150.0
+    assert float(frame.dynamic_slider.cget("to")) == 200.0
     assert round(frame.dynamic_value.get()) == 100
     assert "Expense Multiplier" in frame.dynamic_label_var.get()
 
