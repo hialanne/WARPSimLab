@@ -46,6 +46,7 @@ class DummySimConfig:
     post_tax_equity_dividend_yield: float = 0.0
     post_tax_bond_interest_yield: float = 0.0
     post_tax_cash_interest_yield: float = 0.0
+    roth_flows: tuple = ()
 
     include_rmd: bool = False
     retirement_withdraw_mode: str = "Off"

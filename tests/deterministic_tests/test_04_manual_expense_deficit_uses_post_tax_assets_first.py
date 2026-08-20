@@ -86,6 +86,7 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
         household_eq_target=None,
         household_bd_target=None,
         household_cs_target=None,
+        roth_flows=[],
     )
 
 

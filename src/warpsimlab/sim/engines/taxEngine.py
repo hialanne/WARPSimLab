@@ -190,10 +190,14 @@ FEDERAL_QUALIFIED_DIVIDEND_TAX_TABLES_2026 = {
 
 
 def _inflate_brackets(brackets_base, inflation_factor):
-    return tuple(
-        (upper if upper == inf else upper * inflation_factor, rate)
-        for upper, rate in brackets_base
-    )
+    result = [
+        (upper * inflation_factor, rate)
+        for upper, rate in brackets_base[:-1]
+    ]
+
+    result.append(brackets_base[-1])
+
+    return tuple(result)
 
 
 def initialize_tax_engine_for_simulation(sim_config):

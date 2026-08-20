@@ -35,29 +35,7 @@ def make_portfolio(
     )
 
 
-@pytest.mark.parametrize("amount", [0.0, -1.0, -1000.0])
-def test_apply_roth_contribution_ignores_non_positive_amounts(amount):
-    port = make_portfolio(
-        eq_roth=100.0,
-        bd_roth=200.0,
-        cs_roth=300.0,
-    )
-
-    before_total = port.total_value_roth
-
-    result = portfolioEngine.apply_roth_contribution(
-        port,
-        amount,
-    )
-
-    assert result == 0.0
-    assert port.eq_roth == pytest.approx(100.0)
-    assert port.bd_roth == pytest.approx(200.0)
-    assert port.cs_roth == pytest.approx(300.0)
-    assert port.total_value_roth == pytest.approx(before_total)
-
-
-def test_apply_roth_contribution_adds_new_money_to_roth_cash_only():
+def test_apply_roth_contribution_preserves_existing_roth_allocation():
     port = make_portfolio(
         eq_roth=1000.0,
         bd_roth=2000.0,
@@ -73,9 +51,11 @@ def test_apply_roth_contribution_adds_new_money_to_roth_cash_only():
     )
 
     assert result == pytest.approx(4000.0)
-    assert port.eq_roth == pytest.approx(1000.0)
-    assert port.bd_roth == pytest.approx(2000.0)
-    assert port.cs_roth == pytest.approx(7000.0)
+
+    assert port.eq_roth == pytest.approx(1666.6666666666667)
+    assert port.bd_roth == pytest.approx(3333.3333333333335)
+    assert port.cs_roth == pytest.approx(5000.0)
+
     assert port.total_value_roth == pytest.approx(
         before_roth_total + 4000.0
     )

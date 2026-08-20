@@ -29,6 +29,7 @@ def test_simulation_switches_from_manual_expenses_to_withdrawals_at_retirement(s
         second_person_enabled=False,
         calculate_income_taxes=False,
         sim_type="portfolio_sim",
+        roth_flows=[],
     )
 
     results = simulate_yearly_portfolios(
@@ -78,6 +79,7 @@ def test_fixed_dollar_withdrawal_uses_post_tax_then_pre_tax(scenario_builders):
         second_person_enabled=False,
         calculate_income_taxes=False,
         sim_type="portfolio_sim",
+        roth_flows=[],
     )
 
     results = simulate_yearly_portfolios(
@@ -118,6 +120,7 @@ def test_rmd_off_mode_still_withdraws_required_minimum_distribution(scenario_bui
         second_person_enabled=False,
         calculate_income_taxes=False,
         sim_type="portfolio_sim",
+        roth_flows=[],
     )
 
     results = simulate_yearly_portfolios(

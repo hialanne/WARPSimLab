@@ -214,6 +214,7 @@ def test_expense_shortfall_reduces_ira_and_workplace_roth_contributions_proporti
         ]
     )
 
+
     results = run_one_year(
         monkeypatch,
         husband=make_person(income=10_000.0),
@@ -254,6 +255,11 @@ def test_couple_roth_shortfall_preserves_owner_and_flow_type_allocation():
                 owner="wife",
             ),
         ],
+    )
+    rothEngine.initialize_roth_engine_for_simulation(
+        config,
+        husband_age=40,
+        wife_age=40,
     )
     requested = rothEngine.prepare_requested_roth_flows(
         curr_husband_age=41,

@@ -386,30 +386,21 @@ def apply_returns_and_fund_expenses(
     re_mult = 1.0 + re_return
     exp_mult = 1.0 - fund_expense
 
-    for attr in ["eq_pre", "eq_roth", "hsa_eq"]:
-        setattr(
-            sim_portfolio,
-            attr,
-            getattr(sim_portfolio, attr) * eq_total_mult,
-        )
+    sim_portfolio.eq_pre *= eq_total_mult
+    sim_portfolio.eq_roth *= eq_total_mult
+    sim_portfolio.hsa_eq *= eq_total_mult
 
     sim_portfolio.eq_post *= eq_taxable_price_mult
 
-    for attr in ["bd_pre", "bd_roth", "hsa_bd"]:
-        setattr(
-            sim_portfolio,
-            attr,
-            getattr(sim_portfolio, attr) * bd_total_mult,
-        )
+    sim_portfolio.bd_pre *= bd_total_mult
+    sim_portfolio.bd_roth *= bd_total_mult
+    sim_portfolio.hsa_bd *= bd_total_mult
 
     sim_portfolio.bd_post *= post_tax_bd_mult
 
-    for attr in ["cs_pre", "cs_roth", "hsa_cs"]:
-        setattr(
-            sim_portfolio,
-            attr,
-            getattr(sim_portfolio, attr) * cs_total_mult,
-        )
+    sim_portfolio.cs_pre *= cs_total_mult
+    sim_portfolio.cs_roth *= cs_total_mult
+    sim_portfolio.hsa_cs *= cs_total_mult
 
     sim_portfolio.cs_post *= post_tax_cs_mult
 
@@ -417,21 +408,26 @@ def apply_returns_and_fund_expenses(
 
     total_before = sim_portfolio.total_value
 
-    for attr in [
-        "eq_pre", "bd_pre", "cs_pre",
-        "eq_post", "bd_post", "cs_post",
-        "eq_roth", "bd_roth", "cs_roth",
-        "hsa_eq", "hsa_bd", "hsa_cs",
-    ]:
-        setattr(
-            sim_portfolio,
-            attr,
-            getattr(sim_portfolio, attr) * exp_mult,
-        )
+    sim_portfolio.eq_pre *= exp_mult
+    sim_portfolio.bd_pre *= exp_mult
+    sim_portfolio.cs_pre *= exp_mult
+
+    sim_portfolio.eq_post *= exp_mult
+    sim_portfolio.bd_post *= exp_mult
+    sim_portfolio.cs_post *= exp_mult
+
+    sim_portfolio.eq_roth *= exp_mult
+    sim_portfolio.bd_roth *= exp_mult
+    sim_portfolio.cs_roth *= exp_mult
+
+    sim_portfolio.hsa_eq *= exp_mult
+    sim_portfolio.hsa_bd *= exp_mult
+    sim_portfolio.hsa_cs *= exp_mult
 
     fund_expenses = total_before * fund_expense
 
-    _clamp_portfolio_components(sim_portfolio)
+    # I think I don't need to check for below zero here.
+    # _clamp_portfolio_components(sim_portfolio)
 
     return fund_expenses
 
@@ -518,9 +514,49 @@ def rebalance(sim_portfolio, sim_config):
     """
     
     if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
-        eq_ratio = getattr(sim_config, "household_eq_target", 1 / 3)
-        bd_ratio = getattr(sim_config, "household_bd_target", 1 / 3)
-        cs_ratio = getattr(sim_config, "household_cs_target", 1 / 3)
+        eq_ratio = sim_config.household_eq_target
+        bd_ratio = sim_config.household_bd_target
+        cs_ratio = sim_config.household_cs_target
+
+        total = (
+            sim_portfolio.eq_pre
+            + sim_portfolio.bd_pre
+            + sim_portfolio.cs_pre
+        )
+        sim_portfolio.eq_pre = total * eq_ratio
+        sim_portfolio.bd_pre = total * bd_ratio
+        sim_portfolio.cs_pre = total * cs_ratio
+
+        total = (
+            sim_portfolio.eq_post
+            + sim_portfolio.bd_post
+            + sim_portfolio.cs_post
+        )
+        sim_portfolio.eq_post = total * eq_ratio
+        sim_portfolio.bd_post = total * bd_ratio
+        sim_portfolio.cs_post = total * cs_ratio
+
+        total = (
+            sim_portfolio.eq_roth
+            + sim_portfolio.bd_roth
+            + sim_portfolio.cs_roth
+        )
+        sim_portfolio.eq_roth = total * eq_ratio
+        sim_portfolio.bd_roth = total * bd_ratio
+        sim_portfolio.cs_roth = total * cs_ratio
+
+        total = (
+            sim_portfolio.hsa_eq
+            + sim_portfolio.hsa_bd
+            + sim_portfolio.hsa_cs
+        )
+        sim_portfolio.hsa_eq = total * eq_ratio
+        sim_portfolio.hsa_bd = total * bd_ratio
+        sim_portfolio.hsa_cs = total * cs_ratio
+
+        # Pretty sure nothing in the portfolio can go negative.  Lets not clamp above zero.
+        #_clamp_portfolio_components(sim_portfolio)
+        return
 
     elif sim_config.sim_initial_allocation_mode == "dont-rebalance":
         buckets = [
@@ -858,17 +894,29 @@ def apply_roth_contribution(sim_portfolio, amount):
     """
     Add new outside money to the Roth bucket.
 
-    New Roth contributions enter Roth cash. Annual rebalancing may
-    subsequently redistribute the Roth bucket.
+    Contributions are allocated proportionally to the existing Roth
+    allocation. If the Roth bucket is empty, use an equal allocation.
     """
-    amount = max(0.0, float(amount))
+    total_roth = (
+        sim_portfolio.eq_roth
+        + sim_portfolio.bd_roth
+        + sim_portfolio.cs_roth
+    )
 
-    if amount <= 0.0:
-        return 0.0
-
-    sim_portfolio.cs_roth += amount
-
-    _clamp_portfolio_components(sim_portfolio)
+    if total_roth > 0:
+        sim_portfolio.eq_roth += (
+            amount * sim_portfolio.eq_roth / total_roth
+        )
+        sim_portfolio.bd_roth += (
+            amount * sim_portfolio.bd_roth / total_roth
+        )
+        sim_portfolio.cs_roth += (
+            amount * sim_portfolio.cs_roth / total_roth
+        )
+    else:
+        sim_portfolio.eq_roth += amount / 3
+        sim_portfolio.bd_roth += amount / 3
+        sim_portfolio.cs_roth += amount / 3
 
     return amount
 

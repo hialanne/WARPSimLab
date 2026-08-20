@@ -26,6 +26,7 @@ def test_manual_expense_deficit_uses_post_tax_then_pre_tax_exactly(scenario_buil
         second_person_enabled=False,
         calculate_income_taxes=False,
         sim_type="portfolio_sim",
+        roth_flows=[],
     )
 
     results = simulate_yearly_portfolios(
@@ -73,6 +74,7 @@ def test_manual_expense_couple_records_per_person_net_income_without_taxes(scena
         second_person_enabled=True,
         calculate_income_taxes=False,
         sim_type="portfolio_sim",
+        roth_flows=[],
     )
 
     results = simulate_yearly_portfolios(
@@ -113,6 +115,7 @@ def test_manual_expense_results_can_be_real_dollar_deflated(scenario_builders):
         second_person_enabled=False,
         calculate_income_taxes=False,
         sim_type="portfolio_sim",
+        roth_flows=[],
     )
 
     results = simulate_yearly_portfolios(

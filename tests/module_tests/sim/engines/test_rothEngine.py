@@ -8,6 +8,15 @@ from src.warpsimlab.dataClasses.portfolioState import PortfolioState
 from src.warpsimlab.sim.engines import rothEngine
 
 
+def initialize_roth(cfg, husband_age=50, wife_age=48):
+    rothEngine.initialize_roth_engine_for_simulation(
+        cfg,
+        husband_age,
+        wife_age,
+    )
+    return cfg
+
+
 def make_sim_config(
     *,
     second_person_enabled: bool = True,
@@ -108,163 +117,7 @@ def make_portfolio(
     )
 
 
-def test_calculate_roth_flows_returns_zero_totals_when_no_flows():
-    cfg = make_sim_config(roth_flows=[])
 
-    result = rothEngine.calculate_roth_flows_for_year(
-        curr_husband_age=50,
-        curr_wife_age=48,
-        year=3,
-        sim_config=cfg,
-    )
-
-    for flow_type in rothEngine.ROTH_FLOW_TYPES:
-        assert result[flow_type] == {
-            "husband": 0.0,
-            "wife": 0.0,
-            "total": 0.0,
-        }
-
-
-def test_calculate_roth_flows_ignores_disabled_invalid_and_out_of_range_flows():
-    cfg = make_sim_config(
-        roth_flows=[
-            make_flow(enabled=False, amount=100.0),
-            make_flow(flow_type="invalid", amount=200.0),
-            make_flow(owner="invalid", amount=300.0),
-            make_flow(amount=400.0, start_age=60, end_age=70),
-        ]
-    )
-
-    result = rothEngine.calculate_roth_flows_for_year(
-        curr_husband_age=50,
-        curr_wife_age=50,
-        year=1,
-        sim_config=cfg,
-    )
-
-    assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["total"] == 0.0
-
-
-@pytest.mark.parametrize("age", [50, 55])
-def test_calculate_roth_flows_age_range_is_inclusive(age):
-    cfg = make_sim_config(
-        roth_flows=[
-            make_flow(
-                amount=1200.0,
-                start_age=50,
-                end_age=55,
-            )
-        ]
-    )
-
-    result = rothEngine.calculate_roth_flows_for_year(
-        curr_husband_age=age,
-        curr_wife_age=0,
-        year=1,
-        sim_config=cfg,
-    )
-
-    assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["husband"] == pytest.approx(
-        1200.0
-    )
-
-
-def test_calculate_roth_flows_sums_multiple_active_flows():
-    cfg = make_sim_config(
-        roth_flows=[
-            make_flow(amount=1000.0),
-            make_flow(amount=2500.0),
-            make_flow(
-                flow_type=rothEngine.ROTH_CONVERSION,
-                amount=3000.0,
-            ),
-        ]
-    )
-
-    result = rothEngine.calculate_roth_flows_for_year(
-        curr_husband_age=50,
-        curr_wife_age=0,
-        year=1,
-        sim_config=cfg,
-    )
-
-    assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["husband"] == pytest.approx(
-        3500.0
-    )
-    assert result[rothEngine.ROTH_CONVERSION]["husband"] == pytest.approx(
-        3000.0
-    )
-
-
-def test_calculate_roth_flows_ignores_wife_when_second_person_disabled():
-    cfg = make_sim_config(
-        second_person_enabled=False,
-        roth_flows=[
-            make_flow(owner="wife", amount=2000.0),
-        ],
-    )
-
-    result = rothEngine.calculate_roth_flows_for_year(
-        curr_husband_age=50,
-        curr_wife_age=50,
-        year=1,
-        sim_config=cfg,
-    )
-
-    assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["wife"] == 0.0
-    assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["total"] == 0.0
-
-
-def test_calculate_roth_flows_applies_percent_of_inflation_adjustment():
-    cfg = make_sim_config(
-        inflation_rate=0.04,
-        roth_flows=[
-            make_flow(
-                amount=1000.0,
-                inflation_adjustment_pct=50.0,
-            )
-        ],
-    )
-
-    result = rothEngine.calculate_roth_flows_for_year(
-        curr_husband_age=50,
-        curr_wife_age=0,
-        year=2,
-        sim_config=cfg,
-    )
-
-    assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["husband"] == pytest.approx(
-        1000.0 * 1.02**2
-    )
-
-
-def test_calculate_roth_flows_uses_historical_inflation_path():
-    cfg = make_sim_config(
-        years_to_simulate=3,
-        roth_flows=[
-            make_flow(
-                amount=1000.0,
-                inflation_adjustment_pct=100.0,
-            )
-        ],
-    )
-    cfg.subplot_mode = "monte_carlo"
-    cfg.monte_carlo_mode = "rollingHistoricalWindows"
-    cfg._active_historical_sim_index = 0
-    cfg._hist_window_start_indices = [1]
-    cfg._hist_inflation = [0.99, 0.02, 0.03, 0.04]
-
-    result = rothEngine.calculate_roth_flows_for_year(
-        curr_husband_age=50,
-        curr_wife_age=0,
-        year=2,
-        sim_config=cfg,
-    )
-
-    assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["husband"] == pytest.approx(
-        1000.0 * 1.02 * 1.03
-    )
 
 
 def test_prepare_requested_roth_flows_caps_only_workplace_contributions_by_wages():
@@ -291,6 +144,12 @@ def test_prepare_requested_roth_flows_caps_only_workplace_contributions_by_wages
                 amount=9000.0,
             ),
         ]
+    )
+
+    rothEngine.initialize_roth_engine_for_simulation(
+        cfg,
+        husband_age=49,
+        wife_age=47,
     )
 
     result = rothEngine.prepare_requested_roth_flows(
@@ -553,8 +412,9 @@ def test_deposit_funded_roth_contributions_skips_wife_when_disabled():
         second_person_enabled=False,
     )
 
-    assert result["husband"] == pytest.approx(4000.0)
-    assert result["wife"] == 0.0
+    assert husband.eq_roth == pytest.approx(4000.0 / 3.0)
+    assert husband.bd_roth == pytest.approx(4000.0 / 3.0)
+    assert husband.cs_roth == pytest.approx(4000.0 / 3.0)
+
+    assert wife.total_value_roth == pytest.approx(0.0)
     assert result["total"] == pytest.approx(4000.0)
-    assert husband.cs_roth == pytest.approx(4000.0)
-    assert wife.cs_roth == pytest.approx(0.0)

@@ -83,52 +83,20 @@ def _build_percent_of_inflation_factors(
     return factors
 
 
-def _empty_flow_totals():
-    return {
-        ROTH_IRA_CONTRIBUTION: {
-            "husband": 0.0,
-            "wife": 0.0,
-            "total": 0.0,
-        },
-        ROTH_WORKPLACE_CONTRIBUTION: {
-            "husband": 0.0,
-            "wife": 0.0,
-            "total": 0.0,
-        },
-        ROTH_CONVERSION: {
-            "husband": 0.0,
-            "wife": 0.0,
-            "total": 0.0,
-        },
-    }
-
-
-def calculate_roth_flows_for_year(
-    curr_husband_age,
-    curr_wife_age,
-    year,
+def initialize_roth_engine_for_simulation(
     sim_config,
+    husband_age,
+    wife_age,
 ):
-    """
-    Calculate requested Roth flows active during the current year.
+    years = sim_config.years_to_simulate + 1
 
-    This function only interprets the schedule. It does not mutate
-    portfolios, calculate taxes, or cap flows to available assets.
+    sim_config._roth_inflation_factor_cache = {}
+    sim_config._roth_scheduled_flows = [
+        _empty_flow_totals()
+        for _ in range(years)
+    ]
 
-    Returns
-    -------
-    dict
-        Per-type requested amounts split between husband, wife, and total.
-    """
-    results = _empty_flow_totals()
-
-    roth_flows = getattr(
-        sim_config,
-        "roth_flows",
-        [],
-    )
-
-    for flow in roth_flows:
+    for flow in sim_config.roth_flows:
         if not flow.get("enabled", True):
             continue
 
@@ -151,21 +119,8 @@ def calculate_roth_flows_for_year(
         ):
             continue
 
-        owner_age = (
-            curr_wife_age
-            if owner == "wife"
-            else curr_husband_age
-        )
-
-        start_age = int(
-            flow.get("start_age", 0)
-        )
-        end_age = int(
-            flow.get("end_age", 120)
-        )
-
-        if owner_age < start_age or owner_age > end_age:
-            continue
+        start_age = int(flow.get("start_age", 0))
+        end_age = int(flow.get("end_age", 120))
 
         amount = max(
             0.0,
@@ -182,19 +137,67 @@ def calculate_roth_flows_for_year(
             )
         )
 
-        adjustment_factor = (
-            _build_percent_of_inflation_factors(
-                sim_config,
-                inflation_adjustment_pct,
-            )[year]
+        factors = sim_config._roth_inflation_factor_cache.get(
+            inflation_adjustment_pct
         )
 
-        adjusted_amount = amount * adjustment_factor
+        if factors is None:
+            factors = _build_percent_of_inflation_factors(
+                sim_config,
+                inflation_adjustment_pct,
+            )
 
-        results[flow_type][owner] += adjusted_amount
-        results[flow_type]["total"] += adjusted_amount
+            sim_config._roth_inflation_factor_cache[
+                inflation_adjustment_pct
+            ] = factors
 
-    return results
+        owner_age = (
+            wife_age
+            if owner == "wife"
+            else husband_age
+        )
+
+        first_year = max(
+            1,
+            start_age - owner_age,
+        )
+
+        last_year = min(
+            sim_config.years_to_simulate,
+            end_age - owner_age,
+        )
+
+        if first_year > last_year:
+            continue
+
+        for year in range(first_year, last_year + 1):
+            adjusted_amount = amount * factors[year]
+
+            scheduled = sim_config._roth_scheduled_flows[year]
+
+            scheduled[flow_type][owner] += adjusted_amount
+            scheduled[flow_type]["total"] += adjusted_amount
+
+
+def _empty_flow_totals():
+    return {
+        ROTH_IRA_CONTRIBUTION: {
+            "husband": 0.0,
+            "wife": 0.0,
+            "total": 0.0,
+        },
+        ROTH_WORKPLACE_CONTRIBUTION: {
+            "husband": 0.0,
+            "wife": 0.0,
+            "total": 0.0,
+        },
+        ROTH_CONVERSION: {
+            "husband": 0.0,
+            "wife": 0.0,
+            "total": 0.0,
+        },
+    }
+
 
 def allocate_funded_contributions(
     requested_ira_husband,
@@ -210,90 +213,65 @@ def allocate_funded_contributions(
     If all requested contributions were funded, each requested amount is
     returned unchanged. If funding was insufficient, all contribution
     amounts are reduced proportionally.
-
-    Returns
-    -------
-    dict
-        Actual funded contribution amounts by type and owner.
     """
-    requested = {
+
+    ira_h = requested_ira_husband
+    ira_w = requested_ira_wife
+    work_h = requested_workplace_husband
+    work_w = requested_workplace_wife
+
+    requested_total = ira_h + ira_w + work_h + work_w
+
+    if requested_total <= 0.0 or funded_total <= 0.0:
+        return {
+            ROTH_IRA_CONTRIBUTION: {
+                "husband": 0.0,
+                "wife": 0.0,
+                "total": 0.0,
+            },
+            ROTH_WORKPLACE_CONTRIBUTION: {
+                "husband": 0.0,
+                "wife": 0.0,
+                "total": 0.0,
+            },
+        }
+
+    funded_total = float(funded_total)
+
+    if funded_total >= requested_total:
+        return {
+            ROTH_IRA_CONTRIBUTION: {
+                "husband": ira_h,
+                "wife": ira_w,
+                "total": ira_h + ira_w,
+            },
+            ROTH_WORKPLACE_CONTRIBUTION: {
+                "husband": work_h,
+                "wife": work_w,
+                "total": work_h + work_w,
+            },
+        }
+
+    scale = funded_total / requested_total
+
+    funded_ira_h = ira_h * scale
+    funded_ira_w = ira_w * scale
+    funded_work_h = work_h * scale
+    funded_work_w = work_w * scale
+
+    return {
         ROTH_IRA_CONTRIBUTION: {
-            "husband": max(
-                0.0,
-                float(requested_ira_husband),
-            ),
-            "wife": max(
-                0.0,
-                float(requested_ira_wife),
-            ),
+            "husband": funded_ira_h,
+            "wife": funded_ira_w,
+            "total": funded_ira_h + funded_ira_w,
         },
         ROTH_WORKPLACE_CONTRIBUTION: {
-            "husband": max(
-                0.0,
-                float(requested_workplace_husband),
-            ),
-            "wife": max(
-                0.0,
-                float(requested_workplace_wife),
-            ),
+            "husband": funded_work_h,
+            "wife": funded_work_w,
+            "total": funded_work_h + funded_work_w,
         },
     }
 
-    requested_total = sum(
-        owner_amount
-        for contribution_type in requested.values()
-        for owner_amount in contribution_type.values()
-    )
-
-    funded_total = max(
-        0.0,
-        min(
-            float(funded_total),
-            requested_total,
-        ),
-    )
-
-    if requested_total <= 0.0:
-        scale = 0.0
-    else:
-        scale = funded_total / requested_total
-
-    result = {
-        ROTH_IRA_CONTRIBUTION: {
-            "husband": (
-                requested[ROTH_IRA_CONTRIBUTION]["husband"]
-                * scale
-            ),
-            "wife": (
-                requested[ROTH_IRA_CONTRIBUTION]["wife"]
-                * scale
-            ),
-            "total": 0.0,
-        },
-        ROTH_WORKPLACE_CONTRIBUTION: {
-            "husband": (
-                requested[ROTH_WORKPLACE_CONTRIBUTION]["husband"]
-                * scale
-            ),
-            "wife": (
-                requested[ROTH_WORKPLACE_CONTRIBUTION]["wife"]
-                * scale
-            ),
-            "total": 0.0,
-        },
-    }
-
-    result[ROTH_IRA_CONTRIBUTION]["total"] = (
-        result[ROTH_IRA_CONTRIBUTION]["husband"]
-        + result[ROTH_IRA_CONTRIBUTION]["wife"]
-    )
-
-    result[ROTH_WORKPLACE_CONTRIBUTION]["total"] = (
-        result[ROTH_WORKPLACE_CONTRIBUTION]["husband"]
-        + result[ROTH_WORKPLACE_CONTRIBUTION]["wife"]
-    )
-
-    return result
 
 def prepare_requested_roth_flows(
     *,
@@ -314,12 +292,8 @@ def prepare_requested_roth_flows(
 
     This function does not mutate portfolios.
     """
-    scheduled_flows = calculate_roth_flows_for_year(
-        curr_husband_age=curr_husband_age,
-        curr_wife_age=curr_wife_age,
-        year=year,
-        sim_config=sim_config,
-    )
+
+    scheduled_flows = sim_config._roth_scheduled_flows[year]
 
     requested_husband_roth_ira = scheduled_flows[
         ROTH_IRA_CONTRIBUTION
@@ -404,6 +378,22 @@ def resolve_funded_contributions(
     Allocate actual Roth contribution funding across the requested
     IRA and workplace contributions.
     """
+
+    if requested_flows["requested_contribution_total"] == 0.0:
+        return {
+            ROTH_IRA_CONTRIBUTION: {
+                "husband": 0.0,
+                "wife": 0.0,
+                "total": 0.0,
+            },
+            ROTH_WORKPLACE_CONTRIBUTION: {
+                "husband": 0.0,
+                "wife": 0.0,
+                "total": 0.0,
+            },
+            "total": 0.0,
+        }
+
     funded = allocate_funded_contributions(
         requested_ira_husband=(
             requested_flows[

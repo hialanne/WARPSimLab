@@ -28,6 +28,7 @@ def test_run_pipeline_single_person_manual_expenses_exact_basics(scenario_builde
         always_use_expense_mode=True,
         second_person_enabled=False,
         calculate_income_taxes=False,
+        roth_flows=[],
     )
 
     result = run_pipeline(
@@ -78,6 +79,7 @@ def test_run_pipeline_real_mode_deflates_outputs(scenario_builders):
         always_use_expense_mode=True,
         second_person_enabled=False,
         calculate_income_taxes=False,
+        roth_flows=[],
     )
 
     result = run_pipeline(
@@ -124,6 +126,7 @@ def test_run_pipeline_attaches_overlay_series(scenario_builders):
         fund_expense=0.10,
         overlay_tax_impacts=True,
         overlay_fund_expense_impacts=True,
+        roth_flows=[],
     )
 
     result = run_pipeline(

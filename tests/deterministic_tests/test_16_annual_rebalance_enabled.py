@@ -89,6 +89,7 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
         custom_stock=0.50,
         custom_bonds=0.30,
         custom_cash=0.20,
+        roth_flows=[],
     )
 
 

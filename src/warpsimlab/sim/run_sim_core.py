@@ -13,6 +13,9 @@ from .engines import (
     rothEngine,
 )
 
+PROFILE_SIMULATION = False
+
+
 def _find_first_withdrawal_year(sim_config, husband, wife, years_to_simulate):
     """
     Option B anchor helper.
@@ -211,13 +214,12 @@ def simulate_yearly_portfolios(
 
     real_discount_factors = np.ones((effective_num_sims, years_to_simulate + 1), dtype=float)
 
-    import cProfile
-    import pstats
+    if PROFILE_SIMULATION:
+        import cProfile
+        import pstats
 
-    # profiler = cProfile.Profile()
-    # profiler.enable()
-
-
+        profiler = cProfile.Profile()
+        profiler.enable()
 
     # --------------------------
     # Simulation loop
@@ -239,6 +241,7 @@ def simulate_yearly_portfolios(
         taxEngine.initialize_tax_engine_for_simulation(sim_config)
         incomeEngine.initialize_income_engine_for_simulation(husband, wife, sim_config)
         expenseEngine.initialize_expense_engine_for_simulation(sim_config)
+        rothEngine.initialize_roth_engine_for_simulation(sim_config, husband.age, wife.age,)
 
         # Optional but recommended: reset per-simulation cached withdrawal base.
         sim_config._ret_withdraw_base_dollars = None
@@ -1131,11 +1134,11 @@ def simulate_yearly_portfolios(
 
     # print('total_assets: '+str(results["total_assets"][0]))
 
-    # profiler.disable()
+    if PROFILE_SIMULATION:
+        profiler.disable()
 
-    # stats = pstats.Stats(profiler)
-    # stats.sort_stats("cumulative").print_stats(40)
-
+        stats = pstats.Stats(profiler)
+        stats.sort_stats("cumulative").print_stats(40)
 
     # --------------------------
     # Deflate arrays if real dollars requested
