@@ -71,11 +71,72 @@ def _prepare_historical_window_data(sim_config):
 
     # Overlapping rolling windows:
     # for N years of data and window length W, valid start indices are 0..N-W
-    start_indices = np.arange(0, n_years - window_len + 1, dtype=int)
+    start_indices = np.arange(
+        0,
+        n_years - window_len + 1,
+        dtype=int,
+    )
+
+    historical_start_year = getattr(
+        sim_config,
+        "historical_window_start_year",
+        None,
+    )
+
+    historical_stop_year = getattr(
+        sim_config,
+        "historical_window_stop_year",
+        None,
+    )
+
+    historical_stride = getattr(
+        sim_config,
+        "historical_window_stride",
+        1,
+    )
+
+    if historical_stride is None:
+        historical_stride = 1
+
+    historical_stride = int(historical_stride)
+
+    if historical_stride < 1:
+        raise ValueError(
+            "historical_window_stride must be >= 1"
+        )
+
+    if historical_start_year is not None:
+        historical_start_year = int(historical_start_year)
+
+    if historical_stop_year is not None:
+        historical_stop_year = int(historical_stop_year)
+
+    if (
+        historical_start_year is not None
+        and historical_stop_year is not None
+        and historical_start_year > historical_stop_year
+    ):
+        raise ValueError(
+            "historical_window_start_year must be <= "
+            "historical_window_stop_year"
+        )
+
+    if historical_start_year is not None:
+        start_indices = start_indices[
+            years[start_indices] >= historical_start_year
+        ]
+
+    if historical_stop_year is not None:
+        start_indices = start_indices[
+            years[start_indices] <= historical_stop_year
+        ]
+
+    start_indices = start_indices[::historical_stride]
 
     if len(start_indices) == 0:
         raise ValueError(
-            "No valid rolling historical windows available for the configured horizon"
+            "No valid rolling historical windows available for "
+            "the configured horizon and historical-window selection"
         )
 
     sim_config._hist_years = years

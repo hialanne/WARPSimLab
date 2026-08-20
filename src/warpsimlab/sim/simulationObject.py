@@ -58,8 +58,11 @@ class Simulation:
             scenario_explorer_annotations=None,
             special_income_streams=None,
             roth_flows=None,
-            root=None
-    ): 
+            root=None,
+            historical_window_start_year=None,
+            historical_window_stop_year=None,
+            historical_window_stride=1
+    ):
 
 
         self.root = root
@@ -184,6 +187,9 @@ class Simulation:
         self.disable_sequence_risk_for_historical = disable_sequence_risk_for_historical
         self.show_simulated_shortfall_rate = show_simulated_shortfall_rate
 
+        self.historical_window_start_year = historical_window_start_year
+        self.historical_window_stop_year = historical_window_stop_year
+        self.historical_window_stride = historical_window_stride
 
         
         # Asset order for correlation/covariance logic:

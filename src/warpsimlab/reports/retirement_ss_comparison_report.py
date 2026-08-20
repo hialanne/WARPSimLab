@@ -200,6 +200,12 @@ def _render_methodology(report_data):
             Only retirement timing and Social Security claiming timing are
             changed.
         </p>
+        <p>
+            To reduce report generation time, comparison scenarios use every
+            fourth valid historical starting year. The household's current
+            retirement and Social Security timing uses all available historical
+            windows.
+        </p>
     </div>
 </section>
 """
@@ -526,9 +532,6 @@ def _render_interaction_matrix(report_data):
         </span>
         <span class="matrix-portfolio-zero">
             $0 Ending Portfolio
-        </span>
-        <span class="matrix-portfolio-zero">
-            $0 Median Ending Portfolio
         </span>
     </div>
 

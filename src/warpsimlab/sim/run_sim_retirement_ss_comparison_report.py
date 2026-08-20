@@ -1,7 +1,12 @@
 import copy
+import cProfile
+import pstats
 from datetime import datetime
 
 import numpy as np
+
+
+PROFILE_RETIREMENT_SS_REPORT = False
 
 from .simulation import run_pipeline
 
@@ -817,6 +822,10 @@ def run_sim_retirement_ss_comparison_report(
         sim_config.overlay_fund_expense_impacts
     )
 
+    original_historical_window_stride = (
+        sim_config.historical_window_stride
+    )
+
     cases = []
 
     try:
@@ -834,6 +843,10 @@ def run_sim_retirement_ss_comparison_report(
         sim_config.overlay_fund_expense_impacts = (
             False
         )
+
+        if PROFILE_RETIREMENT_SS_REPORT:
+            profiler = cProfile.Profile()
+            profiler.enable()
 
         for retirement_age in retirement_ages:
             retirement_shift = (
@@ -913,6 +926,18 @@ def run_sim_retirement_ss_comparison_report(
                     "rollingHistoricalWindows"
                 )
 
+                # We are going to create a 6x6 matrix of percents portfolio goes to zero.
+                #   This is very computational heavy.  Lets use stride 4 except on our
+                #   baseline, where we will use stride 1.
+                if (
+                    int(retirement_age) == int(baseline_retirement_age)
+                    and int(ss_age) == int(baseline_ss_age)
+                ):
+                    sim_config.historical_window_stride = 1
+                else:
+                    #sim_config.historical_window_stride = 2
+                    sim_config.historical_window_stride = 4
+
                 historical_pipeline_result = (
                     run_pipeline(
                         husband_portfolio,
@@ -938,6 +963,17 @@ def run_sim_retirement_ss_comparison_report(
                         baseline_ss_age,
                     )
                 )
+
+        if PROFILE_RETIREMENT_SS_REPORT:
+            profiler.disable()
+
+            stats = pstats.Stats(
+                profiler
+            )
+
+            stats.strip_dirs()
+            stats.sort_stats("cumulative")
+            stats.print_stats(40)
 
     finally:
         sim_config.subplot_mode = (
@@ -966,6 +1002,10 @@ def run_sim_retirement_ss_comparison_report(
 
         sim_config.overlay_fund_expense_impacts = (
             original_overlay_fund_expense_impacts
+        )
+
+        sim_config.historical_window_stride = (
+            original_historical_window_stride
         )
 
     generated_timestamp = datetime.now()
