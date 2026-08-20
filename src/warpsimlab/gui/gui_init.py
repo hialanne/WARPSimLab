@@ -11,6 +11,7 @@ from tkinter import ttk
 from datetime import datetime
 import os
 import sys
+from pathlib import Path
 
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.gui.gui_run import PortfolioSimulatorGUI_RunMixin
@@ -162,6 +163,9 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self.guided_tutorial_controller = GuidedTutorialController(self)
 
         self.scenario_controller = ScenarioController(self)
+
+        # Rebuild now that the Scenario Explorer controller exists.
+        self._rebuild_results_menu()
 
         self.root.protocol(
             "WM_DELETE_WINDOW",
@@ -1247,15 +1251,19 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         if is_advanced:
             self.results_menu.add_separator()
-            self.results_menu.add_command(
-                label="Scenario Explorer",
-                command=self.scenario_controller.start_or_focus
-            )
+
+            if hasattr(self, "scenario_controller"):
+                self.results_menu.add_command(
+                    label="Scenario Explorer",
+                    command=self.scenario_controller.start_or_focus
+                )
+
             self.results_menu.add_command(
                 label="Cumulative Operating Balance",
-                command=lambda: self.run_simulation_from_gui(sim_type="operating_balance_sim")
+                command=lambda: self.run_simulation_from_gui(
+                    sim_type="operating_balance_sim"
+                )
             )
-
 
     def _apply_mode_to_results_button(self):
         if not hasattr(self, "results_button"):
@@ -1273,7 +1281,68 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self._rebuild_results_menu()
 
 
+    def _load_user_mode(self):
+        """
+        Load the user's last selected Basic/Advanced mode.
+
+        Defaults to Basic when no saved preference exists or if the
+        preference cannot be read.
+        """
+        try:
+            mode_file = (
+                Path.home()
+                / "Desktop"
+                / "WARPSimLab"
+                / "Administration"
+                / "user_mode.txt"
+            )
+
+            if not mode_file.exists():
+                return "Basic"
+
+            mode = mode_file.read_text(encoding="utf-8").strip()
+
+            if mode in ("Basic", "Advanced"):
+                return mode
+
+        except Exception:
+            pass
+
+        return "Basic"
+
+
+    def _save_user_mode(self):
+        """
+        Save the user's current Basic/Advanced mode.
+
+        Fail silently if the preference cannot be written.
+        """
+        try:
+            target_dir = (
+                Path.home()
+                / "Desktop"
+                / "WARPSimLab"
+                / "Administration"
+            )
+            target_dir.mkdir(parents=True, exist_ok=True)
+
+            mode_file = target_dir / "user_mode.txt"
+
+            mode = self.mode_var.get()
+            if mode not in ("Basic", "Advanced"):
+                return
+
+            mode_file.write_text(mode, encoding="utf-8")
+
+        except Exception:
+            # A preference-file failure must never prevent WARPSimLab
+            # from operating normally.
+            pass
+
+
     def _on_mode_changed(self):
+        self._save_user_mode()
+
         container = getattr(self, "edit_frame_container", None)
         if container is not None:
             for widget in container.winfo_children():
@@ -1325,8 +1394,8 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         # --- BUTTON FRAME ---
         self.button_frame = ttk.Frame(parent)
         self.button_frame.grid(row=0, column=0, columnspan=3, sticky="w", pady=5)
-        self.mode_var = tk.StringVar(value="Basic")
 
+        self.mode_var = tk.StringVar(value=self._load_user_mode())
 
         # Store all buttons as instance variables
 
