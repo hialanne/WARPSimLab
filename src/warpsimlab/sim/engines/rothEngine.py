@@ -83,11 +83,8 @@ def _build_percent_of_inflation_factors(
     return factors
 
 
-def initialize_roth_engine_for_simulation(
-    sim_config,
-    husband_age,
-    wife_age,
-):
+def initialize_roth_engine_for_simulation(sim_config, husband, wife):
+
     years = sim_config.years_to_simulate + 1
 
     sim_config._roth_inflation_factor_cache = {}
@@ -151,11 +148,10 @@ def initialize_roth_engine_for_simulation(
                 inflation_adjustment_pct
             ] = factors
 
-        owner_age = (
-            wife_age
-            if owner == "wife"
-            else husband_age
-        )
+        if owner == "wife":
+            owner_age = wife.age
+        else:
+            owner_age = husband.age
 
         first_year = max(
             1,

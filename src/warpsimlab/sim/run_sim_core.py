@@ -241,7 +241,7 @@ def simulate_yearly_portfolios(
         taxEngine.initialize_tax_engine_for_simulation(sim_config)
         incomeEngine.initialize_income_engine_for_simulation(husband, wife, sim_config)
         expenseEngine.initialize_expense_engine_for_simulation(sim_config)
-        rothEngine.initialize_roth_engine_for_simulation(sim_config, husband.age, wife.age,)
+        rothEngine.initialize_roth_engine_for_simulation(sim_config, husband, wife)
 
         # Optional but recommended: reset per-simulation cached withdrawal base.
         sim_config._ret_withdraw_base_dollars = None
