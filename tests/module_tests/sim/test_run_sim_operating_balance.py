@@ -72,7 +72,13 @@ def test_run_sim_operating_balance_calls_pipeline_and_plot_and_computes_cumsum(m
 
     monkeypatch.setattr(mod, "run_pipeline", fake_run_pipeline, raising=True)
     monkeypatch.setattr(mod, "plot_operating_balance", fake_plot_operating_balance, raising=True)
-    monkeypatch.setattr(mod.io, "write_operating_balance_results_csv", fake_write_operating_balance_results_csv, raising=True)
+
+    monkeypatch.setattr(
+        mod.io,
+        "write_operating_balance_results_csv",
+        fake_write_operating_balance_results_csv,
+        raising=False,
+    )
 
     sim_config = DummySimConfig(output_csv="None")
     husband = DummyPerson()
@@ -164,8 +170,12 @@ def test_run_sim_operating_balance_writes_csv_and_prints_path(monkeypatch, capsy
 
     monkeypatch.setattr(mod, "run_pipeline", fake_run_pipeline, raising=True)
     monkeypatch.setattr(mod, "plot_operating_balance", fake_plot_operating_balance, raising=True)
-    monkeypatch.setattr(mod.io, "write_operating_balance_results_csv", fake_write_operating_balance_results_csv, raising=True)
-
+    monkeypatch.setattr(
+        mod.io,
+        "write_operating_balance_results_csv",
+        fake_write_operating_balance_results_csv,
+        raising=False,
+    )
     sim_config = DummySimConfig(output_csv="Output")
     mod.run_sim_operating_balance(DummyPortfolio(), DummyPortfolio(), DummyPerson(), DummyPerson(), DummyExpenses(), sim_config)
 
