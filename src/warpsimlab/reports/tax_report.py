@@ -807,7 +807,7 @@ def generate_tax_report(report_data) -> ReportResult:
         {render_report_header(
             report_data,
             title="Tax Report",
-            market_wording="user-provided tax settings and simulated market conditions",
+            market_wording="simulated market conditions",
         )}
 
         {_render_highlights(report_data)}

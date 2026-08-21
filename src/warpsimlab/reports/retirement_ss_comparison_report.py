@@ -140,9 +140,8 @@ def _render_current_timing(report_data):
     </table>
     <p class="section-intro timing-definition">
         Household Retirement Age is the age when the household has no
-        remaining wage earners. Household Social Security Age is the
-        comparison age used to shift Social Security claiming ages for
-        the household.
+        remaining wage earners. Household Social Security Age is the age
+        when the last household member begins receiving Social Security.
     </p>
 </section>
 """
@@ -201,9 +200,12 @@ def _render_methodology(report_data):
             changed.
         </p>
         <p>
-            To reduce report generation time, comparison scenarios use every
-            fourth valid historical starting year. The household's current
-            retirement and Social Security timing uses all available historical
+            Portfolio depletion risk is evaluated using historical windows,
+            where each window represents a different historical market starting
+            year over the full simulation period. To reduce report generation
+            time, the Retirement and Social Security Interaction comparison uses
+            every fourth valid historical starting year. The household's current
+            retirement and Social Security ages use all available historical
             windows.
         </p>
     </div>
@@ -238,6 +240,9 @@ def _render_retirement_comparison(report_data):
             ),
         )
 
+        ending_portfolio = case["deterministic_ending_portfolio"]
+        ending_class = "ending-portfolio-zero" if float(ending_portfolio) <= 0.0 else ""
+
         rows.append(
             f"""
             <tr{_current_row_class(case)}>
@@ -252,11 +257,7 @@ def _render_retirement_comparison(report_data):
                         "reaching_zero_percent"
                     ]
                 ))}</td>
-                <td>{_safe(_fmt_currency(
-                    case[
-                        "deterministic_ending_portfolio"
-                    ]
-                ))}</td>
+                <td class="{ending_class}">{_safe(_fmt_currency(ending_portfolio))}</td>
             </tr>
             """
         )
@@ -266,9 +267,10 @@ def _render_retirement_comparison(report_data):
     <h2>Retirement Timing Comparison</h2>
 
     <p class="section-intro">
-        This comparison changes retirement timing while holding Social
-        Security timing at the household's current setting of age
-        {_safe(baseline_ss_age)}.
+        This comparison changes the household retirement age while holding
+        Social Security claiming ages at their current settings. Scenarios
+        That Depleted Portfolio shows the percentage of historical market
+        scenarios in which the portfolio reached zero; lower is better.
     </p>
 
     <table class="wide-table comparison-table">
@@ -381,11 +383,11 @@ def _render_social_security_comparison(
     <h2>Social Security Timing Comparison</h2>
 
     <p class="section-intro">
-        This comparison changes Social Security claiming timing while
-        holding retirement timing at the household's current setting of
-        age {_safe(baseline_retirement_age)}. Monthly Social Security
-        amounts reflect the modeled benefit at each claiming age. Total
-        Social Security is the amount received during the simulation
+        This comparison changes Social Security claiming ages while holding
+        the household retirement age at its current setting of age
+        {_safe(baseline_retirement_age)}. Monthly Social Security amounts
+        reflect the modeled benefit at each claiming age. Total Social
+        Security Received is the amount received during the simulation
         period, not over the household's lifetime.
     </p>
 
@@ -395,10 +397,10 @@ def _render_social_security_comparison(
                 <th>Household Social Security Age</th>
                 <th>Husband Monthly SS</th>
                 <th>Wife Monthly SS</th>
-                <th>Total Social Security During Simulation</th>
+                <th>Total Social Security Received</th>
                 <th>Monthly Retirement Income at Age 70</th>
                 <th>Monthly Retirement Income in Final Simulation Year</th>
-                <th>Portfolio Support Needed</th>
+                <th>Lifetime Cash Flow Shortfall</th>
             </tr>
         </thead>
         <tbody>
@@ -619,6 +621,21 @@ def generate_retirement_ss_comparison_report(
         font-weight: bold;
     }
 
+    .current-row td {
+        background: #e8f5e9;
+        font-weight: bold;
+    }
+
+    .ending-portfolio-zero {
+        color: #b00020;
+    }
+
+    .current-cell {
+        background: #e8f5e9;
+        font-weight: bold;
+        border: 2px solid #2e7d32 !important;
+    }
+
     .current-cell {
         background: #e8f5e9;
         font-weight: bold;
@@ -713,9 +730,7 @@ def generate_retirement_ss_comparison_report(
             title=(
                 "Retirement & Social Security Comparison Report"
             ),
-            market_wording=(
-                "modeled and historical market conditions"
-            ),
+            market_wording="historical market conditions",
         )}
 
         {_render_current_timing(

@@ -183,6 +183,58 @@ def _render_simple_table(rows, empty_message="No entries."):
 """
 
 
+def _render_percentile_table_rows(rows):
+    body_rows = []
+
+    for row in rows:
+        body_rows.append(
+            f"""
+            <tr>
+                <td>
+                    {_safe(_fmt_value(row.get("Year"), key="Year"))}
+                </td>
+                <td>
+                    {_safe(_fmt_value(row.get("10th Percentile"), key="10th Percentile"))}
+                </td>
+                <td>
+                    {_safe(_fmt_value(row.get("25th Percentile"), key="25th Percentile"))}
+                </td>
+                <td>
+                    {_safe(_fmt_value(row.get("Median"), key="Median"))}
+                </td>
+                <td>
+                    {_safe(_fmt_value(row.get("75th Percentile"), key="75th Percentile"))}
+                </td>
+                <td>
+                    {_safe(_fmt_value(row.get("90th Percentile"), key="90th Percentile"))}
+                </td>
+            </tr>
+            """
+        )
+
+    return f"""
+<table class="wide-table">
+    <thead>
+        <tr>
+            <th rowspan="2">Year</th>
+            <th colspan="2" class="market-left">Less Favorable Market</th>
+            <th>Median</th>
+            <th colspan="2">More Favorable Market</th>
+        </tr>
+        <tr>
+            <th>10th Percentile</th>
+            <th>25th Percentile</th>
+            <th></th>
+            <th>75th Percentile</th>
+            <th>90th Percentile</th>
+        </tr>
+    </thead>
+    <tbody>
+        {''.join(body_rows)}
+    </tbody>
+</table>
+"""
+
 def _render_executive_summary(report_data):
     if not _get_report_option(
         report_data.report_options,
@@ -464,7 +516,7 @@ def _render_percentile_table(report_data):
     <h2>Percentile Portfolio Table</h2>
     {explanation}
     <div class="table-scroll">
-        {_render_simple_table(rows)}
+        {_render_percentile_table_rows(rows)}
     </div>
 </section>
 """
@@ -556,7 +608,7 @@ def _render_historical_insights(report_data):
 
     if best_rows or worst_rows:
         best_worst_html = f"""
-        <div class="card-grid two-col historical-year-lists">
+        <div class="card-grid two-col historical-year-lists historical-year-break">
             <div class="summary-card">
                 <h3>Best Historical Retirement Start Years</h3>
                 <p>
@@ -814,6 +866,16 @@ def _render_css():
 .historical-year-lists {{
     margin-top: 16px;
 }}
+
+.historical-year-break {{
+    page-break-before: always;
+    break-before: page;
+}}
+
+.market-left {{
+    text-align: left !important;
+}}
+
 </style>
 """
 

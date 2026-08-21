@@ -73,8 +73,10 @@ class AssetAllocationComparisonReportData:
     report_metadata: dict[str, Any]
     current_allocation: dict[str, Any]
     comparison_cases: list[dict[str, Any]]
+    historical_plot_assets: dict[str, Any] = field(
+        default_factory=dict
+    )
     warnings: list[str] = field(default_factory=list)
-
 
 @dataclass
 class RetirementSSComparisonReportData:

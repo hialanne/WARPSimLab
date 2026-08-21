@@ -22,6 +22,10 @@ def save_portfolio_projection_report_plot(
     husband=None,
     wife=None,
     summary_results=None,
+    x_min=None,
+    x_max=None,
+    y_min=None,
+    y_max=None,
 ):
     """
     Save a portfolio projection plot for report use.
@@ -46,10 +50,22 @@ def save_portfolio_projection_report_plot(
             years_list,
             portfolio_plot_data,
             sim_config=sim_config,
-            annotate_plots=getattr(sim_config, "annotate_plots", False),
-            sim_rebalance_string=getattr(sim_config, "sim_rebalance", ""),
+            annotate_plots=getattr(
+                sim_config,
+                "annotate_plots",
+                False,
+            ),
+            sim_rebalance_string=getattr(
+                sim_config,
+                "sim_rebalance",
+                "",
+            ),
             husband=husband,
             wife=wife,
+            x_min=x_min,
+            x_max=x_max,
+            y_min=y_min,
+            y_max=y_max,
         )
 
         fig.savefig(image_path, dpi=200, bbox_inches="tight")

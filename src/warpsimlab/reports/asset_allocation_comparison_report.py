@@ -11,12 +11,12 @@ from src.warpsimlab.reports.report_common import (
     safe as _safe,
     get_report_output_folder,
     safe_report_id,
+    relative_asset_path,
     render_report_header,
     render_footer,
     render_base_css,
     open_html_report_in_browser,
 )
-
 
 def _fmt_currency(value):
     if value is None:
@@ -170,6 +170,11 @@ def _render_current_allocation_highlights(
             "deterministic_ending_portfolio"
         )
 
+        if float(ending_portfolio or 0.0) <= 0.0:
+            ending_class = "ending-portfolio-zero"
+        else:
+            ending_class = ""
+
         equity_text = _fmt_allocation_percent(
             case.get(
                 "equity_percentage"
@@ -212,7 +217,7 @@ def _render_current_allocation_highlights(
                     <div class="highlight-label">
                         Ending Portfolio
                     </div>
-                    <div class="highlight-value">
+                    <div class="highlight-value {ending_class}">
                         {_safe(_fmt_currency(
                             ending_portfolio
                         ))}
@@ -261,6 +266,11 @@ def _render_portfolio_durability(
             "deterministic_ending_portfolio"
         )
 
+        if float(ending_portfolio or 0.0) <= 0.0:
+            ending_class = "ending-portfolio-zero"
+        else:
+            ending_class = ""
+
         rows.append(
             f"""
             <tr{_current_row_class(case)}>
@@ -276,9 +286,10 @@ def _render_portfolio_durability(
                         "windows_reaching_zero_percent"
                     )
                 ))}</td>
-                <td>{_safe(_fmt_currency(
-                    ending_portfolio
-                ))}</td>
+
+                <td class="{ending_class}">
+                    {_safe(_fmt_currency(ending_portfolio))}
+                </td>
             </tr>
             """
         )
@@ -316,6 +327,10 @@ def _render_portfolio_outcomes(
 ):
     rows = []
 
+    def outcome_cell(value):
+        cell_class = "ending-portfolio-zero" if float(value or 0.0) <= 0.0 else ""
+        return f'<td class="{cell_class}">{_safe(_fmt_currency(value))}</td>'
+
     for case in _table_cases(report_data):
         outcomes = case.get(
             "ending_portfolio",
@@ -326,29 +341,11 @@ def _render_portfolio_outcomes(
             f"""
             <tr{_current_row_class(case)}>
                 <td>{_safe(_allocation_label(case))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get(
-                        "10th_percentile"
-                    )
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get(
-                        "25th_percentile"
-                    )
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("median")
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get(
-                        "75th_percentile"
-                    )
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get(
-                        "90th_percentile"
-                    )
-                ))}</td>
+                {outcome_cell(outcomes.get("10th_percentile"))}
+                {outcome_cell(outcomes.get("25th_percentile"))}
+                {outcome_cell(outcomes.get("median"))}
+                {outcome_cell(outcomes.get("75th_percentile"))}
+                {outcome_cell(outcomes.get("90th_percentile"))}
             </tr>
             """
         )
@@ -369,10 +366,15 @@ def _render_portfolio_outcomes(
         <table class="wide-table comparison-table outcome-table">
             <thead>
                 <tr>
-                    <th>Equity Allocation</th>
+                    <th rowspan="2">Equity Allocation</th>
+                    <th colspan="2" class="market-left">Less Favorable Market</th>
+                    <th>Median</th>
+                    <th colspan="2">More Favorable Market</th>
+                </tr>
+                <tr>
                     <th>10th Percentile</th>
                     <th>25th Percentile</th>
-                    <th>Median</th>
+                    <th></th>
                     <th>75th Percentile</th>
                     <th>90th Percentile</th>
                 </tr>
@@ -381,6 +383,102 @@ def _render_portfolio_outcomes(
                 {''.join(rows)}
             </tbody>
         </table>
+    </div>
+</section>
+"""
+
+
+def _render_historical_window_risk_visualization(
+    report_data,
+    output_folder,
+):
+    plot_assets = report_data.historical_plot_assets
+
+    current = plot_assets.get("current")
+    minus_20 = plot_assets.get("minus_20")
+    plus_20 = plot_assets.get("plus_20")
+
+    if (
+        current is None
+        or minus_20 is None
+        or plus_20 is None
+    ):
+        return ""
+
+    def image_src(asset):
+        path = relative_asset_path(
+            asset["path"],
+            output_folder,
+        )
+
+        return path.replace(
+            os.sep,
+            "/",
+        )
+
+    current_src = image_src(current)
+    minus_20_src = image_src(minus_20)
+    plus_20_src = image_src(plus_20)
+
+    current_equity = _fmt_allocation_percent(
+        current["equity_percentage"]
+    )
+
+    minus_20_equity = _fmt_allocation_percent(
+        minus_20["equity_percentage"]
+    )
+
+    plus_20_equity = _fmt_allocation_percent(
+        plus_20["equity_percentage"]
+    )
+
+    return f"""
+<section class="historical-allocation-risk">
+    <h2>Historical-Window Risk Visualization</h2>
+
+    <p class="section-intro">
+        These charts compare how the modeled portfolio would have behaved
+        across the same rolling historical market windows under three asset
+        allocations centered on the household's current allocation.
+    </p>
+
+    <div class="allocation-risk-primary">
+        <div class="allocation-risk-heading">
+            Current Allocation - {_safe(current_equity)} Equity
+        </div>
+
+        <img
+            src="{_safe(current_src)}"
+            alt="Historical-window portfolio outcomes for the current asset allocation"
+        >
+    </div>
+
+    <div class="allocation-risk-comparisons">
+
+        <div class="allocation-risk-secondary">
+            <div class="allocation-risk-heading">
+                Current -20 Points Equity -
+                {_safe(minus_20_equity)} Equity
+            </div>
+
+            <img
+                src="{_safe(minus_20_src)}"
+                alt="Historical-window portfolio outcomes for current allocation minus 20 percentage points equity"
+            >
+        </div>
+
+        <div class="allocation-risk-secondary">
+            <div class="allocation-risk-heading">
+                Current +20 Points Equity -
+                {_safe(plus_20_equity)} Equity
+            </div>
+
+            <img
+                src="{_safe(plus_20_src)}"
+                alt="Historical-window portfolio outcomes for current allocation plus 20 percentage points equity"
+            >
+        </div>
+
     </div>
 </section>
 """
@@ -395,9 +493,10 @@ def _render_method_note(
 
     <p class="section-intro">
         Each allocation case uses the same household assumptions and
-        deterministic market-return assumptions. Historical return
-        windows are evaluated separately for portfolio risk. Only the
-        modeled Stock/Bond/Cash allocation is changed.
+        deterministic market-return assumptions. Portfolio risk is
+        evaluated using the same rolling historical return windows for
+        each allocation case. Only the modeled Stock/Bond/Cash
+        allocation is changed.
     </p>
 
     <p class="section-intro">
@@ -518,6 +617,70 @@ def generate_asset_allocation_comparison_report(
         overflow-x: auto;
     }}
 
+    .historical-allocation-risk {{
+        margin-top: 34px;
+    }}
+
+    .allocation-risk-primary,
+    .allocation-risk-secondary {{
+        border: 1px solid #ccc;
+        background: #fafafa;
+        border-radius: 6px;
+        padding: 14px;
+    }}
+
+    .allocation-risk-primary {{
+        margin-top: 14px;
+    }}
+
+    .allocation-risk-primary img {{
+        display: block;
+        width: 88%;
+        height: auto;
+        margin: 10px auto 0 auto;
+    }}
+
+    .allocation-risk-comparisons {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }}
+
+    .allocation-risk-secondary img {{
+        display: block;
+        width: 100%;
+        height: auto;
+        margin: 10px auto 0 auto;
+    }}
+
+    .allocation-risk-heading {{
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        text-align: center;
+    }}
+
+    .ending-portfolio-zero {{
+        color: #b00020;
+    }}
+
+    .market-left {{
+        text-align: left !important;
+    }}
+
+    @media print {{
+        .allocation-risk-primary,
+        .allocation-risk-secondary {{
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }}
+
+        .allocation-risk-comparisons {{
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }}
+    }}
+
     </style>
 </head>
 
@@ -529,9 +692,7 @@ def generate_asset_allocation_comparison_report(
             title=(
                 "Asset Allocation Comparison Report"
             ),
-            market_wording=(
-                "modeled and historical market conditions"
-            ),
+            market_wording="historical market conditions",
         )}
 
         {_render_current_allocation_highlights(
@@ -544,6 +705,11 @@ def generate_asset_allocation_comparison_report(
 
         {_render_portfolio_outcomes(
             report_data
+        )}
+
+        {_render_historical_window_risk_visualization(
+            report_data,
+            output_folder,
         )}
 
         {_render_method_note(

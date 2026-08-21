@@ -79,7 +79,11 @@ def draw_portfolio_projection(
         annotate_plots=False,
         sim_rebalance_string="",
         husband=None,
-        wife=None
+        wife=None,
+        x_min=None,
+        x_max=None,
+        y_min=None,
+        y_max=None
     ):
     """
     Draws the portfolio projection into the provided matplotlib Axes.
@@ -151,16 +155,69 @@ def draw_portfolio_projection(
         del _plot_overlays._extra_handles
     ax.legend(handles=handles, labels=labels, loc="upper left")
 
-    # Always start y-axis at 0
-    yMin = 0
-    if sim_config.constant_y_plots:
-        if sim_config.subplot_mode == "monte_carlo":
-            yMax = simulation_data.percentiles["median"][0] * sim_config.years_to_simulate / 3
-        else:
-            yMax = simulation_data.percentiles["median"][0] * sim_config.years_to_simulate / 4.5
-        plt.ylim(yMin, yMax)
+    # Optional externally supplied axis limits take precedence over
+    # WARPSimLab's normal automatic plot scaling.
+    if x_min is not None or x_max is not None:
+        current_x_min, current_x_max = ax.get_xlim()
+
+        resolved_x_min = (
+            current_x_min
+            if x_min is None
+            else float(x_min)
+        )
+
+        resolved_x_max = (
+            current_x_max
+            if x_max is None
+            else float(x_max)
+        )
+
+        ax.set_xlim(
+            resolved_x_min,
+            resolved_x_max,
+        )
+
+    if y_min is not None or y_max is not None:
+        current_y_min, current_y_max = ax.get_ylim()
+
+        resolved_y_min = (
+            current_y_min
+            if y_min is None
+            else float(y_min)
+        )
+
+        resolved_y_max = (
+            current_y_max
+            if y_max is None
+            else float(y_max)
+        )
+
+        ax.set_ylim(
+            resolved_y_min,
+            resolved_y_max,
+        )
+
     else:
-        plt.ylim(bottom=yMin)
+        # Existing WARPSimLab behavior.
+        yMin = 0
+
+        if sim_config.constant_y_plots:
+            if sim_config.subplot_mode == "monte_carlo":
+                yMax = (
+                    simulation_data.percentiles["median"][0]
+                    * sim_config.years_to_simulate
+                    / 3
+                )
+            else:
+                yMax = (
+                    simulation_data.percentiles["median"][0]
+                    * sim_config.years_to_simulate
+                    / 4.5
+                )
+
+            plt.ylim(yMin,yMax,)
+        else:
+            plt.ylim(bottom=yMin)
 
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{int(x):,}'))
     plt.xlabel("Year")
@@ -247,16 +304,10 @@ def _plot_assets(years_list, simulation_data, total_color=COLOR_TOTAL_REAL, sim_
         )
 
     
-        plt.plot(
+        _plot_baseline_line(
             years_list,
-            median_values,
-            color=total_color,
-            linewidth=2,
-            label=getattr(
-                simulation_data,
-                "total_label",
-                "Total Assets",
-            )
+            simulation_data,
+            total_color,
         )
 
 # -------------------

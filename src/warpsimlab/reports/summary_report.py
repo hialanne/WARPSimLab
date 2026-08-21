@@ -1060,6 +1060,10 @@ def generate_summary_report(report_data: SummaryReportData) -> ReportResult:
         text-align: right;
     }}
 
+    .negative {{
+        color: #b00020;
+    }}
+
     @media print {{
 
         .simulation-summary-grid {{

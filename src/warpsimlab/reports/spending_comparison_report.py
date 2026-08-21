@@ -98,6 +98,11 @@ def _render_highlights(report_data):
             "deterministic_ending_portfolio"
         )
 
+        if float(ending_portfolio or 0.0) <= 0.0:
+            ending_class = "ending-portfolio-zero"
+        else:
+            ending_class = ""
+
         first_year_expenses = case.get(
             "deterministic_first_year_expenses"
         )
@@ -131,7 +136,7 @@ def _render_highlights(report_data):
                     <div class="highlight-label">
                         Ending Portfolio
                     </div>
-                    <div class="highlight-value">
+                    <div class="highlight-value {ending_class}">
                         {_safe(_fmt_currency(
                             ending_portfolio
                         ))}
@@ -249,7 +254,8 @@ def _render_portfolio_durability(report_data):
     <p class="section-intro">
         This table compares modeled first-year spending and how often
         historical scenarios depleted the portfolio at each spending level.
-        The 100% row represents current modeled household spending.
+        Lower depletion percentages are better. The 100% row represents
+        current modeled household spending.
     </p>
 
     <table class="wide-table comparison-table">
@@ -271,6 +277,10 @@ def _render_portfolio_durability(report_data):
 
 def _render_portfolio_outcomes(report_data):
     rows = []
+
+    def outcome_cell(value):
+        cell_class = "ending-portfolio-zero" if float(value or 0.0) <= 0.0 else ""
+        return f'<td class="{cell_class}">{_safe(_fmt_currency(value))}</td>'
 
     for case in report_data.comparison_cases:
         outcomes = case.get(
@@ -294,27 +304,13 @@ def _render_portfolio_outcomes(report_data):
             f"""
             <tr{row_class}>
                 <td>{_safe(spending_text)}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("minimum")
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("10th_percentile")
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("25th_percentile")
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("median")
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("75th_percentile")
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("90th_percentile")
-                ))}</td>
-                <td>{_safe(_fmt_currency(
-                    outcomes.get("maximum")
-                ))}</td>
+                {outcome_cell(outcomes.get("minimum"))}
+                {outcome_cell(outcomes.get("10th_percentile"))}
+                {outcome_cell(outcomes.get("25th_percentile"))}
+                {outcome_cell(outcomes.get("median"))}
+                {outcome_cell(outcomes.get("75th_percentile"))}
+                {outcome_cell(outcomes.get("90th_percentile"))}
+                {outcome_cell(outcomes.get("maximum"))}
             </tr>
             """
         )
@@ -336,11 +332,16 @@ def _render_portfolio_outcomes(report_data):
         <table class="wide-table comparison-table outcome-table">
             <thead>
                 <tr>
-                    <th>Spending</th>
+                    <th rowspan="2">Spending</th>
+                    <th colspan="3" class="market-left">Less Favorable Market</th>
+                    <th>Median</th>
+                    <th colspan="3">More Favorable Market</th>
+                </tr>
+                <tr>
                     <th>Lowest</th>
                     <th>10th Percentile</th>
                     <th>25th Percentile</th>
-                    <th>Median</th>
+                    <th></th>
                     <th>75th Percentile</th>
                     <th>90th Percentile</th>
                     <th>Highest</th>
@@ -407,8 +408,9 @@ def _render_financial_effects(report_data):
         uncovered_cell = ""
 
         if include_uncovered:
+            uncovered_class = "uncovered-expense" if float(uncovered or 0.0) > 0.0 else ""
             uncovered_cell = (
-                "<td>"
+                f'<td class="{uncovered_class}">'
                 + _safe(
                     _fmt_currency(
                         uncovered
@@ -529,6 +531,14 @@ def generate_spending_comparison_report(
         background: #eef6ee;
     }}
 
+    .ending-portfolio-zero {{
+        color: #b00020;
+    }}
+
+    .uncovered-expense {{
+        color: #b00020;
+    }}
+
     .highlight-note {{
         margin-top: 4px;
         color: #666;
@@ -557,6 +567,10 @@ def generate_spending_comparison_report(
         white-space: normal;
         line-height: 1.25;
         vertical-align: middle;
+    }}
+
+    .market-left {{
+        text-align: left !important;
     }}
 
     .table-scroll {{

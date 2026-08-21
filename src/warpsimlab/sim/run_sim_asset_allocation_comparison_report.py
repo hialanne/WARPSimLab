@@ -1,6 +1,7 @@
 # run_sim_asset_allocation_comparison_report.py
 
 import numpy as np
+import os
 
 from .simulation import run_pipeline
 
@@ -12,6 +13,15 @@ from src.warpsimlab.reports.report_data import (
 
 from src.warpsimlab.reports.asset_allocation_comparison_report import (
     generate_asset_allocation_comparison_report,
+)
+
+from src.warpsimlab.reports.report_common import (
+    get_report_output_folder,
+    safe_report_id,
+)
+
+from src.warpsimlab.reports.report_plot_helpers import (
+    save_portfolio_projection_report_plot,
 )
 
 
@@ -446,6 +456,15 @@ def _build_case_result(
         historical_pipeline_result["core"]
     )
 
+    historical_portfolio_plot_data = (
+        historical_pipeline_result[
+            "portfolio_plot_data"
+        ]
+    )
+
+    # ---------------------------------------------------------
+    # Deterministic financial quantities
+    # ---------------------------------------------------------
     # ---------------------------------------------------------
     # Deterministic financial quantities
     # ---------------------------------------------------------
@@ -516,7 +535,240 @@ def _build_case_result(
                 historical_ending_portfolios
             )
         ),
+
+        "historical_portfolio_plot_data": (
+            historical_portfolio_plot_data
+        ),
     }
+
+
+def _find_historical_plot_cases(
+    cases,
+    current_equity_percentage,
+):
+    target_percentages = {
+        "minus_20": max(
+            0.0,
+            current_equity_percentage - 20.0,
+        ),
+        "current": current_equity_percentage,
+        "plus_20": min(
+            100.0,
+            current_equity_percentage + 20.0,
+        ),
+    }
+
+    plot_cases = {}
+
+    for key, target_percentage in target_percentages.items():
+        if key == "current":
+            matching_case = next(
+                (
+                    case
+                    for case in cases
+                    if case.get(
+                        "is_current_allocation",
+                        False,
+                    )
+                ),
+                None,
+            )
+        else:
+            matching_case = next(
+                (
+                    case
+                    for case in cases
+                    if (
+                        not case.get(
+                            "is_current_allocation",
+                            False,
+                        )
+                        and abs(
+                            float(
+                                case[
+                                    "equity_percentage"
+                                ]
+                            )
+                            - target_percentage
+                        ) < 1e-9
+                    )
+                ),
+                None,
+            )
+
+        if matching_case is None:
+            raise RuntimeError(
+                "Could not find historical plot case "
+                f"for {target_percentage:.1f}% equity."
+            )
+
+        plot_cases[key] = matching_case
+
+    return plot_cases
+
+
+def _build_shared_historical_plot_limits(
+    plot_cases,
+):
+    x_min = None
+    x_max = None
+    y_max = 0.0
+
+    for case in plot_cases.values():
+        plot_data = case[
+            "historical_portfolio_plot_data"
+        ]
+
+        years = np.asarray(
+            plot_data.years,
+            dtype=float,
+        )
+
+        if years.size == 0:
+            raise RuntimeError(
+                "Historical plot data contains no years."
+            )
+
+        case_x_min = float(
+            np.min(years)
+        )
+
+        case_x_max = float(
+            np.max(years)
+        )
+
+        x_min = (
+            case_x_min
+            if x_min is None
+            else min(
+                x_min,
+                case_x_min,
+            )
+        )
+
+        x_max = (
+            case_x_max
+            if x_max is None
+            else max(
+                x_max,
+                case_x_max,
+            )
+        )
+
+        pct99 = np.asarray(
+            plot_data.percentiles["pct99"],
+            dtype=float,
+        )
+
+        if pct99.size == 0:
+            raise RuntimeError(
+                "Historical plot data contains no "
+                "99th percentile values."
+            )
+
+        y_max = max(
+            y_max,
+            float(
+                np.max(pct99)
+            ),
+        )
+
+    # Leave modest visual space above the outer probability band.
+    if y_max > 0.0:
+        y_max *= 1.05
+    else:
+        y_max = 1.0
+
+    return {
+        "x_min": x_min,
+        "x_max": x_max,
+        "y_min": 0.0,
+        "y_max": y_max,
+    }
+
+
+def _generate_historical_allocation_plots(
+    cases,
+    current_equity_percentage,
+    sim_config,
+    husband,
+    wife,
+    report_id,
+):
+    plot_cases = _find_historical_plot_cases(
+        cases,
+        current_equity_percentage,
+    )
+
+    shared_limits = (
+        _build_shared_historical_plot_limits(
+            plot_cases
+        )
+    )
+
+    output_folder = get_report_output_folder()
+
+    safe_id = safe_report_id(
+        report_id
+    )
+
+    assets_folder = os.path.join(
+        output_folder,
+        (
+            "asset_allocation_comparison_"
+            f"{safe_id}_assets"
+        ),
+    )
+
+    plot_assets = {}
+
+    filenames = {
+        "current": (
+            "historical_windows_current.png"
+        ),
+        "minus_20": (
+            "historical_windows_minus_20.png"
+        ),
+        "plus_20": (
+            "historical_windows_plus_20.png"
+        ),
+    }
+
+    for key in (
+        "current",
+        "minus_20",
+        "plus_20",
+    ):
+        case = plot_cases[key]
+
+        plot_data = case[
+            "historical_portfolio_plot_data"
+        ]
+
+        image_path = (
+            save_portfolio_projection_report_plot(
+                output_folder=assets_folder,
+                filename=filenames[key],
+                years_list=plot_data.years,
+                portfolio_plot_data=plot_data,
+                sim_config=sim_config,
+                husband=husband,
+                wife=wife,
+                x_min=shared_limits["x_min"],
+                x_max=shared_limits["x_max"],
+                y_min=shared_limits["y_min"],
+                y_max=shared_limits["y_max"],
+            )
+        )
+
+        plot_assets[key] = {
+            "path": image_path,
+            "equity_percentage": (
+                case["equity_percentage"]
+            ),
+        }
+
+    return plot_assets
 
 
 def run_sim_asset_allocation_comparison_report(
@@ -602,6 +854,12 @@ def run_sim_asset_allocation_comparison_report(
         None,
     )
 
+    original_monte_carlo_plot_style = getattr(
+        sim_config,
+        "monte_carlo_plot_style",
+        "fill",
+    )
+
     original_include_realestate = getattr(
         sim_config,
         "include_realestate",
@@ -670,6 +928,7 @@ def run_sim_asset_allocation_comparison_report(
         # Depletion is calculated directly from the
         # Historical Window results.
         sim_config.show_simulated_shortfall_rate = False
+        sim_config.monte_carlo_plot_style = "fill"
 
         # Prevent run_pipeline() from performing
         # unrelated overlay simulations for every case.
@@ -834,6 +1093,27 @@ def run_sim_asset_allocation_comparison_report(
             )
         )
 
+        report_metadata = (
+            _build_report_metadata(
+                sim_config
+            )
+        )
+
+        historical_plot_assets = (
+            _generate_historical_allocation_plots(
+                cases=cases,
+                current_equity_percentage=(
+                    current_equity_percentage
+                ),
+                sim_config=sim_config,
+                husband=husband,
+                wife=wife,
+                report_id=report_metadata[
+                    "Report ID"
+                ],
+            )
+        )
+
     finally:
         sim_config.subplot_mode = (
             original_subplot_mode
@@ -845,6 +1125,10 @@ def run_sim_asset_allocation_comparison_report(
 
         sim_config.monte_carlo_mode = (
             original_monte_carlo_mode
+        )
+
+        sim_config.monte_carlo_plot_style = (
+            original_monte_carlo_plot_style
         )
 
         sim_config.include_realestate = (
@@ -914,15 +1198,14 @@ def run_sim_asset_allocation_comparison_report(
     report_data = (
         AssetAllocationComparisonReportData(
             report_options=report_options,
-            report_metadata=(
-                _build_report_metadata(
-                    sim_config
-                )
-            ),
+            report_metadata=report_metadata,
             current_allocation=(
                 report_current_allocation
             ),
             comparison_cases=cases,
+            historical_plot_assets=(
+                historical_plot_assets
+            ),
             warnings=[],
         )
     )
