@@ -120,6 +120,7 @@ class PortfolioSimulatorGUI_IOMixin:
             # --- Second person enabled? ---
             second_person_flag = data.get("DEFAULT_ENABLE_SECOND_PERSON", 0)
             self.simulation_controls["enable_second_person"] = second_person_flag
+            self._sync_tax_status_from_second_person()
 
             if second_person_flag:
                 # Ensure Tk updates GUI traces

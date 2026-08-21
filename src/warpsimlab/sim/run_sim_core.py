@@ -14,6 +14,7 @@ from .engines import (
 )
 
 PROFILE_SIMULATION = False
+DEBUG_SIMULATION = False
 
 
 def _find_first_withdrawal_year(sim_config, husband, wife, years_to_simulate):
@@ -66,6 +67,9 @@ def simulate_yearly_portfolios(
                 - net_income_wife
                 - taxes
     """
+
+    #print("DEBUG tax_filing_status:", sim_config.tax_filing_status)
+    #print("DEBUG second_person_enabled:", sim_config.second_person_enabled)
 
     #print('num_sims: '+str(num_sims))
     years_to_simulate = sim_config.years_to_simulate
@@ -909,6 +913,27 @@ def simulate_yearly_portfolios(
                     portfolioEngine.rebalance(w_port, sim_config)
 
             # print("h_port: "+str(h_port.total_value))
+
+            if DEBUG_SIMULATION:
+                if s == 0 and year >= years_to_simulate - 2:
+                    print("")
+                    print("DEBUG FINAL YEARS")
+                    print("year index:", year)
+                    print("calendar year:", sim_config.start_year + year)
+                    print("husband age:", curr_h_age)
+                    print("use_expenses:", use_expenses)
+                    print("income total:", income["total"])
+                    print("income by class:", income["by_class"])
+                    print("gross work income:", income["by_class"].get("work", 0.0))
+                    print("bond interest:", bond_interest)
+                    print("cash interest:", cash_interest)
+                    print("qualified equity distributions:", qualified_equity_distributions)
+                    print("emergency pre-tax:", emergency_pre_tax_used)
+                    print("federal ordinary tax:", federal_ordinary_tax)
+                    print("federal qualified tax:", federal_qualified_dividend_tax)
+                    print("state tax:", state_income_tax)
+                    print("payroll tax:", payroll_tax)
+                    print("total tax:", total_tax)
 
             # Store results
             total_assets = h_port.total_value + (w_port.total_value if second_person_enabled else 0) + \
