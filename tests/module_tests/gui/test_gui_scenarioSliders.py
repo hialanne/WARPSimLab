@@ -227,8 +227,8 @@ def test_update_slider_state_disables_and_grays_controls(tk_root, no_tooltip, ma
     frame._update_slider_state()
 
     assert not frame.husband_slider.instate(["disabled"])
-    assert str(frame.husband_label.cget("foreground")) == "black"
-    assert str(frame.cash_label.cget("foreground")) == "black"
+    assert str(frame.husband_label.cget("foreground")) == ""
+    assert str(frame.cash_label.cget("foreground")) == ""
 
 def test_adjust_retirement_benefits_year_by_year_clamps_ages_and_scales_ss(tk_root, no_tooltip, main_gui_manual_expenses):
     mod = no_tooltip

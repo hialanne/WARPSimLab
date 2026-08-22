@@ -6,16 +6,14 @@ import pytest
 
 from src.warpsimlab.dataClasses.portfolioState import PortfolioState
 from src.warpsimlab.sim.engines import rothEngine
+from src.warpsimlab.dataClasses.person import Person
 
 
 def initialize_roth(cfg, husband_age=50, wife_age=48):
-    rothEngine.initialize_roth_engine_for_simulation(
-        cfg,
-        husband_age,
-        wife_age,
-    )
+    husband = Person(husband_age, 65, 0.0, 0.0, 99, 0.0, 99, 0.0, 99)
+    wife = Person(wife_age, 65, 0.0, 0.0, 99, 0.0, 99, 0.0, 99)
+    rothEngine.initialize_roth_engine_for_simulation(cfg, husband, wife)
     return cfg
-
 
 def make_sim_config(
     *,
@@ -146,11 +144,7 @@ def test_prepare_requested_roth_flows_caps_only_workplace_contributions_by_wages
         ]
     )
 
-    rothEngine.initialize_roth_engine_for_simulation(
-        cfg,
-        husband_age=49,
-        wife_age=47,
-    )
+    initialize_roth(cfg, husband_age=49, wife_age=47)
 
     result = rothEngine.prepare_requested_roth_flows(
         curr_husband_age=50,

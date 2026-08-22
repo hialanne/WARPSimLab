@@ -256,11 +256,10 @@ def test_couple_roth_shortfall_preserves_owner_and_flow_type_allocation():
             ),
         ],
     )
-    rothEngine.initialize_roth_engine_for_simulation(
-        config,
-        husband_age=40,
-        wife_age=40,
-    )
+    husband = make_person(age=40)
+    wife = make_person(age=40)
+
+    rothEngine.initialize_roth_engine_for_simulation(config, husband, wife)
     requested = rothEngine.prepare_requested_roth_flows(
         curr_husband_age=41,
         curr_wife_age=41,

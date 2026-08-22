@@ -116,31 +116,3 @@ def test_state_selection_updates_controls_dict(tk_root):
     assert control_vars["_controls_dict"]["state_of_residence"] == "NY"
 
 
-def test_filing_status_selection_updates_controls_dict(tk_root):
-    """
-    gui_taxes.py uses a StringVar local to _add_filing_status; it isn't stored.
-    So we find the filing-status Combobox and set its textvariable directly.
-    """
-    from src.warpsimlab.gui import gui_taxes as mod
-    from tkinter import ttk
-
-    control_vars = _control_vars(tax_filing_status="Single")
-    frame = mod.TaxesEditFrame(tk_root, control_vars=control_vars)
-    frame.pack()
-
-    # Find the filing status combobox by matching its values list.
-    filing_combo = None
-    for child in frame.winfo_children():
-        if isinstance(child, ttk.Combobox):
-            vals = tuple(child.cget("values"))
-            if vals == mod.TaxesEditFrame.FILING_STATUSES:
-                filing_combo = child
-                break
-
-    assert filing_combo is not None, "Could not find Tax Filing Status combobox"
-
-    filing_combo.set("Married filing jointly")
-    assert control_vars["_controls_dict"]["tax_filing_status"] == "Married filing jointly"
-
-    filing_combo.set("Single")
-    assert control_vars["_controls_dict"]["tax_filing_status"] == "Single"

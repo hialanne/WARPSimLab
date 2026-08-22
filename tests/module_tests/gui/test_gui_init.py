@@ -74,6 +74,10 @@ def _install_stub_modules(monkeypatch):
         "DEFAULT_REAL_ESTATE_W",
     ]:
         setattr(consts, name, 0)
+
+    consts.UNIFORM_LIFETIME_TABLE = {}
+    consts.RMD_START_AGE = 73
+    
     monkeypatch.setitem(sys.modules, "src.warpsimlab.utils.constants", consts)
 
     # --- stubs for other GUI / utility imports ---
@@ -107,7 +111,12 @@ def _install_stub_modules(monkeypatch):
     stub_mod("src.warpsimlab.gui.gui_scenarioSnapshots")
 
     # io_utils wildcard
-    stub_mod("src.warpsimlab.utils.io_utils")
+    stub_mod(
+        "src.warpsimlab.utils.io_utils",
+        load_financial_data_from_json=lambda *args, **kwargs: {},
+        save_financial_data_to_file=lambda *args, **kwargs: None,
+        load_market_data=lambda *args, **kwargs: {},
+    )
 
     # Portfolio class import
     stub_mod("src.warpsimlab.dataClasses.portfolio", Portfolio=type("Portfolio", (), {"__init__": lambda self, **k: None}))
@@ -239,7 +248,7 @@ def test_advanced_only(gui_init_mod, tk_root):
     assert inst._advanced_only() is True
 
 
-def test_on_mode_changed_destroys_editor_children_and_calls_home(gui_init_mod, tk_root):
+def test_on_mode_changed_destroys_editor_children_and_calls_home(gui_init_mod, patched_soft_disable, tk_root):
     inst = _make_gui_instance(gui_init_mod, tk_root)
 
     # Ensure container has children before
