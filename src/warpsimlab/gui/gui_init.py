@@ -66,7 +66,7 @@ from src.warpsimlab.gui.gui_reportAssetAllocationComparison import (AssetAllocat
 from src.warpsimlab.gui.gui_reportRetirementSSComparison import (RetirementSSComparisonReportFrame,)
 
 
-WARPSIMLAB_VERSION = "4.1.1"
+WARPSIMLAB_VERSION = "4.2.0"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin):
@@ -241,6 +241,90 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             fieldbackground="#3a3a3a",
             foreground="#f0f0f0",
         )
+
+        style.map(
+            "TCheckbutton",
+            background=[
+                ("active", "#2b2b2b"),
+            ],
+            foreground=[
+                ("active", "#f0f0f0"),
+            ],
+        )
+
+        style.map(
+            "TRadiobutton",
+            background=[
+                ("active", "#2b2b2b"),
+            ],
+            foreground=[
+                ("active", "#f0f0f0"),
+            ],
+        )
+
+        style.map(
+            "TLabel",
+            background=[
+                ("disabled", "#2b2b2b"),
+            ],
+            foreground=[
+                ("disabled", "#9a9a9a"),
+            ],
+        )
+
+        style.map(
+            "TEntry",
+            fieldbackground=[
+                ("disabled", "#333333"),
+            ],
+            foreground=[
+                ("disabled", "#9a9a9a"),
+            ],
+        )
+
+        style.map(
+            "TMenubutton",
+            background=[
+                ("disabled", "#333333"),
+            ],
+            foreground=[
+                ("disabled", "#9a9a9a"),
+            ],
+        )
+        style.configure(
+            "TButton",
+            background="#3a3a3a",
+            foreground="#f0f0f0",
+        )
+        style.map(
+            "TButton",
+            background=[
+                ("disabled", "#333333"),
+                ("active", "#4a4a4a"),
+            ],
+            foreground=[
+                ("disabled", "#9a9a9a"),
+                ("active", "#f0f0f0"),
+            ],
+        )
+
+        self.root.option_add("*Button.background", "#3a3a3a")
+        self.root.option_add("*Button.foreground", "#f0f0f0")
+        self.root.option_add("*Button.activeBackground", "#4a4a4a")
+        self.root.option_add("*Button.activeForeground", "#f0f0f0")
+
+        self.root.option_add("*Menubutton.background", "#3a3a3a")
+        self.root.option_add("*Menubutton.foreground", "#f0f0f0")
+        self.root.option_add("*Menubutton.activeBackground", "#4a4a4a")
+        self.root.option_add("*Menubutton.activeForeground", "#f0f0f0")
+
+        self.root.option_add("*Menu.background", "#3a3a3a")
+        self.root.option_add("*Menu.foreground", "#f0f0f0")
+        self.root.option_add("*Menu.activeBackground", "#4a4a4a")
+        self.root.option_add("*Menu.activeForeground", "#f0f0f0")
+
+        self.root.option_add("*Menu.selectColor", "#f0f0f0")
+
 
 
     def _get_monitor_work_area(self, x, y):

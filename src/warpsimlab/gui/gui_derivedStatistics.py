@@ -25,9 +25,6 @@ class DerivedStatisticsFrame(ttk.Frame):
         self.wife_portfolio = wife_portfolio
         self.mode = mode
 
-        style = ttk.Style()
-        style.configure("Derived.TEntry", foreground="#555555")
-
         header_frame = ttk.Frame(self)
         header_frame.grid(
             row=0,
@@ -188,7 +185,6 @@ class DerivedStatisticsFrame(ttk.Frame):
             textvariable=var,
             width=18,
             state="readonly",
-            style="Derived.TEntry",
         )
         entry.grid(row=row, column=1, sticky="w", padx=10)
         Tooltip(entry, tooltip_text, font=("Arial", 11))

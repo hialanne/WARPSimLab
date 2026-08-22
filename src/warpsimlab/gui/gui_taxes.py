@@ -9,11 +9,6 @@ class TaxesEditFrame(ttk.Frame):
     Tax-related controls.
     """
 
-    FILING_STATUSES = (
-        "Single",
-        "Married filing jointly",
-    )
-
     US_STATES = (
         "",  # allows "no selection"
         "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA",
@@ -27,6 +22,26 @@ class TaxesEditFrame(ttk.Frame):
         super().__init__(parent, padding=10, **kwargs)
 
         self.controls = control_vars["_controls_dict"]
+
+        style = ttk.Style(self)
+        combo_foreground = style.lookup("TLabel", "foreground")
+        combo_background = style.lookup("TCombobox", "fieldbackground")
+
+        style.configure(
+            "Taxes.TCombobox",
+            foreground=combo_foreground,
+            fieldbackground=combo_background,
+        )
+
+        style.map(
+            "Taxes.TCombobox",
+            foreground=[
+                ("readonly", combo_foreground),
+            ],
+            fieldbackground=[
+                ("readonly", combo_background),
+            ],
+        )
 
         header_frame = ttk.Frame(self)
         header_frame.grid(
@@ -80,6 +95,10 @@ class TaxesEditFrame(ttk.Frame):
     # ------------------------------------------------
     # Helpers
     # ------------------------------------------------
+    def _on_combobox_selected(self, event=None):
+        event.widget.selection_clear()
+        self.focus_set()
+
     def _next_row(self):
         r = self._row
         self._row += 1
@@ -191,7 +210,8 @@ class TaxesEditFrame(ttk.Frame):
             textvariable=var,
             values=self.US_STATES,
             state="readonly",
-            width=6
+            width=6,
+            style="Taxes.TCombobox"
         )
 
         combo.grid(
@@ -200,6 +220,8 @@ class TaxesEditFrame(ttk.Frame):
             sticky="w",
             pady=(0, 8)
         )
+
+        combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
 
         var.trace_add(
             "write",
@@ -211,43 +233,7 @@ class TaxesEditFrame(ttk.Frame):
 
 
     def _add_filing_status(self):
-        key = "tax_filing_status"
-
-        if key not in self.controls:
-            raise KeyError(f"{key} not found in simulation_controls")
-
-        ttk.Label(
-            self,
-            text="Tax Filing Status"
-        ).grid(
-            row=self._next_row(),
-            column=0,
-            sticky="w",
-            pady=(2, 2)
-        )
-
-        var = tk.StringVar(value=self.controls[key])
-
-        combo = ttk.Combobox(
-            self,
-            textvariable=var,
-            values=self.FILING_STATUSES,
-            state="readonly",
-            width=28
-        )
-
-        combo.grid(
-            row=self._next_row(),
-            column=0,
-            sticky="w",
-            pady=(0, 8)
-        )
-
-        var.trace_add(
-            "write",
-            lambda *args: self.controls.__setitem__(key, var.get())
-        )
-
+        self._add_text("Filing status is determined by the number of people in the simulation.")
 
     def _sync_state_tax_enabled(self):
         federal_on = self.controls["calculate_income_taxes"]

@@ -399,7 +399,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
     def _update_slider_state(self, *args):
         enabled = bool(self.enable_overrides.get())
         state = "normal" if enabled else "disabled"
-        fg = "black" if enabled else "gray"
 
         # Sliders/labels that always exist
         slider_label_pairs = [
@@ -417,9 +416,16 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
         for slider, label in slider_label_pairs:
             slider.configure(state=state)
-            label.configure(foreground=fg)
 
-        self.cash_label.configure(foreground=fg)
+            if enabled:
+                label.configure(foreground="")
+            else:
+                label.configure(foreground="gray")
+
+        if enabled:
+            self.cash_label.configure(foreground="")
+        else:
+            self.cash_label.configure(foreground="gray")
 
         # Adjust SS benefits based on baseline persons if provided
         baseline_h = self.baseline_persons.get("husband", self.main_gui.husband if self.main_gui else None)

@@ -36,6 +36,27 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self.special_income_streams = special_income_streams
         self.enable_second_person = enable_second_person
         self.title = title
+
+        style = ttk.Style(self)
+        combo_foreground = style.lookup("TLabel", "foreground")
+        combo_background = style.lookup("TCombobox", "fieldbackground")
+
+        style.configure(
+            "SpecialIncome.TCombobox",
+            foreground=combo_foreground,
+            fieldbackground=combo_background,
+        )
+
+        style.map(
+            "SpecialIncome.TCombobox",
+            foreground=[
+                ("readonly", combo_foreground),
+            ],
+            fieldbackground=[
+                ("readonly", combo_background),
+            ],
+        )
+
         self.row_vars = []
         self.next_row = 0
 
@@ -103,6 +124,11 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self._update_add_button_position()
 
 
+    def _on_combobox_selected(self, event=None):
+        event.widget.selection_clear()
+        self.focus_set()
+
+
     def _default_owner(self):
         return "husband"
 
@@ -162,8 +188,10 @@ class SpecialIncomeEditFrame(ttk.Frame):
             values=self._owner_values(),
             width=10,
             state="readonly",
+            style="SpecialIncome.TCombobox",
         )
         owner_combo.grid(row=row, column=0, padx=5, pady=2, sticky="w")
+        owner_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
         Tooltip(owner_combo, "Person whose age controls this income stream", font=("Arial", 11))
 
         name_entry = ttk.Entry(self, textvariable=name_var, width=24)

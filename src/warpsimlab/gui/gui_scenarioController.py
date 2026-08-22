@@ -819,6 +819,11 @@ class ScenarioController:
                 pass
 
 
+    def _on_mode_dropdown_selected(self, event=None):
+        self._on_mode_changed()
+        self.mode_dropdown.selection_clear()
+        self.window.focus_set()
+
     def _on_mode_changed(self, *_args):
         if self.mode_var is None:
             return
@@ -909,15 +914,38 @@ class ScenarioController:
         )
         self.mode_var = tk.StringVar(value=current_mode_label)
 
+        style = ttk.Style(self.window)
+
+        combo_foreground = style.lookup("TLabel", "foreground")
+        combo_background = style.lookup("TCombobox", "fieldbackground")
+
+        style.configure(
+            "Scenario.TCombobox",
+            foreground=combo_foreground,
+            fieldbackground=combo_background,
+        )
+
+        style.map(
+            "Scenario.TCombobox",
+            foreground=[
+                ("readonly", combo_foreground),
+            ],
+            fieldbackground=[
+                ("readonly", combo_background),
+            ],
+        )
+
         self.mode_dropdown = ttk.Combobox(
             right_stack,
             textvariable=self.mode_var,
             values=[label for label, _value in SCENARIO_MODE_OPTIONS],
             state="readonly",
-            width=20
+            width=20,
+            style="Scenario.TCombobox"
         )
+
         self.mode_dropdown.grid(row=1, column=0, sticky="ew", pady=(0, 10))
-        self.mode_dropdown.bind("<<ComboboxSelected>>", self._on_mode_changed)
+        self.mode_dropdown.bind("<<ComboboxSelected>>", self._on_mode_dropdown_selected)
 
         self.annotate_cb = ttk.Checkbutton(
             right_stack,

@@ -75,6 +75,26 @@ class RothEditFrame(ttk.Frame):
         self.enable_second_person = enable_second_person
         self.title = title
 
+        style = ttk.Style(self)
+        combo_foreground = style.lookup("TLabel", "foreground")
+        combo_background = style.lookup("TCombobox", "fieldbackground")
+
+        style.configure(
+            "Roth.TCombobox",
+            foreground=combo_foreground,
+            fieldbackground=combo_background,
+        )
+
+        style.map(
+            "Roth.TCombobox",
+            foreground=[
+                ("readonly", combo_foreground),
+            ],
+            fieldbackground=[
+                ("readonly", combo_background),
+            ],
+        )
+
         self.row_vars = []
         self.next_row = 0
 
@@ -149,6 +169,10 @@ class RothEditFrame(ttk.Frame):
 
         self._update_add_button_position()
 
+
+    def _on_combobox_selected(self, event=None):
+        event.widget.selection_clear()
+        self.focus_set()
 
     def _default_owner(self):
         return "husband"
@@ -237,13 +261,19 @@ class RothEditFrame(ttk.Frame):
             values=self._owner_values(),
             width=10,
             state="readonly",
+            style="Roth.TCombobox",
         )
+
         owner_combo.grid(
             row=row,
             column=0,
             padx=5,
             pady=2,
             sticky="w",
+        )
+        owner_combo.bind(
+            "<<ComboboxSelected>>",
+            self._on_combobox_selected,
         )
         Tooltip(
             owner_combo,
@@ -260,6 +290,7 @@ class RothEditFrame(ttk.Frame):
             ],
             width=29,
             state="readonly",
+            style="Roth.TCombobox",
         )
         type_combo.grid(
             row=row,
@@ -267,6 +298,10 @@ class RothEditFrame(ttk.Frame):
             padx=5,
             pady=2,
             sticky="w",
+        )
+        type_combo.bind(
+            "<<ComboboxSelected>>",
+            self._on_combobox_selected,
         )
         Tooltip(
             type_combo,

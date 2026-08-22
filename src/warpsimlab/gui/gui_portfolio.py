@@ -30,9 +30,6 @@ class PortfolioEditFrame(ttk.Frame):
         self.wife_portfolio = wife_portfolio
         self.mode = mode
 
-        style = ttk.Style()
-        style.configure("Derived.TEntry", foreground="#555555")
-
         header_frame = ttk.Frame(self)
         header_frame.grid(
             row=0,
@@ -251,7 +248,6 @@ class PortfolioEditFrame(ttk.Frame):
             textvariable=self.column_total_vars["husband"],
             width=14,
             state="readonly",
-            style="Derived.TEntry",
         ).grid(row=row, column=1, sticky="w", padx=5)
 
         if self.w_vars:
@@ -281,9 +277,7 @@ class PortfolioEditFrame(ttk.Frame):
                 " contributions, qualified medical expenses, or detailed HSA tax treatment."
             ),
             font=("Arial", 12, "italic"),
-            foreground="#555555",
         ).grid(row=row, column=0, columnspan=4, sticky="w", padx=10, pady=(12, 0))
-
 
     def _add_money_row(self, row, label_text, key, tooltip_text):
         ttk.Label(self, text=label_text).grid(

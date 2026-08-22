@@ -8,29 +8,18 @@ def noop():
 
 
 def set_tk_button_soft_disabled(btn: tk.Button, enabled: bool, real_command, noop_command=noop):
-    """
-    Keep tk.Button appearance while simulating a disabled state.
+    default_fg = btn.option_get("foreground", "Foreground")
+    default_active_fg = btn.option_get("activeForeground", "Foreground")
 
-    Why this exists:
-    - tk.Button with state='disabled' often does not render the exact look desired
-    - this keeps the widget visually present while neutralizing clicks
+    if not hasattr(btn, "_warpsimlab_default_fg"):
+        btn._warpsimlab_default_fg = btn.cget("fg")
+        btn._warpsimlab_default_active_fg = btn.cget("activeforeground")
 
-    Parameters
-    ----------
-    btn : tk.Button
-        The button to update.
-    enabled : bool
-        True to enable the real command, False to gray it out and disable behavior.
-    real_command : callable
-        The command to run when enabled.
-    noop_command : callable
-        Fallback command when disabled.
-    """
     if enabled:
         btn.configure(
             state="normal",
-            fg="black",
-            activeforeground="black",
+            fg=btn._warpsimlab_default_fg,
+            activeforeground=btn._warpsimlab_default_active_fg,
             cursor="",
             command=real_command,
             relief="raised",
@@ -44,7 +33,6 @@ def set_tk_button_soft_disabled(btn: tk.Button, enabled: bool, real_command, noo
             command=noop_command,
             relief="flat",
         )
-
 
 def popup_menu_below_widget(widget, menu: tk.Menu):
     """

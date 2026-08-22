@@ -59,8 +59,7 @@ class SummaryDialog(tk.Toplevel):
         style.configure(
             "TNotebook.Tab",
             font=tab_font_reg,
-            padding=[20, 5],
-            background="#f0f0f0"
+            padding=[20, 5]
         )
         style.configure(
             "TNotebook",
@@ -69,9 +68,7 @@ class SummaryDialog(tk.Toplevel):
         style.map(
             "TNotebook.Tab",
             font=[("selected", tab_font_bold)],
-            padding=[("selected", [40, 0])],
-            foreground=[("selected", "darkblue")],
-            background=[("selected", "white")]
+            padding=[("selected", [40, 0])]
         )
 
         container = ttk.Frame(self, padding=20)
@@ -335,20 +332,20 @@ class SummaryDialog(tk.Toplevel):
                 + hsa_assets[year_idx]
             )
 
-            color = (
-                "red"
-                if total_portfolio == 0
-                else "black"
-            )
-
-            ttk.Label(
-                frame,
-                text=(
+            label_args = {
+                "text": (
                     f"Total Portfolio:  "
                     f"{fmt(total_portfolio)}"
                 ),
-                font=body_total_font,
-                foreground=color
+                "font": body_total_font,
+            }
+
+            if total_portfolio == 0:
+                label_args["foreground"] = "red"
+
+            ttk.Label(
+                frame,
+                **label_args
             ).pack(anchor="w")
 
             ttk.Label(
@@ -374,20 +371,20 @@ class SummaryDialog(tk.Toplevel):
                 pady=4
             )
 
-            color = (
-                "red"
-                if r["total_assets"][year_idx] == 0
-                else "black"
-            )
-
-            ttk.Label(
-                frame,
-                text=(
+            label_args = {
+                "text": (
                     f"Total Assets:     "
                     f"{fmt(r['total_assets'][year_idx])}"
                 ),
-                font=body_total_font,
-                foreground=color
+                "font": body_total_font,
+            }
+
+            if r["total_assets"][year_idx] == 0:
+                label_args["foreground"] = "red"
+
+            ttk.Label(
+                frame,
+                **label_args
             ).pack(anchor="w")
 
             ttk.Separator(
@@ -440,7 +437,6 @@ class SummaryDialog(tk.Toplevel):
                 "wife's, if applicable."
             ),
             font=body_font,
-            foreground="darkblue",
             justify="left"
         ).pack(anchor="w")
 
@@ -505,17 +501,19 @@ class SummaryDialog(tk.Toplevel):
             ):
                 value = r[key][idx]
 
-                color = (
-                    color_fn(value)
-                    if color_fn
-                    else "black"
-                )
+                label_args = {
+                    "text": fmt(value),
+                    "font": value_font,
+                }
+
+                if color_fn:
+                    color = color_fn(value)
+                    if color:
+                        label_args["foreground"] = color
 
                 ttk.Label(
                     income_tab,
-                    text=fmt(value),
-                    font=value_font,
-                    foreground=color
+                    **label_args
                 ).grid(
                     row=row_idx,
                     column=col_offset,
@@ -666,7 +664,6 @@ class SummaryDialog(tk.Toplevel):
             income_tab,
             text=note_text,
             font=body_font,
-            foreground="darkblue",
             justify="left"
         ).grid(
             row=row_idx,
@@ -744,17 +741,19 @@ class SummaryDialog(tk.Toplevel):
             ):
                 value = r[key][idx]
 
-                color = (
-                    color_fn(value)
-                    if color_fn
-                    else "black"
-                )
+                label_args = {
+                    "text": fmt(value),
+                    "font": value_font,
+                }
+
+                if color_fn:
+                    color = color_fn(value)
+                    if color:
+                        label_args["foreground"] = color
 
                 ttk.Label(
                     cash_flow_tab,
-                    text=fmt(value),
-                    font=value_font,
-                    foreground=color
+                    **label_args
                 ).grid(
                     row=row_idx,
                     column=col_offset,
@@ -863,7 +862,7 @@ class SummaryDialog(tk.Toplevel):
                 color_fn=(
                     lambda x: "red"
                     if x < 0
-                    else "black"
+                    else None
                 )
             )
 
@@ -908,7 +907,6 @@ class SummaryDialog(tk.Toplevel):
             cash_flow_tab,
             text=note_text,
             font=body_font,
-            foreground="darkblue",
             justify="left"
         ).grid(
             row=row_idx,
@@ -997,17 +995,19 @@ class SummaryDialog(tk.Toplevel):
                 else body_font
             )
 
-            color = (
-                color_fn(value)
-                if color_fn
-                else "black"
-            )
+            label_args = {
+                "text": f"{label}{fmt(value)}",
+                "font": value_font,
+            }
+
+            if color_fn:
+                color = color_fn(value)
+                if color:
+                    label_args["foreground"] = color
 
             ttk.Label(
                 totals_frame,
-                text=f"{label}{fmt(value)}",
-                font=value_font,
-                foreground=color
+                **label_args
             ).pack(
                 anchor="w",
                 pady=2
@@ -1062,7 +1062,7 @@ class SummaryDialog(tk.Toplevel):
             color_fn=(
                 lambda x: "red"
                 if x < 0
-                else "black"
+                else None
             )
         )
 
@@ -1087,7 +1087,6 @@ class SummaryDialog(tk.Toplevel):
                 "    in the portfolio falling to $0."
             ),
             font=body_font,
-            foreground="black",
             justify="left"
         ).pack(
             anchor="w",
@@ -1225,7 +1224,6 @@ class SummaryDialog(tk.Toplevel):
                 "simulation period.\n\n"
             ),
             font=body_font,
-            foreground="darkblue",
             justify="left"
         ).grid(
             row=1,

@@ -154,9 +154,10 @@ class NormalIncomeEditFrame(ttk.Frame):
             ("Pension ($)", "pension", "Annual pension income"),
             ("Pension Start Age", "pension_age", "Age pension payments begin"),
             (
-                "Pension Inflation Adjustment (%)",
+                "Pension COLA (% of Inflation)",
                 "pension_inflation_adjustment_pct",
-                "Percent (0-100). You will apply this in the simulator.",
+                "Percentage of annual inflation applied to the pension after it starts." 
+                " 0% = no COLA, 50% = half of inflation, 100% = full inflation adjustment.",
             ),
             ("Annuity ($)", "annuity", "Annual annuity income"),
             ("Annuity Start Age", "annuity_age", "Age annuity payments begin"),

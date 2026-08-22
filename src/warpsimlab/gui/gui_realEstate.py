@@ -26,9 +26,6 @@ class RealEstateEditFrame(ttk.Frame):
         self.wife_portfolio = wife_portfolio
         self.mode = mode
 
-        style = ttk.Style()
-        style.configure("Derived.TEntry", foreground="#555555")
-
         header_frame = ttk.Frame(self)
         header_frame.grid(
             row=0,
@@ -157,7 +154,6 @@ class RealEstateEditFrame(ttk.Frame):
             textvariable=self.total_real_estate_var,
             width=14,
             state="readonly",
-            style="Derived.TEntry",
         ).grid(row=row, column=3, sticky="w", padx=5)
 
     def _validate_real_estate_on_focusout(self, proposed_value, person_key):
