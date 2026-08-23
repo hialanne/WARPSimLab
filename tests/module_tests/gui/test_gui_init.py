@@ -77,6 +77,14 @@ def _install_stub_modules(monkeypatch):
 
     consts.UNIFORM_LIFETIME_TABLE = {}
     consts.RMD_START_AGE = 73
+    consts.DEFAULT_YEARS = 30
+    consts.DEFAULT_SIMULATIONS = 1000
+    consts.DEFAULT_FUND_EXPENSE = 1.0
+    consts.DEFAULT_ENABLE_SECOND_PERSON = 1
+    consts.DEFAULT_STATE_OF_RESIDENCE = "NM"
+    consts.DEFAULT_EXPENSE_ENTRIES = []
+    consts.DEFAULT_SPECIAL_INCOME_STREAMS = []
+    consts.DEFAULT_ROTH_FLOWS = []
     
     monkeypatch.setitem(sys.modules, "src.warpsimlab.utils.constants", consts)
 
