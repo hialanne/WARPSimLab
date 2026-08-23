@@ -1,4 +1,4 @@
-# WARPSimLab - v4.2.0
+# WARPSimLab - v4.2.2
 
 ## Project overview
 

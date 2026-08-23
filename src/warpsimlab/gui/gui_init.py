@@ -67,7 +67,7 @@ from src.warpsimlab.gui.gui_reportAssetAllocationComparison import (AssetAllocat
 from src.warpsimlab.gui.gui_reportRetirementSSComparison import (RetirementSSComparisonReportFrame,)
 
 
-WARPSIMLAB_VERSION = "4.2.0"
+WARPSIMLAB_VERSION = "4.2.2"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 MODE_DEBUG  = False
