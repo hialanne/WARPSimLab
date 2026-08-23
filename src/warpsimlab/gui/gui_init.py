@@ -12,6 +12,7 @@ from datetime import datetime
 import os
 import sys
 from pathlib import Path
+import traceback
 
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.gui.gui_run import PortfolioSimulatorGUI_RunMixin
@@ -69,6 +70,9 @@ from src.warpsimlab.gui.gui_reportRetirementSSComparison import (RetirementSSCom
 WARPSIMLAB_VERSION = "4.2.0"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
+MODE_DEBUG  = False
+SCREEN_DEBUG  = False
+
 class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin):
     def __init__(self, root):
         self.root = root
@@ -84,7 +88,8 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self._apply_main_window_startup_settings()
 
         # Diagnostic prints for dialog and subdialog diagnostics.  Comment out in production.
-        # self._print_display_diagnostics()
+        if SCREEN_DEBUG:
+            self._print_display_diagnostics()
 
         ttk.Label(root, text=WARPSIMLAB_TITLE, font=("Arial", 16), ).pack(pady=10)
 
@@ -105,7 +110,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             annuity_age=DEFAULT_HUSBAND_ANNUITY_AGE,
             annual_401k_contribution=DEFAULT_HUSBAND_401K_CONTRIB,
             annual_employer_match=DEFAULT_HUSBAND_401K_MATCH,
-            pension_inflation_adjustment_pct=0.0, 
+            pension_inflation_adjustment_pct=DEFAULT_HUSBAND_PENSION_INFLATION_ADJ,
         )
 
         self.wife = Person(
@@ -120,7 +125,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             annuity_age=DEFAULT_WIFE_ANNUITY_AGE,
             annual_401k_contribution=DEFAULT_WIFE_401K_CONTRIB,
             annual_employer_match=DEFAULT_WIFE_401K_MATCH,
-            pension_inflation_adjustment_pct=0.0, 
+            pension_inflation_adjustment_pct=DEFAULT_WIFE_PENSION_INFLATION_ADJ,
         )
 
         self.husband_portfolio = Portfolio(
@@ -806,12 +811,11 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         window_width = int(development_window_width * scale)
         window_height = int(development_window_height * scale)
 
-        minimum_window_width = 1100
+        minimum_window_width = 1200
+        minimum_window_height = 750
 
-        window_width = max(
-            window_width,
-            minimum_window_width,
-        )
+        window_width = max(window_width, minimum_window_width)
+        window_height = max(window_height, minimum_window_height)
 
         # Diagnostic code.  Comment out in production.
         '''
@@ -984,9 +988,9 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         # Default simulation settings
         self.simulation_settings = {
             "start_year": datetime.now().year,
-            "years_to_simulate": 30,
-            "num_sims": 1000,
-            "fund_expense": 0.5,
+            "years_to_simulate": DEFAULT_YEARS,
+            "num_sims": DEFAULT_SIMULATIONS,
+            "fund_expense": DEFAULT_FUND_EXPENSE,
             "use_fund_expenses": True,
             "initial_allocation_mode": "maintain-current-allocation",
             "custom_stock": 0.0,
@@ -997,7 +1001,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         default_csv_dir = os.path.join(os.path.expanduser("~"), "Desktop", "WARPSimLab")
 
         self.simulation_controls = {
-            "enable_second_person": True,
+            "enable_second_person": bool(DEFAULT_ENABLE_SECOND_PERSON),
             "include_realestate": False,
             "plot_mode": "real",
             "subplot_mode": "fill",
@@ -1015,7 +1019,7 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             "calculate_payroll_taxes": True,
             "tax_filing_status": "Married filing jointly",
             "calculate_state_taxes": True,
-            "state_of_residence": "NM",
+            "state_of_residence": DEFAULT_STATE_OF_RESIDENCE,
             "constant_y_plots": False,
             "rebalance_every_year": True,
             "output_csv": "None",
@@ -1175,14 +1179,16 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         # Dynamic expenses
         self.expensesDict = DynamicExpenses()
-        self.expensesDict.add_expense(start_year=2026, cost=74000, comment="Initial yearly expense")
-        self.expensesDict.add_expense(start_year=2026, end_year=2030, cost=5000, comment="Car or something")
+        for expense in DEFAULT_EXPENSE_ENTRIES:
+            self.expensesDict.add_expense(
+                expense["start_year"], expense["cost"], expense["end_year"], expense["comment"]
+            )
 
         # Special income streams
-        self.special_income_streams = []
+        self.special_income_streams = [dict(stream) for stream in DEFAULT_SPECIAL_INCOME_STREAMS]
 
         # Scheduled Roth contributions and conversions
-        self.roth_flows = []
+        self.roth_flows = [dict(flow) for flow in DEFAULT_ROTH_FLOWS]
 
 
     def _sync_tax_status_from_second_person(self):
@@ -1364,7 +1370,6 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         self._rebuild_results_menu()
 
-
     def _load_user_mode(self):
         """
         Load the user's last selected Basic/Advanced mode.
@@ -1373,24 +1378,30 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         preference cannot be read.
         """
         try:
-            mode_file = (
-                Path.home()
-                / "Desktop"
-                / "WARPSimLab"
-                / "Administration"
-                / "user_mode.txt"
-            )
+            mode_file = Path.home() / "Desktop" / "WARPSimLab" / "Administration" / "user_mode.txt"
+
+            if MODE_DEBUG :
+                print("MODE LOAD FILE:", mode_file)
 
             if not mode_file.exists():
+                if MODE_DEBUG :
+                    print("MODE LOAD: file does not exist - using Basic")
                 return "Basic"
 
             mode = mode_file.read_text(encoding="utf-8").strip()
 
+            if MODE_DEBUG :
+                print("MODE LOAD VALUE:", repr(mode))
+
             if mode in ("Basic", "Advanced"):
                 return mode
 
-        except Exception:
-            pass
+            if MODE_DEBUG :
+                print("MODE LOAD: invalid value - using Basic")
+
+        except Exception as e:
+            if MODE_DEBUG :
+                print("MODE LOAD ERROR:", repr(e))
 
         return "Basic"
 
@@ -1416,6 +1427,9 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             if mode not in ("Basic", "Advanced"):
                 return
 
+            if MODE_DEBUG :
+                print("MODE SAVE:", repr(mode), "->", mode_file)
+
             mode_file.write_text(mode, encoding="utf-8")
 
         except Exception:
@@ -1425,6 +1439,9 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
 
     def _on_mode_changed(self):
+        if MODE_DEBUG :
+            print("MODE MENU CALLBACK:", self.mode_var.get())
+
         self._save_user_mode()
 
         container = getattr(self, "edit_frame_container", None)
@@ -1474,6 +1491,16 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self.edit_person_data()
 
 
+    def _debug_mode_change(self, *args):
+        if not MODE_DEBUG :
+            return
+
+        print("")
+        print("MODE CHANGED:", self.mode_var.get())
+        traceback.print_stack(limit=12)
+        print("")
+
+
     def _build_top_fields(self, parent):
         # --- BUTTON FRAME ---
         self.button_frame = ttk.Frame(parent)
@@ -1481,6 +1508,8 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
 
         self.mode_var = tk.StringVar(value=self._load_user_mode())
 
+        if MODE_DEBUG :
+            self.mode_var.trace_add("write", self._debug_mode_change)
         # Store all buttons as instance variables
 
         self.file_button, self.file_menu, self._show_file_menu = create_dropdown_button(

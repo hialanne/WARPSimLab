@@ -1,7 +1,7 @@
 import numpy as np
 import tkinter as tk
 from tkinter import ttk
-
+import tkinter.font as tkfont
 
 class SummaryDialog(tk.Toplevel):
     def __init__(
@@ -19,11 +19,15 @@ class SummaryDialog(tk.Toplevel):
         self.wife = wife
         self.sim_config = sim_config
 
-        width = 1100
-        height = 800
-
         parent = sim_config.root
         parent.update_idletasks()
+
+        development_font_linespace = 24
+        reference_font = tkfont.Font(root=self, family="Arial", size=16)
+        gui_scale = reference_font.metrics("linespace") / development_font_linespace
+
+        width = int(1100 * gui_scale)
+        height = int(800 * gui_scale)
 
         x = (
             parent.winfo_rootx()

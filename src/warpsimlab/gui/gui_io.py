@@ -118,7 +118,7 @@ class PortfolioSimulatorGUI_IOMixin:
             h_port.real_estate = data.get("DEFAULT_REAL_ESTATE_H", h_port.real_estate)
 
             # --- Second person enabled? ---
-            second_person_flag = data.get("DEFAULT_ENABLE_SECOND_PERSON", 0)
+            second_person_flag = data.get("DEFAULT_ENABLE_SECOND_PERSON", DEFAULT_ENABLE_SECOND_PERSON)
             self.simulation_controls["enable_second_person"] = second_person_flag
             self._sync_tax_status_from_second_person()
 
@@ -161,10 +161,11 @@ class PortfolioSimulatorGUI_IOMixin:
                 w_port.real_estate = data.get("DEFAULT_REAL_ESTATE_W", w_port.real_estate)
 
             # --- Simulation / global settings ---
-            self.simulation_settings['years_to_simulate'] = data.get("DEFAULT_YEARS", 30)
-            self.simulation_settings['num_sims'] = data.get("DEFAULT_SIMULATIONS", 500)
-            self.simulation_settings['fund_expense'] = data.get("DEFAULT_FUND_EXPENSE", 0.0)
-            self.simulation_controls["state_of_residence"] = data.get("STATE_OF_RESIDENCE",self.simulation_controls["state_of_residence"],)
+            # --- Simulation / global settings ---
+            self.simulation_settings["years_to_simulate"] = data.get("DEFAULT_YEARS", DEFAULT_YEARS)
+            self.simulation_settings["num_sims"] = data.get("DEFAULT_SIMULATIONS", DEFAULT_SIMULATIONS)
+            self.simulation_settings["fund_expense"] = data.get("DEFAULT_FUND_EXPENSE", DEFAULT_FUND_EXPENSE)
+            self.simulation_controls["state_of_residence"] = data.get("STATE_OF_RESIDENCE", DEFAULT_STATE_OF_RESIDENCE)
             # --- Expenses ---
             self.expensesDict.expenses.clear()
             for exp in data.get("EXPENSES", []):
@@ -283,24 +284,9 @@ class PortfolioSimulatorGUI_IOMixin:
             updated_values["DEFAULT_ENABLE_SECOND_PERSON"] = 0
 
         updated_values.update({
-            "DEFAULT_YEARS": int(
-                self.simulation_settings.get(
-                    "years_to_simulate",
-                    30,
-                )
-            ),
-            "DEFAULT_SIMULATIONS": int(
-                self.simulation_settings.get(
-                    "num_sims",
-                    500,
-                )
-            ),
-            "DEFAULT_FUND_EXPENSE": float(
-                self.simulation_settings.get(
-                    "fund_expense",
-                    0,
-                )
-            ),
+            "DEFAULT_YEARS": int(self.simulation_settings.get("years_to_simulate", DEFAULT_YEARS)),
+            "DEFAULT_SIMULATIONS": int(self.simulation_settings.get("num_sims", DEFAULT_SIMULATIONS)),
+            "DEFAULT_FUND_EXPENSE": float(self.simulation_settings.get("fund_expense", DEFAULT_FUND_EXPENSE)),
             "SPECIAL_INCOME_STREAMS": [
                 dict(stream)
                 for stream in self.special_income_streams

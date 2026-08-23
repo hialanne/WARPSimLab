@@ -1,0 +1,45 @@
+{
+    "DEFAULT_HUSBAND_AGE": 55,
+    "DEFAULT_HUSBAND_RETIRE": 68,
+    "DEFAULT_HUSBAND_INCOME": 65000.0,
+    "DEFAULT_HUSBAND_SOC": 30000.0,
+    "DEFAULT_HUSBAND_SOC_AGE": 68,
+    "DEFAULT_HUSBAND_PENSION": 15000.0,
+    "DEFAULT_HUSBAND_PENSION_AGE": 68,
+    "DEFAULT_HUSBAND_PENSION_INFLATION_ADJ": 50.0,
+    "DEFAULT_HUSBAND_ANNUITY": 15000.0,
+    "DEFAULT_HUSBAND_ANNUITY_AGE": 68,
+    "DEFAULT_HUSBAND_401K_CONTRIB": 3000.0,
+    "DEFAULT_HUSBAND_401K_MATCH": 2000.0,
+    "DEFAULT_EQUITY_PRE_H": 50000.0,
+    "DEFAULT_EQUITY_POST_H": 0,
+    "DEFAULT_BOND_PRE_H": 25000,
+    "DEFAULT_BOND_POST_H": 0,
+    "DEFAULT_CASH_PRE_H": 0.0,
+    "DEFAULT_CASH_POST_H": 50000.0,
+    "DEFAULT_REAL_ESTATE_H": 200000.0,
+    "DEFAULT_ENABLE_SECOND_PERSON": 0,
+    "DEFAULT_YEARS": 30,
+    "DEFAULT_SIMULATIONS": 1000,
+    "DEFAULT_FUND_EXPENSE": 0.6,
+    "EXPENSES": [
+        {
+            "start_year": 2026,
+            "end_year": null,
+            "cost": 50000.0,
+            "comment": "Initial yearly expense"
+        },
+        {
+            "start_year": 2030,
+            "end_year": 2030,
+            "cost": 10000,
+            "comment": "Europe and new Kitchen"
+        },
+        {
+            "start_year": 2024,
+            "end_year": 2029,
+            "cost": 10000.0,
+            "comment": "Truck"
+        }
+    ]
+}

@@ -77,8 +77,40 @@ DEFAULT_ENABLE_SECOND_PERSON = 1
 DEFAULT_INFLATION         = 2.8
 
 DEFAULT_YEARS       = 30
-DEFAULT_SIMULATIONS = 500
-DEFAULT_FUND_EXPENSE = 0.2
+DEFAULT_SIMULATIONS = 1000
+DEFAULT_FUND_EXPENSE = 1.0
+
+DEFAULT_STATE_OF_RESIDENCE = "NM"
+
+DEFAULT_SPECIAL_INCOME_STREAMS = []
+
+DEFAULT_ROTH_FLOWS = [
+    {
+        "owner": "husband",
+        "type": "roth_ira_contribution",
+        "name": "",
+        "amount": 1000.0,
+        "start_age": 0,
+        "end_age": 65,
+        "enabled": True,
+        "inflation_adjustment_pct": 0.0,
+    }
+]
+
+DEFAULT_EXPENSE_ENTRIES = [
+    {
+        "start_year": 2026,
+        "end_year": None,
+        "cost": 73000.0,
+        "comment": "Initial yearly expense",
+    },
+    {
+        "start_year": 2026,
+        "end_year": 2030,
+        "cost": 5000.0,
+        "comment": "Car or something",
+    }
+]
 
 # ---- Asset Class Returns & Volatility ----
 EQUITY_MEAN = 12.0
