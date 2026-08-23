@@ -1,4 +1,4 @@
-# WARPSimLab - v4.0.4
+# WARPSimLab - v4.2.0
 
 ## Project overview
 
@@ -30,17 +30,7 @@ guarantee that simulated outcomes will occur.
 
 ## Key features
 
-- Income and expense modeling, including recurring and special income and dynamic
-  expenses.
-- Portfolio projections across taxable, pre-tax, Roth, HSA, cash, and real-estate
-  categories.
-- Retirement contributions, withdrawals, and required minimum distribution (RMD)
-  modeling.
-- Federal and state tax-related simulations.
-- Deterministic, Monte Carlo, and historical-window analysis.
-- Scenario exploration for comparing different assumptions.
-- Portfolio, income, cash-flow, operating-balance, and summary visualizations.
-- HTML and CSV report generation.
+- Added three comparitive reports - one for Expenses, one for Asset Allocations and one for Retirement/Social Security
 
 Tax and other financial rules are simplified simulation inputs and logic. Their
 presence does not establish current or complete tax-law accuracy.
