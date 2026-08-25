@@ -7,6 +7,7 @@ import copy
 
 from src.warpsimlab.dataClasses.person import Person
 from src.warpsimlab.sim.simulation import run_simulation
+from src.warpsimlab.sim.validation import SimulationValidationError
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.dataClasses.portfolio import Portfolio  # import the new class
 from src.warpsimlab.sim.simulationObject import Simulation
@@ -423,13 +424,16 @@ class PortfolioSimulatorGUI_RunMixin:
         sim_config = self.build_simulation_from_gui(sim_type=sim_type)
 
         # Pass to simulation
-        run_simulation(
-            husband_portfolio=husband_portfolio, 
-            wife_portfolio=wife_portfolio,
-            husband=husband,
-            wife=wife,
-            expenses=self.expensesDict,
-            sim_config=sim_config
-        )
-
+        try:
+            run_simulation(
+                husband_portfolio=husband_portfolio,
+                wife_portfolio=wife_portfolio,
+                husband=husband,
+                wife=wife,
+                expenses=self.expensesDict,
+                sim_config=sim_config
+            )
+        except SimulationValidationError as exc:
+            messagebox.showerror("Simulation Input Error", str(exc), parent=self.root)
+            return
 

@@ -1,7 +1,11 @@
 from src.warpsimlab.sim import simulation
 
 
+def _disable_simulation_validation(monkeypatch):
+    monkeypatch.setattr(simulation, "validate_simulation_inputs", lambda *args, **kwargs: None, raising=True)
+
 def test_run_simulation_routes_cashflow_sim(monkeypatch):
+    _disable_simulation_validation(monkeypatch)
     called = {}
 
     def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
@@ -19,6 +23,7 @@ def test_run_simulation_routes_cashflow_sim(monkeypatch):
 
 
 def test_run_simulation_routes_operating_balance_sim(monkeypatch):
+    _disable_simulation_validation(monkeypatch)
     called = {}
 
     def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
@@ -36,6 +41,7 @@ def test_run_simulation_routes_operating_balance_sim(monkeypatch):
 
 
 def test_run_simulation_routes_portfolio_sim(monkeypatch):
+    _disable_simulation_validation(monkeypatch)
     called = {}
 
     def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
@@ -53,6 +59,7 @@ def test_run_simulation_routes_portfolio_sim(monkeypatch):
 
 
 def test_run_simulation_routes_summary_sim(monkeypatch):
+    _disable_simulation_validation(monkeypatch)
     called = {}
 
     def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):

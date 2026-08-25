@@ -47,15 +47,30 @@ class PortfolioStub:
         cash_pre=0.0,
         cash_post=0.0,
         real_estate=0.0,
+        equity_roth=0.0,
+        bond_roth=0.0,
+        cash_roth=0.0,
+        hsa_cash=0.0,
+        hsa_equity=0.0,
+        hsa_bond=0.0,
     ):
         self.equity_pre = equity_pre
         self.equity_post = equity_post
+        self.equity_roth = equity_roth
+
         self.bond_pre = bond_pre
         self.bond_post = bond_post
+        self.bond_roth = bond_roth
+
         self.cash_pre = cash_pre
         self.cash_post = cash_post
-        self.real_estate = real_estate
+        self.cash_roth = cash_roth
 
+        self.hsa_cash = hsa_cash
+        self.hsa_equity = hsa_equity
+        self.hsa_bond = hsa_bond
+
+        self.real_estate = real_estate
 
 class DynamicExpensesStub:
     def __init__(self):
@@ -89,11 +104,13 @@ def make_config(**overrides):
         num_sims=1,
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
+        historical_window_stride=1,
+        historical_window_mode="rolling_overlapping_all",
         use_correlated_returns=True,
         fund_expense=0.0,
         use_fund_expenses=False,
-        plot_mode="nominal",
-        subplot_mode="baseline",
+        plot_mode="raw",
+        subplot_mode="fill",
         include_rmd=False,
         calculate_income_taxes=False,
         calculate_payroll_taxes=False,
@@ -129,6 +146,8 @@ def make_config(**overrides):
         always_use_expense_mode=True,
         scenario_expense_multiplier=1.0,
         overlay_tax_impacts=False,
+        special_income_streams=[],
+        roth_flows=[],
         overlay_fund_expense_impacts=False,
         overlay_household_expenses=False,
         overlay_profit_loss=True,

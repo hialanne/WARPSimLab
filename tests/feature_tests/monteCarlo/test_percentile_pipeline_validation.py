@@ -10,7 +10,17 @@ from tests.feature_tests.monteCarlo.helpers_validation import (
 )
 
 
+def _disable_simulation_validation(monkeypatch):
+    monkeypatch.setattr(
+        simulation_module,
+        "validate_simulation_inputs",
+        lambda *args, **kwargs: None,
+        raising=True,
+    )
+
+
 def test_pipeline_median_matches_raw_path_median(monkeypatch):
+    _disable_simulation_validation(monkeypatch)
     sim_config = make_sim_config(
         years_to_simulate=4,
         num_sims=5,
@@ -57,6 +67,7 @@ def test_pipeline_median_matches_raw_path_median(monkeypatch):
 
 
 def test_pipeline_preserves_raw_total_assets_shape(monkeypatch):
+    _disable_simulation_validation(monkeypatch)
     sim_config = make_sim_config(
         years_to_simulate=3,
         num_sims=4,
@@ -98,6 +109,7 @@ def test_pipeline_preserves_raw_total_assets_shape(monkeypatch):
 
 
 def test_pipeline_does_not_assert_mean_equals_median(monkeypatch):
+    _disable_simulation_validation(monkeypatch)
     sim_config = make_sim_config(
         years_to_simulate=4,
         num_sims=5,

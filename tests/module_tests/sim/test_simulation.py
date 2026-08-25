@@ -54,6 +54,14 @@ class FakePortfolioPlotData:
     simulated_shortfall_rate: Any = None
 
 
+def _disable_simulation_validation(monkeypatch, mod):
+    monkeypatch.setattr(
+        mod,
+        "validate_simulation_inputs",
+        lambda *args, **kwargs: None,
+        raising=True,
+    )
+
 def _core_for_extracts() -> dict:
     return {
         "net_income": np.array([[100.0, 101.0, 102.0, 103.0]]),
@@ -450,6 +458,8 @@ def test_compute_simulated_shortfall_rate_rejects_non_positive_num_sims():
 def test_run_pipeline_sim_count_policy_forces_one_when_not_monte_carlo(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
 
+    _disable_simulation_validation(monkeypatch, mod)
+
     captured = {"num_sims": None}
 
     def fake_simulate_yearly_portfolios(*args, **kwargs):
@@ -485,6 +495,8 @@ def test_run_pipeline_sim_count_policy_forces_one_when_not_monte_carlo(monkeypat
 def test_run_pipeline_uses_force_num_sims_when_monte_carlo(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
 
+    _disable_simulation_validation(monkeypatch, mod)
+
     captured = {"num_sims": None}
 
     def fake_simulate_yearly_portfolios(*args, **kwargs):
@@ -518,6 +530,8 @@ def test_run_pipeline_uses_force_num_sims_when_monte_carlo(monkeypatch):
 
 def test_run_pipeline_returns_expected_top_level_views(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
+
+    _disable_simulation_validation(monkeypatch, mod)
 
     def fake_simulate_yearly_portfolios(*args, **kwargs):
         return _core_for_extracts()
@@ -556,6 +570,8 @@ def test_run_pipeline_returns_expected_top_level_views(monkeypatch):
 
 def test_run_pipeline_monte_carlo_shortfall_rate_uses_existing_core(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
+
+    _disable_simulation_validation(monkeypatch, mod)
 
     core = _core_for_extracts()
     core["total_assets"] = np.array(
@@ -604,6 +620,8 @@ def test_run_pipeline_monte_carlo_shortfall_rate_uses_existing_core(monkeypatch)
 def test_run_pipeline_non_monte_carlo_shortfall_rate_runs_secondary_sim_except_cashflow(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
 
+    _disable_simulation_validation(monkeypatch, mod)
+
     called = {"compute_simulated_shortfall_rate": 0}
 
     def fake_simulate_yearly_portfolios(*args, **kwargs):
@@ -646,6 +664,8 @@ def test_run_pipeline_non_monte_carlo_shortfall_rate_runs_secondary_sim_except_c
 def test_run_pipeline_cashflow_sim_does_not_compute_secondary_shortfall_rate(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
 
+    _disable_simulation_validation(monkeypatch, mod)
+
     called = {"compute_simulated_shortfall_rate": 0}
 
     def fake_simulate_yearly_portfolios(*args, **kwargs):
@@ -686,6 +706,8 @@ def test_run_pipeline_cashflow_sim_does_not_compute_secondary_shortfall_rate(mon
 
 def test_run_pipeline_overlay_tax_impacts_calls_overlay_with_flag_toggled_and_restored(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
+
+    _disable_simulation_validation(monkeypatch, mod)
 
     observed = {"during": None}
 
@@ -728,6 +750,8 @@ def test_run_pipeline_overlay_tax_impacts_calls_overlay_with_flag_toggled_and_re
 def test_run_pipeline_overlay_fund_expenses_impacts_calls_overlay_with_flag_toggled_and_restored(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
 
+    _disable_simulation_validation(monkeypatch, mod)
+
     observed = {"during": None}
 
     def fake_simulate_yearly_portfolios(*args, **kwargs):
@@ -768,6 +792,8 @@ def test_run_pipeline_overlay_fund_expenses_impacts_calls_overlay_with_flag_togg
 
 def test_run_pipeline_overlay_combined_toggles_both_flags_and_restores(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
+
+    _disable_simulation_validation(monkeypatch, mod)
 
     observed = {"tax": None, "fund": None}
 
@@ -818,6 +844,8 @@ def test_run_pipeline_overlay_combined_toggles_both_flags_and_restores(monkeypat
 
 def test_run_simulation_dispatches_by_sim_type(monkeypatch):
     from src.warpsimlab.sim import simulation as mod
+
+    _disable_simulation_validation(monkeypatch, mod)
 
     pkg = "src.warpsimlab.sim"
 

@@ -21,7 +21,7 @@ def run_case(make_case, **overrides):
 def test_real_plot_mode_deflates_total_assets_relative_to_nominal(make_case):
     nominal_core, nominal_cfg = run_case(
         make_case,
-        plot_mode="nominal",
+        plot_mode="raw",
         inflation_rate=0.03,
         years_to_simulate=5,
     )
@@ -43,7 +43,7 @@ def test_real_plot_mode_deflates_total_assets_relative_to_nominal(make_case):
 def test_real_plot_mode_deflates_pre_and_post_tax_assets_relative_to_nominal(make_case):
     nominal_core, nominal_cfg = run_case(
         make_case,
-        plot_mode="nominal",
+        plot_mode="raw",
         inflation_rate=0.03,
         years_to_simulate=5,
     )
@@ -71,7 +71,7 @@ def test_real_plot_mode_deflates_pre_and_post_tax_assets_relative_to_nominal(mak
 def test_zero_inflation_makes_real_and_nominal_match_for_deflated_series(make_case):
     nominal_core, nominal_cfg = run_case(
         make_case,
-        plot_mode="nominal",
+        plot_mode="raw",
         inflation_rate=0.0,
         years_to_simulate=5,
     )

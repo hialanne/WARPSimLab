@@ -4,6 +4,13 @@ from src.warpsimlab.sim import simulation
 
 
 def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypatch):
+    monkeypatch.setattr(
+        simulation,
+        "validate_simulation_inputs",
+        lambda *args, **kwargs: None,
+        raising=True,
+    )
+
     years_to_simulate = 3
     baseline_total_assets = np.array([[100.0, 99.0, 98.0, 97.0]])
     overlay_total_assets = np.array([[100.0, 100.5, 101.0, 101.5]])

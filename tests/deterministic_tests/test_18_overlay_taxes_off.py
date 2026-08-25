@@ -4,6 +4,12 @@ from src.warpsimlab.sim import simulation
 
 
 def test_overlay_taxes_off_attaches_median_without_taxes_and_exceeds_taxed_baseline(monkeypatch):
+    monkeypatch.setattr(
+        simulation,
+        "validate_simulation_inputs",
+        lambda *args, **kwargs: None,
+        raising=True,
+    )
     years_to_simulate = 3
     baseline_total_assets = np.array([[100.0, 95.0, 90.0, 85.0]])
     overlay_total_assets = np.array([[100.0, 101.0, 103.0, 106.0]])

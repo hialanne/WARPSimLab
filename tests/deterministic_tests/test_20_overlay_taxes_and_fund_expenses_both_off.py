@@ -4,6 +4,12 @@ from src.warpsimlab.sim import simulation
 
 
 def test_overlay_taxes_and_fund_expenses_both_off_attaches_combined_and_combined_is_highest(monkeypatch):
+    monkeypatch.setattr(
+        simulation,
+        "validate_simulation_inputs",
+        lambda *args, **kwargs: None,
+        raising=True,
+    )
     years_to_simulate = 3
     baseline_total_assets = np.array([[100.0, 90.0, 80.0, 70.0]])
     no_taxes_assets = np.array([[100.0, 95.0, 89.0, 84.0]])
