@@ -1,6 +1,9 @@
-import tkinter as tk
-from tkinter import ttk
+# gui_roth.py
 
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
 
 
@@ -562,8 +565,19 @@ class RothEditFrame(ttk.Frame):
         flow["type"] = flow_type
 
 
-    def _clean_number_text(self, raw_value):
-        return raw_value.strip().replace(",", "")
+    def _roth_field_label(self, field_key):
+        labels = {
+            "amount": "Amount",
+            "start_age": "Start Age",
+            "end_age": "End Age",
+            "inflation_adjustment_pct": "Inflation Adjustment",
+        }
+        return labels.get(field_key, field_key)
+
+
+    def _validate_roth_age_relationship(self, flow):
+        if flow["end_age"] < flow["start_age"]:
+            raise ValueError("End Age cannot be before Start Age.")
 
 
     def _validate_float_field(
@@ -575,45 +589,27 @@ class RothEditFrame(ttk.Frame):
         default_value,
         allow_negative,
     ):
-        text = self._clean_number_text(proposed_value)
-
         try:
-            if text == "" or text in {
-                "-",
-                "+",
-                ".",
-                "-.",
-                "+.",
-            }:
-                raise ValueError("Invalid number.")
-
-            if "e" in text.lower():
-                raise ValueError(
-                    "Scientific notation not allowed."
-                )
-
-            value = float(text)
-
-            if not allow_negative and value < 0.0:
-                raise ValueError(
-                    "Negative value not allowed."
-                )
+            value = parse_finite_float(
+                proposed_value,
+                allow_commas=True,
+                allow_scientific=False,
+                minimum=None if allow_negative else 0,
+            )
 
             flow[field_key] = value
-            self.after_idle(
-                lambda: var.set(str(value))
-            )
+            self.after_idle(lambda: var.set(str(value)))
             return True
 
-        except ValueError:
-            current_value = flow.get(
-                field_key,
-                float(default_value),
+        except ValueError as exc:
+            current_value = flow.get(field_key, float(default_value))
+            self.after_idle(lambda: var.set(str(current_value)))
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Roth / {self._roth_field_label(field_key)}: {exc}",
+                parent=self.winfo_toplevel(),
             )
-            self.after_idle(
-                lambda: var.set(str(current_value))
-            )
-            self.bell()
             return True
 
 
@@ -625,32 +621,30 @@ class RothEditFrame(ttk.Frame):
         var,
         default_value,
     ):
-        text = self._clean_number_text(proposed_value)
+        original_start_age = flow["start_age"]
+        original_end_age = flow["end_age"]
 
         try:
-            if text == "" or text in {"-", "+"}:
-                raise ValueError("Invalid integer.")
-
-            value = int(text)
-
-            if value < 0 or value > 120:
-                raise ValueError("Invalid age.")
+            value = parse_integer(proposed_value, allow_commas=True, minimum=0)
 
             flow[field_key] = value
-            self.after_idle(
-                lambda: var.set(str(value))
-            )
+            self._validate_roth_age_relationship(flow)
+
+            self.after_idle(lambda: var.set(str(value)))
             return True
 
-        except ValueError:
-            current_value = flow.get(
-                field_key,
-                int(default_value),
+        except ValueError as exc:
+            flow["start_age"] = original_start_age
+            flow["end_age"] = original_end_age
+
+            current_value = flow.get(field_key, int(default_value))
+            self.after_idle(lambda: var.set(str(current_value)))
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Roth / {self._roth_field_label(field_key)}: {exc}",
+                parent=self.winfo_toplevel(),
             )
-            self.after_idle(
-                lambda: var.set(str(current_value))
-            )
-            self.bell()
             return True
 
 

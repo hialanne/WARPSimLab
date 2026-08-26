@@ -1,8 +1,9 @@
 # gui_portfolio.py
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float
 from src.warpsimlab.utils.tooltip import Tooltip
 
 
@@ -61,24 +62,28 @@ class PortfolioEditFrame(ttk.Frame):
     def _format_money(self, value):
         return f"{float(value):,.0f}"
 
+
     def _parse_money(self, raw_value):
-        text = str(raw_value).strip().replace(",", "")
+        return parse_finite_float(
+            raw_value, allow_commas=True, allow_scientific=False, minimum=0
+        )
 
-        if text == "":
-            raise ValueError("Blank value is not allowed.")
 
-        if text in {"-", "+", ".", "-.", "+."}:
-            raise ValueError("Invalid number.")
+    def _portfolio_field_label(self, field_key):
+        labels = {
+            "equity_pre": "Stocks Pre-Tax",
+            "equity_post": "Stocks After-Tax",
+            "equity_roth": "Stocks Roth",
+            "bond_pre": "Bonds Pre-Tax",
+            "bond_post": "Bonds After-Tax",
+            "bond_roth": "Bonds Roth",
+            "cash_pre": "Cash Pre-Tax",
+            "cash_post": "Cash After-Tax",
+            "cash_roth": "Cash Roth",
+            "hsa": "HSA",
+        }
+        return labels.get(field_key, field_key)
 
-        if "e" in text.lower():
-            raise ValueError("Scientific notation not allowed.")
-
-        value = float(text)
-
-        if value < 0:
-            raise ValueError("Value cannot be negative.")
-
-        return value
 
     def _init_vars(self):
         self.h_vars = {
@@ -335,6 +340,8 @@ class PortfolioEditFrame(ttk.Frame):
         portfolio = self.husband_portfolio if person_key == "husband" else self.wife_portfolio
         vars_dict = self.h_vars if person_key == "husband" else self.w_vars
         var = vars_dict[field_key]
+        person_label = "Husband" if person_key == "husband" else "Wife"
+        field_label = self._portfolio_field_label(field_key)
 
         try:
             parsed = self._parse_money(proposed_value)
@@ -348,16 +355,19 @@ class PortfolioEditFrame(ttk.Frame):
             self.after_idle(self._update_totals)
             return True
 
-        except ValueError:
-            if field_key == "hsa":
-                current_value = self._get_hsa_total(portfolio)
-            else:
-                current_value = getattr(portfolio, field_key)
+        except ValueError as exc:
+            current_value = self._get_hsa_total(portfolio) if field_key == "hsa" else getattr(portfolio, field_key)
 
             self.after_idle(lambda: var.set(self._format_money(current_value)))
             self.after_idle(self._update_totals)
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Portfolio / {person_label} / {field_label}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
+
 
     def _get_var_value(self, vars_dict, key):
         if vars_dict is None:

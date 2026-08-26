@@ -84,12 +84,15 @@ def test_stringvar_updates_data_object(tk_root, patched_module):
     assert frame.eq_mean_var.get() == "8.5"
 
 
-def test_invalid_numeric_input_is_ignored(tk_root, patched_module):
+def test_invalid_numeric_input_is_ignored(monkeypatch, tk_root, patched_module):
     mod = patched_module
     data = _make_data()
 
     frame = mod.HistoricalEditFrame(tk_root, data)
     frame.pack()
+
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
 
     assert frame._validate_historical_field_on_focusout("invalid", "eq_mean_var") is True
 
@@ -98,6 +101,8 @@ def test_invalid_numeric_input_is_ignored(tk_root, patched_module):
 
     assert data.eq_mean == 7
     assert frame.eq_mean_var.get() == "7"
+    assert len(shown_errors) == 1
+    assert shown_errors[0][0][0] == "Invalid Input"
 
 
 def test_historical_market_selection_updates_data(tk_root, patched_module):

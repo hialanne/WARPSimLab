@@ -2,8 +2,9 @@
 
 import tkinter as tk
 import copy
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
 
 
@@ -272,24 +273,19 @@ class RetirementEditFrame(ttk.Frame):
 
 
     def _parse_retirement_field(self, field, value):
+        if field in {"retirement_withdraw_pct", "retirement_withdraw_dollars"}:
+            return parse_finite_float(value, minimum=0)
 
-        text = value.strip()
+        raise ValueError(f"Unknown retirement field: {field}")
 
-        if text == "":
-            raise ValueError("Blank")
 
-        if text in {"-", "+", ".", "-.", "+."}:
-            raise ValueError("Invalid")
-
-        v = float(text)
-
-        if field == "retirement_withdraw_pct" and v < 0:
-            raise ValueError("Invalid")
-
-        if field == "retirement_withdraw_dollars" and v < 0:
-            raise ValueError("Invalid")
-
-        return v
+    def _retirement_field_label(self, field):
+        labels = {
+            "retirement_withdraw_pct": "Total Annual Withdrawal %",
+            "retirement_withdraw_dollars": "Total Annual Withdrawal $",
+            "sequence_risk_start_year_offset": "Years From Simulation Start",
+        }
+        return labels.get(field, field)
 
 
     def _format_retirement_field(self, value):
@@ -297,7 +293,6 @@ class RetirementEditFrame(ttk.Frame):
 
 
     def _validate_retirement_field(self, proposed_value, field):
-
         var = self.pct_var if field == "retirement_withdraw_pct" else self.dollars_var
         current_value = self.controls[field]
 
@@ -307,27 +302,19 @@ class RetirementEditFrame(ttk.Frame):
             self.after_idle(lambda: var.set(self._format_retirement_field(parsed)))
             return True
 
-        except ValueError:
+        except ValueError as exc:
             self.after_idle(lambda: var.set(self._format_retirement_field(current_value)))
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Retirement / {self._retirement_field_label(field)}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
 
 
     def _parse_sequence_start_year_offset(self, value):
-        text = value.strip()
-
-        if text == "":
-            raise ValueError("Blank")
-
-        if text in {"-", "+"}:
-            raise ValueError("Invalid")
-
-        v = int(text)
-
-        if v < 0:
-            raise ValueError("Invalid")
-
-        return v
+        return parse_integer(value, minimum=0)
 
 
     def _validate_sequence_start_year_offset(self, proposed_value):
@@ -339,11 +326,16 @@ class RetirementEditFrame(ttk.Frame):
             self.after_idle(lambda: self.sequence_risk_start_year_offset_var.set(str(parsed)))
             return True
 
-        except ValueError:
+        except ValueError as exc:
             self.after_idle(
                 lambda: self.sequence_risk_start_year_offset_var.set(str(current_value))
             )
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Retirement / {self._retirement_field_label('sequence_risk_start_year_offset')}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
 
 

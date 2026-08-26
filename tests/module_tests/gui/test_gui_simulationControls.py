@@ -101,8 +101,8 @@ def test_subplot_mode_mapping_exists(tk_root, no_tooltip, no_annotations_editor,
     frame = mod.SimulationControlsEditFrame(tk_root, control_vars)
     frame.pack()
 
-    # confirm control key exists and default mapping works
-    assert control_vars["_controls_dict"]["subplot_mode"] == "none"
+    # stale invalid backing value is normalized to the canonical default
+    assert control_vars["_controls_dict"]["subplot_mode"] == "fill"
 
 
 def test_annotation_checkbox_updates_dict(tk_root, no_tooltip, no_annotations_editor, control_vars):

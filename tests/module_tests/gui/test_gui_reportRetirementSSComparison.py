@@ -370,12 +370,12 @@ def test_apply_changes_invalid_retirement_age_does_not_run_report(
         lambda title, message, parent=None: errors.append((title, message)),
     )
 
-    frame.retirement_age_vars[0].set("54")
+    frame.retirement_age_vars[0].set("-1")
 
     frame.apply_changes()
 
     assert len(errors) == 1
-    assert "between 55 and 75" in errors[0][1]
+    assert "between 0 and 100" in errors[0][1]
     assert parent_gui.calls == []
 
 

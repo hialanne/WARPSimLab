@@ -1,9 +1,11 @@
 # gui_expenses.py
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+
 
 class ExpensesEditFrame(ttk.Frame):
     """
@@ -182,39 +184,29 @@ class ExpensesEditFrame(ttk.Frame):
 
 
     def _parse_expense_field(self, field_key, raw_value):
-        text = raw_value.strip().replace(",", "")
-
         if field_key == "start_year":
-            if text == "":
-                raise ValueError("Start year is required.")
-            if text in {"-", "+"}:
-                raise ValueError("Invalid year.")
-            value = int(text)
-            if value < 1900 or value > 3000:
-                raise ValueError("Invalid year.")
-            return value
+            return parse_integer(raw_value, allow_commas=True, minimum=1900, maximum=3000)
 
         if field_key == "end_year":
-            if text == "":
-                return None
-            if text in {"-", "+"}:
-                raise ValueError("Invalid year.")
-            value = int(text)
-            if value < 1900 or value > 3000:
-                raise ValueError("Invalid year.")
-            return value
+            return parse_integer(
+                raw_value, allow_commas=True, minimum=1900, maximum=3000, allow_blank=True
+            )
 
         if field_key == "cost":
-            if text == "":
-                raise ValueError("Cost is required.")
-            if text in {"-", "+", ".", "-.", "+."}:
-                raise ValueError("Invalid cost.")
-            value = float(text)
-            if value < 0:
-                raise ValueError("Cost cannot be negative.")
-            return value
+            return parse_finite_float(
+                raw_value, allow_commas=True, allow_scientific=False, minimum=0
+            )
 
         raise ValueError(f"Unknown field: {field_key}")
+
+
+    def _expense_field_label(self, field_key):
+        labels = {
+            "start_year": "Start Year",
+            "end_year": "End Year",
+            "cost": "Cost",
+        }
+        return labels.get(field_key, field_key)
 
 
     def _format_expense_field(self, field_key, value):
@@ -259,48 +251,35 @@ class ExpensesEditFrame(ttk.Frame):
             self._validate_expense_cross_fields(expense)
 
             if field_key == "start_year":
-                self.after_idle(
-                    lambda: item["start_var"].set(
-                        self._format_expense_field(field_key, parsed)
-                    )
-                )
+                self.after_idle(lambda: item["start_var"].set(self._format_expense_field(field_key, parsed)))
             elif field_key == "end_year":
-                self.after_idle(
-                    lambda: item["end_var"].set(
-                        self._format_expense_field(field_key, parsed)
-                    )
-                )
+                self.after_idle(lambda: item["end_var"].set(self._format_expense_field(field_key, parsed)))
             elif field_key == "cost":
-                self.after_idle(
-                    lambda: item["cost_var"].set(
-                        self._format_expense_field(field_key, parsed)
-                    )
-                )
+                self.after_idle(lambda: item["cost_var"].set(self._format_expense_field(field_key, parsed)))
 
             return True
 
-        except ValueError:
+        except ValueError as exc:
             expense["start_year"] = original_start
             expense["end_year"] = original_end
             expense["cost"] = original_cost
 
             self.after_idle(
-                lambda: item["start_var"].set(
-                    self._format_expense_field("start_year", original_start)
-                )
+                lambda: item["start_var"].set(self._format_expense_field("start_year", original_start))
             )
             self.after_idle(
-                lambda: item["end_var"].set(
-                    self._format_expense_field("end_year", original_end)
-                )
+                lambda: item["end_var"].set(self._format_expense_field("end_year", original_end))
             )
             self.after_idle(
-                lambda: item["cost_var"].set(
-                    self._format_expense_field("cost", original_cost)
-                )
+                lambda: item["cost_var"].set(self._format_expense_field("cost", original_cost))
             )
 
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Expenses / {self._expense_field_label(field_key)}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
 
 

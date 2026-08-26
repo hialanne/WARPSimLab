@@ -66,6 +66,18 @@ class PortfolioSimulatorGUI_RunMixin:
         return {}
 
 
+    def _simulation_int(self, name, value):
+        try:
+            return int(value)
+        except (TypeError, ValueError) as exc:
+            raise SimulationValidationError(f"{name} must be an integer.") from exc
+
+    def _simulation_float(self, name, value):
+        try:
+            return float(value)
+        except (TypeError, ValueError) as exc:
+            raise SimulationValidationError(f"{name} must be numeric.") from exc
+
     def build_simulation_from_gui(self, sim_type=None, use_snapshots=False, retirement_snapshots=None):
 
         report_options = self._build_report_options(sim_type)
@@ -77,15 +89,19 @@ class PortfolioSimulatorGUI_RunMixin:
             inflation               = retirement_snapshots.inflation
             fund_expense            = retirement_snapshots.fund_expense
             initial_allocation_mode = "custom"
-            custom_stock            = float(retirement_snapshots.custom_stock_percent / 100)
-            custom_bonds            = float(retirement_snapshots.custom_bonds_percent / 100)
-            custom_cash             = float(retirement_snapshots.custom_cash_percent / 100)
-            historical_multiplier   = float(retirement_snapshots.historical_data_multiplier / 100)
+            custom_stock = self._simulation_float(
+                "Scenario stock allocation", retirement_snapshots.custom_stock_percent) / 100
+            custom_bonds = self._simulation_float(
+                "Scenario bond allocation", retirement_snapshots.custom_bonds_percent) / 100
+            custom_cash = self._simulation_float(
+                "Scenario cash allocation", retirement_snapshots.custom_cash_percent) / 100
+            historical_multiplier = self._simulation_float(
+                "Scenario historical data multiplier", retirement_snapshots.historical_data_multiplier) / 100
             adjust_hist_for_infl_delta = bool(
                 getattr(retirement_snapshots, "adjust_hist_for_infl_delta", False)
             )
-            delta_inflation = float(
-                getattr(retirement_snapshots, "delta_inflation", 0.0)
+            delta_inflation = self._simulation_float(
+                "Scenario inflation adjustment", getattr(retirement_snapshots, "delta_inflation", 0.0)
             ) if adjust_hist_for_infl_delta else 0.0
 
             use_snapshot_annotations = retirement_snapshots.use_snapshot_annotations
@@ -97,9 +113,9 @@ class PortfolioSimulatorGUI_RunMixin:
             inflation               = self.inflation
             fund_expense            = sim_cfg.get("fund_expense")
             initial_allocation_mode = sim_cfg.get("initial_allocation_mode", "none")
-            custom_stock            = float(sim_cfg.get("custom_stock", 0)) / 100
-            custom_bonds            = float(sim_cfg.get("custom_bonds", 0)) / 100
-            custom_cash             = float(sim_cfg.get("custom_cash", 0)) / 100
+            custom_stock = self._simulation_float("Custom stock allocation", sim_cfg.get("custom_stock", 0)) / 100
+            custom_bonds = self._simulation_float("Custom bond allocation", sim_cfg.get("custom_bonds", 0)) / 100
+            custom_cash = self._simulation_float("Custom cash allocation", sim_cfg.get("custom_cash", 0)) / 100
             historical_multiplier   = 1
             delta_inflation = 0.0
 
@@ -133,25 +149,29 @@ class PortfolioSimulatorGUI_RunMixin:
         # --- Build Simulation object ---
         sim_config = Simulation(
             root=self.root,
-            start_year=int(sim_cfg.get("start_year", 2023)),
-            years_to_simulate=int(sim_cfg.get("years_to_simulate", 30)),
-            inflation_rate=float(inflation) / 100,   ########### This one can be replaced by the snapshots
-            num_sims=int(sim_cfg.get("num_sims", 500)),
-            fund_expense=float(fund_expense) / 100,
+            start_year=self._simulation_int("Simulation start year", sim_cfg.get("start_year", 2023)),
+            years_to_simulate=self._simulation_int("Years to simulate", sim_cfg.get("years_to_simulate", 30)),
+            inflation_rate=self._simulation_float("Inflation rate", inflation) / 100,
+            num_sims=self._simulation_int("Number of simulations", sim_cfg.get("num_sims", 500)),
+            fund_expense=self._simulation_float("Fund expense", fund_expense) / 100,
             use_fund_expenses=sim_cfg.get("use_fund_expenses", True),
 
             sim_type=sim_type,
 
             report_options=report_options,
 
-            eq_mean=(float(market_data["eq_mean"]) * historical_multiplier + delta_inflation) / 100,
-            bd_mean=(float(market_data["bd_mean"]) * historical_multiplier + delta_inflation) / 100,
-            cs_mean=(float(market_data["cs_mean"]) * historical_multiplier + delta_inflation) / 100,
-            re_mean=(float(market_data["re_mean"]) * historical_multiplier + delta_inflation) / 100,
-            eq_std=float(market_data["eq_std"]) / 100,
-            bd_std=float(market_data["bd_std"]) / 100,
-            cs_std=float(market_data["cs_std"]) / 100,
-            re_std=float(market_data["re_std"]) / 100,
+            eq_mean=(self._simulation_float("Equity mean return", market_data["eq_mean"]) * historical_multiplier
+                     + delta_inflation) / 100,
+            bd_mean=(self._simulation_float("Bond mean return", market_data["bd_mean"]) * historical_multiplier
+                     + delta_inflation) / 100,
+            cs_mean=(self._simulation_float("Cash mean return", market_data["cs_mean"]) * historical_multiplier
+                     + delta_inflation) / 100,
+            re_mean=(self._simulation_float("Real estate mean return", market_data["re_mean"]) * historical_multiplier
+                     + delta_inflation) / 100,
+            eq_std=self._simulation_float("Equity standard deviation", market_data["eq_std"]) / 100,
+            bd_std=self._simulation_float("Bond standard deviation", market_data["bd_std"]) / 100,
+            cs_std=self._simulation_float("Cash standard deviation", market_data["cs_std"]) / 100,
+            re_std=self._simulation_float("Real estate standard deviation", market_data["re_std"]) / 100,
 
             sim_initial_allocation_mode=initial_allocation_mode,
             custom_stock=custom_stock,
@@ -180,8 +200,8 @@ class PortfolioSimulatorGUI_RunMixin:
             calculate_state_taxes=controls.get("calculate_state_taxes", False),
             state_of_residence=controls.get("state_of_residence", ""),
 
-            plot_mode=controls.get("plot_mode", "combined"),
-            subplot_mode=controls.get("subplot_mode", False),
+            plot_mode=controls.get("plot_mode", "real"),
+            subplot_mode=controls.get("subplot_mode", "fill"),
             monte_carlo_plot_style=controls.get("monte_carlo_plot_style", "fill"),
             use_correlated_returns=controls.get("use_correlated_returns", True),
             monte_carlo_mode=controls.get("monte_carlo_mode", "pathBasedAnnualSampling"),
@@ -274,23 +294,23 @@ class PortfolioSimulatorGUI_RunMixin:
         Basic mode: only cash_post is preserved; all other fields are set to 0.0.
         """
         sim_p = Portfolio(
-            equity_pre=float(p.equity_pre),
-            equity_post=float(p.equity_post),
-            equity_roth=float(getattr(p, "equity_roth", 0.0)),
+            equity_pre=self._simulation_float("Pre-tax equity", p.equity_pre),
+            equity_post=self._simulation_float("Post-tax equity", p.equity_post),
+            equity_roth=self._simulation_float("Roth equity", getattr(p, "equity_roth", 0.0)),
 
-            bond_pre=float(p.bond_pre),
-            bond_post=float(p.bond_post),
-            bond_roth=float(getattr(p, "bond_roth", 0.0)),
+            bond_pre=self._simulation_float("Pre-tax bonds", p.bond_pre),
+            bond_post=self._simulation_float("Post-tax bonds", p.bond_post),
+            bond_roth=self._simulation_float("Roth bonds", getattr(p, "bond_roth", 0.0)),
 
-            cash_pre=float(p.cash_pre),
-            cash_post=float(p.cash_post),
-            cash_roth=float(getattr(p, "cash_roth", 0.0)),
+            cash_pre=self._simulation_float("Pre-tax cash", p.cash_pre),
+            cash_post=self._simulation_float("Post-tax cash", p.cash_post),
+            cash_roth=self._simulation_float("Roth cash", getattr(p, "cash_roth", 0.0)),
 
-            hsa_cash=float(getattr(p, "hsa_cash", 0.0)),
-            hsa_equity=float(getattr(p, "hsa_equity", 0.0)),
-            hsa_bond=float(getattr(p, "hsa_bond", 0.0)),
+            hsa_cash=self._simulation_float("HSA cash", getattr(p, "hsa_cash", 0.0)),
+            hsa_equity=self._simulation_float("HSA equity", getattr(p, "hsa_equity", 0.0)),
+            hsa_bond=self._simulation_float("HSA bonds", getattr(p, "hsa_bond", 0.0)),
 
-            real_estate=float(p.real_estate),
+            real_estate=self._simulation_float("Real estate", p.real_estate),
         )
 
         if self.mode_var.get() == "Basic":
@@ -325,18 +345,24 @@ class PortfolioSimulatorGUI_RunMixin:
                    to avoid hidden settings affecting results.
         """
         sim_p = Person(
-            age=int(p.age),
-            retire_age=int(p.retire_age),
-            income=float(p.income),
-            ss=float(p.ss),
-            ss_age=int(p.ss_age),
-            pension=float(p.pension),
-            pension_age=int(p.pension_age),
-            annuity=float(p.annuity),
-            annuity_age=int(p.annuity_age),
-            annual_401k_contribution=float(getattr(p, "annual_401k_contribution", 0.0)),
-            annual_employer_match=float(getattr(p, "annual_employer_match", 0.0)),
-            pension_inflation_adjustment_pct=float(getattr(p, "pension_inflation_adjustment_pct", 0.0)),
+            age=self._simulation_int("Age", p.age),
+            retire_age=self._simulation_int("Retirement age", p.retire_age),
+            income=self._simulation_float("Income", p.income),
+            ss=self._simulation_float("Social Security", p.ss),
+            ss_age=self._simulation_int("Social Security age", p.ss_age),
+            pension=self._simulation_float("Pension", p.pension),
+            pension_age=self._simulation_int("Pension age", p.pension_age),
+            annuity=self._simulation_float("Annuity", p.annuity),
+            annuity_age=self._simulation_int("Annuity age", p.annuity_age),
+            annual_401k_contribution=self._simulation_float(
+                "401(k) contribution", getattr(p, "annual_401k_contribution", 0.0)
+            ),
+            annual_employer_match=self._simulation_float(
+                "Employer match", getattr(p, "annual_employer_match", 0.0)
+            ),
+            pension_inflation_adjustment_pct=self._simulation_float(
+                "Pension inflation adjustment", getattr(p, "pension_inflation_adjustment_pct", 0.0)
+            ),
         )
 
         if self.mode_var.get() == "Basic":
@@ -347,12 +373,12 @@ class PortfolioSimulatorGUI_RunMixin:
             sim_p.pension_inflation_adjustment_pct = 0.0
 
             # Avoid hidden SS start age influencing results in Basic mode
-            sim_p.ss_age = int(sim_p.retire_age)
+            sim_p.ss_age = sim_p.retire_age
 
             # pension_age / annuity_age become irrelevant since amounts are 0,
             # but you can normalize them if you want:
-            sim_p.pension_age = int(sim_p.retire_age)
-            sim_p.annuity_age = int(sim_p.retire_age)
+            sim_p.pension_age = sim_p.retire_age
+            sim_p.annuity_age = sim_p.retire_age
 
         return sim_p
 
@@ -361,70 +387,51 @@ class PortfolioSimulatorGUI_RunMixin:
         Force pending GUI edits to validate and write through to backing data
         before running simulations or opening result dialogs.
 
-        This preserves the current UX: users do not need Apply/OK buttons.
+        Returns False when any GUI validator reports invalid input.
         """
-        # First, try to validate the widget that currently has focus.
+        self.root._warpsimlab_validation_failed = False
+
         focus_widget = self.root.focus_get()
 
         if focus_widget is not None:
-            try:
-                widget_class = focus_widget.winfo_class()
+            widget_class = focus_widget.winfo_class()
 
-                # ttk.Entry often reports "TEntry"; tk.Entry reports "Entry"
-                if widget_class in {"TEntry", "Entry", "Spinbox", "TSpinbox"}:
-                    # Trigger the widget's validate command explicitly if it has one.
-                    # This works even when focus does not naturally leave the widget.
-                    focus_widget.tk.call(focus_widget._w, "validate")
-            except Exception:
-                # Do not block the simulation because of commit logic.
-                pass
+            if widget_class in {"TEntry", "Entry", "Spinbox", "TSpinbox"}:
+                focus_widget.tk.call(focus_widget._w, "validate")
 
-        # Then validate all visible entry-like widgets in the current editor area.
-        # This catches cases where focus is on a menu/button but the user edited
-        # a field that still has stale text.
         container = getattr(self, "edit_frame_container", None)
         if container is not None:
             self._validate_entries_recursive(container)
 
-        # Let any after_idle callbacks finish, since your validators use after_idle(...)
         self.root.update_idletasks()
+        return not self.root._warpsimlab_validation_failed
 
 
     def _validate_entries_recursive(self, parent):
         for child in parent.winfo_children():
-            try:
-                widget_class = child.winfo_class()
+            widget_class = child.winfo_class()
 
-                if widget_class in {"TEntry", "Entry", "Spinbox", "TSpinbox"}:
-                    state = str(child.cget("state")) if "state" in child.keys() else "normal"
-                    if state != "disabled":
-                        try:
-                            child.tk.call(child._w, "validate")
-                        except Exception:
-                            pass
+            if widget_class in {"TEntry", "Entry", "Spinbox", "TSpinbox"}:
+                state = str(child.cget("state")) if "state" in child.keys() else "normal"
+                if state != "disabled":
+                    child.tk.call(child._w, "validate")
 
-                # Recurse into nested frames
-                self._validate_entries_recursive(child)
-
-            except Exception:
-                # Ignore widgets that do not behave like standard Tk widgets
-                pass
+            self._validate_entries_recursive(child)
 
 
     def run_simulation_from_gui(self, sim_type=None):
-        self.commit_pending_gui_edits()
-        husband = self._person_for_sim(self.husband)
-        wife = self._person_for_sim(self.wife) if self.simulation_controls.get("enable_second_person") else None
+        if not self.commit_pending_gui_edits():
+            return
 
-        husband_portfolio = self._portfolio_for_sim(self.husband_portfolio)
-        wife_portfolio = self._portfolio_for_sim(self.wife_portfolio) if wife else None
-        #print("Normal Path")
-            
-        # Build Simulation from GUI values
-        sim_config = self.build_simulation_from_gui(sim_type=sim_type)
-
-        # Pass to simulation
         try:
+            husband = self._person_for_sim(self.husband)
+            wife = self._person_for_sim(self.wife) if self.simulation_controls.get("enable_second_person") else None
+
+            husband_portfolio = self._portfolio_for_sim(self.husband_portfolio)
+            wife_portfolio = self._portfolio_for_sim(self.wife_portfolio) if wife else None
+
+            sim_config = self.build_simulation_from_gui(sim_type=sim_type)
+
             run_simulation(
                 husband_portfolio=husband_portfolio,
                 wife_portfolio=wife_portfolio,
@@ -436,4 +443,3 @@ class PortfolioSimulatorGUI_RunMixin:
         except SimulationValidationError as exc:
             messagebox.showerror("Simulation Input Error", str(exc), parent=self.root)
             return
-

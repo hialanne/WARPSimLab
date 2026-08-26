@@ -1,8 +1,9 @@
 # gui_specialIncome.py
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
 
 
@@ -350,10 +351,6 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self._update_add_button_position()
 
 
-    def _clean_number_text(self, raw_value):
-        return raw_value.strip().replace(",", "")
-
-
     def _validate_float_field(
         self,
         proposed_value,
@@ -363,51 +360,52 @@ class SpecialIncomeEditFrame(ttk.Frame):
         default_value,
         allow_negative_text,
     ):
-        text = self._clean_number_text(proposed_value)
         allow_negative = allow_negative_text == "True"
+        field_label = "Amount" if field_key == "amount" else "Inflation Adjustment"
 
         try:
-            if text == "" or text in {"-", "+", ".", "-.", "+."}:
-                raise ValueError("Invalid number.")
-            if "e" in text.lower():
-                raise ValueError("Scientific notation not allowed.")
+            parsed = parse_finite_float(
+                proposed_value,
+                allow_commas=True,
+                allow_scientific=False,
+                minimum=None if allow_negative else 0,
+            )
 
-            value = float(text)
-
-            if not allow_negative and value < 0.0:
-                raise ValueError("Negative value not allowed.")
-
-            stream[field_key] = value
-            self.after_idle(lambda: var.set(str(value)))
+            stream[field_key] = parsed
+            self.after_idle(lambda: var.set(str(parsed)))
             return True
 
-        except ValueError:
+        except ValueError as exc:
             current_value = stream.get(field_key, float(default_value))
             self.after_idle(lambda: var.set(str(current_value)))
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Special Income / {field_label}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
 
 
     def _validate_int_field(self, proposed_value, stream, field_key, var, default_value):
-        text = self._clean_number_text(proposed_value)
+        field_label = "Start Age" if field_key == "start_age" else "End Age"
 
         try:
-            if text == "" or text in {"-", "+"}:
-                raise ValueError("Invalid integer.")
+            parsed = parse_integer(proposed_value, allow_commas=True, minimum=0, maximum=120)
 
-            value = int(text)
-
-            if value < 0 or value > 120:
-                raise ValueError("Invalid age.")
-
-            stream[field_key] = value
-            self.after_idle(lambda: var.set(str(value)))
+            stream[field_key] = parsed
+            self.after_idle(lambda: var.set(str(parsed)))
             return True
 
-        except ValueError:
+        except ValueError as exc:
             current_value = stream.get(field_key, int(default_value))
             self.after_idle(lambda: var.set(str(current_value)))
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Special Income / {field_label}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
 
 

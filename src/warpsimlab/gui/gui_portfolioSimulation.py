@@ -1,9 +1,11 @@
 # gui_portfolioSimulation.py
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+
 
 class PortfolioSimulationEditFrame(ttk.Frame):
     """
@@ -192,6 +194,7 @@ class PortfolioSimulationEditFrame(ttk.Frame):
         self.custom_stock_var = tk.StringVar(value=self._format_sim_field("custom_stock", settings["custom_stock"]))
         self.custom_bonds_var = tk.StringVar(value=self._format_sim_field("custom_bonds", settings["custom_bonds"]))
         self.custom_cash_var = tk.StringVar(value=self._format_sim_field("custom_cash", settings["custom_cash"]))
+        self._custom_total_check_id = None
 
         self.custom_stock_label = ttk.Label(self, text="Percent Stock:")
 
@@ -271,31 +274,29 @@ class PortfolioSimulationEditFrame(ttk.Frame):
 
 
     def _parse_sim_field(self, field, value):
-
-        text = value.strip()
-
-        if text == "":
-            raise ValueError("Blank")
-
-        if text in {"-", "+", ".", "-.", "+."}:
-            raise ValueError("Invalid")
-
         if field in {"start_year", "years_to_simulate", "num_sims"}:
-            v = int(text)
+            return parse_integer(value, minimum=1)
 
-            if v <= 0:
-                raise ValueError("Invalid")
+        if field == "fund_expense":
+            return parse_finite_float(value, minimum=0)
 
-            return v
+        if field in {"custom_stock", "custom_bonds", "custom_cash"}:
+            return parse_finite_float(value, minimum=0, maximum=100)
 
-        v = float(text)
+        raise ValueError(f"Unknown field: {field}")
 
-        v = float(text)
 
-        if field in {"fund_expense", "custom_stock", "custom_bonds", "custom_cash"} and v < 0:
-            raise ValueError("Invalid")
-
-        return v
+    def _sim_field_label(self, field):
+        labels = {
+            "start_year": "Start Year",
+            "years_to_simulate": "Years to Simulate",
+            "num_sims": "Number of Simulations",
+            "fund_expense": "Fund Expense",
+            "custom_stock": "Custom Stock Allocation",
+            "custom_bonds": "Custom Bond Allocation",
+            "custom_cash": "Custom Cash Allocation",
+        }
+        return labels.get(field, field)
 
 
     def _format_sim_field(self, field, value):
@@ -306,24 +307,68 @@ class PortfolioSimulationEditFrame(ttk.Frame):
         return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
-    def _validate_sim_field(self, proposed_value, field):
+    def _schedule_custom_allocation_check(self):
+        if self._custom_total_check_id is not None:
+            self.after_cancel(self._custom_total_check_id)
 
+        self._custom_total_check_id = self.after_idle(self._validate_custom_allocation_total)
+
+
+    def _validate_custom_allocation_total(self):
+        self._custom_total_check_id = None
+
+        if self.initial_allocation_mode_var.get() != "custom":
+            return
+
+        focus_widget = self.focus_get()
+        custom_entries = {
+            self.custom_stock_entry,
+            self.custom_bonds_entry,
+            self.custom_cash_entry,
+        }
+
+        if focus_widget in custom_entries:
+            return
+
+        settings = self.sim_vars["_settings_dict"]
+        total = settings["custom_stock"] + settings["custom_bonds"] + settings["custom_cash"]
+
+        if abs(total - 100.0) <= 1.0e-9:
+            return
+
+        mark_validation_failed(self)
+        messagebox.showerror(
+            "Invalid Input",
+            f"Simulation Settings / Custom Asset Allocation must total 100%. Current total is {total:g}%.",
+            parent=self.winfo_toplevel(),
+        )
+
+
+    def _validate_sim_field(self, proposed_value, field):
         settings = self.sim_vars["_settings_dict"]
 
         var_name = "sims_var" if field == "num_sims" else f"{field}_var"
         var = getattr(self, var_name)
-
         current_value = settings[field]
 
         try:
             parsed = self._parse_sim_field(field, proposed_value)
             settings[field] = parsed
             self.after_idle(lambda: var.set(self._format_sim_field(field, parsed)))
+
+            if field in {"custom_stock", "custom_bonds", "custom_cash"}:
+                self._schedule_custom_allocation_check()
+
             return True
 
-        except ValueError:
+        except ValueError as exc:
             self.after_idle(lambda: var.set(self._format_sim_field(field, current_value)))
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Simulation Settings / {self._sim_field_label(field)}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
 
 

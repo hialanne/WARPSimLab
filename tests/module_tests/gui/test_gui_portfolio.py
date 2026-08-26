@@ -114,6 +114,8 @@ def test_bind_var_sets_portfolio_value_and_ignores_invalid(mod_no_tooltip, tk_ro
     h = DummyPortfolio()
     frame = mod.PortfolioEditFrame(tk_root, husband_portfolio=h, wife_portfolio=None, mode="Advanced")
     frame.pack()
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
 
     scheduled = {"idle_calls": 0, "cancel_calls": 0}
 
@@ -166,7 +168,8 @@ def test_bind_var_sets_portfolio_value_and_ignores_invalid(mod_no_tooltip, tk_ro
     #   1. restore formatted current value
     #   2. update totals
     assert scheduled["idle_calls"] >= prev_idle_calls + 2
-
+    assert len(shown_errors) == 1
+    assert shown_errors[0][0][0] == "Invalid Input"
 
 def test_advanced_mode_builds_roth_hsa_and_total_rows(mod_no_tooltip, tk_root):
     mod = mod_no_tooltip

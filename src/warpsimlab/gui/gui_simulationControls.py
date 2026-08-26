@@ -246,9 +246,12 @@ class SimulationControlsEditFrame(ttk.Frame):
         )
         right_col0_row += 1
 
-        plot_mode_var = tk.StringVar(
-            value="real" if self.controls.get("plot_mode") == "real" else "raw"
-        )
+        plot_mode = self.controls.get("plot_mode", "real")
+        if plot_mode not in {"raw", "real"}:
+            plot_mode = "real"
+            self.controls["plot_mode"] = plot_mode
+
+        plot_mode_var = tk.StringVar(value=plot_mode)
 
         plot_mode_frame = ttk.Frame(right_left_col)
         plot_mode_frame.grid(row=right_col0_row, column=0, sticky="nw", pady=2)
@@ -294,12 +297,12 @@ class SimulationControlsEditFrame(ttk.Frame):
         }
         subplot_mode_value_to_label = {v: k for k, v in subplot_mode_label_to_value.items()}
 
-        subplot_mode_var = tk.StringVar(
-            value=subplot_mode_value_to_label.get(
-                self.controls.get("subplot_mode", "fill"),
-                "Fill"
-            )
-        )
+        subplot_mode = self.controls.get("subplot_mode", "fill")
+        if subplot_mode not in subplot_mode_value_to_label:
+            subplot_mode = "fill"
+            self.controls["subplot_mode"] = subplot_mode
+
+        subplot_mode_var = tk.StringVar(value=subplot_mode_value_to_label[subplot_mode])
 
         plot_style_frame = ttk.Frame(right_left_col)
         plot_style_frame.grid(row=right_col0_row, column=0, sticky="nw", pady=2)

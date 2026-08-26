@@ -1,9 +1,11 @@
 # gui_realEstate.py
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float
 from src.warpsimlab.utils.tooltip import Tooltip
+
 
 class RealEstateEditFrame(ttk.Frame):
     """
@@ -58,23 +60,9 @@ class RealEstateEditFrame(ttk.Frame):
         return f"{float(value):,.0f}"
 
     def _parse_money(self, raw_value):
-        text = str(raw_value).strip().replace(",", "")
-
-        if text == "":
-            raise ValueError("Blank value is not allowed.")
-
-        if text in {"-", "+", ".", "-.", "+."}:
-            raise ValueError("Invalid number.")
-
-        if "e" in text.lower():
-            raise ValueError("Scientific notation not allowed.")
-
-        value = float(text)
-
-        if value < 0:
-            raise ValueError("Value cannot be negative.")
-
-        return value
+        return parse_finite_float(
+            raw_value, allow_commas=True, allow_scientific=False, minimum=0
+        )
 
     def _init_vars(self):
         self.h_real_estate_var = tk.StringVar(
@@ -156,9 +144,11 @@ class RealEstateEditFrame(ttk.Frame):
             state="readonly",
         ).grid(row=row, column=3, sticky="w", padx=5)
 
+
     def _validate_real_estate_on_focusout(self, proposed_value, person_key):
         portfolio = self.husband_portfolio if person_key == "husband" else self.wife_portfolio
         var = self.h_real_estate_var if person_key == "husband" else self.w_real_estate_var
+        person_label = "Husband" if person_key == "husband" else "Wife"
 
         try:
             parsed = self._parse_money(proposed_value)
@@ -168,13 +158,17 @@ class RealEstateEditFrame(ttk.Frame):
             self.after_idle(self._update_totals)
             return True
 
-        except ValueError:
+        except ValueError as exc:
             current_value = portfolio.real_estate
 
             self.after_idle(lambda: var.set(self._format_money(current_value)))
             self.after_idle(self._update_totals)
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input", f"Real Estate / {person_label}: {exc}", parent=self.winfo_toplevel()
+            )
             return True
+
 
     def _update_totals(self):
         husband_value = self.husband_portfolio.real_estate

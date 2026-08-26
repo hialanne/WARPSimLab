@@ -182,12 +182,15 @@ def test_controls_disabled_when_using_expenses_enabled_when_using_retirement(mod
     assert _state(frame.ret_mode_menu) in ("normal", "")
 
 
-def test_pct_and_dollars_write_back_to_controls_and_ignore_invalid(mod_no_tooltip, tk_root):
+def test_pct_and_dollars_write_back_to_controls_and_ignore_invalid(monkeypatch, mod_no_tooltip, tk_root):
     mod = mod_no_tooltip
 
     control_vars = {"_controls_dict": {}}
     frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
     frame.pack()
+
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
 
     assert frame.controls["retirement_withdraw_pct"] == 4.0
     assert frame.controls["retirement_withdraw_dollars"] == 0.0
@@ -217,6 +220,117 @@ def test_pct_and_dollars_write_back_to_controls_and_ignore_invalid(mod_no_toolti
     tk_root.update_idletasks()
     assert frame.controls["retirement_withdraw_dollars"] == pytest.approx(prev_dollars)
     assert frame.dollars_var.get() == frame._format_retirement_field(prev_dollars)
+
+    assert len(shown_errors) == 2
+    assert all(args[0] == "Invalid Input" for args, _kwargs in shown_errors)
+
+
+@pytest.mark.parametrize(
+    ("field", "bad_value"),
+    [
+        ("retirement_withdraw_pct", "-1"),
+        ("retirement_withdraw_pct", "NaN"),
+        ("retirement_withdraw_pct", "inf"),
+        ("retirement_withdraw_dollars", "-1"),
+        ("retirement_withdraw_dollars", "NaN"),
+        ("retirement_withdraw_dollars", "inf"),
+    ],
+)
+def test_retirement_withdrawal_fields_reject_negative_and_nonfinite_values(
+    monkeypatch,
+    mod_no_tooltip,
+    tk_root,
+    field,
+    bad_value,
+):
+    mod = mod_no_tooltip
+
+    control_vars = {"_controls_dict": {}}
+    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame.pack()
+
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
+
+    original_value = frame.controls[field]
+
+    assert frame._validate_retirement_field(bad_value, field) is True
+    tk_root.update()
+    tk_root.update_idletasks()
+
+    assert frame.controls[field] == pytest.approx(original_value)
+    assert len(shown_errors) == 1
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "retirement_withdraw_pct",
+        "retirement_withdraw_dollars",
+    ],
+)
+def test_retirement_withdrawal_zero_is_valid(monkeypatch, mod_no_tooltip, tk_root, field):
+    mod = mod_no_tooltip
+
+    control_vars = {"_controls_dict": {}}
+    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame.pack()
+
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
+
+    assert frame._validate_retirement_field("0", field) is True
+    tk_root.update()
+    tk_root.update_idletasks()
+
+    assert frame.controls[field] == pytest.approx(0.0)
+    assert shown_errors == []
+
+
+def test_sequence_start_year_offset_accepts_nonnegative_integer(monkeypatch, mod_no_tooltip, tk_root):
+    mod = mod_no_tooltip
+
+    control_vars = {"_controls_dict": {}}
+    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame.pack()
+
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
+
+    assert frame._validate_sequence_start_year_offset("150") is True
+    tk_root.update()
+    tk_root.update_idletasks()
+
+    assert frame.controls["sequence_risk_start_year_offset"] == 150
+    assert frame.sequence_risk_start_year_offset_var.get() == "150"
+    assert shown_errors == []
+
+
+@pytest.mark.parametrize("bad_value", ["-1", "1.5", "bad", ""])
+def test_sequence_start_year_offset_rejects_invalid_values(
+    monkeypatch,
+    mod_no_tooltip,
+    tk_root,
+    bad_value,
+):
+    mod = mod_no_tooltip
+
+    control_vars = {"_controls_dict": {}}
+    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame.pack()
+
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
+
+    original_value = frame.controls["sequence_risk_start_year_offset"]
+
+    assert frame._validate_sequence_start_year_offset(bad_value) is True
+    tk_root.update()
+    tk_root.update_idletasks()
+
+    assert frame.controls["sequence_risk_start_year_offset"] == original_value
+    assert frame.sequence_risk_start_year_offset_var.get() == str(original_value)
+    assert len(shown_errors) == 1
 
 
 def test_include_rmd_checkbox_default_and_writeback(mod_no_tooltip, tk_root):

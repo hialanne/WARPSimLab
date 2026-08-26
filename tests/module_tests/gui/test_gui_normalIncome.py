@@ -74,6 +74,9 @@ def test_bind_var_updates_person_and_ignores_invalid(monkeypatch, tk_root, mod_n
     frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Basic")
     frame.pack()
 
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
+
     # age is int
     assert frame._validate_person_field_on_focusout("41", "husband", "age") is True
     tk_root.update()
@@ -88,14 +91,16 @@ def test_bind_var_updates_person_and_ignores_invalid(monkeypatch, tk_root, mod_n
     assert husband.income == pytest.approx(123456.78)
     assert frame.vars["husband"]["income"].get() == "123,457"
 
-    # invalid numeric input should be ignored (no change)
+    # invalid numeric input should be rejected without changing the model
     prev_retire = husband.retire_age
     assert frame._validate_person_field_on_focusout("not-a-number", "husband", "retire_age") is True
     tk_root.update()
     tk_root.update_idletasks()
+
     assert husband.retire_age == prev_retire
     assert frame.vars["husband"]["retire_age"].get() == str(prev_retire)
-
+    assert len(shown_errors) == 1
+    assert shown_errors[0][0][0] == "Invalid Input"
 
 def test_enable_second_person_checkbox_updates_controls_and_calls_refresh(tk_root, mod_no_tooltip):
     mod = mod_no_tooltip

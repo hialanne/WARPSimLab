@@ -51,7 +51,7 @@ def test_run_simulation_from_gui(monkeypatch, dummy_gui, sim_type):
     monkeypatch.setattr(
         mod.PortfolioSimulatorGUI_RunMixin,
         "commit_pending_gui_edits",
-        lambda self: None,
+        lambda self: True,
     )
 
     monkeypatch.setattr(mod, "run_simulation", fake_run_simulation)
@@ -96,7 +96,7 @@ def test_run_simulation_without_second_person(monkeypatch, dummy_gui):
     monkeypatch.setattr(
         mod.PortfolioSimulatorGUI_RunMixin,
         "commit_pending_gui_edits",
-        lambda self: None,
+        lambda self: True,
     )
 
     monkeypatch.setattr(mod, "run_simulation", fake_run_simulation)

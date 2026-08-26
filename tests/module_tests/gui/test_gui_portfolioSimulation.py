@@ -63,7 +63,7 @@ def test_init_sets_stringvars_from_settings(tk_root, mod_no_tooltip):
     assert frame.fund_expense_var.get() == frame._format_sim_field("fund_expense", settings["fund_expense"])
     assert frame.initial_allocation_mode_var.get() == settings["initial_allocation_mode"]
 
-def test_bind_var_updates_settings_and_ignores_invalid(tk_root, mod_no_tooltip):
+def test_bind_var_updates_settings_and_ignores_invalid(monkeypatch, tk_root, mod_no_tooltip):
     mod = mod_no_tooltip
 
     settings = _base_settings()
@@ -71,6 +71,9 @@ def test_bind_var_updates_settings_and_ignores_invalid(tk_root, mod_no_tooltip):
 
     frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
     frame.pack()
+
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
 
     assert frame._validate_sim_field("2030", "start_year") is True
     tk_root.update()
@@ -109,6 +112,8 @@ def test_bind_var_updates_settings_and_ignores_invalid(tk_root, mod_no_tooltip):
     tk_root.update_idletasks()
     assert settings["fund_expense"] == prev_f
     assert frame.fund_expense_var.get() == frame._format_sim_field("fund_expense", prev_f)
+    assert len(shown_errors) == 2
+    assert all(args[0] == "Invalid Input" for args, _kwargs in shown_errors)
 
 def test_toggle_fund_expense_entry_enables_and_disables(tk_root, mod_no_tooltip):
     mod = mod_no_tooltip
@@ -176,7 +181,7 @@ def test_toggle_custom_entries_shows_and_hides_custom_block(tk_root, mod_no_tool
     assert frame.custom_cash_entry.winfo_manager() == ""
 
 
-def test_custom_percent_vars_update_settings_when_custom_selected(tk_root, mod_no_tooltip):
+def test_custom_percent_vars_update_settings_when_custom_selected(monkeypatch, tk_root, mod_no_tooltip):
     mod = mod_no_tooltip
 
     settings = _base_settings()
@@ -185,6 +190,9 @@ def test_custom_percent_vars_update_settings_when_custom_selected(tk_root, mod_n
 
     frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
     frame.pack()
+
+    shown_errors = []
+    monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
 
     frame.initial_allocation_mode_var.set("custom")
     frame.toggle_custom_entries()

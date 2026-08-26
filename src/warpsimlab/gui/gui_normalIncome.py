@@ -1,9 +1,11 @@
 # gui_normalIncome.py
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+
 
 class NormalIncomeEditFrame(ttk.Frame):
     """
@@ -249,11 +251,6 @@ class NormalIncomeEditFrame(ttk.Frame):
 
 
     def _parse_person_field(self, field_key, raw_value):
-        text = raw_value.strip().replace(",", "")
-
-        if text == "":
-            raise ValueError("Blank value is not allowed.")
-
         int_fields = {
             "age",
             "retire_age",
@@ -262,38 +259,45 @@ class NormalIncomeEditFrame(ttk.Frame):
             "annuity_age",
         }
 
-        float_fields = {
+        nonnegative_float_fields = {
             "income",
             "ss",
             "pension",
             "annuity",
             "annual_401k_contribution",
             "annual_employer_match",
-            "pension_inflation_adjustment_pct",
         }
 
         if field_key in int_fields:
-            if text in {"-", "+"}:
-                raise ValueError("Invalid integer.")
-            value = int(text)
+            return parse_integer(raw_value, allow_commas=True, minimum=0, maximum=120)
 
-            if value < 0 or value > 120:
-                raise ValueError("Invalid age.")
+        if field_key in nonnegative_float_fields:
+            return parse_finite_float(
+                raw_value, allow_commas=True, allow_scientific=False, minimum=0
+            )
 
-            return value
-
-        if field_key in float_fields:
-            cleaned = text
-            if cleaned in {"-", "+", ".", "-.", "+."}:
-                raise ValueError("Invalid number.")
-            if "e" in cleaned.lower():
-                raise ValueError("Scientific notation not allowed.")
-            value = float(cleaned)
-            if field_key != "pension_inflation_adjustment_pct" and value < 0:
-                raise ValueError("Value cannot be negative.")
-            return value
+        if field_key == "pension_inflation_adjustment_pct":
+            return parse_finite_float(raw_value, allow_commas=True, allow_scientific=False)
 
         raise ValueError(f"Unknown field: {field_key}")
+
+
+    def _person_field_label(self, field_key):
+        labels = {
+            "age": "Age",
+            "income": "Income",
+            "retire_age": "Retirement Age",
+            "ss": "Social Security",
+            "ss_age": "Social Security Start Age",
+            "pension": "Pension",
+            "pension_age": "Pension Start Age",
+            "annuity": "Annuity",
+            "annuity_age": "Annuity Start Age",
+            "annual_401k_contribution": "401k / IRA Contribution",
+            "annual_employer_match": "Employer Match",
+            "pension_inflation_adjustment_pct": "Pension COLA",
+        }
+        return labels.get(field_key, field_key)
 
 
     def _format_person_field(self, field_key, value):
@@ -327,20 +331,25 @@ class NormalIncomeEditFrame(ttk.Frame):
 
 
     def _validate_person_field_on_focusout(self, proposed_value, person_key, field_key):
-        #print("VALIDATE FOCUSOUT", person_key, field_key, repr(proposed_value))
-        
         person = self.persons[person_key]
         var = self.vars[person_key][field_key]
+        person_label = "Husband" if person_key == "husband" else "Wife"
+        field_label = self._person_field_label(field_key)
 
         try:
             parsed = self._parse_person_field(field_key, proposed_value)
             setattr(person, field_key, parsed)
             self.after_idle(lambda: var.set(self._format_person_field(field_key, parsed)))
             return True
-        except ValueError:
+
+        except ValueError as exc:
             current_value = getattr(person, field_key)
             self.after_idle(lambda: var.set(self._format_person_field(field_key, current_value)))
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Normal Income / {person_label} / {field_label}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
-
 

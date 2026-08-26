@@ -651,8 +651,8 @@ class RetirementSSComparisonReportFrame(ttk.Frame):
                 self._parse_age_values(
                     self.retirement_age_vars,
                     "Retirement",
-                    55,
-                    75,
+                    0,
+                    100,
                 )
             )
 

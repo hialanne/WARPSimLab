@@ -71,6 +71,26 @@ RETIREMENT_WITHDRAW_MODES = {
     "Fixed Dollar Amount + Inflation",
 }
 
+SEQUENCE_RISK_TIMINGS = {
+    "None",
+    "Early downturn",
+    "Mid-retirement downturn",
+    "Late downturn",
+    "Custom",
+}
+
+SEQUENCE_RISK_LENGTHS = {
+    "Short",
+    "Medium",
+    "Long",
+}
+
+SEQUENCE_RISK_DEPTHS = {
+    "Mild",
+    "Moderate",
+    "Severe",
+}
+
 PORTFOLIO_FIELDS = (
     "equity_pre",
     "equity_post",
@@ -315,6 +335,27 @@ def _validate_sim_config(sim_config):
         "sim_config.retirement_withdraw_mode",
         getattr(sim_config, "retirement_withdraw_mode", None),
         RETIREMENT_WITHDRAW_MODES,
+    )
+
+    _require_choice(
+        "sim_config.sequence_risk_timing",
+        getattr(sim_config, "sequence_risk_timing", None),
+        SEQUENCE_RISK_TIMINGS,
+    )
+    _require_choice(
+        "sim_config.sequence_risk_length",
+        getattr(sim_config, "sequence_risk_length", None),
+        SEQUENCE_RISK_LENGTHS,
+    )
+    _require_choice(
+        "sim_config.sequence_risk_depth",
+        getattr(sim_config, "sequence_risk_depth", None),
+        SEQUENCE_RISK_DEPTHS,
+    )
+    _require_integer(
+        "sim_config.sequence_risk_start_year_offset",
+        getattr(sim_config, "sequence_risk_start_year_offset", None),
+        minimum=0,
     )
 
     _require_integer("sim_config.start_year", getattr(sim_config, "start_year", None), strictly_positive=True)

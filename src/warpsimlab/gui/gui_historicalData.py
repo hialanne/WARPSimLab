@@ -1,9 +1,11 @@
 # gui_historicalData.py
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float
 from src.warpsimlab.utils.tooltip import Tooltip
+
 
 def load_market_data(selection):
     # Lazy import to avoid circular import at module load time
@@ -179,18 +181,24 @@ class HistoricalEditFrame(ttk.Frame):
                     font=("Arial", 11))
 
 
-    def _parse_historical_field(self, raw_value):
-        text = raw_value.strip()
+    def _parse_historical_field(self, field_name, raw_value):
+        minimum = 0 if field_name in {"eq_std", "bd_std", "cs_std", "re_std"} else None
+        return parse_finite_float(raw_value, minimum=minimum)
 
-        if text == "":
-            raise ValueError("Blank value")
 
-        if text in {"-", "+", ".", "-.", "+."}:
-            raise ValueError("Invalid number")
-
-        value = float(text)
-
-        return value
+    def _historical_field_label(self, field_name):
+        labels = {
+            "eq_mean": "Stock Yearly Gains",
+            "bd_mean": "Bond Yearly Gains",
+            "cs_mean": "Cash Yearly Gains",
+            "re_mean": "Real Estate Yearly Gains",
+            "eq_std": "Stock STD",
+            "bd_std": "Bond STD",
+            "cs_std": "Cash STD",
+            "re_std": "Real Estate STD",
+            "inflation": "Inflation Rate",
+        }
+        return labels.get(field_name, field_name)
 
 
     def _format_historical_field(self, value):
@@ -203,13 +211,19 @@ class HistoricalEditFrame(ttk.Frame):
         current_value = getattr(self.data, field_name)
 
         try:
-            parsed = self._parse_historical_field(proposed_value)
+            parsed = self._parse_historical_field(field_name, proposed_value)
             setattr(self.data, field_name, parsed)
             self.after_idle(lambda: var.set(self._format_historical_field(parsed)))
             return True
-        except ValueError:
+
+        except ValueError as exc:
             self.after_idle(lambda: var.set(self._format_historical_field(current_value)))
-            self.bell()
+            mark_validation_failed(self)
+            messagebox.showerror(
+                "Invalid Input",
+                f"Historical Data / {self._historical_field_label(field_name)}: {exc}",
+                parent=self.winfo_toplevel(),
+            )
             return True
 
 

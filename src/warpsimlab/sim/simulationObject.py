@@ -36,7 +36,7 @@ class Simulation:
             output_csv="None",
             csv_output_dir=None,
 
-            retirement_withdraw_mode="None",
+            retirement_withdraw_mode="Off",
             retirement_withdraw_pct=4.0,
             retirement_withdraw_dollars=0,
             always_use_expense_mode=True,
@@ -131,35 +131,6 @@ class Simulation:
         self.sequence_risk_length = sequence_risk_length
         self.sequence_risk_depth = sequence_risk_depth
 
-        valid_sequence_risk_timing = {
-            "None",
-            "Early downturn",
-            "Mid-retirement downturn",
-            "Late downturn",
-            "Custom",
-        }
-        if self.sequence_risk_timing not in valid_sequence_risk_timing:
-            raise ValueError(
-                f"Unsupported sequence_risk_timing: {self.sequence_risk_timing}"
-            )
-
-        valid_sequence_risk_length = {"Short", "Medium", "Long"}
-        if self.sequence_risk_length not in valid_sequence_risk_length:
-            raise ValueError(
-                f"Unsupported sequence_risk_length: {self.sequence_risk_length}"
-            )
-
-        valid_sequence_risk_depth = {"Mild", "Moderate", "Severe"}
-        if self.sequence_risk_depth not in valid_sequence_risk_depth:
-            raise ValueError(
-                f"Unsupported sequence_risk_depth: {self.sequence_risk_depth}"
-            )
-
-        self.sequence_risk_start_year_offset = max(
-            0,
-            int(self.sequence_risk_start_year_offset),
-        )
-
         self.scenario_expense_multiplier = scenario_expense_multiplier
         self.overlay_tax_impacts = overlay_tax_impacts
         self.overlay_fund_expense_impacts = overlay_fund_expense_impacts
@@ -206,37 +177,6 @@ class Simulation:
             [0.00, 0.20, 1.00, 0.05],
             [0.55, 0.10, 0.05, 1.00],
         ], dtype=float)
-
-        valid_monte_carlo_plot_styles = {
-            "fill",
-            "line",
-            "all_lines",
-        }
-        if self.monte_carlo_plot_style not in valid_monte_carlo_plot_styles:
-            raise ValueError(
-                f"Unsupported monte_carlo_plot_style: {self.monte_carlo_plot_style}. "
-                f"Valid values are: {sorted(valid_monte_carlo_plot_styles)}"
-            )
-
-        valid_monte_carlo_modes = {
-            "pathBasedAnnualSampling",
-            "rollingHistoricalWindows",
-        }
-        if self.monte_carlo_mode not in valid_monte_carlo_modes:
-            raise ValueError(
-                f"Unsupported monte_carlo_mode: {self.monte_carlo_mode}. "
-                f"Valid values are: {sorted(valid_monte_carlo_modes)}"
-            )
-
-        valid_historical_window_modes = {
-            "rolling_overlapping_all",
-        }
-        if self.historical_window_mode not in valid_historical_window_modes:
-            raise ValueError(
-                f"Unsupported historical_window_mode: {self.historical_window_mode}. "
-                f"Valid values are: {sorted(valid_historical_window_modes)}"
-            )
-
         
         # --- Precomputed Monte Carlo sampling data ---
         # Built once per simulation run to avoid repeated covariance setup

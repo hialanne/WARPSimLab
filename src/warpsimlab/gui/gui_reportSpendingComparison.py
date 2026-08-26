@@ -4,6 +4,8 @@ import copy
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from src.warpsimlab.gui.gui_validation import parse_finite_float
+
 
 class SpendingComparisonReportFrame(ttk.Frame):
 
@@ -275,11 +277,9 @@ class SpendingComparisonReportFrame(ttk.Frame):
                 continue
 
             try:
-                value = float(text)
-            except ValueError:
-                raise ValueError(
-                    f"'{text}' is not a valid spending percentage."
-                )
+                value = parse_finite_float(text)
+            except ValueError as exc:
+                raise ValueError(f"'{text}' is not a valid spending percentage: {exc}") from exc
 
             if value <= 0:
                 raise ValueError(
