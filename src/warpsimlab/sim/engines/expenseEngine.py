@@ -42,18 +42,20 @@ def initialize_expense_engine_for_simulation(sim_config):
     sim_config._expense_inflation_factors = _build_expense_inflation_factors(sim_config)
 
 
-def calculate_expenses(expenses, year, sim_config):
+def calculate_expense_breakdown(expenses, year, sim_config):
     if not hasattr(sim_config, "_expense_inflation_factors"):
         initialize_expense_engine_for_simulation(sim_config)
 
     current_year = year + sim_config.start_year
+    base = expenses.get_expense_breakdown_for_year(current_year)
+    factor = sim_config.scenario_expense_multiplier * sim_config._expense_inflation_factors[year]
 
-    base_expense = expenses.get_total_expense_for_year(current_year)
+    return {
+        "total": base["total"] * factor,
+        "hsa_eligible": base["hsa_eligible"] * factor,
+        "non_hsa": base["non_hsa"] * factor,
+    }
 
-    # Scenario scaling (applied to the base expense before inflation)
-    base_expense *= sim_config.scenario_expense_multiplier
 
-    # Adjust for inflation over the simulation period
-    expenses_infl = base_expense * sim_config._expense_inflation_factors[year]
-
-    return expenses_infl
+def calculate_expenses(expenses, year, sim_config):
+    return calculate_expense_breakdown(expenses, year, sim_config)["total"]

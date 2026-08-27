@@ -76,6 +76,8 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "final_tax_delta_uncovered": r["final_tax_delta_uncovered"][0],
         "roth_withdrawals": r["roth_withdrawals"][0],
         "hsa_withdrawals": r["hsa_withdrawals"][0],
+        "hsa_qualified_withdrawals": r["hsa_qualified_withdrawals"][0],
+        "hsa_taxable_withdrawals": r["hsa_taxable_withdrawals"][0],
         "expenses": r["expense_amt"][0],
         "net_cash_flow": r["net_profit"][0],
         "cash_flow_shortfall": r["cash_flow_shortfall"][0],

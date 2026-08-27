@@ -58,17 +58,34 @@ class DynamicExpenses:
         """
         return [exp.copy() for exp in self.expenses]
 
+
+    def get_expense_breakdown_for_year(self, year):
+        """
+        Return total, HSA-eligible, and non-HSA expenses applicable for a year.
+        """
+        total = 0.0
+        hsa_eligible = 0.0
+
+        for exp in self.expenses:
+            start = exp["start_year"]
+            end = exp["end_year"]
+
+            if year >= start and (end is None or year <= end):
+                cost = exp["cost"]
+                total += cost
+
+                if exp.get("is_hsa_eligible", False):
+                    hsa_eligible += cost
+
+        return {
+            "total": total,
+            "hsa_eligible": hsa_eligible,
+            "non_hsa": total - hsa_eligible,
+        }
+
+
     def get_total_expense_for_year(self, year):
         """
         Return the total cost of all expenses applicable for the given year.
-        Open-ended expenses (end_year=None) are considered ongoing indefinitely.
         """
-        total = 0
-        for exp in self.expenses:
-            start = exp["start_year"]
-            end = exp["end_year"]  # could be None
-            # if end is None, treat it as "forever" / no limit
-            if end is None or start <= year <= end:
-                if year >= start:  # always after start year
-                    total += exp["cost"]
-        return total
+        return self.get_expense_breakdown_for_year(year)["total"]

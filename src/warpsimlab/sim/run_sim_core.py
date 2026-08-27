@@ -152,6 +152,8 @@ def simulate_yearly_portfolios(
         "taxes": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "tax_bracket": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "hsa_qualified_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "hsa_taxable_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "expense_amt": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "uncovered_expense": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -442,6 +444,9 @@ def simulate_yearly_portfolios(
             w_hsa = {"employee": 0.0, "employer": 0.0, "total": 0.0}
 
             emergency_pre_tax_used = 0.0
+            qualified_hsa_withdrawal = 0.0
+            taxable_hsa_withdrawal = 0.0
+            cash_expense_amt = 0.0
             uncovered_expense = 0.0
             net_cash_result = None
             cash_flow_shortfall = 0.0
@@ -571,11 +576,20 @@ def simulate_yearly_portfolios(
             )
 
             if use_expenses:
-                expense_amt = expenseEngine.calculate_expenses(expenses, year, sim_config)
-                wd_pre_tax = 0
-                wd_post_tax = 0
-                wd_roth = 0
-                wd_hsa = 0
+                expense_breakdown = expenseEngine.calculate_expense_breakdown(expenses, year, sim_config)
+                expense_amt = expense_breakdown["total"]
+
+                qualified_hsa_result = hsaEngine.pay_qualified_hsa_expenses(
+                    h_port, w_port, expense_breakdown["hsa_eligible"], second_person_enabled
+                )
+                qualified_hsa_withdrawal = qualified_hsa_result["paid"]
+
+                cash_expense_amt = expense_breakdown["non_hsa"] + qualified_hsa_result["uncovered"]
+
+                wd_pre_tax = 0.0
+                wd_post_tax = 0.0
+                wd_roth = 0.0
+                wd_hsa = qualified_hsa_withdrawal
             else:
                 wd = withdrawalEngine.calculate_retirement_withdrawal(
                     h_port,
@@ -593,6 +607,7 @@ def simulate_yearly_portfolios(
                 wd_post_tax = wd["post_tax"]
                 wd_roth = wd.get("roth", 0.0)
                 wd_hsa = wd.get("hsa", 0.0)
+                taxable_hsa_withdrawal = wd_hsa
                 wd_rmd = wd.get("rmd", 0.0)
                 # Contributions are discretionary relative to the base retirement
                 # withdrawal. Any uncovered amount reduces the Roth contribution first.
@@ -713,13 +728,13 @@ def simulate_yearly_portfolios(
                     net_cash = (
                         income["total"]
                         - baseline_total_tax
-                        - expense_amt
+                        - cash_expense_amt
                         - requested_roth_contribution_total
                     )
                 else:
                     net_cash = (
                         income["total"]
-                        - expense_amt
+                        - cash_expense_amt
                         - requested_roth_contribution_total
                     )
 
@@ -763,6 +778,8 @@ def simulate_yearly_portfolios(
                 )
 
                 emergency_pre_tax_used = net_cash_result["pre_tax_used"]
+                taxable_hsa_withdrawal = net_cash_result["hsa_used"]
+                wd_hsa = qualified_hsa_withdrawal + taxable_hsa_withdrawal
 
                 combined_uncovered = max(
                     0.0,
@@ -796,8 +813,13 @@ def simulate_yearly_portfolios(
                 )
                 
                 # Recompute final taxes only if the emergency pre-tax draw changed income
-                if emergency_pre_tax_used > 0.0:
-                    ordinary_income = baseline_ordinary_income + emergency_pre_tax_used
+                # Recompute final taxes if taxable portfolio withdrawals changed income.
+                if emergency_pre_tax_used > 0.0 or taxable_hsa_withdrawal > 0.0:
+                    ordinary_income = (
+                        baseline_ordinary_income
+                        + emergency_pre_tax_used
+                        + taxable_hsa_withdrawal
+                    )
 
                     (
                         federal_ordinary_tax,
@@ -860,6 +882,7 @@ def simulate_yearly_portfolios(
                     - qualified_equity_distributions
                     - income.get("non_taxable_income", 0.0)
                     + wd_pre_tax
+                    + wd_hsa
                     + roth_conversion_total
                 )
 
@@ -1017,7 +1040,13 @@ def simulate_yearly_portfolios(
             hsa_employer_total = h_hsa["employer"] + (w_hsa["employer"] if second_person_enabled else 0.0)
             hsa_total_contributions = hsa_employee_total + hsa_employer_total
 
-            gross_income = income["total"] + employee_401k_total + hsa_employee_total + emergency_pre_tax_used
+            gross_income = (
+                income["total"]
+                + employee_401k_total
+                + emergency_pre_tax_used
+                + hsa_employee_total
+                + (taxable_hsa_withdrawal if use_expenses else 0.0)
+            )
 
             if use_expenses:
                 net_profit = (
@@ -1113,6 +1142,8 @@ def simulate_yearly_portfolios(
             results["emergency_pre_tax_used"][s,year] = emergency_pre_tax_used
             results["roth_withdrawals"][s, year] = wd_roth
             results["hsa_withdrawals"][s, year] = wd_hsa
+            results["hsa_qualified_withdrawals"][s, year] = qualified_hsa_withdrawal
+            results["hsa_taxable_withdrawals"][s, year] = taxable_hsa_withdrawal
             results["final_tax_delta"][s,year] = final_tax_delta
             results["final_tax_delta_deducted"][s,year] = final_tax_delta_deducted
             results["final_tax_delta_uncovered"][s,year] = final_tax_delta_uncovered
@@ -1294,6 +1325,8 @@ def simulate_yearly_portfolios(
         results["cash_flow_shortfall"] = (results["cash_flow_shortfall"] / discount_factors)
         results["roth_withdrawals"] = (results["roth_withdrawals"] / discount_factors)
         results["hsa_withdrawals"] = (results["hsa_withdrawals"] / discount_factors)
+        results["hsa_qualified_withdrawals"] = results["hsa_qualified_withdrawals"] / discount_factors
+        results["hsa_taxable_withdrawals"] = results["hsa_taxable_withdrawals"] / discount_factors
         results["final_tax_delta"] = results["final_tax_delta"] / discount_factors
         results["final_tax_delta_deducted"] = results["final_tax_delta_deducted"] / discount_factors
         results["final_tax_delta_uncovered"] = results["final_tax_delta_uncovered"] / discount_factors

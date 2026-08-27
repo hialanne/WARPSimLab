@@ -63,3 +63,49 @@ def deposit_hsa_contributions(sim_portfolio, contributions):
         return 0.0
 
     return portfolioEngine.apply_hsa_contribution(sim_portfolio, amount)
+
+def _withdraw_hsa(sim_portfolio, amount):
+    amount = max(0.0, float(amount))
+    total_hsa = max(0.0, float(sim_portfolio.total_value_hsa))
+
+    if amount <= 0.0 or total_hsa <= 0.0:
+        return 0.0
+
+    take = min(amount, total_hsa)
+    ratio = take / total_hsa
+
+    sim_portfolio.hsa_eq = max(0.0, sim_portfolio.hsa_eq * (1.0 - ratio))
+    sim_portfolio.hsa_bd = max(0.0, sim_portfolio.hsa_bd * (1.0 - ratio))
+    sim_portfolio.hsa_cs = max(0.0, sim_portfolio.hsa_cs * (1.0 - ratio))
+
+    return take
+
+
+def pay_qualified_hsa_expenses(h_port, w_port, amount, second_person_enabled):
+    """
+    Pay qualified medical expenses directly from household HSA assets.
+
+    These withdrawals are tax-free. Any amount not covered by HSA assets
+    remains an ordinary household expense.
+    """
+    requested = max(0.0, float(amount))
+    h_total = max(0.0, float(h_port.total_value_hsa))
+    w_total = max(0.0, float(w_port.total_value_hsa)) if second_person_enabled else 0.0
+    household_total = h_total + w_total
+
+    if requested <= 0.0 or household_total <= 0.0:
+        return {"paid": 0.0, "uncovered": requested}
+
+    paid = min(requested, household_total)
+    h_take = paid * h_total / household_total if h_total > 0.0 else 0.0
+    w_take = paid - h_take if second_person_enabled else 0.0
+
+    actual_paid = _withdraw_hsa(h_port, h_take)
+
+    if second_person_enabled:
+        actual_paid += _withdraw_hsa(w_port, w_take)
+
+    return {
+        "paid": actual_paid,
+        "uncovered": max(0.0, requested - actual_paid),
+    }
