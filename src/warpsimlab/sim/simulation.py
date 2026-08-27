@@ -51,6 +51,10 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "roth_equity": r["roth_equity"][0],
         "roth_bonds": r["roth_bonds"][0],
         "roth_cash": r["roth_cash"][0],
+        
+        "hsa_equity": r["hsa_equity"][0],
+        "hsa_bonds": r["hsa_bonds"][0],
+        "hsa_cash": r["hsa_cash"][0],
 
         "roth_assets": r["roth_assets"][0],
         "hsa_assets": r["hsa_assets"][0],
@@ -82,18 +86,14 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "special_income": r["breakdown_by_class"]["special_income"][0],
         "ira_401k": r["ira_401k"][0],
         "employee_401k_contributions": (r["employee_401k_contributions"][0]),
-        "roth_ira_contributions": (
-            r["roth_ira_contributions"][0]
-        ),
-        "roth_workplace_contributions": (
-            r["roth_workplace_contributions"][0]
-        ),
-        "roth_conversions": (
-            r["roth_conversions"][0]
-        ),
-        "roth_total_flows": (
-            r["roth_total_flows"][0]
-        ),
+
+        "roth_ira_contributions": (r["roth_ira_contributions"][0]),
+        "roth_workplace_contributions": (r["roth_workplace_contributions"][0]),
+        "roth_conversions": (r["roth_conversions"][0]),
+        "roth_total_flows": (r["roth_total_flows"][0]),
+        "hsa_employee_contributions": r["hsa_employee_contributions"][0],
+        "hsa_employer_contributions": r["hsa_employer_contributions"][0],
+        "hsa_total_contributions": r["hsa_total_contributions"][0],
         "social_security": r["breakdown_by_class"]["ss"][0],
         "pensions": r["breakdown_by_class"]["pension"][0],
         "annuities": r["breakdown_by_class"]["annuity"][0],

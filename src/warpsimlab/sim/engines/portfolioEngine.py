@@ -921,6 +921,27 @@ def apply_roth_contribution(sim_portfolio, amount):
     return amount
 
 
+def apply_hsa_contribution(sim_portfolio, amount):
+    """
+    Add new outside money to the HSA bucket.
+
+    Contributions are allocated proportionally to the existing HSA
+    allocation. If the HSA bucket is empty, use an equal allocation.
+    """
+    total_hsa = sim_portfolio.hsa_eq + sim_portfolio.hsa_bd + sim_portfolio.hsa_cs
+
+    if total_hsa > 0:
+        sim_portfolio.hsa_eq += amount * sim_portfolio.hsa_eq / total_hsa
+        sim_portfolio.hsa_bd += amount * sim_portfolio.hsa_bd / total_hsa
+        sim_portfolio.hsa_cs += amount * sim_portfolio.hsa_cs / total_hsa
+    else:
+        sim_portfolio.hsa_eq += amount / 3
+        sim_portfolio.hsa_bd += amount / 3
+        sim_portfolio.hsa_cs += amount / 3
+
+    return amount
+
+
 def convert_pre_tax_to_roth(sim_portfolio, amount):
     """
     Move assets proportionally from the pre-tax bucket to the Roth bucket.

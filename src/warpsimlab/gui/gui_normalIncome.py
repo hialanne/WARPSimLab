@@ -67,6 +67,12 @@ class NormalIncomeEditFrame(ttk.Frame):
                 "annual_employer_match": tk.StringVar(
                     value=fmt_money(person.annual_employer_match)
                 ),
+                "annual_hsa_contribution": tk.StringVar(
+                    value=fmt_money(person.annual_hsa_contribution)
+                ),
+                "annual_hsa_employer_contribution": tk.StringVar(
+                    value=fmt_money(person.annual_hsa_employer_contribution)
+                ),
                 "pension_inflation_adjustment_pct": tk.StringVar(
                     value=str(getattr(person, "pension_inflation_adjustment_pct", 0.0))
                 ),
@@ -147,6 +153,16 @@ class NormalIncomeEditFrame(ttk.Frame):
                 "Employer Match ($/yr)",
                 "annual_employer_match",
                 "Annual employer retirement contribution",
+            ),
+            (
+                "HSA Contribution ($/yr)",
+                "annual_hsa_contribution",
+                "Annual employee HSA contribution",
+            ),
+            (
+                "Employer HSA Contribution ($/yr)",
+                "annual_hsa_employer_contribution",
+                "Annual employer HSA contribution",
             ),
         ]
 
@@ -266,6 +282,8 @@ class NormalIncomeEditFrame(ttk.Frame):
             "annuity",
             "annual_401k_contribution",
             "annual_employer_match",
+            "annual_hsa_contribution",
+            "annual_hsa_employer_contribution",
         }
 
         if field_key in int_fields:
@@ -295,6 +313,8 @@ class NormalIncomeEditFrame(ttk.Frame):
             "annuity_age": "Annuity Start Age",
             "annual_401k_contribution": "401k / IRA Contribution",
             "annual_employer_match": "Employer Match",
+            "annual_hsa_contribution": "HSA Contribution",
+            "annual_hsa_employer_contribution": "Employer HSA Contribution",
             "pension_inflation_adjustment_pct": "Pension COLA",
         }
         return labels.get(field_key, field_key)
@@ -316,6 +336,8 @@ class NormalIncomeEditFrame(ttk.Frame):
             "annuity",
             "annual_401k_contribution",
             "annual_employer_match",
+            "annual_hsa_contribution",
+            "annual_hsa_employer_contribution",
         }
 
         if field_key in int_fields:

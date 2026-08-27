@@ -100,6 +100,12 @@ class PortfolioSimulatorGUI_IOMixin:
             self.husband.annual_employer_match = data.get(
                 "DEFAULT_HUSBAND_401K_MATCH", self.husband.annual_employer_match
             )
+            self.husband.annual_hsa_contribution = data.get(
+                "DEFAULT_HUSBAND_HSA_CONTRIB", self.husband.annual_hsa_contribution
+            )
+            self.husband.annual_hsa_employer_contribution = data.get(
+                "DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB", self.husband.annual_hsa_employer_contribution
+            )
 
             # --- Husband Portfolio ---
             h_port = self.husband_portfolio
@@ -143,6 +149,12 @@ class PortfolioSimulatorGUI_IOMixin:
                 self.wife.annual_employer_match = data.get(
                     "DEFAULT_WIFE_401K_MATCH", self.wife.annual_employer_match
                 )
+                self.wife.annual_hsa_contribution = data.get(
+                    "DEFAULT_WIFE_HSA_CONTRIB", self.wife.annual_hsa_contribution
+                )
+                self.wife.annual_hsa_employer_contribution = data.get(
+                    "DEFAULT_WIFE_HSA_EMPLOYER_CONTRIB", self.wife.annual_hsa_employer_contribution
+                )
 
                 # --- Wife Portfolio ---
                 w_port = self.wife_portfolio
@@ -170,11 +182,12 @@ class PortfolioSimulatorGUI_IOMixin:
             self.expensesDict.expenses.clear()
             for exp in data.get("EXPENSES", []):
                 start_year = exp.get("start_year")
-                end_year   = exp.get("end_year")
-                cost       = exp.get("cost")
-                comment    = exp.get("comment", "")
+                end_year = exp.get("end_year")
+                cost = exp.get("cost")
+                comment = exp.get("comment", "")
+                is_hsa_eligible = bool(exp.get("is_hsa_eligible", False))
                 if start_year is not None and cost is not None:
-                    self.expensesDict.add_expense(start_year, cost, end_year, comment)
+                    self.expensesDict.add_expense(start_year, cost, end_year, comment, is_hsa_eligible)
 
             self.special_income_streams.clear()
 
@@ -223,6 +236,12 @@ class PortfolioSimulatorGUI_IOMixin:
             "DEFAULT_HUSBAND_401K_MATCH": parse_money_strict(
                 self.husband.annual_employer_match, "husband.annual_employer_match"
             ),
+            "DEFAULT_HUSBAND_HSA_CONTRIB": parse_money_strict(
+                self.husband.annual_hsa_contribution, "husband.annual_hsa_contribution"
+            ),
+            "DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB": parse_money_strict(
+                self.husband.annual_hsa_employer_contribution, "husband.annual_hsa_employer_contribution"
+            ),
 
             # Husband Portfolio
             "DEFAULT_EQUITY_PRE_H": self.husband_portfolio.equity_pre,
@@ -261,6 +280,12 @@ class PortfolioSimulatorGUI_IOMixin:
                 ),
                 "DEFAULT_WIFE_401K_MATCH": parse_money_strict(
                     self.wife.annual_employer_match, "wife.annual_employer_match"
+                ),
+                "DEFAULT_WIFE_HSA_CONTRIB": parse_money_strict(
+                    self.wife.annual_hsa_contribution, "wife.annual_hsa_contribution"
+                ),
+                "DEFAULT_WIFE_HSA_EMPLOYER_CONTRIB": parse_money_strict(
+                    self.wife.annual_hsa_employer_contribution, "wife.annual_hsa_employer_contribution"
                 ),
 
                 # Wife Portfolio
@@ -302,7 +327,8 @@ class PortfolioSimulatorGUI_IOMixin:
                     "start_year": exp["start_year"],
                     "end_year": exp["end_year"],
                     "cost": exp["cost"],
-                    "comment": exp["comment"]
+                    "comment": exp["comment"],
+                    "is_hsa_eligible": bool(exp.get("is_hsa_eligible", False))
                 }
                 for exp in getattr(self.expensesDict, "expenses", [])
             ],

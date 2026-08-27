@@ -360,6 +360,12 @@ class PortfolioSimulatorGUI_RunMixin:
             annual_employer_match=self._simulation_float(
                 "Employer match", getattr(p, "annual_employer_match", 0.0)
             ),
+            annual_hsa_contribution=self._simulation_float(
+                "HSA contribution", getattr(p, "annual_hsa_contribution", 0.0)
+            ),
+            annual_hsa_employer_contribution=self._simulation_float(
+                "Employer HSA contribution", getattr(p, "annual_hsa_employer_contribution", 0.0)
+            ),
             pension_inflation_adjustment_pct=self._simulation_float(
                 "Pension inflation adjustment", getattr(p, "pension_inflation_adjustment_pct", 0.0)
             ),
@@ -370,6 +376,8 @@ class PortfolioSimulatorGUI_RunMixin:
             sim_p.annuity = 0.0
             sim_p.annual_401k_contribution = 0.0
             sim_p.annual_employer_match = 0.0
+            sim_p.annual_hsa_contribution = 0.0
+            sim_p.annual_hsa_employer_contribution = 0.0
             sim_p.pension_inflation_adjustment_pct = 0.0
 
             # Avoid hidden SS start age influencing results in Basic mode

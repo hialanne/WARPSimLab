@@ -110,6 +110,8 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             annuity_age=DEFAULT_HUSBAND_ANNUITY_AGE,
             annual_401k_contribution=DEFAULT_HUSBAND_401K_CONTRIB,
             annual_employer_match=DEFAULT_HUSBAND_401K_MATCH,
+            annual_hsa_contribution=DEFAULT_HUSBAND_HSA_CONTRIB,
+            annual_hsa_employer_contribution=DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB,
             pension_inflation_adjustment_pct=DEFAULT_HUSBAND_PENSION_INFLATION_ADJ,
         )
 
@@ -125,6 +127,8 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
             annuity_age=DEFAULT_WIFE_ANNUITY_AGE,
             annual_401k_contribution=DEFAULT_WIFE_401K_CONTRIB,
             annual_employer_match=DEFAULT_WIFE_401K_MATCH,
+            annual_hsa_contribution=DEFAULT_WIFE_HSA_CONTRIB,
+            annual_hsa_employer_contribution=DEFAULT_WIFE_HSA_EMPLOYER_CONTRIB,
             pension_inflation_adjustment_pct=DEFAULT_WIFE_PENSION_INFLATION_ADJ,
         )
 
@@ -1181,7 +1185,8 @@ class PortfolioSimulatorGUI(PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGU
         self.expensesDict = DynamicExpenses()
         for expense in DEFAULT_EXPENSE_ENTRIES:
             self.expensesDict.add_expense(
-                expense["start_year"], expense["cost"], expense["end_year"], expense["comment"]
+                expense["start_year"], expense["cost"], expense["end_year"], expense["comment"],
+                expense.get("is_hsa_eligible", False)
             )
 
         # Special income streams

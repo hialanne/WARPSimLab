@@ -11,6 +11,7 @@ from .engines import (
     statsCollector,
     monteCarloEngine,
     rothEngine,
+    hsaEngine,
 )
 
 PROFILE_SIMULATION = False
@@ -138,6 +139,10 @@ def simulate_yearly_portfolios(
         "roth_bonds": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_cash": np.zeros((effective_num_sims, years_to_simulate + 1)),
 
+        "hsa_equity": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "hsa_bonds": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "hsa_cash": np.zeros((effective_num_sims, years_to_simulate + 1)),
+
         "cash": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "bonds": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "real_estate": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -155,6 +160,9 @@ def simulate_yearly_portfolios(
         "rmd_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "rmd_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "employee_401k_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "hsa_employee_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "hsa_employer_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "hsa_total_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_ira_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_workplace_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_conversions": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -332,6 +340,10 @@ def simulate_yearly_portfolios(
         results["roth_equity"][s,0] = (h_port.eq_roth + (w_port.eq_roth if second_person_enabled else 0))
         results["roth_bonds"][s,0] = (h_port.bd_roth + (w_port.bd_roth if second_person_enabled else 0))
         results["roth_cash"][s,0] = (h_port.cs_roth+ (w_port.cs_roth if second_person_enabled else 0)) 
+
+        results["hsa_equity"][s,0] = (h_port.hsa_eq + (w_port.hsa_eq if second_person_enabled else 0))
+        results["hsa_bonds"][s,0] = (h_port.hsa_bd + (w_port.hsa_bd if second_person_enabled else 0))
+        results["hsa_cash"][s,0] = (h_port.hsa_cs + (w_port.hsa_cs if second_person_enabled else 0))
         
         results["post_tax_assets"][s,0] = h_port.total_value_post + (w_port.total_value_post if second_person_enabled else 0)
 
@@ -426,6 +438,8 @@ def simulate_yearly_portfolios(
             h_401k_employer = 0.0
             w_401k_employee = 0.0
             w_401k_employer = 0.0
+            h_hsa = {"employee": 0.0, "employer": 0.0, "total": 0.0}
+            w_hsa = {"employee": 0.0, "employer": 0.0, "total": 0.0}
 
             emergency_pre_tax_used = 0.0
             uncovered_expense = 0.0
@@ -463,6 +477,23 @@ def simulate_yearly_portfolios(
                     portfolioEngine.apply_pre_tax_contribution(
                         w_port, w_401k_employee + w_401k_employer
                     )
+
+                # HSA contributions
+                h_hsa = hsaEngine.calculate_hsa_contributions(
+                    husband, curr_h_age, year, payroll_wages_husband, h_401k_employee, sim_config
+                )
+                hsaEngine.apply_employee_hsa_to_income(income, h_hsa["employee"], "husband")
+                hsaEngine.deposit_hsa_contributions(h_port, h_hsa)
+                payroll_wages_husband = max(0.0, payroll_wages_husband - h_hsa["employee"])
+
+                if second_person_enabled:
+                    w_hsa = hsaEngine.calculate_hsa_contributions(
+                        wife, curr_w_age, year, payroll_wages_wife, w_401k_employee, sim_config
+                    )
+                    hsaEngine.apply_employee_hsa_to_income(income, w_hsa["employee"], "wife")
+                    hsaEngine.deposit_hsa_contributions(w_port, w_hsa)
+                    payroll_wages_wife = max(0.0, payroll_wages_wife - w_hsa["employee"])
+
 
             # ---------------------------------------------------------
             # Prepare the current year's requested Roth flows.
@@ -955,6 +986,10 @@ def simulate_yearly_portfolios(
             roth_bonds = (h_port.bd_roth + (w_port.bd_roth if second_person_enabled else 0))
             roth_cash = (h_port.cs_roth + (w_port.cs_roth if second_person_enabled else 0))
 
+            hsa_equity = (h_port.hsa_eq + (w_port.hsa_eq if second_person_enabled else 0))
+            hsa_bonds = (h_port.hsa_bd + (w_port.hsa_bd if second_person_enabled else 0))
+            hsa_cash = (h_port.hsa_cs + (w_port.hsa_cs if second_person_enabled else 0))
+
             cash = h_port.total_value_cash + (w_port.total_value_cash if second_person_enabled else 0)
             bonds = h_port.total_value_bonds + (w_port.total_value_bonds if second_person_enabled else 0)
             real_estate = h_port.re_post + (w_port.re_post if second_person_enabled else 0)
@@ -978,7 +1013,11 @@ def simulate_yearly_portfolios(
                 ira_401k = h_401k_employee + h_401k_employer
                 employee_401k_total = h_401k_employee
 
-            gross_income = income["total"] + employee_401k_total + emergency_pre_tax_used
+            hsa_employee_total = h_hsa["employee"] + (w_hsa["employee"] if second_person_enabled else 0.0)
+            hsa_employer_total = h_hsa["employer"] + (w_hsa["employer"] if second_person_enabled else 0.0)
+            hsa_total_contributions = hsa_employee_total + hsa_employer_total
+
+            gross_income = income["total"] + employee_401k_total + hsa_employee_total + emergency_pre_tax_used
 
             if use_expenses:
                 net_profit = (
@@ -1014,6 +1053,10 @@ def simulate_yearly_portfolios(
             results["roth_bonds"][s,year] = roth_bonds
             results["roth_cash"][s,year] = roth_cash
 
+            results["hsa_equity"][s,year] = hsa_equity
+            results["hsa_bonds"][s,year] = hsa_bonds
+            results["hsa_cash"][s,year] = hsa_cash
+
             results["roth_assets"][s,year] = roth
             results["hsa_assets"][s,year] = hsa
             results["cash"][s,year] = cash
@@ -1029,6 +1072,9 @@ def simulate_yearly_portfolios(
             results["cash_flow_shortfall"][s, year] = cash_flow_shortfall
             results["ira_401k"][s, year] = ira_401k
             results["employee_401k_contributions"][s, year] = employee_401k_total
+            results["hsa_employee_contributions"][s, year] = hsa_employee_total
+            results["hsa_employer_contributions"][s, year] = hsa_employer_total
+            results["hsa_total_contributions"][s, year] = hsa_total_contributions
 
             results["roth_ira_contributions"][s, year] = (
                 funded_roth_contributions[
@@ -1189,6 +1235,9 @@ def simulate_yearly_portfolios(
         results["roth_cash"]            = results["roth_cash"]          / discount_factors
         results["roth_assets"]          = results["roth_assets"]        / discount_factors
 
+        results["hsa_equity"]           = results["hsa_equity"]         / discount_factors
+        results["hsa_bonds"]            = results["hsa_bonds"]          / discount_factors
+        results["hsa_cash"]             = results["hsa_cash"]           / discount_factors
         results["hsa_assets"]           = results["hsa_assets"]         / discount_factors
         results["cash"]                 = results["cash"]               / discount_factors
         results["bonds"]                = results["bonds"]              / discount_factors
@@ -1207,20 +1256,25 @@ def simulate_yearly_portfolios(
             / discount_factors
         )
         results["roth_ira_contributions"] = (
-            results["roth_ira_contributions"]
-            / discount_factors
+            results["roth_ira_contributions"] / discount_factors
         )
         results["roth_workplace_contributions"] = (
-            results["roth_workplace_contributions"]
-            / discount_factors
+            results["roth_workplace_contributions"] / discount_factors
         )
         results["roth_conversions"] = (
-            results["roth_conversions"]
-            / discount_factors
+            results["roth_conversions"] / discount_factors
         )
         results["roth_total_flows"] = (
-            results["roth_total_flows"]
-            / discount_factors
+            results["roth_total_flows"] / discount_factors
+        )
+        results["hsa_employee_contributions"] = (
+            results["hsa_employee_contributions"] / discount_factors
+        )
+        results["hsa_employer_contributions"] = (
+            results["hsa_employer_contributions"] / discount_factors
+        )
+        results["hsa_total_contributions"] = (
+            results["hsa_total_contributions"] / discount_factors
         )
         results["rmd_husband"] = results["rmd_husband"] / discount_factors
         results["rmd_wife"] = results["rmd_wife"] / discount_factors

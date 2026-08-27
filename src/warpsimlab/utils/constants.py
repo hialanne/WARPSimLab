@@ -17,6 +17,8 @@ DEFAULT_HUSBAND_ANNUITY  = 0
 DEFAULT_HUSBAND_ANNUITY_AGE = 65
 DEFAULT_HUSBAND_401K_CONTRIB = 3000
 DEFAULT_HUSBAND_401K_MATCH  = 2000
+DEFAULT_HUSBAND_HSA_CONTRIB = 0
+DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB = 0
 
 DEFAULT_WIFE_AGE         = 55
 DEFAULT_WIFE_RETIRE      = 65
@@ -30,6 +32,8 @@ DEFAULT_WIFE_ANNUITY     = 15000
 DEFAULT_WIFE_ANNUITY_AGE = 65
 DEFAULT_WIFE_401K_CONTRIB   = 0
 DEFAULT_WIFE_401K_MATCH    = 0
+DEFAULT_WIFE_HSA_CONTRIB = 0
+DEFAULT_WIFE_HSA_EMPLOYER_CONTRIB = 0
 
 # ---- Portfolio Simulation Defaults ----
 DEFAULT_EQUITY_PRE_H       = 50000
@@ -103,12 +107,14 @@ DEFAULT_EXPENSE_ENTRIES = [
         "end_year": None,
         "cost": 73000.0,
         "comment": "Initial yearly expense",
+        "is_hsa_eligible": False,
     },
     {
         "start_year": 2026,
         "end_year": 2030,
         "cost": 5000.0,
         "comment": "Car or something",
+        "is_hsa_eligible": False,
     }
 ]
 

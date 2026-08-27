@@ -114,6 +114,8 @@ PERSON_NONNEGATIVE_FIELDS = (
     "annuity",
     "annual_401k_contribution",
     "annual_employer_match",
+    "annual_hsa_contribution",
+    "annual_hsa_employer_contribution",
 )
 
 PERSON_AGE_FIELDS = (
@@ -215,7 +217,7 @@ def _validate_expenses(expenses):
     expense_list = getattr(expenses, "expenses", None)
     _require(isinstance(expense_list, list), "Expenses must contain an expenses list.")
 
-    required_keys = {"start_year", "end_year", "cost", "comment"}
+    required_keys = {"start_year", "end_year", "cost", "comment", "is_hsa_eligible"}
 
     for index, expense in enumerate(expense_list):
         name = f"expenses[{index}]"
@@ -238,6 +240,8 @@ def _validate_expenses(expenses):
             isinstance(expense["comment"], str),
             f"Expenses / Description (entry {entry}) must be text.",
         )
+        _require_bool(f"Expenses / HSA Eligible (entry {entry})", expense["is_hsa_eligible"])
+
 
 def _validate_special_income_streams(sim_config):
     streams = getattr(sim_config, "special_income_streams", None)

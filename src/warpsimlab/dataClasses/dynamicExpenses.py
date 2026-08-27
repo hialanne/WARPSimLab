@@ -9,7 +9,7 @@ class DynamicExpenses:
     def __init__(self):
         self.expenses = []
 
-    def add_expense(self, start_year, cost, end_year=None, comment=""):
+    def add_expense(self, start_year, cost, end_year=None, comment="", is_hsa_eligible=False):
         """
         Add a new expense.
         """
@@ -17,9 +17,11 @@ class DynamicExpenses:
             "start_year": start_year,
             "end_year": end_year,
             "cost": cost,
-            "comment": comment
+            "comment": comment,
+            "is_hsa_eligible": bool(is_hsa_eligible)
         }
         self.expenses.append(expense)
+
 
     def remove_expense(self, index):
         """
@@ -30,7 +32,7 @@ class DynamicExpenses:
         else:
             raise IndexError("Expense index out of range")
 
-    def update_expense(self, index, start_year=None, cost=None, end_year=None, comment=None):
+    def update_expense(self, index, start_year=None, cost=None, end_year=None, comment=None, is_hsa_eligible=None):
         """
         Update fields of an existing expense by index.
         Only provided fields will be updated.
@@ -45,6 +47,8 @@ class DynamicExpenses:
                 exp["cost"] = cost
             if comment is not None:
                 exp["comment"] = comment
+            if is_hsa_eligible is not None:
+                exp["is_hsa_eligible"] = bool(is_hsa_eligible)
         else:
             raise IndexError("Expense index out of range")
 

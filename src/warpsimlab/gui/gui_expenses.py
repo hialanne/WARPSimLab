@@ -21,7 +21,7 @@ class ExpensesEditFrame(ttk.Frame):
         header_frame.grid(
             row=0,
             column=0,
-            columnspan=5,
+            columnspan=6,
             sticky="w",
             pady=(0, 8),
         )
@@ -41,7 +41,7 @@ class ExpensesEditFrame(ttk.Frame):
             font=("Arial", 11),
         ).pack(side="left")
 
-        headers = ["Start Year", "End Year", "Cost", "Comment", "Delete"]
+        headers = ["Start Year", "End Year", "Cost", "HSA Eligible", "Comment", "Delete"]
 
         for col, header in enumerate(headers):
             ttk.Label(
@@ -76,7 +76,8 @@ class ExpensesEditFrame(ttk.Frame):
             "start_year": None,
             "end_year": None,
             "cost": None,
-            "comment": ""
+            "comment": "",
+            "is_hsa_eligible": False
         }
 
         self.expensesDict.expenses.append(expense)
@@ -92,10 +93,16 @@ class ExpensesEditFrame(ttk.Frame):
         end_var = tk.StringVar(value="" if expense["end_year"] is None else str(expense["end_year"]))
         cost_var = tk.StringVar(value=str(expense["cost"]))
         comment_var = tk.StringVar(value=str(expense["comment"]))
+        hsa_eligible_var = tk.BooleanVar(value=bool(expense.get("is_hsa_eligible", False)))
 
         comment_var.trace_add(
             "write",
             lambda *_: expense.__setitem__("comment", comment_var.get())
+        )
+        
+        hsa_eligible_var.trace_add(
+            "write",
+            lambda *_: expense.__setitem__("is_hsa_eligible", bool(hsa_eligible_var.get()))
         )
 
         # --- UI widgets ---
@@ -148,8 +155,12 @@ class ExpensesEditFrame(ttk.Frame):
         cost_entry.grid(row=row, column=2, padx=5, pady=2)
         Tooltip(cost_entry, "Cost of this expense per year", font=("Arial", 11))
 
+        hsa_eligible_check = ttk.Checkbutton(self, variable=hsa_eligible_var)
+        hsa_eligible_check.grid(row=row, column=3, padx=5, pady=2)
+        Tooltip(hsa_eligible_check, "This expense may be paid from HSA funds", font=("Arial", 11))
+
         comment_entry = ttk.Entry(self, textvariable=comment_var, width=20)
-        comment_entry.grid(row=row, column=3, padx=5, pady=2)
+        comment_entry.grid(row=row, column=4, padx=5, pady=2)
         Tooltip(comment_entry, "Optional comment or description",
             font=("Arial", 11))
 
@@ -158,7 +169,7 @@ class ExpensesEditFrame(ttk.Frame):
             text="Delete",
             command=lambda e=expense, r=row: self._delete_row(e)
         )
-        del_button.grid(row=row, column=4, padx=5, pady=2)
+        del_button.grid(row=row, column=5, padx=5, pady=2)
         Tooltip(del_button, "Delete this expense row",
             font=("Arial", 11))
 
@@ -168,8 +179,9 @@ class ExpensesEditFrame(ttk.Frame):
             "start_var": start_var,
             "end_var": end_var,
             "cost_var": cost_var,
+            "hsa_eligible_var": hsa_eligible_var,
             "comment_var": comment_var,
-            "widgets": [start_entry, end_entry, cost_entry, comment_entry, del_button]
+            "widgets": [start_entry, end_entry, cost_entry, hsa_eligible_check, comment_entry, del_button]
         })
 
         self.next_row += 1

@@ -80,7 +80,9 @@ class PortfolioEditFrame(ttk.Frame):
             "cash_pre": "Cash Pre-Tax",
             "cash_post": "Cash After-Tax",
             "cash_roth": "Cash Roth",
-            "hsa": "HSA",
+            "hsa_equity": "Stocks HSA",
+            "hsa_bond": "Bonds HSA",
+            "hsa_cash": "Cash HSA",
         }
         return labels.get(field_key, field_key)
 
@@ -99,7 +101,9 @@ class PortfolioEditFrame(ttk.Frame):
             "cash_post": tk.StringVar(value=self._format_money(self.husband_portfolio.cash_post)),
             "cash_roth": tk.StringVar(value=self._format_money(self.husband_portfolio.cash_roth)),
 
-            "hsa": tk.StringVar(value=self._format_money(self._get_hsa_total(self.husband_portfolio))),
+            "hsa_equity": tk.StringVar(value=self._format_money(self.husband_portfolio.hsa_equity)),
+            "hsa_bond": tk.StringVar(value=self._format_money(self.husband_portfolio.hsa_bond)),
+            "hsa_cash": tk.StringVar(value=self._format_money(self.husband_portfolio.hsa_cash)),
         }
 
         self.w_vars = None
@@ -117,7 +121,9 @@ class PortfolioEditFrame(ttk.Frame):
                 "cash_post": tk.StringVar(value=self._format_money(self.wife_portfolio.cash_post)),
                 "cash_roth": tk.StringVar(value=self._format_money(self.wife_portfolio.cash_roth)),
 
-                "hsa": tk.StringVar(value=self._format_money(self._get_hsa_total(self.wife_portfolio))),
+                "hsa_equity": tk.StringVar(value=self._format_money(self.wife_portfolio.hsa_equity)),
+                "hsa_bond": tk.StringVar(value=self._format_money(self.wife_portfolio.hsa_bond)),
+                "hsa_cash": tk.StringVar(value=self._format_money(self.wife_portfolio.hsa_cash)),
             }
 
         self.row_total_vars = {}
@@ -127,12 +133,6 @@ class PortfolioEditFrame(ttk.Frame):
             "total": tk.StringVar(value="--"),
         }
 
-    def _get_hsa_total(self, portfolio):
-        return (
-            float(getattr(portfolio, "hsa_cash", 0.0)) +
-            float(getattr(portfolio, "hsa_equity", 0.0)) +
-            float(getattr(portfolio, "hsa_bond", 0.0))
-        )
 
     def _set_hsa_as_cash_only(self, portfolio, value):
         portfolio.hsa_cash = value
@@ -182,6 +182,11 @@ class PortfolioEditFrame(ttk.Frame):
                     "equity_roth",
                     "Stock investments held in Roth retirement accounts",
                 ),
+                (
+                    "Stocks HSA",
+                    "hsa_equity",
+                    "Stock investments held in HSA accounts",
+                ),
                 ("", None, None),
 
                 (
@@ -198,6 +203,11 @@ class PortfolioEditFrame(ttk.Frame):
                     "Bonds Roth",
                     "bond_roth",
                     "Bond investments held in Roth retirement accounts",
+                ),
+                (
+                    "Bonds HSA",
+                    "hsa_bond",
+                    "Bond investments held in HSA accounts",
                 ),
                 ("", None, None),
 
@@ -216,12 +226,10 @@ class PortfolioEditFrame(ttk.Frame):
                     "cash_roth",
                     "Cash held in Roth retirement accounts",
                 ),
-                ("", None, None),
-
                 (
-                    "HSA",
-                    "hsa",
-                    "Total HSA balance; currently stored and modeled as HSA cash",
+                    "Cash HSA",
+                    "hsa_cash",
+                    "Cash held in HSA accounts",
                 ),
             ]
 
@@ -272,17 +280,6 @@ class PortfolioEditFrame(ttk.Frame):
             style="Derived.TEntry",
         ).grid(row=row, column=3, sticky="w", padx=5)
 
-        row += 1
-
-        ttk.Label(
-            self,
-            text=(
-                "Note: HSA is shown as one row. Internally, the edited HSA value is currently stored as HSA cash.\n\n"
-                "HSA accounts are modeled as separate asset buckets. This release does not model new HSA\n"
-                " contributions, qualified medical expenses, or detailed HSA tax treatment."
-            ),
-            font=("Arial", 12, "italic"),
-        ).grid(row=row, column=0, columnspan=4, sticky="w", padx=10, pady=(12, 0))
 
     def _add_money_row(self, row, label_text, key, tooltip_text):
         ttk.Label(self, text=label_text).grid(
@@ -346,17 +343,13 @@ class PortfolioEditFrame(ttk.Frame):
         try:
             parsed = self._parse_money(proposed_value)
 
-            if field_key == "hsa":
-                self._set_hsa_as_cash_only(portfolio, parsed)
-            else:
-                setattr(portfolio, field_key, parsed)
-
+            setattr(portfolio, field_key, parsed)
             self.after_idle(lambda: var.set(self._format_money(parsed)))
             self.after_idle(self._update_totals)
             return True
 
         except ValueError as exc:
-            current_value = self._get_hsa_total(portfolio) if field_key == "hsa" else getattr(portfolio, field_key)
+            current_value = getattr(portfolio, field_key)
 
             self.after_idle(lambda: var.set(self._format_money(current_value)))
             self.after_idle(self._update_totals)

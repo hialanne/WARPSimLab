@@ -13,6 +13,8 @@ class Person:
         annuity_age,
         annual_401k_contribution=0.0,
         annual_employer_match=0.0,
+        annual_hsa_contribution=0.0,
+        annual_hsa_employer_contribution=0.0,
         pension_inflation_adjustment_pct=0.0,
     ):
         self.age = age  # Current age
@@ -25,5 +27,7 @@ class Person:
         self.annuity = annuity  # Annuity amount
         self.annuity_age = annuity_age  # Age at which annuity kicks in
         self.annual_401k_contribution = annual_401k_contribution
-        self.annual_employer_match = annual_employer_match 
-        self.pension_inflation_adjustment_pct = pension_inflation_adjustment_pct 
+        self.annual_employer_match = annual_employer_match
+        self.annual_hsa_contribution = annual_hsa_contribution
+        self.annual_hsa_employer_contribution = annual_hsa_employer_contribution
+        self.pension_inflation_adjustment_pct = pension_inflation_adjustment_pct
