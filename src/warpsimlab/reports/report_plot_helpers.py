@@ -454,8 +454,8 @@ def save_taxable_income_source_report_plot(
     ]
     traditional = [row["Traditional Withdrawals"] for row in yearly_tax_rows]
     emergency = [row["Emergency Pre-Tax Withdrawal"] for row in yearly_tax_rows]
-    roth = [row["Roth Withdrawals"] for row in yearly_tax_rows]
-    hsa = [row["HSA Withdrawals"] for row in yearly_tax_rows]
+    roth_conversions = [row["Roth Conversions"] for row in yearly_tax_rows]
+    taxable_hsa = [row["Taxable HSA Withdrawals"] for row in yearly_tax_rows]
 
     fig, ax = plt.subplots(figsize=(16, 9))
 
@@ -463,10 +463,10 @@ def save_taxable_income_source_report_plot(
         ax.plot(years, rmd, label="RMD")
         ax.plot(years, traditional, label="Traditional Withdrawals")
         ax.plot(years, emergency, label="Emergency Pre-Tax Withdrawals")
-        ax.plot(years, roth, label="Roth Withdrawals")
-        ax.plot(years, hsa, label="HSA Withdrawals")
+        ax.plot(years, roth_conversions, label="Roth Conversions")
+        ax.plot(years, taxable_hsa, label="Taxable HSA Withdrawals")
 
-        ax.set_title("Retirement Withdrawal Sources by Year")
+        ax.set_title("Taxable Retirement Income Sources by Year")
         ax.set_xlabel("Year")
         ax.set_ylabel("Amount")
         ax.grid(True, axis="y", linestyle="--", alpha=0.5)

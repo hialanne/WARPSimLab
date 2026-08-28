@@ -86,16 +86,11 @@ def _build_year_row(results, index, husband, wife, sim_config):
         + _array_value(results, "annuities", index)
     )
 
-    employee_401k_contributions = _array_value(
-        results,
-        "employee_401k_contributions",
-        index,
-    )
+    employee_401k_contributions = _array_value(results, "employee_401k_contributions", index)
+    hsa_employee_contributions = _array_value(results, "hsa_employee_contributions", index)
+    hsa_employer_contributions = _array_value(results, "hsa_employer_contributions", index)
 
-    gross_wages = (
-        _array_value(results, "wages", index)
-        + employee_401k_contributions
-    )
+    gross_wages = _array_value(results, "wages", index) + employee_401k_contributions + hsa_employee_contributions
 
     row = {
         "Year": _array_value(results, "year", index),
@@ -133,20 +128,16 @@ def _build_year_row(results, index, husband, wife, sim_config):
         "Gross Income": _array_value(results, "gross_income", index),
 
         "Employee 401(k) / IRA": employee_401k_contributions,
+        "Employee HSA Contribution": hsa_employee_contributions,
+        "Employer HSA Contribution": hsa_employer_contributions,
         "Taxes": _array_value(results, "taxes", index),
         "Tax Bracket": _array_value(results, "tax_bracket", index),
         "Net Income": _array_value(results, "net_income", index),
 
-        "Roth IRA Contributions": _array_value(
-            results,
-            "roth_ira_contributions",
-            index,
-        ),
-        "Workplace Roth Contributions": _array_value(
-            results,
-            "roth_workplace_contributions",
-            index,
-        ),
+        "Roth IRA Contributions": _array_value(results, "roth_ira_contributions", index),
+        "Workplace Roth Contributions": _array_value(results, "roth_workplace_contributions", index),
+        "Qualified HSA Withdrawal": _array_value(results, "hsa_qualified_withdrawals", index),
+        "Taxable HSA Withdrawal": _array_value(results, "hsa_taxable_withdrawals", index),
         "Household Expenses": _array_value(results, "expenses", index),
         "Net Cash Flow": _array_value(results, "net_cash_flow", index),
 
@@ -203,6 +194,9 @@ def _build_year_row(results, index, husband, wife, sim_config):
         ),
         "Roth Assets": roth_assets,
 
+        "HSA Equity": _array_value(results, "hsa_equity", index),
+        "HSA Bonds": _array_value(results, "hsa_bonds", index),
+        "HSA Cash": _array_value(results, "hsa_cash", index),
         "HSA Assets": hsa_assets,
         "Real Estate": real_estate,
         "Total Portfolio": total_portfolio,

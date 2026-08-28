@@ -115,16 +115,10 @@ def _build_portfolio_milestone(results, index):
     
 
 def _build_income_milestone(results, index):
-    employee_401k_contribution = _array_value(
-        results,
-        "employee_401k_contributions",
-        index,
-    )
+    employee_401k_contribution = _array_value(results, "employee_401k_contributions", index)
+    employee_hsa_contribution = _array_value(results, "hsa_employee_contributions", index)
 
-    gross_wages = (
-        _array_value(results, "wages", index)
-        + employee_401k_contribution
-    )
+    gross_wages = _array_value(results, "wages", index) + employee_401k_contribution + employee_hsa_contribution
 
     pensions_and_annuities = (
         _array_value(results, "pensions", index)
@@ -366,16 +360,17 @@ def _build_portfolio_inputs(husband_portfolio, wife_portfolio, sim_config):
         ("Stocks Pre-Tax", ["equity_pre"]),
         ("Stocks Post-Tax", ["equity_post"]),
         ("Stocks Roth", ["equity_roth"]),
+        ("Stocks HSA", ["hsa_equity"]),
 
         ("Bonds Pre-Tax", ["bond_pre"]),
         ("Bonds Post-Tax", ["bond_post"]),
         ("Bonds Roth", ["bond_roth"]),
+        ("Bonds HSA", ["hsa_bond"]),
 
         ("Cash Pre-Tax", ["cash_pre"]),
         ("Cash Post-Tax", ["cash_post"]),
         ("Cash Roth", ["cash_roth"]),
-
-        ("HSA", ["hsa_cash", "hsa_equity", "hsa_bond"]),
+        ("Cash HSA", ["hsa_cash"]),
 
         ("Real Estate", ["real_estate"]),
 
@@ -457,6 +452,8 @@ def _build_household_retirement_table(husband, wife, sim_config):
         ("Annuity Amount", "annuity", _fmt_assumption_currency, True),
         ("Annuity Start Age", "annuity_age", _fmt_assumption_number, False),
         ("Employee 401(k) / IRA", "annual_401k_contribution", _fmt_assumption_currency, True),
+        ("Employee HSA Contribution", "annual_hsa_contribution", _fmt_assumption_currency, True),
+        ("Employer HSA Contribution", "annual_hsa_employer_contribution", _fmt_assumption_currency, True),
         ("Employer Match", "annual_employer_match", _fmt_assumption_currency, True),
     ]
 
@@ -510,6 +507,7 @@ def _build_expense_rows(expenses):
                 "Start Year": expense.get("start_year"),
                 "End Year": expense.get("end_year") or "Ongoing",
                 "Annual Amount": expense.get("cost"),
+                "HSA Eligible": bool(expense.get("is_hsa_eligible", False)),
             }
         )
 

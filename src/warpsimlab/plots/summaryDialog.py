@@ -27,7 +27,10 @@ class SummaryDialog(tk.Toplevel):
         gui_scale = reference_font.metrics("linespace") / development_font_linespace
 
         width = int(1100 * gui_scale)
-        height = int(800 * gui_scale)
+
+        # Making the dialog slightly shorter vertically to keep the dialog close to the same height as the main window.
+        # height = int(800 * gui_scale)
+        height = int(750 * gui_scale)
 
         x = (
             parent.winfo_rootx()
@@ -602,6 +605,7 @@ class SummaryDialog(tk.Toplevel):
             (
                 "wages",
                 "employee_401k_contributions",
+                "hsa_employee_contributions",
             ),
         )
         add_row("RMD", "rmd")
@@ -658,8 +662,8 @@ class SummaryDialog(tk.Toplevel):
         note_text = (
             "Gross Income includes all modeled income and spendable "
             "withdrawal cash before taxes.\n"
-            "Employee traditional 401k contributions are added back "
-            "when calculating Gross Income.\n"
+            "Employee traditional 401k and HSA contributions are added "
+            "back when calculating Gross Income.\n"
             "Amounts are shown in real or nominal terms according to "
             "the simulation settings."
         )
@@ -779,7 +783,7 @@ class SummaryDialog(tk.Toplevel):
                 column=0,
                 columnspan=5,
                 sticky="ew",
-                pady=6
+                pady=3
             )
 
             row_idx += 1
@@ -793,6 +797,11 @@ class SummaryDialog(tk.Toplevel):
         add_row(
             "Employee 401(k) / IRA",
             "employee_401k_contributions"
+        )
+
+        add_row(
+            "Employee HSA Contribution",
+            "hsa_employee_contributions"
         )
 
         add_row(
@@ -842,6 +851,11 @@ class SummaryDialog(tk.Toplevel):
         )
 
         add_row(
+            "Employer HSA Contribution",
+            "hsa_employer_contributions"
+        )
+
+        add_row(
             "Roth IRA Contributions",
             "roth_ira_contributions"
         )
@@ -849,6 +863,16 @@ class SummaryDialog(tk.Toplevel):
         add_row(
             "Workplace Roth Contributions",
             "roth_workplace_contributions"
+        )
+
+        add_row(
+            "Qualified HSA Withdrawal",
+            "hsa_qualified_withdrawals"
+        )
+
+        add_row(
+            "Taxable HSA Withdrawal",
+            "hsa_taxable_withdrawals"
         )
 
         if self.sim_config.always_use_expense_mode:
@@ -870,18 +894,6 @@ class SummaryDialog(tk.Toplevel):
                 )
             )
 
-        ttk.Label(
-            cash_flow_tab,
-            text=""
-        ).grid(
-            row=row_idx,
-            column=0,
-            columnspan=5,
-            pady=6
-        )
-
-        row_idx += 1
-
         add_row(
             "Fund Expenses",
             "fund_expenses",
@@ -890,21 +902,19 @@ class SummaryDialog(tk.Toplevel):
 
         if self.sim_config.always_use_expense_mode:
             note_text = (
-                "Net Income is Gross Income after modeled taxes and "
-                "employee traditional 401k contributions.\n"
-                "Net Cash Flow also reflects household expenses, Roth IRA "
-                "contributions, and workplace Roth contributions.\n"
-                "Fund expenses are removed directly from the portfolio "
-                "and are shown for reference."
+                "Net Income is Gross Income after modeled taxes and employee "
+                "traditional 401k and HSA contributions.\n"
+                "Net Cash Flow also reflects household expenses, Roth contributions, "
+                "and HSA funding flows.\n"
+                "Fund expenses are removed directly from the portfolio and are shown for reference."
             )
         else:
             note_text = (
-                "Gross Income and Net Income include modeled retirement "
-                "withdrawal cash where applicable.\n"
-                "Roth IRA and workplace Roth contributions are shown as "
-                "after-tax cash uses.\n"
-                "Fund expenses are removed directly from the portfolio "
-                "and are shown for reference."
+                "Gross Income and Net Income include modeled retirement withdrawal cash "
+                "and taxable HSA withdrawals where applicable.\n"
+                "Roth contributions are after-tax cash uses; qualified HSA withdrawals "
+                "are tax-free funding for modeled eligible expenses.\n"
+                "Fund expenses are removed directly from the portfolio and are shown for reference."
             )
 
         ttk.Label(

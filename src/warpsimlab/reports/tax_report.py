@@ -35,6 +35,7 @@ YEAR_KEYS = {
     "Wife First RMD Year",
 }
 
+
 def _get_report_option(report_options, path, default=False):
     target = report_options
 
@@ -86,6 +87,7 @@ def _fmt_value(value, key=None):
         return f"{value:,}"
 
     return str(value)
+
 
 def _render_kv_table(data, emphasize_keys=None):
     emphasize_keys = set(emphasize_keys or [])
@@ -186,8 +188,10 @@ def _render_tax_model_limitations(report_data):
             optimize Roth withdrawal timing or Roth conversions.
         </li>
         <li>
-            HSA accounts are modeled as simplified tax-free buckets. The simulator does not currently
-            distinguish qualified medical withdrawals from other uses.
+            HSA accounts are modeled using simplified tax treatment. Qualified HSA withdrawals used
+            for modeled HSA-eligible medical expenses are tax-free. HSA withdrawals used for general
+            household funding are treated as ordinary taxable income. WARPSimLab does not model the
+            real-world additional penalty that may apply to some non-qualified HSA withdrawals.
         </li>
         <li>
             State income taxes are planning-grade approximations and may omit deductions, credits,
@@ -280,11 +284,11 @@ def _render_hsa_analysis(report_data):
 <section>
     <h2>HSA Analysis</h2>
     <p class="section-intro">
-        WARPSimLab treats HSA accounts as simplified tax-free retirement buckets. When
-        additional portfolio funding is needed for expenses, the simulator uses post-tax
-        assets first, then pre-tax assets, then Roth assets, and finally HSA assets. HSA
-        withdrawals do not increase ordinary taxable income. The simulator does not currently
-        distinguish qualified medical withdrawals from other uses.
+        WARPSimLab distinguishes qualified HSA withdrawals from HSA withdrawals used for
+        general household funding. Qualified withdrawals used for modeled HSA-eligible medical
+        expenses are tax-free. When additional general portfolio funding is needed, the simulator
+        uses post-tax assets first, then pre-tax assets, then Roth assets, and finally HSA assets.
+        General-purpose HSA withdrawals are treated as ordinary taxable income.
     </p>
     <div class="card-grid two-col">
         <div class="summary-card">
@@ -361,7 +365,8 @@ def _render_yearly_tax_table(report_data):
         "Emergency Pre-Tax Withdrawal",
         "Roth Conversions",
         "Roth Withdrawals",
-        "HSA Withdrawals",
+        "Qualified HSA Withdrawals",
+        "Taxable HSA Withdrawals",
     ])
 
     def render_table(columns):
@@ -524,7 +529,7 @@ def _render_tax_insights(report_data):
         )
 
     #
-    # Tax-free retirement assets
+    # Tax-free and taxable retirement assets
     #
 
     if float(report_data.roth_summary.get("Total Roth Withdrawals") or 0.0) > 0.0:
@@ -532,9 +537,14 @@ def _render_tax_insights(report_data):
             "Roth withdrawals provide tax-free retirement income under the current simulation model."
         )
 
-    if float(report_data.hsa_summary.get("Total HSA Withdrawals") or 0.0) > 0.0:
+    if float(report_data.hsa_summary.get("Qualified HSA Withdrawals") or 0.0) > 0.0:
         observations.append(
-            "HSA withdrawals provide an additional tax-free retirement funding source under the current simulation model."
+            "Qualified HSA withdrawals fund modeled HSA-eligible medical expenses without increasing ordinary taxable income."
+        )
+
+    if float(report_data.hsa_summary.get("Taxable HSA Withdrawals") or 0.0) > 0.0:
+        observations.append(
+            "HSA withdrawals used for general household funding increase ordinary taxable income under the current simulation model."
         )
 
     html = "\n".join(
@@ -600,14 +610,14 @@ def _build_tax_plot_assets(report_data, output_folder, safe_id):
             "title": "Effective Tax Rate by Year",
             "alt": "Effective tax rate by year",
         },
-        "retirement_withdrawal_sources": {
+        "taxable_retirement_income_sources": {
             "path": save_taxable_income_source_report_plot(
                 output_folder,
-                "retirement_withdrawal_sources.png",
+                "taxable_retirement_income_sources.png",
                 rows,
             ),
-            "title": "Retirement Withdrawal Sources by Year",
-            "alt": "Retirement withdrawal sources by year",
+            "title": "Taxable Retirement Income Sources by Year",
+            "alt": "Taxable retirement income sources by year",
         },
     }
 
@@ -621,7 +631,7 @@ def _render_tax_plots(plot_assets, output_folder):
     for key in [
         "tax_by_year",
         "effective_tax_rate",
-        "retirement_withdrawal_sources",
+        "taxable_retirement_income_sources",
     ]:
         asset = plot_assets.get(key)
 
@@ -644,7 +654,7 @@ def _render_tax_plots(plot_assets, output_folder):
 <section>
     <h2>Tax Visuals</h2>
     <p class="section-intro">
-        These charts show how estimated taxes and withdrawal sources change over time.
+        These charts show how estimated taxes and taxable retirement income sources change over time.
     </p>
     <div class="plot-stack">
         {''.join(cards)}
@@ -761,7 +771,7 @@ def generate_tax_report(report_data) -> ReportResult:
         rmd_html = _render_rmd_analysis(report_data)
 
     insights_html = _render_tax_insights(report_data)
-    
+
     html_text = f"""<!doctype html>
 <html>
 <head>

@@ -101,7 +101,8 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             "Emergency Pre-Tax Withdrawal": _as_float(results.get("emergency_pre_tax_used", [])[i]),
             "Roth Conversions": _as_float(results.get("roth_conversions", [])[i]),
             "Roth Withdrawals": _as_float(results.get("roth_withdrawals", [])[i]),
-            "HSA Withdrawals": _as_float(results.get("hsa_withdrawals", [])[i]),
+            "Qualified HSA Withdrawals": _as_float(results.get("hsa_qualified_withdrawals", [])[i]),
+            "Taxable HSA Withdrawals": _as_float(results.get("hsa_taxable_withdrawals", [])[i]),
             "Qualified Equity Distributions": _as_float(results.get("qualified_equity_distributions", [])[i]),
         })
 
@@ -164,12 +165,10 @@ def _build_tax_source_summary(results):
         "Pensions": _sum(results, "pensions"),
         "Annuities": _sum(results, "annuities"),
         "Traditional Withdrawals": _sum(results, "withdrawal"),
-        "Emergency Pre-Tax Withdrawals": _sum(
-            results,
-            "emergency_pre_tax_used",
-        ),
+        "Emergency Pre-Tax Withdrawals": _sum(results, "emergency_pre_tax_used"),
         "RMDs": _sum(results, "rmd"),
         "Roth Conversions": _sum(results, "roth_conversions"),
+        "Taxable HSA Withdrawals": _sum(results, "hsa_taxable_withdrawals"),
         "Bond Interest": _sum(results, "bond_interest"),
         "Cash Interest": _sum(results, "cash_interest"),
         "Qualified Equity Distributions": _sum(results, "qualified_equity_distributions"),
@@ -201,6 +200,10 @@ def _build_hsa_summary(results):
     return {
         "Starting HSA Balance": _as_float(hsa_assets[0]) if hsa_assets else 0.0,
         "Ending HSA Balance": _as_float(hsa_assets[-1]) if hsa_assets else 0.0,
+        "Employee HSA Contributions": _sum(results, "hsa_employee_contributions"),
+        "Employer HSA Contributions": _sum(results, "hsa_employer_contributions"),
+        "Qualified HSA Withdrawals": _sum(results, "hsa_qualified_withdrawals"),
+        "Taxable HSA Withdrawals": _sum(results, "hsa_taxable_withdrawals"),
         "Total HSA Withdrawals": _sum(results, "hsa_withdrawals"),
     }
 
