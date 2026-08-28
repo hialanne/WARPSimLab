@@ -103,6 +103,10 @@ def _core_for_extracts() -> dict:
         "roth_bonds": np.array([[30.0, 32.0, 33.0, 35.0]]),
         "roth_cash": np.array([[20.0, 21.0, 22.0, 23.0]]),
         "roth_assets": np.array([[100.0, 105.0, 110.0, 115.0]]),
+
+        "hsa_equity": np.array([[30.0, 33.0, 36.0, 39.0]]),
+        "hsa_bonds": np.array([[10.0, 11.0, 12.0, 13.0]]),
+        "hsa_cash": np.array([[10.0, 11.0, 12.0, 13.0]]),
         "hsa_assets": np.array([[50.0, 55.0, 60.0, 65.0]]),
 
         "federal_ordinary_tax": np.array([[4.0, 4.0, 5.0, 5.0]]),
@@ -116,14 +120,17 @@ def _core_for_extracts() -> dict:
         "final_tax_delta_uncovered": np.array([[0.0, 0.0, 0.0, 0.0]]),
 
         "roth_withdrawals": np.array([[0.0, 0.0, 0.0, 0.0]]),
-        "hsa_withdrawals": np.array([[0.0, 0.0, 0.0, 0.0]]),
+        "hsa_withdrawals": np.array([[0.0, 3.0, 4.0, 5.0]]),
+        "hsa_qualified_withdrawals": np.array([[0.0, 2.0, 3.0, 4.0]]),
+        "hsa_taxable_withdrawals": np.array([[0.0, 1.0, 1.0, 1.0]]),
         "real_estate": np.array([[0.0, 10.0, 20.0, 30.0]]),
         "gross_income": np.array([[120.0, 121.0, 122.0, 123.0]]),
         "tax_bracket": np.array([[0.10, 0.10, 0.12, 0.12]]),
         "ira_401k": np.array([[0.0, 0.0, 0.0, 0.0]]),
-        "employee_401k_contributions": np.array(
-            [[0.0, 10.0, 20.0, 30.0]]
-        ),
+        "employee_401k_contributions": np.array([[0.0, 10.0, 20.0, 30.0]]),
+        "hsa_employee_contributions": np.array([[0.0, 2.0, 3.0, 4.0]]),
+        "hsa_employer_contributions": np.array([[0.0, 1.0, 1.0, 2.0]]),
+        "hsa_total_contributions": np.array([[0.0, 3.0, 4.0, 6.0]]),
 
         "roth_ira_contributions": np.array(
             [[0.0, 1.0, 2.0, 3.0]]
@@ -221,6 +228,9 @@ def test_extract_summary_single_run_builds_expected_keys():
     np.testing.assert_allclose(summary["additional_medicare_tax"],core["additional_medicare_tax"][0])
     np.testing.assert_allclose(summary["roth_assets"], core["roth_assets"][0])
     np.testing.assert_allclose(summary["hsa_assets"], core["hsa_assets"][0])
+    np.testing.assert_allclose(summary["hsa_equity"], core["hsa_equity"][0])
+    np.testing.assert_allclose(summary["hsa_bonds"], core["hsa_bonds"][0])
+    np.testing.assert_allclose(summary["hsa_cash"], core["hsa_cash"][0])
 
     np.testing.assert_allclose(summary["federal_ordinary_tax"], core["federal_ordinary_tax"][0])
     np.testing.assert_allclose(
@@ -237,6 +247,11 @@ def test_extract_summary_single_run_builds_expected_keys():
 
     np.testing.assert_allclose(summary["roth_withdrawals"], core["roth_withdrawals"][0])
     np.testing.assert_allclose(summary["hsa_withdrawals"], core["hsa_withdrawals"][0])
+    np.testing.assert_allclose(summary["hsa_qualified_withdrawals"], core["hsa_qualified_withdrawals"][0])
+    np.testing.assert_allclose(summary["hsa_taxable_withdrawals"], core["hsa_taxable_withdrawals"][0])
+    np.testing.assert_allclose(summary["hsa_employee_contributions"], core["hsa_employee_contributions"][0])
+    np.testing.assert_allclose(summary["hsa_employer_contributions"], core["hsa_employer_contributions"][0])
+    np.testing.assert_allclose(summary["hsa_total_contributions"], core["hsa_total_contributions"][0])
 
     assert summary["simulated_shortfall_rate"] == 12.5
 

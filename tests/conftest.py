@@ -20,6 +20,8 @@ class PersonStub:
         annuity_age=100,
         annual_401k_contribution=0.0,
         annual_employer_match=0.0,
+        annual_hsa_contribution=0.0,
+        annual_hsa_employer_contribution=0.0,
         pension_inflation_adjustment_pct=0.0,
     ):
         self.age = age
@@ -33,6 +35,8 @@ class PersonStub:
         self.annuity_age = annuity_age
         self.annual_401k_contribution = annual_401k_contribution
         self.annual_employer_match = annual_employer_match
+        self.annual_hsa_contribution = annual_hsa_contribution
+        self.annual_hsa_employer_contribution = annual_hsa_employer_contribution
         self.pension_inflation_adjustment_pct = pension_inflation_adjustment_pct
 
 
@@ -76,24 +80,36 @@ class DynamicExpensesStub:
     def __init__(self):
         self.expenses = []
 
-    def add_expense(self, start_year, cost, end_year=None, comment=""):
+    def add_expense(self, start_year, cost, end_year=None, comment="", is_hsa_eligible=False):
         self.expenses.append(
             {
                 "start_year": start_year,
                 "end_year": end_year,
                 "cost": cost,
                 "comment": comment,
+                "is_hsa_eligible": is_hsa_eligible,
             }
         )
 
-    def get_total_expense_for_year(self, year):
+    def get_expense_breakdown_for_year(self, year):
         total = 0.0
+        hsa_eligible = 0.0
+
         for exp in self.expenses:
             start = exp["start_year"]
             end = exp["end_year"]
+
             if year >= start and (end is None or year <= end):
                 total += exp["cost"]
-        return total
+
+                if exp["is_hsa_eligible"]:
+                    hsa_eligible += exp["cost"]
+
+        return {
+            "total": total,
+            "hsa_eligible": hsa_eligible,
+            "non_hsa": total - hsa_eligible,
+        }
 
 
 def make_config(**overrides):

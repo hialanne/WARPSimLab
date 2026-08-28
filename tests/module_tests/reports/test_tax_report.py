@@ -59,6 +59,8 @@ def make_report_data(**overrides):
             "Starting HSA Assets": 2000.0,
             "Ending HSA Assets": 2500.0,
             "Total HSA Withdrawals": 500.0,
+            "Qualified HSA Withdrawals": 500.0,
+            "Taxable HSA Withdrawals": 0.0,
         },
         rmd_summary={
             "First RMD Year": 2035,
@@ -314,7 +316,7 @@ def test_render_tax_insights_generates_expected_observations():
     assert "Required Minimum Distributions begin in 2035." in html
     assert "The largest annual tax bill occurs in 2027" in html
     assert "Roth withdrawals provide tax-free retirement income" in html
-    assert "HSA withdrawals provide an additional tax-free retirement funding source" in html
+    assert "Qualified HSA withdrawals fund modeled HSA-eligible medical expenses without increasing ordinary taxable income." in html
 
 
 def test_render_tax_insights_handles_zero_tax_and_empty_rows():
@@ -379,13 +381,13 @@ def test_build_tax_plot_assets_calls_plot_helpers(tmp_path, monkeypatch):
     assert set(assets.keys()) == {
         "tax_by_year",
         "effective_tax_rate",
-        "retirement_withdrawal_sources",
+        "taxable_retirement_income_sources",
     }
 
     assert len(calls) == 3
     assert calls[0][1] == "tax_by_year.png"
     assert calls[1][1] == "effective_tax_rate.png"
-    assert calls[2][1] == "retirement_withdrawal_sources.png"
+    assert calls[2][1] == "taxable_retirement_income_sources.png"
 
 
 def test_render_tax_plots_returns_empty_without_assets(tmp_path):

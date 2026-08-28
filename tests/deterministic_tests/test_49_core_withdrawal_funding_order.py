@@ -383,61 +383,29 @@ def test_gross_income_reports_total_withdrawal_regardless_of_source(
     )
 
 
-def test_only_pre_tax_portion_creates_income_tax(
-    monkeypatch,
-):
+def test_pre_tax_and_general_hsa_withdrawals_create_income_tax(monkeypatch):
     post_tax_results = run_core(
-        monkeypatch,
-        post_tax=100_000.0,
-        withdrawal_amount=60_000.0,
-        calculate_income_taxes=True,
+        monkeypatch, post_tax=100_000.0, withdrawal_amount=60_000.0, calculate_income_taxes=True
     )
-
     pre_tax_results = run_core(
-        monkeypatch,
-        pre_tax=100_000.0,
-        withdrawal_amount=60_000.0,
-        calculate_income_taxes=True,
+        monkeypatch, pre_tax=100_000.0, withdrawal_amount=60_000.0, calculate_income_taxes=True
     )
-
     roth_results = run_core(
-        monkeypatch,
-        roth=100_000.0,
-        withdrawal_amount=60_000.0,
-        calculate_income_taxes=True,
+        monkeypatch, roth=100_000.0, withdrawal_amount=60_000.0, calculate_income_taxes=True
     )
-
     hsa_results = run_core(
-        monkeypatch,
-        hsa=100_000.0,
-        withdrawal_amount=60_000.0,
-        calculate_income_taxes=True,
+        monkeypatch, hsa=100_000.0, withdrawal_amount=60_000.0, calculate_income_taxes=True
     )
 
-    for results in [
-        post_tax_results,
-        pre_tax_results,
-        roth_results,
-        hsa_results,
-    ]:
-        assert results["gross_income"][0, 1] == pytest.approx(
-            60_000.0
-        )
+    for results in [post_tax_results, pre_tax_results, roth_results, hsa_results]:
+        assert results["gross_income"][0, 1] == pytest.approx(60_000.0)
 
-    assert post_tax_results["taxes"][0, 1] == pytest.approx(
-        0.0
-    )
-
+    assert post_tax_results["taxes"][0, 1] == pytest.approx(0.0)
     assert pre_tax_results["taxes"][0, 1] > 0.0
-
-    assert roth_results["taxes"][0, 1] == pytest.approx(
-        0.0
-    )
-
-    assert hsa_results["taxes"][0, 1] == pytest.approx(
-        0.0
-    )
-
+    assert roth_results["taxes"][0, 1] == pytest.approx(0.0)
+    assert hsa_results["taxes"][0, 1] > 0.0
+    assert hsa_results["hsa_taxable_withdrawals"][0, 1] == pytest.approx(60_000.0)
+    assert hsa_results["hsa_qualified_withdrawals"][0, 1] == pytest.approx(0.0)
 
 def test_mixed_withdrawal_tax_is_based_on_pre_tax_portion(
     monkeypatch,

@@ -348,32 +348,16 @@ def test_roth_withdrawal_does_not_generate_income_tax(
     )
 
 
-def test_hsa_withdrawal_does_not_generate_income_tax(
-    monkeypatch,
-):
-    results = run_core(
-        monkeypatch,
-        hsa=100_000.0,
-        withdrawal_amount=60_000.0,
-        calculate_income_taxes=True,
-    )
+def test_general_hsa_withdrawal_generates_income_tax(monkeypatch):
+    results = run_core(monkeypatch, hsa=100_000.0, withdrawal_amount=60_000.0, calculate_income_taxes=True)
 
-    assert results["gross_income"][0, 1] == pytest.approx(
-        60_000.0
-    )
-
-    assert results["hsa_withdrawals"][0, 1] == pytest.approx(
-        60_000.0
-    )
-
-    assert results["taxes"][0, 1] == pytest.approx(
-        0.0
-    )
-
-    assert results["hsa_assets"][0, 1] == pytest.approx(
-        40_000.0
-    )
-
+    assert results["gross_income"][0, 1] == pytest.approx(60_000.0)
+    assert results["hsa_withdrawals"][0, 1] == pytest.approx(60_000.0)
+    assert results["hsa_taxable_withdrawals"][0, 1] == pytest.approx(60_000.0)
+    assert results["hsa_qualified_withdrawals"][0, 1] == pytest.approx(0.0)
+    assert results["taxes"][0, 1] > 0.0
+    assert results["federal_ordinary_tax"][0, 1] > 0.0
+    assert results["hsa_assets"][0, 1] == pytest.approx(40_000.0)
 
 def test_mixed_withdrawal_tax_matches_same_pre_tax_amount(
     monkeypatch,

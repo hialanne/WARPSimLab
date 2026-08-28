@@ -31,12 +31,13 @@ def no_tooltip(monkeypatch):
     return mod
 
 
-def _make_expense(start=2025, end=None, cost=1000.0, comment="test"):
+def _make_expense(start=2025, end=None, cost=1000.0, comment="test", is_hsa_eligible=False):
     return {
         "start_year": start,
         "end_year": end,
         "cost": cost,
         "comment": comment,
+        "is_hsa_eligible": is_hsa_eligible,
     }
 
 
@@ -97,7 +98,7 @@ def test_stringvar_updates_model_values(tk_root, no_tooltip):
     tk_root.update_idletasks()
 
     row = frame.row_vars[0]
-    comment_entry = row["widgets"][3]
+    comment_entry = row["widgets"][4]
 
     comment_entry.delete(0, "end")
     comment_entry.insert(0, "updated")

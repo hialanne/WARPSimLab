@@ -336,20 +336,9 @@ def test_build_expense_rows_supports_get_expenses_and_ongoing_end_year():
     rows = mod._build_expense_rows(Expenses())
 
     assert rows == [
-        {
-            "Description": "Expense",
-            "Start Year": 2025,
-            "End Year": "Ongoing",
-            "Annual Amount": 1000.0,
-        },
-        {
-            "Description": "Car",
-            "Start Year": 2030,
-            "End Year": 2032,
-            "Annual Amount": 2000.0,
-        },
+        {"Description": "Expense", "Start Year": 2025, "End Year": "Ongoing", "Annual Amount": 1000.0, "HSA Eligible": False},
+        {"Description": "Car", "Start Year": 2030, "End Year": 2032, "Annual Amount": 2000.0, "HSA Eligible": False},
     ]
-
 
 def test_build_assumptions_summary_includes_tax_assumptions_and_payroll_flag():
     husband = SimpleNamespace(

@@ -30,6 +30,8 @@ def _make_dummy_gui(tmp_path: Path):
         annuity_age=67,
         annual_401k_contribution="10000",
         annual_employer_match="5000",
+        annual_hsa_contribution="3000",
+        annual_hsa_employer_contribution="1000",
     )
     gui.wife = SimpleNamespace(
         age=40,
@@ -44,6 +46,8 @@ def _make_dummy_gui(tmp_path: Path):
         annuity_age=67,
         annual_401k_contribution="8000",
         annual_employer_match="4000",
+        annual_hsa_contribution="2500",
+        annual_hsa_employer_contribution="750",
     )
 
     # Minimal portfolios
@@ -328,3 +332,6 @@ def test_save_values_to_json_writes_expected_keys(monkeypatch, tmp_path):
     assert "EXPENSES" in data
     assert "SPECIAL_INCOME_STREAMS" in data
     assert data["SPECIAL_INCOME_STREAMS"] == []
+
+    assert data["DEFAULT_HUSBAND_HSA_CONTRIB"] == pytest.approx(3000.0)
+    assert data["DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB"] == pytest.approx(1000.0)

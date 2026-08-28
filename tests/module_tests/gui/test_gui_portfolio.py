@@ -206,13 +206,17 @@ def test_advanced_mode_builds_roth_hsa_and_total_rows(mod_no_tooltip, tk_root):
     assert "Cash Pre-Tax" in texts
     assert "Cash After-Tax" in texts
     assert "Cash Roth" in texts
-    assert "HSA" in texts
+    assert "Stocks HSA" in texts
+    assert "Bonds HSA" in texts
+    assert "Cash HSA" in texts
     assert "TOTAL" in texts
 
     assert frame.h_vars["equity_roth"].get() == "300"
     assert frame.h_vars["bond_roth"].get() == "600"
     assert frame.h_vars["cash_roth"].get() == "900"
-    assert frame.h_vars["hsa"].get() == "1,000"
+    assert frame.h_vars["hsa_equity"].get() == "0"
+    assert frame.h_vars["hsa_bond"].get() == "0"
+    assert frame.h_vars["hsa_cash"].get() == "1,000"
 
     assert frame.column_total_vars["husband"].get().replace(",", "") == "5500"
     assert frame.column_total_vars["wife"].get() == "--"
@@ -238,72 +242,17 @@ def test_update_totals_populates_row_and_column_totals_for_couple(mod_no_tooltip
     frame.h_vars["cash_post"].set("50")
     frame.w_vars["cash_post"].set("75")
     frame.h_vars["equity_roth"].set("25")
-    frame.w_vars["hsa"].set("10")
+    frame.w_vars["hsa_cash"].set("10")
 
     frame._update_totals()
 
     assert frame.row_total_vars["equity_pre"].get() == "300"
     assert frame.row_total_vars["cash_post"].get() == "125"
     assert frame.row_total_vars["equity_roth"].get() == "25"
-    assert frame.row_total_vars["hsa"].get() == "10"
+    assert frame.row_total_vars["hsa_cash"].get() == "10"
 
     assert frame.column_total_vars["husband"].get() == "175"
     assert frame.column_total_vars["wife"].get() == "285"
     assert frame.column_total_vars["total"].get() == "460"
 
 
-def test_hsa_total_combines_cash_equity_and_bond(mod_no_tooltip, tk_root):
-    mod = mod_no_tooltip
-
-    h = DummyPortfolio(hsa_cash=10, hsa_equity=20, hsa_bond=30)
-
-    frame = mod.PortfolioEditFrame(
-        tk_root,
-        husband_portfolio=h,
-        wife_portfolio=None,
-        mode="Advanced",
-    )
-    frame.pack()
-
-    assert frame._get_hsa_total(h) == pytest.approx(60.0)
-    assert frame.h_vars["hsa"].get() == "60"
-
-
-def test_hsa_total_combines_cash_equity_and_bond(mod_no_tooltip, tk_root):
-    mod = mod_no_tooltip
-
-    h = DummyPortfolio(hsa_cash=10, hsa_equity=20, hsa_bond=30)
-
-    frame = mod.PortfolioEditFrame(
-        tk_root,
-        husband_portfolio=h,
-        wife_portfolio=None,
-        mode="Advanced",
-    )
-    frame.pack()
-
-    assert frame._get_hsa_total(h) == pytest.approx(60.0)
-    assert frame.h_vars["hsa"].get() == "60"
-
-
-def test_validate_hsa_stores_hsa_as_cash_only(mod_no_tooltip, tk_root, monkeypatch):
-    mod = mod_no_tooltip
-
-    h = DummyPortfolio(hsa_cash=10, hsa_equity=20, hsa_bond=30)
-
-    frame = mod.PortfolioEditFrame(
-        tk_root,
-        husband_portfolio=h,
-        wife_portfolio=None,
-        mode="Advanced",
-    )
-    frame.pack()
-
-    monkeypatch.setattr(frame, "after_idle", lambda fn: fn(), raising=True)
-
-    assert frame._validate_portfolio_field_on_focusout("1,234", "husband", "hsa") is True
-
-    assert h.hsa_cash == pytest.approx(1234.0)
-    assert h.hsa_equity == pytest.approx(0.0)
-    assert h.hsa_bond == pytest.approx(0.0)
-    assert frame.h_vars["hsa"].get() == "1,234"

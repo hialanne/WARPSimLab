@@ -12,9 +12,9 @@ class DummyExpenses:
         self.yearly_amount = yearly_amount
         self.requested_year = None
 
-    def get_total_expense_for_year(self, year: int) -> float:
+    def get_expense_breakdown_for_year(self, year: int):
         self.requested_year = year
-        return self.yearly_amount
+        return {"total": self.yearly_amount, "hsa_eligible": 0.0, "non_hsa": self.yearly_amount}
 
 
 def make_config(*, inflation_rate: float, start_year: int, scenario_expense_multiplier: float, years_to_simulate: int = 5):

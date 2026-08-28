@@ -9,8 +9,8 @@ class FlatExpenses:
     def __init__(self, annual_amount: float):
         self.annual_amount = annual_amount
 
-    def get_total_expense_for_year(self, year: int) -> float:
-        return self.annual_amount
+    def get_expense_breakdown_for_year(self, year: int):
+        return {"total": self.annual_amount, "hsa_eligible": 0.0, "non_hsa": self.annual_amount}
 
 
 def make_person(
@@ -20,6 +20,8 @@ def make_person(
     income=0.0,
     annual_401k_contribution=0.0,
     annual_employer_match=0.0,
+    annual_hsa_contribution=0.0,
+    annual_hsa_employer_contribution=0.0,
 ):
     return SimpleNamespace(
         age=age,
@@ -33,6 +35,8 @@ def make_person(
         annuity_age=99,
         annual_401k_contribution=annual_401k_contribution,
         annual_employer_match=annual_employer_match,
+        annual_hsa_contribution=annual_hsa_contribution,
+        annual_hsa_employer_contribution=annual_hsa_employer_contribution,
         pension_inflation_adjustment_pct=0.0,
     )
 

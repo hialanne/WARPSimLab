@@ -23,6 +23,8 @@ class DummyPerson:
     annuity_age: int = 0
     annual_401k_contribution: float = 0.0
     annual_employer_match: float = 0.0
+    annual_hsa_contribution: float = 0.0
+    annual_hsa_employer_contribution: float = 0.0
     pension_inflation_adjustment_pct: float = 0.0
 
 
@@ -179,9 +181,9 @@ def test_advanced_mode_builds_full_left_and_right_blocks(tk_root, mod_no_tooltip
     frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Advanced")
     frame.pack()
 
-    # Full mode: left block fields_full_left len=5; right block fields_full_right len=7; total=12.
-    # Two people => entries == 12 * 2
-    assert _count_entries(frame) == 24
+    # Full mode: left block fields_full_left len=7; right block fields_full_right len=7; total=14.
+    # Two people => entries == 14 * 2
+    assert _count_entries(frame) == 28
 
     texts = _label_texts(frame)
     # In full mode, right block headers add another "Husband" (+ maybe "Wife") label.

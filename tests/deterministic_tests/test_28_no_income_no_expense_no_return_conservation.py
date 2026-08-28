@@ -8,8 +8,8 @@ class FlatExpenses:
     def __init__(self, annual_amount: float = 0.0):
         self.annual_amount = annual_amount
 
-    def get_total_expense_for_year(self, year: int) -> float:
-        return self.annual_amount
+    def get_expense_breakdown_for_year(self, year: int):
+        return {"total": self.annual_amount, "hsa_eligible": 0.0, "non_hsa": self.annual_amount}
 
 
 def make_person(*, age, retire_age):

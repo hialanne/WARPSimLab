@@ -107,8 +107,8 @@ class DummyPortfolio:
 
 
 class DummyExpenses:
-    pass
-
+    def get_expense_breakdown_for_year(self, year):
+        return {"total": 30.0, "hsa_eligible": 0.0, "non_hsa": 30.0}
 
 def _make_portfolio(
     total=100.0,
@@ -137,9 +137,9 @@ def _make_portfolio(
         bd_roth=roth * 0.3,
         cs_roth=roth * 0.2,
 
-        eq_hsa=hsa * 0.5,
-        bd_hsa=hsa * 0.3,
-        cs_hsa=hsa * 0.2,
+        hsa_eq=hsa * 0.5,
+        hsa_bd=hsa * 0.3,
+        hsa_cs=hsa * 0.2,
 
         re_post=re_post,
 
@@ -212,7 +212,6 @@ def _patch_baseline(monkeypatch, mod, sim_config: DummySimConfig):
     monkeypatch.setattr(mod.taxEngine, "initialize_tax_engine_for_simulation", lambda cfg: None)
     monkeypatch.setattr(mod.incomeEngine, "initialize_income_engine_for_simulation", lambda h, w, cfg: None)
     monkeypatch.setattr(mod.monteCarloEngine, "prepare_market_path_sampling", lambda cfg: None)
-    monkeypatch.setattr(mod.expenseEngine, "initialize_expense_engine_for_simulation", lambda cfg: None)
 
     monkeypatch.setattr(
         mod.taxEngine,
@@ -316,21 +315,14 @@ def _patch_baseline(monkeypatch, mod, sim_config: DummySimConfig):
     monkeypatch.setattr(
         mod.portfolioEngine,
         "apply_net_income_couple",
-        lambda *a, **k: {
-            "post_tax_used": 0.0,
-            "pre_tax_used": 0.0,
-            "uncovered": 0.0,
-        },
+        lambda *a, **k: {"post_tax_used": 0.0, "pre_tax_used": 0.0, "hsa_used": 0.0, "uncovered": 0.0},
     )
     monkeypatch.setattr(
         mod.portfolioEngine,
         "apply_net_income_single",
-        lambda *a, **k: {
-            "post_tax_used": 0.0,
-            "pre_tax_used": 0.0,
-            "uncovered": 0.0,
-        },
+        lambda *a, **k: {"post_tax_used": 0.0, "pre_tax_used": 0.0, "hsa_used": 0.0, "uncovered": 0.0},
     )
+
     monkeypatch.setattr(
         mod.portfolioEngine,
         "deduct_post_tax_amount",
@@ -516,7 +508,7 @@ def test_emergency_pre_tax_flow_updates_tax_delta_and_gross_income(mod, monkeypa
     monkeypatch.setattr(
         mod.portfolioEngine,
         "apply_net_income_couple",
-        lambda *a, **k: {"post_tax_used": 40.0, "pre_tax_used": 25.0, "uncovered": 0.0},
+        lambda *a, **k: {"post_tax_used": 40.0, "pre_tax_used": 25.0, "hsa_used": 0.0, "uncovered": 0.0},
     )
     monkeypatch.setattr(mod.portfolioEngine, "deduct_post_tax_amount", lambda *a, **k: 6.0)
 
@@ -616,7 +608,11 @@ def test_allocates_couple_net_income_after_tax(mod, monkeypatch):
 def test_real_mode_deflates_selected_series(mod, monkeypatch):
     sim_config = DummySimConfig(plot_mode="real", inflation_rate=0.10)
     _patch_baseline(monkeypatch, mod, sim_config)
-    monkeypatch.setattr(mod.expenseEngine, "calculate_expenses", lambda *a, **k: 10.0)
+    monkeypatch.setattr(
+        mod.expenseEngine,
+        "calculate_expense_breakdown",
+        lambda *a, **k: {"total": 10.0, "hsa_eligible": 0.0, "non_hsa": 10.0},
+    )
     monkeypatch.setattr(mod.taxEngine, "calculate_total_income_tax_split", lambda *a, **k: _tax_split(total_tax=5.0, federal_marginal_rate=0.10))
     monkeypatch.setattr(mod.taxEngine, "allocate_tax_proportionally_couple", lambda total_tax, h_inc, w_inc: (3.0, 2.0))
 
@@ -791,11 +787,7 @@ def test_expense_mode_reduces_roth_contributions_before_uncovered_expense(
     monkeypatch.setattr(
         mod.portfolioEngine,
         "apply_net_income_couple",
-        lambda *args, **kwargs: {
-            "post_tax_used": 0.0,
-            "pre_tax_used": 0.0,
-            "uncovered": 4000.0,
-        },
+        lambda *args, **kwargs: {"post_tax_used": 0.0, "pre_tax_used": 0.0, "hsa_used": 0.0, "uncovered": 4000.0},
     )
 
     monkeypatch.setattr(
@@ -863,11 +855,7 @@ def test_expense_mode_reports_only_shortfall_beyond_all_roth_contributions(
     monkeypatch.setattr(
         mod.portfolioEngine,
         "apply_net_income_couple",
-        lambda *args, **kwargs: {
-            "post_tax_used": 0.0,
-            "pre_tax_used": 0.0,
-            "uncovered": 13000.0,
-        },
+        lambda *args, **kwargs: {"post_tax_used": 0.0, "pre_tax_used": 0.0, "hsa_used": 0.0, "uncovered": 13000.0},
     )
 
     monkeypatch.setattr(
