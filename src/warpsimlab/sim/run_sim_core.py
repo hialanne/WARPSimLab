@@ -8,11 +8,11 @@ from .engines import (
     withdrawalEngine,
     expenseEngine,
     taxEngine,
-    statsCollector,
     monteCarloEngine,
     rothEngine,
-    hsaEngine,
 )
+from .run_sim_core_expenses import simulate_expense_year
+from .run_sim_core_withdrawals import simulate_withdrawal_year
 
 PROFILE_SIMULATION = False
 DEBUG_SIMULATION = False
@@ -374,599 +374,86 @@ def simulate_yearly_portfolios(
                 "re": market_path["re"][year],
             }
 
-            # RMDs - needed by the income engine.  However, if we are calculating withdrawals and not expenses,
-            #   this gets done in the withdrawalEngine in calculate_retirement_withdrawal as part of the main withdrawal.
             if use_expenses:
-                rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
-                withdrawalEngine.withdraw_rmds(h_port,rmd_h) 
-
-                rmd_w = 0
-                if second_person_enabled:
-                    rmd_w = withdrawalEngine.calculate_rmds(w_port, wife, curr_w_age, sim_config)
-                    withdrawalEngine.withdraw_rmds(w_port,rmd_w) 
-            else:
-                rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
-                rmd_w = 0
-                if second_person_enabled:
-                    rmd_w = withdrawalEngine.calculate_rmds(w_port, wife, curr_w_age, sim_config)
-
-            # Income breakdown
-            income = incomeEngine.calculate_income_breakdown(husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year, sim_config)
-            income["by_class"]["roth_conversion"] = 0.0
-
-            #print("income husband at breakdown: "+str(income["by_person"]["husband"]))
-            #print("income wife at breakdown: "+str(income["by_person"]["wife"]))
-            #print("income-total at breakdown: "+str(income["total"]))
-
-            (
-                bond_interest,
-                cash_interest,
-                qualified_equity_distributions,
-                post_tax_total,
-                husband_post_tax_total,
-                wife_post_tax_total,
-            ) = portfolioEngine.estimate_household_post_tax_income_components(
-                h_port,
-                w_port,
-                sim_config,
-                bond_return=year_returns["bd"],
-                cash_return=year_returns["cs"],
-            )
-
-            income["by_class"]["bond_interest"] += bond_interest
-            income["by_class"]["cash_interest"] += cash_interest
-            income["by_class"]["qualified_equity_distributions"] += qualified_equity_distributions
-
-            income["total"] += post_tax_total
-            income["by_person"]["husband"] += husband_post_tax_total
-
-            if second_person_enabled:
-                income["by_person"]["wife"] += wife_post_tax_total
-
-            payroll_wages_husband = max(
-                0.0,
-                float(income.get("work_by_person", {}).get("husband", 0.0))
-            )
-
-            payroll_wages_wife = 0.0
-
-            if second_person_enabled:
-                payroll_wages_wife = max(
-                    0.0,
-                    float(income.get("work_by_person", {}).get("wife", 0.0))
-                )
-
-            h_401k_employee = 0.0
-            h_401k_employer = 0.0
-            w_401k_employee = 0.0
-            w_401k_employer = 0.0
-            h_hsa = {"employee": 0.0, "employer": 0.0, "total": 0.0}
-            w_hsa = {"employee": 0.0, "employer": 0.0, "total": 0.0}
-
-            emergency_pre_tax_used = 0.0
-            qualified_hsa_withdrawal = 0.0
-            taxable_hsa_withdrawal = 0.0
-            cash_expense_amt = 0.0
-            uncovered_expense = 0.0
-            net_cash_result = None
-            cash_flow_shortfall = 0.0
-            baseline_total_tax = 0.0
-            final_tax_delta = 0.0
-            final_tax_delta_deducted = 0.0
-            final_tax_delta_uncovered = 0.0
-
-
-            if use_expenses:
-                # 401k contributions
-                h_401k_employee, h_401k_employer = (
-                    incomeEngine.calculate_pre_tax_401k_contributions(
-                        husband, curr_h_age, year, sim_config
-                    )
-                )
-                incomeEngine.apply_employee_401k_to_income(
-                    income, h_401k_employee, "husband"
-                )
-                portfolioEngine.apply_pre_tax_contribution(
-                    h_port, h_401k_employee + h_401k_employer
-                )
-
-                if second_person_enabled:
-                    w_401k_employee, w_401k_employer = (
-                        incomeEngine.calculate_pre_tax_401k_contributions(
-                            wife, curr_w_age, year, sim_config
-                        )
-                    )
-                    incomeEngine.apply_employee_401k_to_income(
-                        income, w_401k_employee, "wife"
-                    )
-                    portfolioEngine.apply_pre_tax_contribution(
-                        w_port, w_401k_employee + w_401k_employer
-                    )
-
-                # HSA contributions
-                h_hsa = hsaEngine.calculate_hsa_contributions(
-                    husband, curr_h_age, year, payroll_wages_husband, h_401k_employee, sim_config
-                )
-                hsaEngine.apply_employee_hsa_to_income(income, h_hsa["employee"], "husband")
-                hsaEngine.deposit_hsa_contributions(h_port, h_hsa)
-                payroll_wages_husband = max(0.0, payroll_wages_husband - h_hsa["employee"])
-
-                if second_person_enabled:
-                    w_hsa = hsaEngine.calculate_hsa_contributions(
-                        wife, curr_w_age, year, payroll_wages_wife, w_401k_employee, sim_config
-                    )
-                    hsaEngine.apply_employee_hsa_to_income(income, w_hsa["employee"], "wife")
-                    hsaEngine.deposit_hsa_contributions(w_port, w_hsa)
-                    payroll_wages_wife = max(0.0, payroll_wages_wife - w_hsa["employee"])
-
-
-            # ---------------------------------------------------------
-            # Prepare the current year's requested Roth flows.
-            #
-            # Roth IRA contributions are after-tax cash uses.
-            # Workplace Roth contributions are capped by each owner's
-            # current gross wages. Roth conversions are not wage capped.
-            # ---------------------------------------------------------
-            requested_roth_flows = (
-                rothEngine.prepare_requested_roth_flows(
-                    curr_husband_age=curr_h_age,
-                    curr_wife_age=curr_w_age,
-                    year=year,
-                    payroll_wages_husband=payroll_wages_husband,
-                    payroll_wages_wife=payroll_wages_wife,
-                    second_person_enabled=second_person_enabled,
-                    sim_config=sim_config,
-                )
-            )
-
-            applied_roth_conversions = (
-                rothEngine.apply_roth_conversions(
-                    husband_portfolio=h_port,
-                    wife_portfolio=w_port,
-                    requested_flows=requested_roth_flows,
-                    second_person_enabled=(
-                        second_person_enabled
-                    ),
-                )
-            )
-
-            husband_roth_conversion = (
-                applied_roth_conversions["husband"]
-            )
-
-            wife_roth_conversion = (
-                applied_roth_conversions["wife"]
-            )
-
-            roth_conversion_total = (
-                applied_roth_conversions["total"]
-            )
-
-            # A Roth conversion is taxable ordinary income, but it is
-            # not spendable household cash.
-            income["by_class"]["roth_conversion"] = (
-                roth_conversion_total
-            )
-
-            requested_roth_contribution_total = (
-                requested_roth_flows[
-                    "requested_contribution_total"
-                ]
-            )
-
-            funded_roth_contributions = (
-                rothEngine.resolve_funded_contributions(
-                    requested_flows=requested_roth_flows,
-                    funded_total=0.0,
-                )
-            )
-
-            #print("income-total after 401k: "+str(income["total"]))
-
-            (
-                social_security_payroll_tax,
-                medicare_tax,
-                additional_medicare_tax,
-                payroll_tax,
-            ) = taxEngine.calculate_employee_payroll_tax_split(
-                husband_wages=payroll_wages_husband,
-                wife_wages=payroll_wages_wife,
-                year_cache=year_cache,
-                sim_config=sim_config,
-            )
-
-            if use_expenses:
-                expense_breakdown = expenseEngine.calculate_expense_breakdown(expenses, year, sim_config)
-                expense_amt = expense_breakdown["total"]
-
-                qualified_hsa_result = hsaEngine.pay_qualified_hsa_expenses(
-                    h_port, w_port, expense_breakdown["hsa_eligible"], second_person_enabled
-                )
-                qualified_hsa_withdrawal = qualified_hsa_result["paid"]
-
-                cash_expense_amt = expense_breakdown["non_hsa"] + qualified_hsa_result["uncovered"]
-
-                wd_pre_tax = 0.0
-                wd_post_tax = 0.0
-                wd_roth = 0.0
-                wd_hsa = qualified_hsa_withdrawal
-            else:
-                wd = withdrawalEngine.calculate_retirement_withdrawal(
+                model_result = simulate_expense_year(
                     h_port,
                     w_port,
                     husband,
                     wife,
-                    year,
+                    expenses,
                     sim_config,
-                    additional_cash_needed=(
-                        requested_roth_contribution_total
-                    ),
+                    year,
+                    year_cache,
+                    curr_h_age,
+                    curr_w_age,
+                    year_returns,
+                    second_person_enabled,
                 )
-                expense_amt = 0
-                wd_pre_tax = wd["pre_tax"]
-                wd_post_tax = wd["post_tax"]
-                wd_roth = wd.get("roth", 0.0)
-                wd_hsa = wd.get("hsa", 0.0)
-                taxable_hsa_withdrawal = wd_hsa
-                wd_rmd = wd.get("rmd", 0.0)
-                # Contributions are discretionary relative to the base retirement
-                # withdrawal. Any uncovered amount reduces the Roth contribution first.
-                withdrawal_uncovered = max(
-                    0.0,
-                    float(wd.get("uncovered", 0.0)),
-                )
-
-                roth_funding_result = (
-                    rothEngine.resolve_contribution_shortfall(
-                        requested_flows=requested_roth_flows,
-                        uncovered_amount=withdrawal_uncovered,
-                    )
-                )
-
-                funded_roth_contributions = (
-                    roth_funding_result[
-                        "funded_contributions"
-                    ]
-                )
-
-                income["by_class"]["withdrawal"] = wd["total"]
-
-                # Separate withdrawal cash used for Roth contributions
-                # from withdrawal cash available for household spending.
-                retirement_cash = (
-                    rothEngine.separate_retirement_contribution_funding(
-                        withdrawal_result=wd,
-                        actual_contribution_total=(
-                            funded_roth_contributions["total"]
-                        ),
-                    )
-                )
-
-                additional_withdrawal_cash = (
-                    retirement_cash["household"]
-                )
-
-                husband_additional_withdrawal = (
-                    retirement_cash["husband"]
-                )
-
-                wife_additional_withdrawal = (
-                    retirement_cash["wife"]
-                )
-
-                income["total"] += additional_withdrawal_cash
-                income["by_person"]["husband"] += (
-                    husband_additional_withdrawal
-                )
-
-                if second_person_enabled:
-                    income["by_person"]["wife"] += (
-                        wife_additional_withdrawal
-                    )
-
-                income["non_taxable_income"] = (
-                    income.get("non_taxable_income", 0.0)
-                    + additional_withdrawal_cash
-                )
-
-            if qualified_equity_distributions > (income["total"]):
-                print("qualified_equity_distributions: "+str(qualified_equity_distributions)+ " income-total: "+str(income["total"]))
-                raise RuntimeError("Qualified dividends exceed total income")
-
-            # print("h_port: "+str(h_port.total_value))
-
-            if use_expenses:
-                # ---------------------------------------------------------
-                # One-pass approximation for emergency pre-tax withdrawals
-                #
-                # First pass:
-                #   estimate net cash using income before any emergency pre-tax draw
-                #
-                # Then:
-                #   apply net cash to the portfolio
-                #   capture any gross pre-tax amount needed to cover a deficit
-                #
-                # Final pass:
-                #   recompute taxes including that gross emergency pre-tax withdrawal
-                #
-                # This avoids embedding tax assumptions inside portfolioEngine and
-                # avoids an iterative tax/withdrawal loop.
-                # ---------------------------------------------------------
-
-                qualified_equity_distributions = income["by_class"].get("qualified_equity_distributions", 0.0)
-
-                baseline_ordinary_income = (
-                    income["total"]
-                    - qualified_equity_distributions
-                    - income.get("non_taxable_income", 0.0)
-                    + wd_pre_tax
-                    + roth_conversion_total
-                )
-
-                (
-                    baseline_federal_ordinary_tax,
-                    baseline_federal_qualified_dividend_tax,
-                    baseline_state_income_tax,
-                    baseline_total_tax,
-                    baseline_federal_marginal_rate,
-                ) = taxEngine.calculate_total_income_tax_split(
-                    ordinary_income=baseline_ordinary_income,
-                    qualified_equity_distributions=qualified_equity_distributions,
-                    year_cache=year_cache,
-                    sim_config=sim_config
-                )
-
-                baseline_total_tax += payroll_tax
-
-                taxes_enabled = (
-                    sim_config.calculate_income_taxes
-                    or sim_config.calculate_payroll_taxes
-                    or sim_config.calculate_state_taxes
-                )
-
-                if taxes_enabled:
-                    net_cash = (
-                        income["total"]
-                        - baseline_total_tax
-                        - cash_expense_amt
-                        - requested_roth_contribution_total
-                    )
-                else:
-                    net_cash = (
-                        income["total"]
-                        - cash_expense_amt
-                        - requested_roth_contribution_total
-                    )
-
-                # print("income total: "+str(income["total"]))
-                # print("expense_amt: "+str(expense_amt))
-                # print("baseline_total_tax: "+str(baseline_total_tax))
-
-                # Apply net cash and capture any emergency gross pre-tax draw
-                if second_person_enabled:
-                    net_cash_result = portfolioEngine.apply_net_income_couple(
-                        h_port,
-                        w_port,
-                        net_cash,
-                    )
-                else:
-                    net_cash_result = portfolioEngine.apply_net_income_single(
-                        h_port,
-                        net_cash,
-                    )
-
-                # print("h_port after apply: "+str(h_port.total_value))
-                # This code dumps logs of portfolio if it's draining.  
-                #   Should drain, in order, before tax, after tax, roth, hsa.
-                #print(
-                #    year,
-                #    h_port.total_value_pre + w_port.total_value_pre,
-                #    h_port.total_value_post + w_port.total_value_post,
-                #    h_port.total_value_roth + w_port.total_value_roth,
-                #    net_cash_result["uncovered"],
-                #)
-                
-                cash_flow_shortfall = sum(
-                    net_cash_result.get(key, 0.0)
-                    for key in (
-                        "post_tax_used",
-                        "pre_tax_used",
-                        "roth_used",
-                        "hsa_used",
-                        "real_estate_used",
-                    )
-                )
-
-                emergency_pre_tax_used = net_cash_result["pre_tax_used"]
-                taxable_hsa_withdrawal = net_cash_result["hsa_used"]
-                wd_hsa = qualified_hsa_withdrawal + taxable_hsa_withdrawal
-
-                combined_uncovered = max(
-                    0.0,
-                    float(
-                        net_cash_result.get(
-                            "uncovered",
-                            0.0,
-                        )
-                    ),
-                )
-
-                # Roth contributions are discretionary. Apply the cash
-                # shortfall to them before reporting uncovered expenses.
-                roth_funding_result = (
-                    rothEngine.resolve_contribution_shortfall(
-                        requested_flows=requested_roth_flows,
-                        uncovered_amount=combined_uncovered,
-                    )
-                )
-
-                funded_roth_contributions = (
-                    roth_funding_result[
-                        "funded_contributions"
-                    ]
-                )
-
-                uncovered_expense = (
-                    roth_funding_result[
-                        "remaining_uncovered"
-                    ]
-                )
-                
-                # Recompute final taxes only if the emergency pre-tax draw changed income
-                # Recompute final taxes if taxable portfolio withdrawals changed income.
-                if emergency_pre_tax_used > 0.0 or taxable_hsa_withdrawal > 0.0:
-                    ordinary_income = (
-                        baseline_ordinary_income
-                        + emergency_pre_tax_used
-                        + taxable_hsa_withdrawal
-                    )
-
-                    (
-                        federal_ordinary_tax,
-                        federal_qualified_dividend_tax,
-                        state_income_tax,
-                        total_tax,
-                        federal_marginal_rate,
-                    ) = taxEngine.calculate_total_income_tax_split(
-                        ordinary_income=ordinary_income,
-                        qualified_equity_distributions=qualified_equity_distributions,
-                        year_cache=year_cache,
-                        sim_config=sim_config
-                    )
-                    total_tax += payroll_tax
-                else:
-                    ordinary_income = baseline_ordinary_income
-                    federal_ordinary_tax = baseline_federal_ordinary_tax
-                    federal_qualified_dividend_tax = baseline_federal_qualified_dividend_tax
-                    state_income_tax = baseline_state_income_tax
-                    total_tax = baseline_total_tax
-                    federal_marginal_rate = baseline_federal_marginal_rate
-
-                final_tax_delta = max(0.0, total_tax - baseline_total_tax)
-
-                #print("tax_bracket: "+str(tax_bracket))
-
-                # ---------------------------------------------------------
-                # Deduct the extra tax created by the emergency pre-tax draw.
-                #
-                # One-pass approximation:
-                # the portfolio was already adjusted using net_cash based on
-                # baseline tax. If final tax is higher after including emergency
-                # pre-tax withdrawals, remove the tax delta directly from post-tax
-                # assets without triggering another tax/withdrawal iteration.
-                # ---------------------------------------------------------
-                if sim_config.calculate_income_taxes and final_tax_delta > 0:
-                    final_tax_delta_deducted = portfolioEngine.deduct_post_tax_amount(
-                        h_port,
-                        w_port,
-                        final_tax_delta,
-                        sim_config
-                    )
-                    final_tax_delta_uncovered = max(0.0, final_tax_delta - final_tax_delta_deducted)
-                #print("final_tax_delta_uncovered expenses"+str(final_tax_delta_uncovered))
-
-                if final_tax_delta < -1e-9:
-                    raise RuntimeError("final_tax_delta should never be negative")
-
-                if final_tax_delta_deducted < -1e-9:
-                    raise RuntimeError("final_tax_delta_deducted should never be negative")
-
-                if final_tax_delta_uncovered < -1e-9:
-                    raise RuntimeError("final_tax_delta_uncovered should never be negative")
-
             else:
-                qualified_equity_distributions = income["by_class"].get("qualified_equity_distributions", 0.0)
-
-                ordinary_income = (
-                    income["total"]
-                    - qualified_equity_distributions
-                    - income.get("non_taxable_income", 0.0)
-                    + wd_pre_tax
-                    + wd_hsa
-                    + roth_conversion_total
-                )
-
-                (
-                    federal_ordinary_tax,
-                    federal_qualified_dividend_tax,
-                    state_income_tax,
-                    total_tax,
-                    federal_marginal_rate,
-                ) = taxEngine.calculate_total_income_tax_split(
-                    ordinary_income=ordinary_income,
-                    qualified_equity_distributions=qualified_equity_distributions,
-                    year_cache=year_cache,
-                    sim_config=sim_config
-                )
-                total_tax += payroll_tax
-
-            # print("h_port: "+str(h_port.total_value))
-
-            # ---------------------------------------------------------
-            # Deposit only the Roth contributions that were actually funded.
-            #
-            # Contributions are added before annual returns, so they participate
-            # in the current year's return under the simulator's annual timing model.
-            # ---------------------------------------------------------
-            deposited_roth_contributions = (
-                rothEngine.deposit_funded_roth_contributions(
-                    husband_portfolio=h_port,
-                    wife_portfolio=w_port,
-                    funded_contributions=(
-                        funded_roth_contributions
-                    ),
-                    second_person_enabled=(
-                        second_person_enabled
-                    ),
-                )
-            )
-
-            if abs(
-                deposited_roth_contributions["total"]
-                - funded_roth_contributions["total"]
-            ) > 1e-6:
-                raise RuntimeError(
-                    "Deposited Roth contributions do not match "
-                    "the funded contribution total"
-                )
-
-            equity_total_return = year_returns["eq"]
-            equity_dividend_yield = sim_config._post_tax_equity_dividend_yield
-            taxable_equity_price_return = (
-                equity_total_return - equity_dividend_yield
-            )
-
-            # Portfolio returns (shared market path)
-            fund_expense_rate = sim_config.fund_expense if sim_config.use_fund_expenses else 0.0
-
-            fund_expenses = portfolioEngine.apply_returns_and_fund_expenses(
-                h_port,
-                equity_total_return,
-                taxable_equity_price_return,
-                year_returns["bd"],
-                year_returns["cs"],
-                year_returns["re"],
-                fund_expense_rate,
-            )
-
-            if second_person_enabled:
-                fund_expenses += portfolioEngine.apply_returns_and_fund_expenses(
+                model_result = simulate_withdrawal_year(
+                    h_port,
                     w_port,
-                    equity_total_return,
-                    taxable_equity_price_return,
-                    year_returns["bd"],
-                    year_returns["cs"],
-                    year_returns["re"],
-                    fund_expense_rate,
+                    husband,
+                    wife,
+                    sim_config,
+                    year,
+                    year_cache,
+                    curr_h_age,
+                    curr_w_age,
+                    year_returns,
+                    second_person_enabled,
                 )
 
-            # Rebalance if requested
-            if sim_config.rebalance_every_year:
-                portfolioEngine.rebalance(h_port, sim_config)
-                if second_person_enabled:
-                    portfolioEngine.rebalance(w_port, sim_config)
+            income = model_result["income"]
 
-            # print("h_port: "+str(h_port.total_value))
+            gross_income = model_result["gross_income"]
+            net_income = model_result["net_income"]
+            net_profit = model_result["net_profit"]
+            net_income_husband = model_result["net_income_husband"]
+            net_income_wife = model_result["net_income_wife"]
+
+            total_tax = model_result["total_tax"]
+            federal_marginal_rate = model_result["federal_marginal_rate"]
+            federal_ordinary_tax = model_result["federal_ordinary_tax"]
+            federal_qualified_dividend_tax = model_result["federal_qualified_dividend_tax"]
+            state_income_tax = model_result["state_income_tax"]
+
+            payroll_tax = model_result["payroll_tax"]
+            social_security_payroll_tax = model_result["social_security_payroll_tax"]
+            medicare_tax = model_result["medicare_tax"]
+            additional_medicare_tax = model_result["additional_medicare_tax"]
+
+            expense_amt = model_result["expense_amt"]
+            uncovered_expense = model_result["uncovered_expense"]
+            cash_flow_shortfall = model_result["cash_flow_shortfall"]
+
+            rmd_h = model_result["rmd_h"]
+            rmd_w = model_result["rmd_w"]
+
+            wd_roth = model_result["wd_roth"]
+            wd_hsa = model_result["wd_hsa"]
+            qualified_hsa_withdrawal = model_result["qualified_hsa_withdrawal"]
+            taxable_hsa_withdrawal = model_result["taxable_hsa_withdrawal"]
+            emergency_pre_tax_used = model_result["emergency_pre_tax_used"]
+
+            ira_401k = model_result["ira_401k"]
+            employee_401k_total = model_result["employee_401k_total"]
+            hsa_employee_total = model_result["hsa_employee_total"]
+            hsa_employer_total = model_result["hsa_employer_total"]
+            hsa_total_contributions = model_result["hsa_total_contributions"]
+
+            funded_roth_contributions = model_result["funded_roth_contributions"]
+            roth_conversion_total = model_result["roth_conversion_total"]
+
+            bond_interest = model_result["bond_interest"]
+            cash_interest = model_result["cash_interest"]
+            qualified_equity_distributions = model_result["qualified_equity_distributions"]
+
+            fund_expenses = model_result["fund_expenses"]
+
+            final_tax_delta = model_result["final_tax_delta"]
+            final_tax_delta_deducted = model_result["final_tax_delta_deducted"]
+            final_tax_delta_uncovered = model_result["final_tax_delta_uncovered"]
 
             if DEBUG_SIMULATION:
                 if s == 0 and year >= years_to_simulate - 2:
@@ -1016,48 +503,6 @@ def simulate_yearly_portfolios(
             cash = h_port.total_value_cash + (w_port.total_value_cash if second_person_enabled else 0)
             bonds = h_port.total_value_bonds + (w_port.total_value_bonds if second_person_enabled else 0)
             real_estate = h_port.re_post + (w_port.re_post if second_person_enabled else 0)
-
-            taxes_enabled = (
-                sim_config.calculate_income_taxes
-                or sim_config.calculate_payroll_taxes
-                or sim_config.calculate_state_taxes
-            )
-
-            net_income = (
-                income["total"] - total_tax
-                if taxes_enabled
-                else income["total"]
-            )
-
-            if sim_config.second_person_enabled:
-                ira_401k = h_401k_employee + h_401k_employer + w_401k_employee + w_401k_employer
-                employee_401k_total = h_401k_employee + w_401k_employee
-            else:
-                ira_401k = h_401k_employee + h_401k_employer
-                employee_401k_total = h_401k_employee
-
-            hsa_employee_total = h_hsa["employee"] + (w_hsa["employee"] if second_person_enabled else 0.0)
-            hsa_employer_total = h_hsa["employer"] + (w_hsa["employer"] if second_person_enabled else 0.0)
-            hsa_total_contributions = hsa_employee_total + hsa_employer_total
-
-            gross_income = (
-                income["total"]
-                + employee_401k_total
-                + emergency_pre_tax_used
-                + hsa_employee_total
-                + (taxable_hsa_withdrawal if use_expenses else 0.0)
-            )
-
-            if use_expenses:
-                net_profit = (
-                    net_income
-                    - expense_amt
-                    - funded_roth_contributions["total"]
-                )
-            else:
-                # Retirement-mode income already excludes the withdrawal cash
-                # redirected into Roth contributions.
-                net_profit = net_income
 
             #print("income-net: "+str(net_income))
             #print("income-total: "+str(income["total"]))
@@ -1153,86 +598,8 @@ def simulate_yearly_portfolios(
                 results["breakdown_by_class"][key][s, year] = (
                     income["by_class"][key]
                 )
-
-            # ---------------------------------------------------------
-            # Allocate household income and taxes by person.
-            # ---------------------------------------------------------
-            if second_person_enabled:
-                husband_income_for_tax_alloc = (
-                    income["by_person"]["husband"]
-                    + husband_roth_conversion
-                )
-
-                wife_income_for_tax_alloc = (
-                    income["by_person"]["wife"]
-                    + wife_roth_conversion
-                )
-
-                if use_expenses and emergency_pre_tax_used > 0.0:
-                    h_pre = h_port.total_value_pre
-                    w_pre = w_port.total_value_pre
-                    total_pre = h_pre + w_pre
-
-                    if total_pre > 0.0:
-                        husband_income_for_tax_alloc += (
-                            emergency_pre_tax_used
-                            * h_pre
-                            / total_pre
-                        )
-                        wife_income_for_tax_alloc += (
-                            emergency_pre_tax_used
-                            * w_pre
-                            / total_pre
-                        )
-                    else:
-                        husband_income_for_tax_alloc += (
-                            emergency_pre_tax_used / 2.0
-                        )
-                        wife_income_for_tax_alloc += (
-                            emergency_pre_tax_used / 2.0
-                        )
-
-                expected_person_income_total = (
-                    income["total"]
-                    + emergency_pre_tax_used
-                    + roth_conversion_total
-                )
-
-                actual_person_income_total = (
-                    husband_income_for_tax_alloc
-                    + wife_income_for_tax_alloc
-                )
-
-                if abs(
-                    actual_person_income_total
-                    - expected_person_income_total
-                ) > 1e-6:
-                    raise RuntimeError(
-                        "Person-level income does not match household income"
-                    )
-
-                (
-                    husband_tax_alloc,
-                    wife_tax_alloc,
-                ) = taxEngine.allocate_tax_proportionally_couple(
-                    total_tax,
-                    husband_income_for_tax_alloc,
-                    wife_income_for_tax_alloc,
-                )
-
-                results["net_income_husband"][s, year] = (
-                    husband_income_for_tax_alloc
-                    - husband_tax_alloc
-                )
-
-                results["net_income_wife"][s, year] = (
-                    wife_income_for_tax_alloc
-                    - wife_tax_alloc
-                )
-
-            else:
-                results["net_income_husband"][s, year] = net_income
-                results["net_income_wife"][s, year] = 0.0
+            results["net_income_husband"][s, year] = net_income_husband
+            results["net_income_wife"][s, year] = net_income_wife
 
     # print('total_assets: '+str(results["total_assets"][0]))
 
