@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.warpsimlab.gui.gui_scenarioSnapshots import ScenarioSnapshots
+from src.warpsimlab.gui.scenario.gui_scenarioSnapshots import ScenarioSnapshots
 
 
 def test_defaults_are_assigned():

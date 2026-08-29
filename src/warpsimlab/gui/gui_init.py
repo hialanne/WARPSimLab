@@ -22,10 +22,10 @@ from src.warpsimlab.dataClasses.dynamicExpenses import DynamicExpenses
 from src.warpsimlab.gui.gui_retirement import *
 from src.warpsimlab.gui.gui_main import MainHomeFrame
 from src.warpsimlab.gui.gui_tutorial import TutorialFrame
-from src.warpsimlab.gui.gui_scenarioSnapshots import *
+from src.warpsimlab.gui.scenario.gui_scenarioSnapshots import *
 from src.warpsimlab.gui.gui_io import *
 from src.warpsimlab.gui.gui_io import PortfolioSimulatorGUI_IOMixin
-from src.warpsimlab.gui.gui_scenarioController import ScenarioController
+from src.warpsimlab.gui.scenario.gui_scenarioController import ScenarioController
 from src.warpsimlab.gui.gui_navigation import PortfolioSimulatorGUI_NavigationMixin
 from src.warpsimlab.gui.gui_editors import PortfolioSimulatorGUI_EditorsMixin
 from src.warpsimlab.gui.reports.gui_reports import PortfolioSimulatorGUI_ReportsMixin

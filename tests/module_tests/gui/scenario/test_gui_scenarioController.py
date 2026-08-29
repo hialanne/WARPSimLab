@@ -49,7 +49,7 @@ def dummy_gui():
 
 
 def test_start_or_focus_calls_start_session(monkeypatch, dummy_gui):
-    from src.warpsimlab.gui import gui_scenarioController as mod
+    from src.warpsimlab.gui.scenario import gui_scenarioController as mod
 
     ctrl = mod.ScenarioController(dummy_gui)
 
@@ -63,7 +63,7 @@ def test_start_or_focus_calls_start_session(monkeypatch, dummy_gui):
 
 
 def test_start_or_focus_focuses_existing_window(monkeypatch, dummy_gui):
-    from src.warpsimlab.gui import gui_scenarioController as mod
+    from src.warpsimlab.gui.scenario import gui_scenarioController as mod
 
     ctrl = mod.ScenarioController(dummy_gui)
 
@@ -85,7 +85,7 @@ def test_start_or_focus_focuses_existing_window(monkeypatch, dummy_gui):
 
 
 def test_stop_session_resets_state(monkeypatch, dummy_gui):
-    from src.warpsimlab.gui import gui_scenarioController as mod
+    from src.warpsimlab.gui.scenario import gui_scenarioController as mod
 
     ctrl = mod.ScenarioController(dummy_gui)
 
@@ -106,7 +106,7 @@ def test_stop_session_resets_state(monkeypatch, dummy_gui):
 
 
 def test_schedule_update_sets_pending_job(monkeypatch, dummy_gui):
-    from src.warpsimlab.gui import gui_scenarioController as mod
+    from src.warpsimlab.gui.scenario import gui_scenarioController as mod
 
     ctrl = mod.ScenarioController(dummy_gui)
 
@@ -123,7 +123,7 @@ def test_schedule_update_sets_pending_job(monkeypatch, dummy_gui):
 
 
 def test_cancel_pending_update_clears_job(monkeypatch, dummy_gui):
-    from src.warpsimlab.gui import gui_scenarioController as mod
+    from src.warpsimlab.gui.scenario import gui_scenarioController as mod
 
     ctrl = mod.ScenarioController(dummy_gui)
 
@@ -143,7 +143,7 @@ def test_cancel_pending_update_clears_job(monkeypatch, dummy_gui):
 
 
 def test_build_snapshots_from_truth(monkeypatch, dummy_gui):
-    from src.warpsimlab.gui import gui_scenarioController as mod
+    from src.warpsimlab.gui.scenario import gui_scenarioController as mod
 
     ctrl = mod.ScenarioController(dummy_gui)
 

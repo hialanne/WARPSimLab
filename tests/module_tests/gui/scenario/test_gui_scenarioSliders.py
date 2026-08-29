@@ -57,7 +57,7 @@ def tk_root():
 @pytest.fixture
 def no_tooltip(monkeypatch):
     """Disable Tooltip side-effects (event binds / timers)."""
-    from src.warpsimlab.gui import gui_scenarioSliders as mod
+    from src.warpsimlab.gui.scenario import gui_scenarioSliders as mod
 
     class DummyTooltip:
         def __init__(self, *args, **kwargs):

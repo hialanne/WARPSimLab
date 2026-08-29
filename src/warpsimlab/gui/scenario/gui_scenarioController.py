@@ -24,8 +24,8 @@ RESULT_SOURCE_SCENARIO = "scenario"
 from src.warpsimlab.plots.plotYearlyIncome import draw_yearly_income
 from src.warpsimlab.plots.plotPortfolioProjection import draw_portfolio_projection
 
-from src.warpsimlab.gui.gui_scenarioSliders import ScenarioSlidersFrame
-from src.warpsimlab.gui.gui_scenarioSnapshots import ScenarioSnapshots
+from src.warpsimlab.gui.scenario.gui_scenarioSliders import ScenarioSlidersFrame
+from src.warpsimlab.gui.scenario.gui_scenarioSnapshots import ScenarioSnapshots
 
 from src.warpsimlab.sim.simulation import run_pipeline
 from src.warpsimlab.gui.gui_utils import set_tk_button_soft_disabled, noop
