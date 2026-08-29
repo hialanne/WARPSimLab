@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.warpsimlab.gui.gui_reportMonteCarloRisk import (
+from src.warpsimlab.gui.reports.gui_reportMonteCarloRisk import (
     MonteCarloRiskReportFrame,
 )
 

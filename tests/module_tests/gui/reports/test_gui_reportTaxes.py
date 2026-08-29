@@ -5,7 +5,7 @@ from tkinter import ttk
 
 import pytest
 
-from src.warpsimlab.gui.gui_reportTaxes import TaxReportFrame
+from src.warpsimlab.gui.reports.gui_reportTaxes import TaxReportFrame
 
 
 class DummyParentGUI:

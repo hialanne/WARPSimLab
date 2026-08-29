@@ -1,14 +1,14 @@
 # gui_reports.py
 
 from src.warpsimlab.gui.gui_utils import noop, set_tk_button_soft_disabled
-from src.warpsimlab.gui.gui_reportExecutiveSummary import ExecutiveSummaryReportFrame
-from src.warpsimlab.gui.gui_reportYearByYearDetails import YearByYearDetailsReportFrame
-from src.warpsimlab.gui.gui_reportHistoricalWindowRisk import HistoricalWindowRiskReportFrame
-from src.warpsimlab.gui.gui_reportMonteCarloRisk import MonteCarloRiskReportFrame
-from src.warpsimlab.gui.gui_reportTaxes import TaxReportFrame
-from src.warpsimlab.gui.gui_reportSpendingComparison import SpendingComparisonReportFrame
-from src.warpsimlab.gui.gui_reportAssetAllocationComparison import AssetAllocationComparisonReportFrame
-from src.warpsimlab.gui.gui_reportRetirementSSComparison import RetirementSSComparisonReportFrame
+from src.warpsimlab.gui.reports.gui_reportExecutiveSummary import ExecutiveSummaryReportFrame
+from src.warpsimlab.gui.reports.gui_reportYearByYearDetails import YearByYearDetailsReportFrame
+from src.warpsimlab.gui.reports.gui_reportHistoricalWindowRisk import HistoricalWindowRiskReportFrame
+from src.warpsimlab.gui.reports.gui_reportMonteCarloRisk import MonteCarloRiskReportFrame
+from src.warpsimlab.gui.reports.gui_reportTaxes import TaxReportFrame
+from src.warpsimlab.gui.reports.gui_reportSpendingComparison import SpendingComparisonReportFrame
+from src.warpsimlab.gui.reports.gui_reportAssetAllocationComparison import AssetAllocationComparisonReportFrame
+from src.warpsimlab.gui.reports.gui_reportRetirementSSComparison import RetirementSSComparisonReportFrame
 
 
 class PortfolioSimulatorGUI_ReportsMixin:

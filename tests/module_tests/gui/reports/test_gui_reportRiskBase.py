@@ -5,7 +5,7 @@ from tkinter import ttk
 
 import pytest
 
-from src.warpsimlab.gui.gui_reportRiskBase import RiskReportBaseFrame
+from src.warpsimlab.gui.reports.gui_reportRiskBase import RiskReportBaseFrame
 
 
 class DummyParentGUI:

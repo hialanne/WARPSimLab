@@ -39,7 +39,7 @@ def parent_gui():
 
 @pytest.fixture
 def mod():
-    from src.warpsimlab.gui import gui_reportExecutiveSummary as mod
+    from src.warpsimlab.gui.reports import gui_reportExecutiveSummary as mod
 
     return mod
 

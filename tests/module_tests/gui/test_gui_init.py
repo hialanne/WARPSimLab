@@ -149,6 +149,8 @@ def gui_init_mod(monkeypatch):
 
 @pytest.fixture
 def patched_soft_disable(gui_init_mod, monkeypatch):
+    from src.warpsimlab.gui import gui_navigation
+
     def fake_set_tk_button_soft_disabled(button, enabled, real_command, noop_command=None):
         button.configure(
             state="normal" if enabled else "disabled",
@@ -158,12 +160,8 @@ def patched_soft_disable(gui_init_mod, monkeypatch):
             relief="raised" if enabled else "flat",
         )
 
-    monkeypatch.setattr(
-        gui_init_mod,
-        "set_tk_button_soft_disabled",
-        fake_set_tk_button_soft_disabled,
-        raising=True,
-    )
+    monkeypatch.setattr(gui_navigation, "set_tk_button_soft_disabled", fake_set_tk_button_soft_disabled)
+
 
 class DummyBtn:
     def __init__(self):

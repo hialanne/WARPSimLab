@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.warpsimlab.gui.gui_reportHistoricalWindowRisk import (
+from src.warpsimlab.gui.reports.gui_reportHistoricalWindowRisk import (
     HistoricalWindowRiskReportFrame,
 )
 

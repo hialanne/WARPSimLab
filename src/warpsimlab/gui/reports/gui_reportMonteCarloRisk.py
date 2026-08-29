@@ -1,19 +1,19 @@
-# gui_reportHistoricalWindowRisk.py
+# gui_reportMonteCarloRisk.py
 
-from src.warpsimlab.gui.gui_reportRiskBase import RiskReportBaseFrame
+from src.warpsimlab.gui.reports.gui_reportRiskBase import RiskReportBaseFrame
 
 
-class HistoricalWindowRiskReportFrame(RiskReportBaseFrame):
-    REPORT_NAME = "Historical Window Risk Report"
-    RUN_SIM_TYPE = "historical_window_risk_report"
+class MonteCarloRiskReportFrame(RiskReportBaseFrame):
+    REPORT_NAME = "Monte Carlo Risk Report"
+    RUN_SIM_TYPE = "monte_carlo_risk_report"
 
     DESCRIPTION = (
-        "Select the Historical Window Risk Report sections and outputs to include. "
+        "Select the Monte Carlo Risk Report sections and outputs to include. "
         "This dialog controls report contents only."
     )
 
     METHOD_NOTE = (
-        "Simulation settings such as historical data files and window mode remain under Simulation. "
+        "Simulation settings such as number of simulations, correlation, and sampling mode remain under Simulation. "
         "This dialog controls report contents only."
     )
 
@@ -25,7 +25,7 @@ class HistoricalWindowRiskReportFrame(RiskReportBaseFrame):
         "analysis": {
             "include_portfolio_projection": True,
             "include_portfolio_sustainability": True,
-            "include_historical_window_insights": True,
+            "include_monte_carlo_insights": True,
             "include_percentile_table": True,
         },
         "output": {
@@ -38,12 +38,12 @@ class HistoricalWindowRiskReportFrame(RiskReportBaseFrame):
     def _build_method_specific_analysis_options(self, parent, row):
         row = self._add_check_path_to_frame(
             parent,
-            "Include Historical Window Insights",
-            ["analysis", "include_historical_window_insights"],
+            "Include Monte Carlo Insights",
+            ["analysis", "include_monte_carlo_insights"],
             row,
             (
-                "Include observations derived from overlapping historical "
-                "market return windows."
+                "Include observations derived from simulated market return "
+                "paths across the Monte Carlo result set."
             )
         )
 

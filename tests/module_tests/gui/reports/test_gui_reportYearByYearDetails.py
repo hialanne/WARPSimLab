@@ -5,7 +5,7 @@ from tkinter import ttk
 
 import pytest
 
-from src.warpsimlab.gui.gui_reportYearByYearDetails import (
+from src.warpsimlab.gui.reports.gui_reportYearByYearDetails import (
     YearByYearDetailsReportFrame,
 )
 

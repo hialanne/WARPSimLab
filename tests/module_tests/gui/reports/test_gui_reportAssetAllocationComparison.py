@@ -68,7 +68,7 @@ def parent_gui():
 
 @pytest.fixture
 def mod():
-    from src.warpsimlab.gui import gui_reportAssetAllocationComparison as mod
+    from src.warpsimlab.gui.reports import gui_reportAssetAllocationComparison as mod
 
     return mod
 

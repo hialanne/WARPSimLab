@@ -28,7 +28,7 @@ from src.warpsimlab.gui.gui_io import PortfolioSimulatorGUI_IOMixin
 from src.warpsimlab.gui.gui_scenarioController import ScenarioController
 from src.warpsimlab.gui.gui_navigation import PortfolioSimulatorGUI_NavigationMixin
 from src.warpsimlab.gui.gui_editors import PortfolioSimulatorGUI_EditorsMixin
-from src.warpsimlab.gui.gui_reports import PortfolioSimulatorGUI_ReportsMixin
+from src.warpsimlab.gui.reports.gui_reports import PortfolioSimulatorGUI_ReportsMixin
 from .gui_notes import NotesFrame
 from src.warpsimlab.gui.gui_expenses import ExpensesEditFrame
 from src.warpsimlab.gui.gui_taxes import TaxesEditFrame
