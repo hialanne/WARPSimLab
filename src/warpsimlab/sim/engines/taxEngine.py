@@ -352,24 +352,28 @@ def calculate_us_federal_qualified_dividend_tax(ordinary_income, qualified_equit
     if qualified_equity_distributions <= 0.0:
         return 0.0
 
-    taxable_ordinary_income = ordinary_income - year_cache["ordinary_standard_deduction"]
-    if taxable_ordinary_income < 0.0:
-        taxable_ordinary_income = 0.0
+    standard_deduction = year_cache["ordinary_standard_deduction"]
+    taxable_ordinary_income = max(0.0, ordinary_income - standard_deduction)
+    unused_standard_deduction = max(0.0, standard_deduction - ordinary_income)
+    taxable_qualified_dividends = max(0.0, qualified_equity_distributions - unused_standard_deduction)
+
+    if taxable_qualified_dividends <= 0.0:
+        return 0.0
 
     qd_brackets = year_cache["qd_brackets"]
     upper_0 = qd_brackets[0][0]
     upper_1 = qd_brackets[1][0]
 
-    # Portion of qualified dividends that fits in the 0% band
+    # Portion of taxable qualified dividends that fits in the 0% band
     zero_band_room = upper_0 - taxable_ordinary_income
     if zero_band_room <= 0.0:
         zero_taxed = 0.0
-    elif qualified_equity_distributions <= zero_band_room:
-        zero_taxed = qualified_equity_distributions
+    elif taxable_qualified_dividends <= zero_band_room:
+        zero_taxed = taxable_qualified_dividends
     else:
         zero_taxed = zero_band_room
 
-    remaining_after_zero = qualified_equity_distributions - zero_taxed
+    remaining_after_zero = taxable_qualified_dividends - zero_taxed
     if remaining_after_zero <= 0.0:
         return 0.0
 

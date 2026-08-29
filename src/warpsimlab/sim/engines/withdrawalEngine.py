@@ -63,6 +63,112 @@ def withdraw_rmds(sim_portfolio, rmd):
     return rmd
 
 
+def _withdraw_cash_by_order(h_port, w_port, amount, sim_config):
+    remaining = max(0.0, float(amount))
+    result = {
+        "total": 0.0, "pre_tax": 0.0, "post_tax": 0.0, "roth": 0.0, "hsa": 0.0,
+        "real_estate": 0.0, "uncovered": 0.0, "by_person": {"husband": 0.0, "wife": 0.0},
+    }
+
+    def owner_name(port):
+        if port is h_port:
+            return "husband"
+        if port is w_port:
+            return "wife"
+        raise RuntimeError("Withdrawal used an unknown portfolio object")
+
+
+    def order_by_bucket(p1, p2, total_attr):
+        return [p1, p2] if getattr(p1, total_attr) >= getattr(p2, total_attr) else [p2, p1]
+
+
+    def withdraw_from_bucket(port, requested, bucket):
+        requested = max(0.0, float(requested))
+        if requested <= 0.0:
+            return 0.0
+
+        if bucket == "post":
+            total, attrs, result_key = port.total_value_post, ("eq_post", "bd_post", "cs_post"), "post_tax"
+        elif bucket == "pre":
+            total, attrs, result_key = port.total_value_pre, ("eq_pre", "bd_pre", "cs_pre"), "pre_tax"
+        elif bucket == "roth":
+            total, attrs, result_key = port.total_value_roth, ("eq_roth", "bd_roth", "cs_roth"), "roth"
+        elif bucket == "hsa":
+            total, attrs, result_key = port.total_value_hsa, ("hsa_eq", "hsa_bd", "hsa_cs"), "hsa"
+        else:
+            raise ValueError(f"Unknown withdrawal bucket: {bucket}")
+
+        total = max(0.0, float(total))
+        if total <= 0.0:
+            return 0.0
+
+        take = min(requested, total)
+        ratio = take / total
+
+        for attr in attrs:
+            current = float(getattr(port, attr))
+            setattr(port, attr, max(0.0, current - current * ratio))
+
+        result[result_key] += take
+        result["by_person"][owner_name(port)] += take
+        result["total"] += take
+        return take
+
+
+    def withdraw_from_real_estate(port, requested):
+        requested = max(0.0, float(requested))
+        if requested <= 0.0:
+            return 0.0
+
+        available = max(0.0, float(port.re_post))
+        if available <= 0.0:
+            return 0.0
+
+        take = min(requested, available)
+        port.re_post = max(0.0, port.re_post - take)
+        result["real_estate"] += take
+        result["by_person"][owner_name(port)] += take
+        result["total"] += take
+        return take
+
+    withdrawal_order = [
+        ("post", "total_value_post"), ("pre", "total_value_pre"),
+        ("roth", "total_value_roth"), ("hsa", "total_value_hsa"),
+    ]
+
+    if sim_config.second_person_enabled:
+        for bucket, total_attr in withdrawal_order:
+            for port in order_by_bucket(h_port, w_port, total_attr):
+                remaining -= withdraw_from_bucket(port, remaining, bucket)
+                if remaining <= 0.0:
+                    return result
+
+        for port in order_by_bucket(h_port, w_port, "re_post"):
+            remaining -= withdraw_from_real_estate(port, remaining)
+            if remaining <= 0.0:
+                return result
+    else:
+        for bucket, total_attr in withdrawal_order:
+            remaining -= withdraw_from_bucket(h_port, remaining, bucket)
+            if remaining <= 0.0:
+                return result
+
+        remaining -= withdraw_from_real_estate(h_port, remaining)
+
+    result["uncovered"] = max(0.0, remaining)
+    return result
+
+
+def fund_tax_cash_shortfall(h_port, w_port, tax_due, cash_available, sim_config):
+    tax_due = max(0.0, float(tax_due))
+    cash_available = max(0.0, float(cash_available))
+    cash_required = max(0.0, tax_due - cash_available)
+
+    result = _withdraw_cash_by_order(h_port, w_port, cash_required, sim_config)
+    result["required"] = cash_required
+    return result
+
+
 def calculate_retirement_withdrawal(
     h_port,
     w_port,
@@ -70,9 +176,11 @@ def calculate_retirement_withdrawal(
     wife,
     year,
     sim_config,
+    *,
+    rmd_h,
+    rmd_w=0.0,
     additional_cash_needed=0.0,
 ):
-
     """
     Retirement withdrawals.
 
@@ -93,16 +201,11 @@ def calculate_retirement_withdrawal(
     """
 
     if not hasattr(sim_config, "_ret_withdraw_base_dollars") or sim_config._ret_withdraw_base_dollars is None:
-        total_portfolio = h_port.total_value + (
-            w_port.total_value if sim_config.second_person_enabled else 0.0
-        )
-
+        total_portfolio = h_port.total_value + (w_port.total_value if sim_config.second_person_enabled else 0.0)
         mode = sim_config.retirement_withdraw_mode
 
         if mode in ["Percentage", "Percentage + Inflation"]:
-            sim_config._ret_withdraw_base_dollars = (
-                total_portfolio * sim_config.retirement_withdraw_pct / 100.0
-            )
+            sim_config._ret_withdraw_base_dollars = total_portfolio * sim_config.retirement_withdraw_pct / 100.0
         elif mode in ["Fixed Dollar Amount", "Fixed Dollar Amount + Inflation"]:
             sim_config._ret_withdraw_base_dollars = sim_config.retirement_withdraw_dollars
         else:
@@ -111,12 +214,22 @@ def calculate_retirement_withdrawal(
     mode = sim_config.retirement_withdraw_mode
     base = sim_config._ret_withdraw_base_dollars
 
-    rmd_h = calculate_rmds(h_port, husband, husband.age + year, sim_config)
+    rmd_h = max(0.0, float(rmd_h))
+
+    if sim_config.second_person_enabled:
+        rmd_w = max(0.0, float(rmd_w))
+    else:
+        rmd_w = 0.0
+
+    if rmd_h > h_port.total_value_pre + 1e-6:
+        raise RuntimeError("Husband RMD exceeds remaining pre-tax assets")
+
+    if sim_config.second_person_enabled and rmd_w > w_port.total_value_pre + 1e-6:
+        raise RuntimeError("Wife RMD exceeds remaining pre-tax assets")
+
     withdraw_rmds(h_port, rmd_h)
 
-    rmd_w = 0.0
     if sim_config.second_person_enabled:
-        rmd_w = calculate_rmds(w_port, wife, wife.age + year, sim_config)
         withdraw_rmds(w_port, rmd_w)
 
     rmd_total = rmd_h + rmd_w
@@ -134,196 +247,28 @@ def calculate_retirement_withdrawal(
     else:
         withdrawal_amount = rmd_total
 
-    withdrawal_amount = max(
-        withdrawal_amount,
-        rmd_total,
-    )
-
-    additional_cash_needed = max(
-        0.0,
-        float(additional_cash_needed),
-    )
-
+    withdrawal_amount = max(withdrawal_amount, rmd_total)
+    additional_cash_needed = max(0.0, float(additional_cash_needed))
     withdrawal_amount += additional_cash_needed
 
-    remaining = withdrawal_amount - rmd_total
+    remaining = max(0.0, withdrawal_amount - rmd_total)
+    withdrawal = _withdraw_cash_by_order(h_port, w_port, remaining, sim_config)
 
-    total_withdrawn = rmd_total
-
-    withdrawn_pre = 0.0
-    withdrawn_post = 0.0
-    withdrawn_roth = 0.0
-    withdrawn_hsa = 0.0
-    withdrawn_real_estate = 0.0
-
-    withdrawn_husband = rmd_h
-    withdrawn_wife = rmd_w
-
-    def result():
-        return {
-            "total": total_withdrawn,
-            "rmd": rmd_total,
-            "pre_tax": withdrawn_pre,
-            "post_tax": withdrawn_post,
-            "roth": withdrawn_roth,
-            "hsa": withdrawn_hsa,
-            "real_estate": withdrawn_real_estate,
-            "uncovered": max(0.0, remaining),
-            "by_person": {
-                "husband": withdrawn_husband,
-                "wife": withdrawn_wife,
-            },
-            "rmd_by_person": {
-                "husband": rmd_h,
-                "wife": rmd_w,
-            },
-        }
-
-
-    if remaining <= 0.0:
-        return result()
-
-
-    def order_by_bucket(p1, p2, total_attr):
-        if getattr(p1, total_attr) >= getattr(p2, total_attr):
-            return [p1, p2]
-        return [p2, p1]
-
-
-    def withdraw_from_bucket(port, amount, bucket):
-        nonlocal withdrawn_pre
-        nonlocal withdrawn_post
-        nonlocal withdrawn_roth
-        nonlocal withdrawn_hsa
-        nonlocal withdrawn_husband
-        nonlocal withdrawn_wife
-
-        amount = max(0.0, float(amount))
-        if amount <= 0.0:
-            return 0.0
-
-        if bucket == "post":
-            total = port.total_value_post
-            attrs = ("eq_post", "bd_post", "cs_post")
-        elif bucket == "pre":
-            total = port.total_value_pre
-            attrs = ("eq_pre", "bd_pre", "cs_pre")
-        elif bucket == "roth":
-            total = port.total_value_roth
-            attrs = ("eq_roth", "bd_roth", "cs_roth")
-        elif bucket == "hsa":
-            total = port.total_value_hsa
-            attrs = ("hsa_eq", "hsa_bd", "hsa_cs")
-        else:
-            raise ValueError(f"Unknown withdrawal bucket: {bucket}")
-
-        total = max(0.0, float(total))
-        if total <= 0.0:
-            return 0.0
-
-        take = min(amount, total)
-        ratio = take / total
-
-        for attr in attrs:
-            current = float(getattr(port, attr))
-            updated = current - current * ratio
-
-            if updated < 0.0 and updated > -1e-9:
-                updated = 0.0
-
-            setattr(port, attr, max(0.0, updated))
-
-        if bucket == "post":
-            withdrawn_post += take
-        elif bucket == "pre":
-            withdrawn_pre += take
-        elif bucket == "roth":
-            withdrawn_roth += take
-        elif bucket == "hsa":
-            withdrawn_hsa += take
-
-        if port is h_port:
-            withdrawn_husband += take
-        elif port is w_port:
-            withdrawn_wife += take
-        else:
-            raise RuntimeError(
-                "Withdrawal used an unknown portfolio object"
-            )
-
-        return take
-
-
-    def withdraw_from_real_estate(port, amount):
-        nonlocal withdrawn_real_estate
-        nonlocal withdrawn_husband
-        nonlocal withdrawn_wife
-
-        if amount <= 0.0:
-            return 0.0
-
-        available = max(0.0, float(port.re_post))
-        if available <= 0.0:
-            return 0.0
-
-        take = min(amount, available)
-        port.re_post -= take
-
-        if port.re_post < 0.0:
-            port.re_post = 0.0
-
-        withdrawn_real_estate += take
-
-        if port is h_port:
-            withdrawn_husband += take
-        elif port is w_port:
-            withdrawn_wife += take
-        else:
-            raise RuntimeError("Real-estate withdrawal used an unknown portfolio object")
-
-        return take
-
-    withdrawal_order = [
-        ("post", "total_value_post"),
-        ("pre", "total_value_pre"),
-        ("roth", "total_value_roth"),
-        ("hsa", "total_value_hsa"),
-    ]
-
-    if sim_config.second_person_enabled:
-        for bucket, total_attr in withdrawal_order:
-            for port in order_by_bucket(h_port, w_port, total_attr):
-                taken = withdraw_from_bucket(port, remaining, bucket)
-                remaining -= taken
-                total_withdrawn += taken
-
-                if remaining <= 0.0:
-                    return result()
-    else:
-        for bucket, total_attr in withdrawal_order:
-            taken = withdraw_from_bucket(h_port, remaining, bucket)
-            remaining -= taken
-            total_withdrawn += taken
-
-            if remaining <= 0.0:
-                return result()
-
-    if remaining > 0.0:
-        if sim_config.second_person_enabled:
-            for port in order_by_bucket(h_port, w_port, "re_post"):
-                taken = withdraw_from_real_estate(port, remaining)
-                remaining -= taken
-                total_withdrawn += taken
-
-                if remaining <= 0.0:
-                    return result()
-        else:
-            taken = withdraw_from_real_estate(h_port, remaining)
-            remaining -= taken
-            total_withdrawn += taken
-
-    return result()
-
+    return {
+        "total": rmd_total + withdrawal["total"],
+        "rmd": rmd_total,
+        "pre_tax": withdrawal["pre_tax"],
+        "post_tax": withdrawal["post_tax"],
+        "roth": withdrawal["roth"],
+        "hsa": withdrawal["hsa"],
+        "real_estate": withdrawal["real_estate"],
+        "uncovered": withdrawal["uncovered"],
+        "by_person": {
+            "husband": rmd_h + withdrawal["by_person"]["husband"],
+            "wife": rmd_w + withdrawal["by_person"]["wife"],
+        },
+        "rmd_by_person": {"husband": rmd_h, "wife": rmd_w},
+    }
 
 def use_expenses_this_year(sim_config, husband, wife, year):
     """

@@ -284,37 +284,18 @@ def test_qualified_dividend_tax_is_calculated_separately(
     )
 
     expected_dividends = 50_000.0
-
-    zero_percent_band = 48_350.0
-    dividends_taxed_at_fifteen = (
-        expected_dividends - zero_percent_band
-    )
-    expected_dividend_tax = (
-        dividends_taxed_at_fifteen * 0.15
-    )
-
-    expected_net_income = (
-        expected_dividends - expected_dividend_tax
-    )
-
-    assert expected_dividend_tax == pytest.approx(247.50)
+    expected_dividend_tax = 0.0
+    expected_net_income = expected_dividends
 
     assert results["qualified_equity_distributions"][0, 1] == pytest.approx(
         expected_dividends
     )
-    assert results["federal_ordinary_tax"][0, 1] == (
-        pytest.approx(0.0)
-    )
-    assert results["federal_qualified_dividend_tax"][0, 1] == (
-        pytest.approx(expected_dividend_tax)
-    )
-    assert results["taxes"][0, 1] == pytest.approx(
+    assert results["federal_ordinary_tax"][0, 1] == pytest.approx(0.0)
+    assert results["federal_qualified_dividend_tax"][0, 1] == pytest.approx(
         expected_dividend_tax
     )
-    assert results["net_income"][0, 1] == pytest.approx(
-        expected_net_income
-    )
-
+    assert results["taxes"][0, 1] == pytest.approx(expected_dividend_tax)
+    assert results["net_income"][0, 1] == pytest.approx(expected_net_income)
     assert results["post_tax_assets"][0, 1] == pytest.approx(
         100_000.0 + expected_net_income
     )

@@ -95,6 +95,22 @@ def simulate_withdrawal_year(
         sim_config=sim_config,
     )
 
+    # Preserve the already-determined RMD in pre-tax assets until it is physically withdrawn.
+    roth_conversion = requested_roth_flows[rothEngine.ROTH_CONVERSION]
+
+    roth_conversion["husband"] = min(
+        roth_conversion["husband"], max(0.0, float(h_port.total_value_pre) - rmd_h)
+    )
+
+    if second_person_enabled:
+        roth_conversion["wife"] = min(
+            roth_conversion["wife"], max(0.0, float(w_port.total_value_pre) - rmd_w)
+        )
+    else:
+        roth_conversion["wife"] = 0.0
+
+    roth_conversion["total"] = roth_conversion["husband"] + roth_conversion["wife"]
+
     applied_roth_conversions = rothEngine.apply_roth_conversions(
         husband_portfolio=h_port,
         wife_portfolio=w_port,
@@ -131,6 +147,8 @@ def simulate_withdrawal_year(
         wife,
         year,
         sim_config,
+        rmd_h=rmd_h,
+        rmd_w=rmd_w,
         additional_cash_needed=requested_roth_contribution_total,
     )
 
@@ -149,6 +167,7 @@ def simulate_withdrawal_year(
     )
 
     funded_roth_contributions = roth_funding_result["funded_contributions"]
+    uncovered_expense = roth_funding_result["remaining_uncovered"]
 
     income["by_class"]["withdrawal"] = wd["total"]
 
@@ -204,8 +223,92 @@ def simulate_withdrawal_year(
     )
 
     total_tax += payroll_tax
+    baseline_total_tax = total_tax
+
+    taxes_enabled = (
+        sim_config.calculate_income_taxes
+        or sim_config.calculate_payroll_taxes
+        or sim_config.calculate_state_taxes
+    )
+
+    initial_tax_cash_shortfall = max(0.0, total_tax - income["total"]) if taxes_enabled else 0.0
+
+    # Taxes take priority over discretionary Roth contributions. Cash already withdrawn for
+    # a contribution can be redirected to taxes before another portfolio withdrawal is made.
+    if initial_tax_cash_shortfall > 0.0 and funded_roth_contributions["total"] > 0.0:
+        revised_roth_funding = rothEngine.resolve_contribution_shortfall(
+            requested_flows=requested_roth_flows,
+            uncovered_amount=withdrawal_uncovered + initial_tax_cash_shortfall,
+        )
+        revised_funded_roth_contributions = revised_roth_funding["funded_contributions"]
+
+        if revised_funded_roth_contributions["total"] < funded_roth_contributions["total"]:
+            revised_retirement_cash = rothEngine.separate_retirement_contribution_funding(
+                withdrawal_result=wd,
+                actual_contribution_total=revised_funded_roth_contributions["total"],
+            )
+
+            released_household_cash = revised_retirement_cash["household"] - additional_withdrawal_cash
+            released_husband_cash = revised_retirement_cash["husband"] - husband_additional_withdrawal
+            released_wife_cash = revised_retirement_cash["wife"] - wife_additional_withdrawal
+
+            income["total"] += released_household_cash
+            income["by_person"]["husband"] += released_husband_cash
+
+            if second_person_enabled:
+                income["by_person"]["wife"] += released_wife_cash
+
+            income["non_taxable_income"] += released_household_cash
+
+            funded_roth_contributions = revised_funded_roth_contributions
+            retirement_cash = revised_retirement_cash
+            additional_withdrawal_cash = retirement_cash["household"]
+            husband_additional_withdrawal = retirement_cash["husband"]
+            wife_additional_withdrawal = retirement_cash["wife"]
+
+    tax_funding = withdrawalEngine.fund_tax_cash_shortfall(
+        h_port, w_port, total_tax, income["total"], sim_config
+    )
+
+    if tax_funding["total"] > 0.0:
+        income["total"] += tax_funding["total"]
+        income["by_person"]["husband"] += tax_funding["by_person"]["husband"]
+
+        if second_person_enabled:
+            income["by_person"]["wife"] += tax_funding["by_person"]["wife"]
+
+        income["non_taxable_income"] += tax_funding["total"]
+        income["by_class"]["withdrawal"] += tax_funding["total"]
+
+        wd_pre_tax += tax_funding["pre_tax"]
+        wd_roth += tax_funding["roth"]
+        wd_hsa += tax_funding["hsa"]
+        taxable_hsa_withdrawal += tax_funding["hsa"]
+
+        if tax_funding["pre_tax"] > 0.0 or tax_funding["hsa"] > 0.0:
+            ordinary_income += tax_funding["pre_tax"] + tax_funding["hsa"]
+
+            (
+                federal_ordinary_tax,
+                federal_qualified_dividend_tax,
+                state_income_tax,
+                total_tax,
+                federal_marginal_rate,
+            ) = taxEngine.calculate_total_income_tax_split(
+                ordinary_income=ordinary_income,
+                qualified_equity_distributions=qualified_equity_distributions,
+                year_cache=year_cache,
+                sim_config=sim_config,
+            )
+
+            total_tax += payroll_tax
+
+    final_tax_delta = max(0.0, total_tax - baseline_total_tax)
+    final_tax_delta_deducted = tax_funding["total"]
+    final_tax_delta_uncovered = max(0.0, total_tax - income["total"])
 
     # Deposit only Roth contributions that were actually funded.
+
     deposited_roth_contributions = rothEngine.deposit_funded_roth_contributions(
         husband_portfolio=h_port,
         wife_portfolio=w_port,
@@ -249,13 +352,11 @@ def simulate_withdrawal_year(
             portfolioEngine.rebalance(w_port, sim_config)
 
     # Reporting values.
-    taxes_enabled = (
-        sim_config.calculate_income_taxes
-        or sim_config.calculate_payroll_taxes
-        or sim_config.calculate_state_taxes
-    )
 
-    net_income = income["total"] - total_tax if taxes_enabled else income["total"]
+    if taxes_enabled:
+        net_income = income["total"] - total_tax
+    else:
+        net_income = income["total"]
 
     if second_person_enabled:
         ira_401k = h_401k_employee + h_401k_employer + w_401k_employee + w_401k_employer

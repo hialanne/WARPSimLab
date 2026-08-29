@@ -57,22 +57,10 @@ def make_config(
     )
 
 
-def calculate_withdrawal(
-    husband_portfolio,
-    wife_portfolio,
-    config,
-    *,
-    year=0,
-    additional_cash_needed=0.0,
-):
+def calculate_withdrawal(husband_portfolio, wife_portfolio, config, *, year=0, additional_cash_needed=0.0):
     return withdrawalEngine.calculate_retirement_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        make_person(),
-        make_person(),
-        year,
-        config,
-        additional_cash_needed=additional_cash_needed,
+        husband_portfolio, wife_portfolio, make_person(), make_person(), year, config,
+        rmd_h=0.0, additional_cash_needed=additional_cash_needed
     )
 
 

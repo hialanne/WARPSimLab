@@ -169,13 +169,36 @@ def test_retirement_withdrawal_off_only_rmds_withdrawn():
 
     cfg = make_config(include_rmd=True, second_person_enabled=False, retirement_withdraw_mode="Off")
 
-    out = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg)
+    rmd_h = we.calculate_rmds(h, husband, age=73, sim_config=cfg)
+    out = we.calculate_retirement_withdrawal(
+        h, w, husband, wife, year=0, sim_config=cfg, rmd_h=rmd_h
+    )
 
     # age=73 => RMD = 100000/25 = 4000 (and it is withdrawn from pre-tax)
     assert out["total"] == pytest.approx(4000.0)
     assert out["pre_tax"] == pytest.approx(0.0)   # per code: only "remaining" withdrawals tracked here
     assert out["post_tax"] == pytest.approx(0.0)
     assert h.total_value_pre == pytest.approx(96000.0)
+
+
+def test_retirement_withdrawal_uses_supplied_rmd_after_pre_tax_balance_changes():
+    h = DummyPortfolioState(eq_pre=96000, bd_pre=0, cs_pre=0, eq_post=0, bd_post=0, cs_post=0)
+    w = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=0, bd_post=0, cs_post=0)
+
+    husband = make_person(age=73)
+    wife = make_person(age=73)
+
+    cfg = make_config(include_rmd=True, second_person_enabled=False, retirement_withdraw_mode="Off")
+
+    # RMD was determined earlier from a $100,000 pre-tax balance: 100000 / 25 = 4000.
+    out = we.calculate_retirement_withdrawal(
+        h, w, husband, wife, year=0, sim_config=cfg, rmd_h=4000.0
+    )
+
+    assert out["rmd"] == pytest.approx(4000.0)
+    assert out["rmd_by_person"]["husband"] == pytest.approx(4000.0)
+    assert out["total"] == pytest.approx(4000.0)
+    assert h.total_value_pre == pytest.approx(92000.0)
 
 
 def test_retirement_withdrawal_percentage_base_is_cached_year0():
@@ -192,12 +215,12 @@ def test_retirement_withdrawal_percentage_base_is_cached_year0():
         retirement_withdraw_pct=4.0,
     )
 
-    out1 = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg)
+    out1 = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg, rmd_h=0.0)
     assert out1["total"] == pytest.approx(4000.0)
 
     # Change portfolio totals; base should remain cached
     h.eq_post = 200000
-    out2 = we.calculate_retirement_withdrawal(h, w, husband, wife, year=1, sim_config=cfg)
+    out2 = we.calculate_retirement_withdrawal(h, w, husband, wife, year=1, sim_config=cfg, rmd_h=0.0)
     assert out2["total"] == pytest.approx(4000.0)
 
 
@@ -216,11 +239,11 @@ def test_retirement_withdrawal_percentage_plus_inflation_scales():
         inflation_rate=0.10,
     )
 
-    out_y0 = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg)
+    out_y0 = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg, rmd_h=0.0)
     assert out_y0["total"] == pytest.approx(4000.0)
 
     # year=2 => base * 1.1^2 = 4000*1.21
-    out_y2 = we.calculate_retirement_withdrawal(h, w, husband, wife, year=2, sim_config=cfg)
+    out_y2 = we.calculate_retirement_withdrawal(h, w, husband, wife, year=2, sim_config=cfg, rmd_h=0.0)
     assert out_y2["total"] == pytest.approx(4000.0 * (1.10 ** 2))
 
 
@@ -239,7 +262,7 @@ def test_retirement_withdrawal_draws_post_tax_first_then_pre_tax():
         retirement_withdraw_dollars=150.0,
     )
 
-    out = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg)
+    out = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg, rmd_h=0.0)
 
     assert out["total"] == pytest.approx(150.0)
     assert out["post_tax"] == pytest.approx(100.0)
@@ -264,7 +287,7 @@ def test_retirement_withdrawal_never_goes_negative_if_insufficient_assets():
         retirement_withdraw_dollars=150.0,
     )
 
-    out = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg)
+    out = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg, rmd_h=0.0)
 
     assert out["total"] == pytest.approx(80.0)
     assert out["post_tax"] == pytest.approx(50.0)
@@ -289,7 +312,7 @@ def test_retirement_withdrawal_couple_orders_by_larger_post_then_larger_pre():
         retirement_withdraw_dollars=150.0,
     )
 
-    out = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg)
+    out = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg, rmd_h=0.0)
 
     assert out["total"] == pytest.approx(150.0)
     assert out["post_tax"] == pytest.approx(100.0)
