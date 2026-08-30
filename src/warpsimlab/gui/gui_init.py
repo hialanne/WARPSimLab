@@ -46,7 +46,7 @@ from src.warpsimlab.gui.gui_settings import load_display_settings, save_display_
 from src.warpsimlab.gui.gui_display import PortfolioSimulatorGUI_DisplayMixin
 
 
-WARPSIMLAB_VERSION = "4.2.2"
+WARPSIMLAB_VERSION = "4.3.0"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 SCREEN_DEBUG = False
@@ -216,7 +216,7 @@ class PortfolioSimulatorGUI(
         default_csv_dir = os.path.join(os.path.expanduser("~"), "Desktop", "WARPSimLab")
 
         self.simulation_controls = {
-            "enable_second_person": bool(DEFAULT_ENABLE_SECOND_PERSON),
+            "second_person_enabled": bool(DEFAULT_ENABLE_SECOND_PERSON),
             "include_realestate": False,
             "plot_mode": "real",
             "subplot_mode": "fill",

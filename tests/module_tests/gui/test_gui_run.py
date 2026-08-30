@@ -25,7 +25,7 @@ def dummy_gui():
     inst.husband_portfolio = object()
     inst.wife_portfolio = object()
     inst.expensesDict = object()
-    inst.simulation_controls = {"enable_second_person": True}
+    inst.simulation_controls = {"second_person_enabled": True}
     inst.mode_var = type("_ModeVar", (), {"get": lambda self: "Advanced"})()
 
     return inst
@@ -86,7 +86,7 @@ def test_run_simulation_from_gui(monkeypatch, dummy_gui, sim_type):
 def test_run_simulation_without_second_person(monkeypatch, dummy_gui):
     from src.warpsimlab.gui import gui_run as mod
 
-    dummy_gui.simulation_controls["enable_second_person"] = False
+    dummy_gui.simulation_controls["second_person_enabled"] = False
 
     called = {}
 

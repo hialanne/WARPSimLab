@@ -847,12 +847,12 @@ class ScenarioController:
 
         # Persons
         self.person_snapshots = {"husband": copy.deepcopy(self.main_gui.husband)}
-        if controls.get("enable_second_person", False):
+        if controls.get("second_person_enabled", False):
             self.person_snapshots["wife"] = copy.deepcopy(self.main_gui.wife)
 
         # Portfolios
         self.portfolio_snapshots = {"husband": copy.deepcopy(self.main_gui.husband_portfolio)}
-        if controls.get("enable_second_person", False):
+        if controls.get("second_person_enabled", False):
             self.portfolio_snapshots["wife"] = copy.deepcopy(self.main_gui.wife_portfolio)
 
         # Scenario assumptions snapshots
@@ -868,7 +868,7 @@ class ScenarioController:
             widget.destroy()
 
         controls = self.main_gui.simulation_controls
-        show_wife = bool(controls.get("enable_second_person", False))
+        show_wife = bool(controls.get("second_person_enabled", False))
 
         # ---- Main 2-column layout ----
         self.window.rowconfigure(0, weight=1)
@@ -1015,7 +1015,7 @@ class ScenarioController:
 
         wife_snapshot = None
         tmp_ret_age_w = None
-        if controls.get("enable_second_person", False):
+        if controls.get("second_person_enabled", False):
             wife_snapshot = self.person_snapshots.get("wife")
             if wife_snapshot is not None and self.sliders_frame.tmp_ret_age_w is not None:
                 tmp_ret_age_w = self.sliders_frame.tmp_ret_age_w.get()

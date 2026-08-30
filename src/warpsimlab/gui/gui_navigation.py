@@ -13,7 +13,7 @@ MODE_DEBUG = False
 
 class PortfolioSimulatorGUI_NavigationMixin:
     def _sync_tax_status_from_second_person(self):
-        if self.simulation_controls["enable_second_person"]:
+        if self.simulation_controls["second_person_enabled"]:
             self.simulation_controls["tax_filing_status"] = "Married filing jointly"
         else:
             self.simulation_controls["tax_filing_status"] = "Single"

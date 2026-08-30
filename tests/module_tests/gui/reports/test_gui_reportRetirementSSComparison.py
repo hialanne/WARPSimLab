@@ -43,7 +43,7 @@ def parent_gui():
             ss_age=65,
         ),
         simulation_controls={
-            "enable_second_person": True,
+            "second_person_enabled": True,
         },
     )
 
@@ -101,7 +101,7 @@ def test_years_until(tk_root, parent_gui, mod):
 
 
 def test_household_retirement_age_single_person(tk_root, parent_gui, mod):
-    parent_gui.simulation_controls["enable_second_person"] = False
+    parent_gui.simulation_controls["second_person_enabled"] = False
 
     frame = mod.RetirementSSComparisonReportFrame(
         tk_root,
@@ -159,7 +159,7 @@ def test_household_retirement_age_tie_uses_larger_age(tk_root, parent_gui, mod):
 
 
 def test_household_ss_age_single_person(tk_root, parent_gui, mod):
-    parent_gui.simulation_controls["enable_second_person"] = False
+    parent_gui.simulation_controls["second_person_enabled"] = False
 
     frame = mod.RetirementSSComparisonReportFrame(
         tk_root,

@@ -61,7 +61,7 @@ def parent_gui():
         ),
         wife_portfolio=make_portfolio(),
         simulation_controls={
-            "enable_second_person": False,
+            "second_person_enabled": False,
         },
     )
 
@@ -153,7 +153,7 @@ def test_compute_current_allocation_single_person(tk_root, parent_gui, mod):
 
 
 def test_compute_current_allocation_combines_couple(tk_root, parent_gui, mod):
-    parent_gui.simulation_controls["enable_second_person"] = True
+    parent_gui.simulation_controls["second_person_enabled"] = True
     parent_gui.wife_portfolio = make_portfolio(
         equity=40.0,
         bonds=30.0,

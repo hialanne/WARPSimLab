@@ -37,7 +37,7 @@ class NormalIncomeEditFrame(ttk.Frame):
         self.mode = mode
 
         self._enable_second_person_var = tk.BooleanVar(
-            value=self.simulation_controls["enable_second_person"]
+            value=self.simulation_controls["second_person_enabled"]
         )
 
         self._enable_second_person_var.trace_add(
@@ -107,7 +107,7 @@ class NormalIncomeEditFrame(ttk.Frame):
 
     def _on_enable_second_person_changed(self, *_):
         new_value = self._enable_second_person_var.get()
-        self.simulation_controls["enable_second_person"] = new_value
+        self.simulation_controls["second_person_enabled"] = new_value
 
         if self.refresh_callback:
             self.refresh_callback()

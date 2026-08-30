@@ -47,14 +47,14 @@ def _make_flow(**overrides):
     return flow
 
 
-def _make_frame(tk_root, patched_module, monkeypatch, flow=None, enable_second_person=True):
+def _make_frame(tk_root, patched_module, monkeypatch, flow=None, second_person_enabled=True):
     mod = patched_module
     flows = [_make_flow() if flow is None else flow]
 
     frame = mod.RothEditFrame(
         tk_root,
         roth_flows=flows,
-        enable_second_person=enable_second_person,
+        second_person_enabled=second_person_enabled,
     )
     frame.pack()
 
@@ -119,7 +119,7 @@ def test_owner_values_respect_second_person_state(tk_root, patched_module):
     frame_single = patched_module.RothEditFrame(
         tk_root,
         roth_flows=[_make_flow()],
-        enable_second_person=False,
+        second_person_enabled=False,
     )
     frame_single.pack()
 
@@ -128,7 +128,7 @@ def test_owner_values_respect_second_person_state(tk_root, patched_module):
     frame_couple = patched_module.RothEditFrame(
         tk_root,
         roth_flows=[_make_flow()],
-        enable_second_person=True,
+        second_person_enabled=True,
     )
     frame_couple.pack()
 

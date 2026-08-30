@@ -386,7 +386,7 @@ class AssetAllocationComparisonReportFrame(ttk.Frame):
         w_cash = 0.0
 
         if self.parent_gui.simulation_controls.get(
-            "enable_second_person",
+            "second_person_enabled",
             False,
         ):
             w_equity, w_bonds, w_cash = (

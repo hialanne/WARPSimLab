@@ -28,14 +28,14 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self,
         parent,
         special_income_streams,
-        enable_second_person=True,
+        second_person_enabled=True,
         title="Special Income",
         **kwargs
     ):
         super().__init__(parent, padding=10, **kwargs)
 
         self.special_income_streams = special_income_streams
-        self.enable_second_person = enable_second_person
+        self.second_person_enabled = second_person_enabled
         self.title = title
 
         style = ttk.Style(self)
@@ -135,7 +135,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
 
 
     def _owner_values(self):
-        if self.enable_second_person:
+        if self.second_person_enabled:
             return ["husband", "wife"]
         return ["husband"]
 

@@ -229,12 +229,12 @@ class PortfolioSimulatorGUI_RunMixin:
             constant_y_plots=controls.get("constant_y_plots", False),
             rebalance_every_year=controls.get("rebalance_every_year", True),
             include_realestate=controls.get("include_realestate", False),
-            second_person_enabled=controls.get("enable_second_person", False),
+            second_person_enabled=controls.get("second_person_enabled", False),
 
             husband_portfolio=self._portfolio_for_sim(self.husband_portfolio),
             wife_portfolio=(
                 self._portfolio_for_sim(self.wife_portfolio)
-                if controls.get("enable_second_person", False)
+                if controls.get("second_person_enabled", False)
                 else None
             ),
 
@@ -433,7 +433,7 @@ class PortfolioSimulatorGUI_RunMixin:
 
         try:
             husband = self._person_for_sim(self.husband)
-            wife = self._person_for_sim(self.wife) if self.simulation_controls.get("enable_second_person") else None
+            wife = self._person_for_sim(self.wife) if self.simulation_controls.get("second_person_enabled") else None
 
             husband_portfolio = self._portfolio_for_sim(self.husband_portfolio)
             wife_portfolio = self._portfolio_for_sim(self.wife_portfolio) if wife else None

@@ -72,7 +72,7 @@ def test_bind_var_updates_person_and_ignores_invalid(monkeypatch, tk_root, mod_n
     husband = DummyPerson(age=40, income=100000.0, retire_age=65)
     persons = {"husband": husband}
 
-    sim_controls = {"enable_second_person": False}
+    sim_controls = {"second_person_enabled": False}
     frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Basic")
     frame.pack()
 
@@ -114,7 +114,7 @@ def test_enable_second_person_checkbox_updates_controls_and_calls_refresh(tk_roo
 
     husband = DummyPerson()
     persons = {"husband": husband}
-    sim_controls = {"enable_second_person": False}
+    sim_controls = {"second_person_enabled": False}
 
     frame = mod.NormalIncomeEditFrame(
         tk_root,
@@ -128,7 +128,7 @@ def test_enable_second_person_checkbox_updates_controls_and_calls_refresh(tk_roo
     # Toggle the BooleanVar; trace_add should call _on_enable_second_person_changed
     frame._enable_second_person_var.set(True)
 
-    assert sim_controls["enable_second_person"] is True
+    assert sim_controls["second_person_enabled"] is True
     assert called["n"] >= 1
 
 
@@ -137,7 +137,7 @@ def test_basic_mode_builds_basic_fields_only_single_person(tk_root, mod_no_toolt
 
     husband = DummyPerson()
     persons = {"husband": husband}
-    sim_controls = {"enable_second_person": False}
+    sim_controls = {"second_person_enabled": False}
 
     frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Basic")
     frame.pack()
@@ -156,7 +156,7 @@ def test_basic_mode_builds_basic_fields_for_two_people(tk_root, mod_no_tooltip):
     husband = DummyPerson()
     wife = DummyPerson()
     persons = {"husband": husband, "wife": wife}
-    sim_controls = {"enable_second_person": True}
+    sim_controls = {"second_person_enabled": True}
 
     frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Basic")
     frame.pack()
@@ -176,7 +176,7 @@ def test_advanced_mode_builds_full_left_and_right_blocks(tk_root, mod_no_tooltip
     husband = DummyPerson()
     wife = DummyPerson()
     persons = {"husband": husband, "wife": wife}
-    sim_controls = {"enable_second_person": True}
+    sim_controls = {"second_person_enabled": True}
 
     frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Advanced")
     frame.pack()

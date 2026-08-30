@@ -68,7 +68,7 @@ def _make_gui(advanced=True, second_person=True):
     gui.husband_portfolio = object()
     gui.wife_portfolio = object()
 
-    gui.simulation_controls = {"enable_second_person": second_person}
+    gui.simulation_controls = {"second_person_enabled": second_person}
     gui.simulation_settings = {"test": True}
     gui.special_income_streams = [{"test": 1}]
     gui.roth_flows = [{"test": 2}]
@@ -205,7 +205,7 @@ def test_edit_special_income(monkeypatch):
 
     frame = factory.instances[0]
     assert frame.kwargs["special_income_streams"] is gui.special_income_streams
-    assert frame.kwargs["enable_second_person"] is True
+    assert frame.kwargs["second_person_enabled"] is True
     assert frame.kwargs["title"] == "Special Income"
 
 
@@ -218,7 +218,7 @@ def test_edit_roth(monkeypatch):
 
     frame = factory.instances[0]
     assert frame.kwargs["roth_flows"] is gui.roth_flows
-    assert frame.kwargs["enable_second_person"] is True
+    assert frame.kwargs["second_person_enabled"] is True
 
 
 def test_edit_expenses(monkeypatch):

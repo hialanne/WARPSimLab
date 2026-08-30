@@ -124,8 +124,8 @@ class PortfolioSimulatorGUI_IOMixin:
             h_port.real_estate = data.get("DEFAULT_REAL_ESTATE_H", h_port.real_estate)
 
             # --- Second person enabled? ---
-            second_person_flag = data.get("DEFAULT_ENABLE_SECOND_PERSON", DEFAULT_ENABLE_SECOND_PERSON)
-            self.simulation_controls["enable_second_person"] = second_person_flag
+            second_person_flag = bool(data.get("DEFAULT_ENABLE_SECOND_PERSON", DEFAULT_ENABLE_SECOND_PERSON))
+            self.simulation_controls["second_person_enabled"] = second_person_flag
             self._sync_tax_status_from_second_person()
 
             if second_person_flag:
@@ -262,9 +262,9 @@ class PortfolioSimulatorGUI_IOMixin:
         }
 
         # Wife data (if enabled)
-        if self.simulation_controls.get("enable_second_person", 0):
+        if self.simulation_controls.get("second_person_enabled", 0):
             updated_values.update({
-                "DEFAULT_ENABLE_SECOND_PERSON": 1,
+                "DEFAULT_ENABLE_SECOND_PERSON": True,
                 "DEFAULT_WIFE_AGE": self.wife.age,
                 "DEFAULT_WIFE_RETIRE": self.wife.retire_age,
                 "DEFAULT_WIFE_INCOME": parse_money_strict(self.wife.income,'wife.income'), 
@@ -306,7 +306,7 @@ class PortfolioSimulatorGUI_IOMixin:
                 "DEFAULT_REAL_ESTATE_W": self.wife_portfolio.real_estate,
             })
         else:
-            updated_values["DEFAULT_ENABLE_SECOND_PERSON"] = 0
+            updated_values["DEFAULT_ENABLE_SECOND_PERSON"] = False
 
         updated_values.update({
             "DEFAULT_YEARS": int(self.simulation_settings.get("years_to_simulate", DEFAULT_YEARS)),
@@ -387,7 +387,7 @@ class PortfolioSimulatorGUI_IOMixin:
         print(f"{'Husband Pension':35} | {h.pension} at age {h.pension_age}")
         print(f"{'Husband Annuity':35} | {h.annuity} at age {h.annuity_age}")
 
-        if self.enable_second_person.get():
+        if self.second_person_enabled.get():
             print('Second person enabled\n')
         else:
             print('Second person disabled\n')
@@ -456,7 +456,7 @@ class PortfolioSimulatorGUI_IOMixin:
         print(f"{'Selected Market Data':35} | {self.historical_market_var.get()}")
 
         # Second person enabled
-        print(f"{'Enable Second Person':35} | {bool_str(self.enable_second_person)}")
+        print(f"{'Enable Second Person':35} | {bool_str(self.second_person_enabled)}")
     
         # Footer
         print("-"*60 + "\n")

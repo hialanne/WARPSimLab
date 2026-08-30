@@ -27,7 +27,7 @@ def dummy_gui():
         portfolio_balance_btn=DummyBtn(),
         summary_btn=DummyBtn(),
         temp_overrides_btn=DummyBtn(),
-        simulation_controls={"enable_second_person": False},
+        simulation_controls={"second_person_enabled": False},
         simulation_settings={"fund_expense": 0.5},
         display_settings={
             "scenario_explorer": {

@@ -29,7 +29,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
         self.husband = persons["husband"]
 
-        # Wife may be omitted when enable_second_person is False
+        # Wife may be omitted when second_person_enabled is False
         self.wife = persons.get("wife") if persons else None
         if not show_wife:
             self.wife = None

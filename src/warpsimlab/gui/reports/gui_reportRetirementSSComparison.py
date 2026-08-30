@@ -51,7 +51,7 @@ class RetirementSSComparisonReportFrame(ttk.Frame):
 
         self.show_wife = bool(
             self.parent_gui.simulation_controls.get(
-                "enable_second_person",
+                "second_person_enabled",
                 False,
             )
         )

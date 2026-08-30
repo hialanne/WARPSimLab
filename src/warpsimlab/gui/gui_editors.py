@@ -108,7 +108,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
 
         persons = {"husband": self.husband}
 
-        if self.simulation_controls["enable_second_person"]:
+        if self.simulation_controls["second_person_enabled"]:
             persons["wife"] = self.wife
 
         person_frame = NormalIncomeEditFrame(
@@ -133,7 +133,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
         special_income_frame = SpecialIncomeEditFrame(
             self.edit_frame_container,
             special_income_streams=self.special_income_streams,
-            enable_second_person=self.simulation_controls.get("enable_second_person", False),
+            second_person_enabled=self.simulation_controls.get("second_person_enabled", False),
             title="Special Income",
         )
 
@@ -150,7 +150,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
         roth_frame = RothEditFrame(
             self.edit_frame_container,
             roth_flows=self.roth_flows,
-            enable_second_person=self.simulation_controls.get("enable_second_person", False),
+            second_person_enabled=self.simulation_controls.get("second_person_enabled", False),
             title="Roth Contributions / Conversions",
         )
 
@@ -181,7 +181,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
             widget.destroy()
 
         husband_portfolio = self.husband_portfolio
-        wife_portfolio = self.wife_portfolio if self.simulation_controls["enable_second_person"] else None
+        wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
 
         portfolio_frame = PortfolioEditFrame(
             self.edit_frame_container,
@@ -201,7 +201,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
             widget.destroy()
 
         husband_portfolio = self.husband_portfolio
-        wife_portfolio = self.wife_portfolio if self.simulation_controls["enable_second_person"] else None
+        wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
 
         real_estate_frame = RealEstateEditFrame(
             self.edit_frame_container,
@@ -222,7 +222,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
             widget.destroy()
 
         husband_portfolio = self.husband_portfolio
-        wife_portfolio = self.wife_portfolio if self.simulation_controls["enable_second_person"] else None
+        wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
 
         derived_statistics_frame = DerivedStatisticsFrame(
             self.edit_frame_container,
@@ -248,11 +248,11 @@ class PortfolioSimulatorGUI_EditorsMixin:
         control_vars = {"_controls_dict": self.simulation_controls}
 
         persons = {"husband": self.husband}
-        if self.simulation_controls["enable_second_person"]:
+        if self.simulation_controls["second_person_enabled"]:
             persons["wife"] = self.wife
 
         portfolio = {"husband": self.husband_portfolio}
-        if self.simulation_controls["enable_second_person"]:
+        if self.simulation_controls["second_person_enabled"]:
             portfolio["wife"] = self.wife_portfolio
 
         self.retirement_editor_frame = RetirementEditFrame(

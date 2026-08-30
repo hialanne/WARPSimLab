@@ -112,12 +112,12 @@ def _make_dummy_gui(tmp_path: Path):
     gui.roth_flows = []
 
     gui.simulation_controls = {
-        "enable_second_person": 0,
+        "second_person_enabled": 0,
         "state_of_residence": "Colorado",
     }
     gui.simulation_settings = {"years_to_simulate": 30, "num_sims": 500, "fund_expense": 0.0}
 
-    gui.enable_second_person = SimpleNamespace(get=lambda: False)
+    gui.second_person_enabled = SimpleNamespace(get=lambda: False)
     gui.root = SimpleNamespace(update_idletasks=lambda: None)
     gui.edit_frame_container = None
 

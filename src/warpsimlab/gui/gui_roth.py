@@ -67,7 +67,7 @@ class RothEditFrame(ttk.Frame):
         self,
         parent,
         roth_flows,
-        enable_second_person=True,
+        second_person_enabled=True,
         title="Roth Contributions / Conversions",
         **kwargs
     ):
@@ -75,7 +75,7 @@ class RothEditFrame(ttk.Frame):
 
         # gui_init.py owns this list. This frame mutates it directly.
         self.roth_flows = roth_flows
-        self.enable_second_person = enable_second_person
+        self.second_person_enabled = second_person_enabled
         self.title = title
 
         style = ttk.Style(self)
@@ -182,7 +182,7 @@ class RothEditFrame(ttk.Frame):
 
 
     def _owner_values(self):
-        if self.enable_second_person:
+        if self.second_person_enabled:
             return ["husband", "wife"]
 
         return ["husband"]

@@ -77,7 +77,7 @@ class DummyScenarioController:
 def _make_gui(mode="Basic"):
     gui = gui_navigation.PortfolioSimulatorGUI_NavigationMixin()
     gui.mode_var = DummyVar(mode)
-    gui.simulation_controls = {"enable_second_person": True}
+    gui.simulation_controls = {"second_person_enabled": True}
     return gui
 
 
@@ -92,11 +92,11 @@ def test_advanced_only():
 def test_sync_tax_status_from_second_person():
     gui = _make_gui()
 
-    gui.simulation_controls["enable_second_person"] = True
+    gui.simulation_controls["second_person_enabled"] = True
     gui._sync_tax_status_from_second_person()
     assert gui.simulation_controls["tax_filing_status"] == "Married filing jointly"
 
-    gui.simulation_controls["enable_second_person"] = False
+    gui.simulation_controls["second_person_enabled"] = False
     gui._sync_tax_status_from_second_person()
     assert gui.simulation_controls["tax_filing_status"] == "Single"
 
