@@ -564,63 +564,17 @@ def test_taxable_positive_bond_return_becomes_income(monkeypatch):
     assert results["qualified_equity_distributions"][0, 1] == pytest.approx(0.0)
 
 
-def test_taxable_positive_bond_return_is_not_applied_to_bond_balance(
-    monkeypatch,
-):
-    husband_portfolio = make_portfolio(
-        bond_post=STARTING_BALANCE,
-    )
+def test_taxable_positive_bond_income_is_deposited_using_existing_post_tax_allocation(monkeypatch):
+    husband_portfolio = make_portfolio(bond_post=STARTING_BALANCE)
 
-    results = run_one_year(
-        monkeypatch,
-        husband_portfolio,
-        bond_return=POSITIVE_BOND_RETURN,
-    )
+    results = run_one_year(monkeypatch, husband_portfolio, bond_return=POSITIVE_BOND_RETURN)
 
-    expected_interest = (
-        STARTING_BALANCE * POSITIVE_BOND_RETURN
-    )
+    expected_interest = STARTING_BALANCE * POSITIVE_BOND_RETURN
 
-    assert results["bonds"][0, 0] == pytest.approx(
-        STARTING_BALANCE
-    )
-    assert results["bonds"][0, 1] == pytest.approx(
-        STARTING_BALANCE
-    )
-
-    assert results["post_tax_assets"][0, 1] == pytest.approx(
-        STARTING_BALANCE + expected_interest
-    )
-    assert results["total_assets"][0, 1] == pytest.approx(
-        STARTING_BALANCE + expected_interest
-    )
-
-
-def test_taxable_positive_bond_income_is_deposited_into_equity(
-    monkeypatch,
-):
-    husband_portfolio = make_portfolio(
-        bond_post=STARTING_BALANCE,
-    )
-
-    results = run_one_year(
-        monkeypatch,
-        husband_portfolio,
-        bond_return=POSITIVE_BOND_RETURN,
-    )
-
-    expected_interest = (
-        STARTING_BALANCE * POSITIVE_BOND_RETURN
-    )
-
-    assert results["bonds"][0, 1] == pytest.approx(
-        STARTING_BALANCE
-    )
-    assert (
-        results["post_tax_assets"][0, 1]
-        - results["bonds"][0, 1]
-        == pytest.approx(expected_interest)
-    )
+    assert results["bonds"][0, 0] == pytest.approx(STARTING_BALANCE)
+    assert results["bonds"][0, 1] == pytest.approx(STARTING_BALANCE + expected_interest)
+    assert results["post_tax_assets"][0, 1] == pytest.approx(STARTING_BALANCE + expected_interest)
+    assert results["total_assets"][0, 1] == pytest.approx(STARTING_BALANCE + expected_interest)
 
 
 def test_taxable_negative_bond_return_reduces_balance(
@@ -785,63 +739,17 @@ def test_taxable_positive_cash_return_becomes_income(monkeypatch):
     assert results["qualified_equity_distributions"][0, 1] == pytest.approx(0.0)
 
 
-def test_taxable_positive_cash_return_is_not_applied_to_cash_balance(
-    monkeypatch,
-):
-    husband_portfolio = make_portfolio(
-        cash_post=STARTING_BALANCE,
-    )
+def test_taxable_positive_cash_income_is_deposited_using_existing_post_tax_allocation(monkeypatch):
+    husband_portfolio = make_portfolio(cash_post=STARTING_BALANCE)
 
-    results = run_one_year(
-        monkeypatch,
-        husband_portfolio,
-        cash_return=POSITIVE_CASH_RETURN,
-    )
+    results = run_one_year(monkeypatch, husband_portfolio, cash_return=POSITIVE_CASH_RETURN)
 
-    expected_interest = (
-        STARTING_BALANCE * POSITIVE_CASH_RETURN
-    )
+    expected_interest = STARTING_BALANCE * POSITIVE_CASH_RETURN
 
-    assert results["cash"][0, 0] == pytest.approx(
-        STARTING_BALANCE
-    )
-    assert results["cash"][0, 1] == pytest.approx(
-        STARTING_BALANCE
-    )
-
-    assert results["post_tax_assets"][0, 1] == pytest.approx(
-        STARTING_BALANCE + expected_interest
-    )
-    assert results["total_assets"][0, 1] == pytest.approx(
-        STARTING_BALANCE + expected_interest
-    )
-
-
-def test_taxable_positive_cash_income_is_deposited_into_equity(
-    monkeypatch,
-):
-    husband_portfolio = make_portfolio(
-        cash_post=STARTING_BALANCE,
-    )
-
-    results = run_one_year(
-        monkeypatch,
-        husband_portfolio,
-        cash_return=POSITIVE_CASH_RETURN,
-    )
-
-    expected_interest = (
-        STARTING_BALANCE * POSITIVE_CASH_RETURN
-    )
-
-    assert results["cash"][0, 1] == pytest.approx(
-        STARTING_BALANCE
-    )
-    assert (
-        results["post_tax_assets"][0, 1]
-        - results["cash"][0, 1]
-        == pytest.approx(expected_interest)
-    )
+    assert results["cash"][0, 0] == pytest.approx(STARTING_BALANCE)
+    assert results["cash"][0, 1] == pytest.approx(STARTING_BALANCE + expected_interest)
+    assert results["post_tax_assets"][0, 1] == pytest.approx(STARTING_BALANCE + expected_interest)
+    assert results["total_assets"][0, 1] == pytest.approx(STARTING_BALANCE + expected_interest)
 
 
 def test_taxable_negative_cash_return_reduces_balance(

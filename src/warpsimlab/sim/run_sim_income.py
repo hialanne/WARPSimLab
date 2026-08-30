@@ -34,6 +34,7 @@ def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, s
     cashflow_extra_keys = [
         "rmd",
         "withdrawal",
+        "tax_funding_withdrawal",
         "bond_interest",
         "cash_interest",
         "qualified_equity_distributions",

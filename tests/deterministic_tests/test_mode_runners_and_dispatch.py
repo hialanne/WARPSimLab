@@ -25,6 +25,7 @@ def _fake_pipeline_output():
             "special_income": np.array([0.0, 0.0, 0.0]),
             "rmd": np.array([0.0, 0.0, 0.0]),
             "withdrawal": np.array([0.0, 0.0, 20.0]),
+            "tax_funding_withdrawal": np.array([0.0, 0.0, 0.0]),
             "bond_interest": np.array([0.0, 0.0, 0.0]),
             "cash_interest": np.array([0.0, 0.0, 0.0]),
             "qualified_equity_distributions": np.array([0.0, 0.0, 0.0]),

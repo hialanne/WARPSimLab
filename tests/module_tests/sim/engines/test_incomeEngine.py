@@ -355,6 +355,7 @@ def test_income_breakdown_sums_by_class_and_tracks_by_person():
         "ss",
         "rmd",
         "withdrawal",
+        "tax_funding_withdrawal",
         "bond_interest",
         "cash_interest",
         "qualified_equity_distributions",

@@ -151,6 +151,7 @@ def simulate_yearly_portfolios(
         "net_profit": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "taxes": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "tax_bracket": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "pre_tax_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_qualified_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_taxable_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -181,6 +182,7 @@ def simulate_yearly_portfolios(
                 "ss",
                 "rmd",
                 "withdrawal",
+                "tax_funding_withdrawal",
                 "bond_interest",
                 "cash_interest",
                 "qualified_equity_distributions",
@@ -430,6 +432,7 @@ def simulate_yearly_portfolios(
             rmd_h = model_result["rmd_h"]
             rmd_w = model_result["rmd_w"]
 
+            pre_tax_withdrawal = model_result["pre_tax_withdrawal"]
             wd_roth = model_result["wd_roth"]
             wd_hsa = model_result["wd_hsa"]
             qualified_hsa_withdrawal = model_result["qualified_hsa_withdrawal"]
@@ -585,6 +588,7 @@ def simulate_yearly_portfolios(
             results["additional_medicare_tax"][s,year] = additional_medicare_tax
             results["state_income_tax"][s,year] = state_income_tax
             results["emergency_pre_tax_used"][s,year] = emergency_pre_tax_used
+            results["pre_tax_withdrawals"][s, year] = pre_tax_withdrawal
             results["roth_withdrawals"][s, year] = wd_roth
             results["hsa_withdrawals"][s, year] = wd_hsa
             results["hsa_qualified_withdrawals"][s, year] = qualified_hsa_withdrawal
@@ -689,6 +693,7 @@ def simulate_yearly_portfolios(
         results["medicare_tax"] = results["medicare_tax"] / discount_factors
         results["additional_medicare_tax"] = results["additional_medicare_tax"] / discount_factors
         results["emergency_pre_tax_used"] = results["emergency_pre_tax_used"] / discount_factors
+        results["pre_tax_withdrawals"] = results["pre_tax_withdrawals"] / discount_factors
         results["cash_flow_shortfall"] = (results["cash_flow_shortfall"] / discount_factors)
         results["roth_withdrawals"] = (results["roth_withdrawals"] / discount_factors)
         results["hsa_withdrawals"] = (results["hsa_withdrawals"] / discount_factors)
@@ -707,8 +712,10 @@ def simulate_yearly_portfolios(
         results["breakdown_by_class"]["special_income"] = results["breakdown_by_class"]["special_income"] / discount_factors
         results["breakdown_by_class"]["bond_interest"] = (results["breakdown_by_class"]["bond_interest"] / discount_factors)
         results["breakdown_by_class"]["cash_interest"] = (results["breakdown_by_class"]["cash_interest"] / discount_factors)
-        results["breakdown_by_class"]["qualified_equity_distributions"] = (results["breakdown_by_class"]["qualified_equity_distributions"] / discount_factors)
-
+        results["breakdown_by_class"]["qualified_equity_distributions"] = \
+                (results["breakdown_by_class"]["qualified_equity_distributions"] / discount_factors)
+        results["breakdown_by_class"]["roth_conversion"] /= discount_factors
+        results["breakdown_by_class"]["tax_funding_withdrawal"] /= discount_factors
     return results
 
 

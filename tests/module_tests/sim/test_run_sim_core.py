@@ -163,6 +163,7 @@ def _income(*, total=100.0, husband=60.0, wife=40.0):
             "ss": 20.0,
             "rmd": 10.0,
             "withdrawal": 0.0,
+            "tax_funding_withdrawal": 0.0,
             "bond_interest": 0.0,
             "cash_interest": 0.0,
             "qualified_equity_distributions": 0.0,
@@ -608,13 +609,43 @@ def test_allocates_couple_net_income_after_tax(mod, monkeypatch):
 def test_real_mode_deflates_selected_series(mod, monkeypatch):
     sim_config = DummySimConfig(plot_mode="real", inflation_rate=0.10)
     _patch_baseline(monkeypatch, mod, sim_config)
+
     monkeypatch.setattr(
         mod.expenseEngine,
         "calculate_expense_breakdown",
         lambda *a, **k: {"total": 10.0, "hsa_eligible": 0.0, "non_hsa": 10.0},
     )
-    monkeypatch.setattr(mod.taxEngine, "calculate_total_income_tax_split", lambda *a, **k: _tax_split(total_tax=5.0, federal_marginal_rate=0.10))
-    monkeypatch.setattr(mod.taxEngine, "allocate_tax_proportionally_couple", lambda total_tax, h_inc, w_inc: (3.0, 2.0))
+    monkeypatch.setattr(mod.taxEngine, "calculate_total_income_tax_split",
+                        lambda *a, **k: _tax_split(total_tax=5.0, federal_marginal_rate=0.10))
+    monkeypatch.setattr(mod.taxEngine, "allocate_tax_proportionally_couple",
+                        lambda total_tax, h_inc, w_inc: (3.0, 2.0))
+
+    monkeypatch.setattr(mod.withdrawalEngine, "use_expenses_this_year", lambda *a, **k: False)
+
+    monkeypatch.setattr(
+        mod.withdrawalEngine,
+        "calculate_retirement_withdrawal",
+        lambda *a, **k: {
+            "pre_tax": 20.0,
+            "post_tax": 10.0,
+            "roth": 0.0,
+            "hsa": 0.0,
+            "rmd": 0.0,
+            "total": 30.0,
+            "uncovered": 0.0,
+            "by_person": {"husband": 18.0, "wife": 12.0},
+            "rmd_by_person": {"husband": 0.0, "wife": 0.0},
+        },
+    )
+
+    requested = _requested_roth_flows(conversion_husband=10.0)
+
+    monkeypatch.setattr(mod.rothEngine, "prepare_requested_roth_flows", lambda **kwargs: requested)
+    monkeypatch.setattr(
+        mod.rothEngine,
+        "apply_roth_conversions",
+        lambda **kwargs: {"husband": 10.0, "wife": 0.0, "total": 10.0},
+    )
 
     results = mod.simulate_yearly_portfolios(
         DummyPortfolio(),
@@ -626,9 +657,11 @@ def test_real_mode_deflates_selected_series(mod, monkeypatch):
         num_sims=1,
     )
 
-    assert results["net_income"][0, 1] == pytest.approx(95.0 / 1.10)
+    assert results["net_income"][0, 1] == pytest.approx(125.0 / 1.10)
     assert results["taxes"][0, 1] == pytest.approx(5.0 / 1.10)
-    assert results["expense_amt"][0, 1] == pytest.approx(10.0 / 1.10)
+    assert results["pre_tax_withdrawals"][0, 1] == pytest.approx(20.0 / 1.10)
+    assert results["roth_conversions"][0, 1] == pytest.approx(10.0 / 1.10)
+    assert results["breakdown_by_class"]["roth_conversion"][0, 1] == pytest.approx(10.0 / 1.10)
 
 
 def _requested_roth_flows(

@@ -132,7 +132,7 @@ def test_rmd_only_scenario_nominal():
     expected_rmd = 270_000.0 / 26.5
 
     assert row_class(results, "rmd") == pytest.approx([0.0, expected_rmd])
-    assert row_class(results, "withdrawal") == pytest.approx([0.0, expected_rmd])
+    assert row_class(results, "withdrawal") == pytest.approx([0.0, 0.0])
     assert row(results, "gross_income") == pytest.approx([0.0, expected_rmd])
     assert row(results, "pre_tax_assets") == pytest.approx([270_000.0, 270_000.0 - expected_rmd])
 

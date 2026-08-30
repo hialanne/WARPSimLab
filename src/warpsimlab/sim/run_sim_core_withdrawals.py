@@ -8,6 +8,31 @@ from .engines import (
     rothEngine,
 )
 
+# -----------------------------------------------------------------------------
+# Withdrawal-mode yearly simulation
+# -----------------------------------------------------------------------------
+#
+# This file implements the yearly core logic for the income/withdrawal
+# simulation path.
+#
+# In this mode, the simulator models household income together with a selected
+# retirement withdrawal strategy. Instead of using projected household expenses
+# to determine portfolio funding needs, the configured withdrawal strategy
+# determines how much is withdrawn from the portfolio.
+#
+# This path is intended to evaluate the consequences of withdrawal strategies,
+# such as percentage-based withdrawals, inflation-adjusted withdrawals, and
+# fixed-dollar withdrawals. It shows how those strategies interact with income,
+# taxes, RMDs, Roth flows, investment returns, fund expenses, and the remaining
+# portfolio over time.
+#
+# Withdrawal mode is intentionally separate from expense mode. The two yearly
+# paths contain substantial similar logic, but keeping each path complete and
+# explicit makes the financial sequence easier to read, audit, test, and reason
+# about. Readability of the simulation model is preferred over minimizing
+# duplicated code.
+# -----------------------------------------------------------------------------
+
 
 def simulate_withdrawal_year(
     h_port,
@@ -22,6 +47,62 @@ def simulate_withdrawal_year(
     year_returns,
     second_person_enabled,
 ):
+
+    # -------------------------------------------------------------------------
+    # Withdrawal-mode yearly flow
+    # -------------------------------------------------------------------------
+    #
+    # The yearly calculation proceeds roughly in this order:
+    #
+    #   1. Calculate required minimum distributions (RMDs). In withdrawal mode,
+    #      the actual RMD withdrawals are applied later as part of the retirement
+    #      withdrawal calculation.
+    #
+    #   2. Build household income from wages, Social Security, pensions,
+    #      annuities, RMDs, special income, and taxable investment income.
+    #
+    #   3. Prepare scheduled Roth flows. Traditional 401(k) and HSA
+    #      contributions are not currently made in withdrawal mode.
+    #
+    #   4. Limit Roth conversions so they do not consume pre-tax assets already
+    #      needed to satisfy the year's RMDs, then apply the conversions.
+    #
+    #   5. Calculate payroll taxes.
+    #
+    #   6. Calculate the retirement withdrawal required by the selected
+    #      withdrawal strategy. The withdrawal also includes any additional cash
+    #      requested for Roth contributions.
+    #
+    #   7. Reduce discretionary Roth contributions if the portfolio cannot fund
+    #      the full requested withdrawal.
+    #
+    #   8. Separate retirement-withdrawal cash used for Roth contributions from
+    #      withdrawal cash available to the household.
+    #
+    #   9. Calculate income taxes using the taxable portions of RMDs, pre-tax
+    #      withdrawals, taxable HSA withdrawals, Roth conversions, and other
+    #      taxable income.
+    #
+    #  10. If available household cash is insufficient to pay the tax bill,
+    #      withdraw additional portfolio assets to fund the tax shortfall and
+    #      recalculate taxes when those withdrawals create additional taxable
+    #      income.
+    #
+    #  11. Deposit the Roth contributions that were actually funded.
+    #
+    #  12. Apply market returns and fund expenses to the remaining portfolio.
+    #
+    #  13. Rebalance the portfolio if requested.
+    #
+    #  14. Build the reporting values returned to run_sim_core.py.
+    #
+    # The ordering is significant. In particular, RMDs, Roth conversions,
+    # retirement withdrawals, Roth contribution funding, and tax-funding
+    # withdrawals can all change the assets and taxable income available to
+    # later steps.
+    # -------------------------------------------------------------------------
+
+
     # RMD amounts are needed for income reporting. Actual RMD withdrawal
     # occurs inside calculate_retirement_withdrawal() in Withdrawal mode.
     rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
@@ -169,8 +250,6 @@ def simulate_withdrawal_year(
     funded_roth_contributions = roth_funding_result["funded_contributions"]
     uncovered_expense = roth_funding_result["remaining_uncovered"]
 
-    income["by_class"]["withdrawal"] = wd["total"]
-
     # Separate withdrawal cash used for Roth contributions from household spending.
     retirement_cash = rothEngine.separate_retirement_contribution_funding(
         withdrawal_result=wd,
@@ -266,9 +345,8 @@ def simulate_withdrawal_year(
             husband_additional_withdrawal = retirement_cash["husband"]
             wife_additional_withdrawal = retirement_cash["wife"]
 
-    tax_funding = withdrawalEngine.fund_tax_cash_shortfall(
-        h_port, w_port, total_tax, income["total"], sim_config
-    )
+    income["by_class"]["withdrawal"] = additional_withdrawal_cash
+    tax_funding = withdrawalEngine.fund_tax_cash_shortfall(h_port, w_port, total_tax, income["total"], sim_config)
 
     if tax_funding["total"] > 0.0:
         income["total"] += tax_funding["total"]
@@ -278,7 +356,7 @@ def simulate_withdrawal_year(
             income["by_person"]["wife"] += tax_funding["by_person"]["wife"]
 
         income["non_taxable_income"] += tax_funding["total"]
-        income["by_class"]["withdrawal"] += tax_funding["total"]
+        income["by_class"]["tax_funding_withdrawal"] = tax_funding["total"]
 
         wd_pre_tax += tax_funding["pre_tax"]
         wd_roth += tax_funding["roth"]
@@ -304,8 +382,8 @@ def simulate_withdrawal_year(
             total_tax += payroll_tax
 
     final_tax_delta = max(0.0, total_tax - baseline_total_tax)
-    final_tax_delta_deducted = tax_funding["total"]
-    final_tax_delta_uncovered = max(0.0, total_tax - income["total"])
+    final_tax_delta_deducted = 0.0
+    final_tax_delta_uncovered = final_tax_delta
 
     # Deposit only Roth contributions that were actually funded.
 
@@ -419,6 +497,7 @@ def simulate_withdrawal_year(
         "rmd_w": rmd_w,
         "wd_roth": wd_roth,
         "wd_hsa": wd_hsa,
+        "pre_tax_withdrawal": wd_pre_tax,
         "qualified_hsa_withdrawal": qualified_hsa_withdrawal,
         "taxable_hsa_withdrawal": taxable_hsa_withdrawal,
         "emergency_pre_tax_used": emergency_pre_tax_used,

@@ -226,7 +226,7 @@ def test_rmd_only_withdraws_from_pre_tax_assets(monkeypatch):
     )
     assert (
         results["breakdown_by_class"]["withdrawal"][0, 1]
-        == pytest.approx(expected_rmd)
+        == pytest.approx(0.0)
     )
 
     assert results["pre_tax_assets"][0, 0] == pytest.approx(
@@ -256,11 +256,7 @@ def test_rmd_only_is_not_double_counted_in_gross_income(
         results["breakdown_by_class"]["rmd"][0, 1]
         == pytest.approx(expected_rmd)
     )
-    assert (
-        results["breakdown_by_class"]["withdrawal"][0, 1]
-        == pytest.approx(expected_rmd)
-    )
-
+    assert results["gross_income"][0, 1] == pytest.approx(expected_rmd)
     assert results["gross_income"][0, 1] == pytest.approx(
         expected_rmd
     )
@@ -329,10 +325,7 @@ def test_no_rmd_before_start_age(monkeypatch):
         results["breakdown_by_class"]["rmd"][0, 1]
         == pytest.approx(0.0)
     )
-    assert (
-        results["breakdown_by_class"]["withdrawal"][0, 1]
-        == pytest.approx(0.0)
-    )
+    assert (results["breakdown_by_class"]["withdrawal"][0, 1] == pytest.approx(0.0))
 
     assert results["gross_income"][0, 1] == pytest.approx(0.0)
     assert results["pre_tax_assets"][0, 1] == pytest.approx(
@@ -387,10 +380,7 @@ def test_fixed_withdrawal_larger_than_rmd_uses_rmd_as_part_of_target(
         results["breakdown_by_class"]["rmd"][0, 1]
         == pytest.approx(expected_rmd)
     )
-    assert (
-        results["breakdown_by_class"]["withdrawal"][0, 1]
-        == pytest.approx(expected_total_withdrawal)
-    )
+    assert results["breakdown_by_class"]["withdrawal"][0, 1] == pytest.approx(expected_additional_withdrawal)
 
     assert results["pre_tax_assets"][0, 1] == pytest.approx(
         96_000.0
@@ -427,10 +417,7 @@ def test_rmd_larger_than_fixed_target_becomes_total_withdrawal(
         results["breakdown_by_class"]["rmd"][0, 1]
         == pytest.approx(expected_rmd)
     )
-    assert (
-        results["breakdown_by_class"]["withdrawal"][0, 1]
-        == pytest.approx(expected_rmd)
-    )
+    assert results["breakdown_by_class"]["withdrawal"][0, 1] == pytest.approx(0.0)
 
     assert results["pre_tax_assets"][0, 1] == pytest.approx(
         96_000.0
@@ -478,10 +465,7 @@ def test_couple_rmds_are_combined_without_double_counting(
         results["breakdown_by_class"]["rmd"][0, 1]
         == pytest.approx(total_rmd)
     )
-    assert (
-        results["breakdown_by_class"]["withdrawal"][0, 1]
-        == pytest.approx(total_rmd)
-    )
+    assert results["breakdown_by_class"]["withdrawal"][0, 1] == pytest.approx(0.0)
 
     assert results["pre_tax_assets"][0, 0] == pytest.approx(
         150_000.0

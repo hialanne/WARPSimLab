@@ -135,7 +135,7 @@ def test_rmd_plus_withdrawal_scenario_nominal():
     assert expected_extra_post_tax_withdrawal > 0.0
 
     assert row_class(results, "rmd") == pytest.approx([0.0, expected_rmd])
-    assert row_class(results, "withdrawal") == pytest.approx([0.0, 15_000.0])
+    assert row_class(results, "withdrawal") == pytest.approx([0.0, expected_extra_post_tax_withdrawal])
 
     # Gross/net income report total cash available to the household.
     # The RMD is taxable income; the extra post-tax withdrawal is non-taxable cash flow.

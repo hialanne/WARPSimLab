@@ -138,10 +138,22 @@ def _withdraw_cash_by_order(h_port, w_port, amount, sim_config):
 
     if sim_config.second_person_enabled:
         for bucket, total_attr in withdrawal_order:
-            for port in order_by_bucket(h_port, w_port, total_attr):
-                remaining -= withdraw_from_bucket(port, remaining, bucket)
-                if remaining <= 0.0:
-                    return result
+            if remaining <= 0.0:
+                return result
+
+            h_total = max(0.0, float(getattr(h_port, total_attr)))
+            w_total = max(0.0, float(getattr(w_port, total_attr)))
+            household_total = h_total + w_total
+
+            if household_total <= 0.0:
+                continue
+
+            use_amount = min(remaining, household_total)
+            h_use = use_amount * h_total / household_total
+            w_use = use_amount - h_use
+
+            remaining -= withdraw_from_bucket(h_port, h_use, bucket)
+            remaining -= withdraw_from_bucket(w_port, w_use, bucket)
 
         for port in order_by_bucket(h_port, w_port, "re_post"):
             remaining -= withdraw_from_real_estate(port, remaining)

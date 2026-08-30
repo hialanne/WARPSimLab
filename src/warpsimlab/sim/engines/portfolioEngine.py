@@ -994,6 +994,7 @@ def convert_pre_tax_to_roth(sim_portfolio, amount):
     return converted_amount
 
 
+
 # NOTE ON PRE-TAX WITHDRAWALS
 # ---------------------------
 # These net-income functions move assets only.
@@ -1022,8 +1023,23 @@ def apply_net_income_couple(h_port, w_port, net_cash):
 
     if net_cash >= 0:
         half = net_cash / 2
-        h_port.eq_post += half
-        w_port.eq_post += half
+
+        h_total_post = float(h_port.total_value_post)
+        if h_total_post > 0.0:
+            h_port.eq_post += half * h_port.eq_post / h_total_post
+            h_port.bd_post += half * h_port.bd_post / h_total_post
+            h_port.cs_post += half * h_port.cs_post / h_total_post
+        else:
+            h_port.cs_post += half
+
+        w_total_post = float(w_port.total_value_post)
+        if w_total_post > 0.0:
+            w_port.eq_post += half * w_port.eq_post / w_total_post
+            w_port.bd_post += half * w_port.bd_post / w_total_post
+            w_port.cs_post += half * w_port.cs_post / w_total_post
+        else:
+            w_port.cs_post += half
+
         return result
 
     deficit = -net_cash
@@ -1112,7 +1128,13 @@ def apply_net_income_single(port, net_cash):
     }
 
     if net_cash >= 0:
-        port.eq_post += net_cash
+        total_post = float(port.total_value_post)
+        if total_post > 0.0:
+            port.eq_post += net_cash * port.eq_post / total_post
+            port.bd_post += net_cash * port.bd_post / total_post
+            port.cs_post += net_cash * port.cs_post / total_post
+        else:
+            port.cs_post += net_cash
         return result
 
     deficit = -net_cash

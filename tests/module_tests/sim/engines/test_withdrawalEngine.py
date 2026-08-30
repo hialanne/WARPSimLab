@@ -296,11 +296,11 @@ def test_retirement_withdrawal_never_goes_negative_if_insufficient_assets():
     assert h.total_value_pre == pytest.approx(0.0)
 
 
-def test_retirement_withdrawal_couple_orders_by_larger_post_then_larger_pre():
-    # Couple: H has more post-tax, W has more pre-tax.
-    # Request 150: should take post from H first (100), then pre from W (50).
-    h = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=100, bd_post=0, cs_post=0)
-    w = DummyPortfolioState(eq_pre=100, bd_pre=0, cs_pre=0, eq_post=0, bd_post=0, cs_post=0)
+def test_retirement_withdrawal_couple_withdraws_proportionally_between_spouses():
+    # Household post-tax assets are 80% husband / 20% wife.
+    # A $50 withdrawal should therefore take $40 from husband and $10 from wife.
+    h = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=80, bd_post=0, cs_post=0)
+    w = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=20, bd_post=0, cs_post=0)
 
     husband = make_person(age=60)
     wife = make_person(age=60)
@@ -309,18 +309,20 @@ def test_retirement_withdrawal_couple_orders_by_larger_post_then_larger_pre():
         include_rmd=False,
         second_person_enabled=True,
         retirement_withdraw_mode="Fixed Dollar Amount",
-        retirement_withdraw_dollars=150.0,
+        retirement_withdraw_dollars=50.0,
     )
 
     out = we.calculate_retirement_withdrawal(h, w, husband, wife, year=0, sim_config=cfg, rmd_h=0.0)
 
-    assert out["total"] == pytest.approx(150.0)
-    assert out["post_tax"] == pytest.approx(100.0)
-    assert out["pre_tax"] == pytest.approx(50.0)
+    assert out["total"] == pytest.approx(50.0)
+    assert out["post_tax"] == pytest.approx(50.0)
+    assert out["pre_tax"] == pytest.approx(0.0)
 
-    assert h.total_value_post == pytest.approx(0.0)
-    assert w.total_value_pre == pytest.approx(50.0)
+    assert out["by_person"]["husband"] == pytest.approx(40.0)
+    assert out["by_person"]["wife"] == pytest.approx(10.0)
 
+    assert h.total_value_post == pytest.approx(40.0)
+    assert w.total_value_post == pytest.approx(10.0)
 
 # -------------------------
 # use_manual_expenses_this_year

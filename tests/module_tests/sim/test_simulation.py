@@ -114,7 +114,7 @@ def _core_for_extracts() -> dict:
         "state_income_tax": np.array([[1.0, 1.0, 1.2, 1.2]]),
 
         "emergency_pre_tax_used": np.array([[0.0, 0.0, 0.0, 0.0]]),
-
+        "pre_tax_withdrawals": np.array([[0.0, 1.0, 2.0, 3.0]]),
         "final_tax_delta": np.array([[0.0, 0.0, 0.0, 0.0]]),
         "final_tax_delta_deducted": np.array([[0.0, 0.0, 0.0, 0.0]]),
         "final_tax_delta_uncovered": np.array([[0.0, 0.0, 0.0, 0.0]]),

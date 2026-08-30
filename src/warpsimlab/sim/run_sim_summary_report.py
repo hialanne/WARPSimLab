@@ -810,8 +810,9 @@ def _save_income_plot_with_temporary_modes(
         cashflow_extra_keys = [
             "rmd",
             "withdrawal",
-            "cash_interest",
+            "tax_funding_withdrawal",
             "bond_interest",
+            "cash_interest",
             "qualified_equity_distributions",
         ]
 

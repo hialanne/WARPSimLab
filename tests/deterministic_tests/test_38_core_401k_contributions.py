@@ -483,23 +483,10 @@ def test_contribution_preserves_existing_pre_tax_allocation(
     expected_cash = 10_000.0 + 15_000.0 * 0.10
     expected_equity = 60_000.0 + 15_000.0 * 0.60
 
-    assert results["pre_tax_assets"][0, 1] == pytest.approx(
-        expected_total_pre_tax
-    )
-    assert results["bonds"][0, 1] == pytest.approx(
-        expected_bonds
-    )
-    assert results["cash"][0, 1] == pytest.approx(
-        expected_cash
-    )
-
-    actual_equity = (
-        results["pre_tax_assets"][0, 1]
-        - results["bonds"][0, 1]
-        - results["cash"][0, 1]
-    )
-
-    assert actual_equity == pytest.approx(expected_equity)
+    assert results["pre_tax_assets"][0, 1] == pytest.approx(expected_total_pre_tax)
+    assert results["pre_tax_equity"][0, 1] == pytest.approx(expected_equity)
+    assert results["pre_tax_bonds"][0, 1] == pytest.approx(expected_bonds)
+    assert results["pre_tax_cash"][0, 1] == pytest.approx(expected_cash)
 
 
 def test_couple_contributions_and_income_reconcile(

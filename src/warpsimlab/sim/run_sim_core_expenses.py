@@ -10,6 +10,35 @@ from .engines import (
     hsaEngine,
 )
 
+# -----------------------------------------------------------------------------
+# Expense-mode yearly simulation
+# -----------------------------------------------------------------------------
+#
+# This file implements the yearly core logic for the income/expense simulation
+# path.
+#
+# In this mode, the simulator models the household's projected income and
+# explicit household expenses year by year. Income, taxes, contributions,
+# expenses, and any resulting cash-flow deficit or surplus determine how the
+# portfolio changes.
+#
+# This path answers questions such as:
+#   - What are the long-term consequences of the household's projected income
+#     and spending?
+#   - When does income stop covering expenses?
+#   - How much portfolio funding is needed to cover cash-flow shortfalls?
+#   - How do taxes, Roth flows, HSA flows, investment returns, and fund expenses
+#     affect the resulting portfolio?
+#
+# Expense mode is intentionally separate from withdrawal mode. The two yearly
+# paths contain substantial similar logic, but keeping each path complete and
+# explicit makes the financial sequence easier to read, audit, test, and reason
+# about. Readability of the simulation model is preferred over minimizing
+# duplicated code.
+# -----------------------------------------------------------------------------
+
+
+
 
 def simulate_expense_year(
     h_port,
@@ -25,6 +54,55 @@ def simulate_expense_year(
     year_returns,
     second_person_enabled,
 ):
+
+    # -------------------------------------------------------------------------
+    # Expense-mode yearly flow
+    # -------------------------------------------------------------------------
+    #
+    # The yearly calculation proceeds roughly in this order:
+    #
+    #   1. Calculate and withdraw required minimum distributions (RMDs).
+    #
+    #   2. Build household income from wages, Social Security, pensions,
+    #      annuities, RMDs, special income, and taxable investment income.
+    #
+    #   3. Calculate and apply traditional 401(k) contributions and employer
+    #      contributions.
+    #
+    #   4. Calculate and apply HSA employee and employer contributions.
+    #
+    #   5. Prepare and apply scheduled Roth conversions and determine requested
+    #      Roth contributions.
+    #
+    #   6. Calculate payroll taxes.
+    #
+    #   7. Calculate the household's modeled expenses and use HSA assets for
+    #      qualified HSA expenses where applicable.
+    #
+    #   8. Calculate baseline income taxes and household net cash flow.
+    #
+    #   9. Apply the resulting cash surplus or deficit to the portfolio. A
+    #      deficit may require withdrawals from post-tax, pre-tax, Roth, HSA,
+    #      or real-estate assets.
+    #
+    #  10. Reduce discretionary Roth contributions if available cash is
+    #      insufficient to fund them.
+    #
+    #  11. Recalculate income taxes when taxable emergency withdrawals changed
+    #      taxable income, and fund any resulting additional tax.
+    #
+    #  12. Deposit the Roth contributions that were actually funded.
+    #
+    #  13. Apply market returns and fund expenses to the remaining portfolio.
+    #
+    #  14. Rebalance the portfolio if requested.
+    #
+    #  15. Build the reporting values returned to run_sim_core.py.
+    #
+    # The ordering is significant. Many later steps depend on portfolio or
+    # taxable-income changes made by earlier steps.
+    # -------------------------------------------------------------------------
+
     # RMDs
     rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
     withdrawalEngine.withdraw_rmds(h_port, rmd_h)
@@ -409,6 +487,7 @@ def simulate_expense_year(
         "rmd_w": rmd_w,
         "wd_roth": wd_roth,
         "wd_hsa": wd_hsa,
+        "pre_tax_withdrawal": emergency_pre_tax_used,
         "qualified_hsa_withdrawal": qualified_hsa_withdrawal,
         "taxable_hsa_withdrawal": taxable_hsa_withdrawal,
         "emergency_pre_tax_used": emergency_pre_tax_used,

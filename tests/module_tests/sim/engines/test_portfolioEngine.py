@@ -760,9 +760,19 @@ def test_apply_net_income_single_positive_adds_to_eq_post_only():
     assert result["pre_tax_used"] == pytest.approx(0.0)
     assert result["uncovered"] == pytest.approx(0.0)
 
-    assert ps.eq_post == pytest.approx(65.0)
-    assert ps.bd_post == pytest.approx(25.0)
+    assert ps.eq_post == pytest.approx(45.0)
+    assert ps.bd_post == pytest.approx(45.0)
     assert ps.cs_post == pytest.approx(0.0)
+
+
+def test_apply_net_income_single_positive_empty_post_tax_defaults_to_cash():
+    ps = DummyPortfolioState(eq_pre=50, bd_pre=50, cs_pre=0, eq_post=0, bd_post=0, cs_post=0)
+
+    pe.apply_net_income_single(ps, net_cash=40)
+
+    assert ps.eq_post == pytest.approx(0.0)
+    assert ps.bd_post == pytest.approx(0.0)
+    assert ps.cs_post == pytest.approx(40.0)
 
 
 def test_apply_net_income_single_negative_limited_by_post_then_uses_pre_tax():

@@ -64,58 +64,37 @@ def calculate_withdrawal(husband_portfolio, wife_portfolio, config, *, year=0, a
     )
 
 
-def test_couple_withdrawal_uses_larger_spouse_post_tax_balance_first():
+def test_couple_withdrawal_uses_proportional_spouse_post_tax_balances():
     husband_portfolio = make_portfolio_state(post_tax=100_000.0)
     wife_portfolio = make_portfolio_state(post_tax=60_000.0)
-    config = make_config(
-        withdrawal_amount=80_000.0,
-        second_person_enabled=True,
-    )
 
-    result = calculate_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        config,
-    )
+    config = make_config(withdrawal_amount=80_000.0,second_person_enabled=True,)
+
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config,)
 
     assert result["total"] == pytest.approx(80_000.0)
     assert result["post_tax"] == pytest.approx(80_000.0)
     assert result["by_person"] == pytest.approx(
-        {"husband": 80_000.0, "wife": 0.0}
+        {"husband": 50_000.0, "wife": 30_000.0}
     )
-    assert husband_portfolio.total_value_post == pytest.approx(20_000.0)
-    assert wife_portfolio.total_value_post == pytest.approx(60_000.0)
+    assert husband_portfolio.total_value_post == pytest.approx(50_000.0)
+    assert wife_portfolio.total_value_post == pytest.approx(30_000.0)
 
 
-def test_couple_withdrawal_reorders_by_balance_for_each_account_type():
-    husband_portfolio = make_portfolio_state(
-        post_tax=100_000.0,
-        pre_tax=10_000.0,
-    )
-    wife_portfolio = make_portfolio_state(
-        post_tax=20_000.0,
-        pre_tax=100_000.0,
-    )
-    config = make_config(
-        withdrawal_amount=150_000.0,
-        second_person_enabled=True,
-    )
+def test_couple_withdrawal_uses_proportional_ownership_within_each_account_type():
+    husband_portfolio = make_portfolio_state(post_tax=100_000.0, pre_tax=10_000.0)
+    wife_portfolio = make_portfolio_state(post_tax=20_000.0, pre_tax=100_000.0)
+    config = make_config(withdrawal_amount=150_000.0, second_person_enabled=True)
 
-    result = calculate_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        config,
-    )
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config)
 
     assert result["post_tax"] == pytest.approx(120_000.0)
     assert result["pre_tax"] == pytest.approx(30_000.0)
-    assert result["by_person"] == pytest.approx(
-        {"husband": 100_000.0, "wife": 50_000.0}
-    )
+    assert result["by_person"] == pytest.approx({"husband": 102_727.27272727272, "wife": 47_272.72727273})
     assert husband_portfolio.total_value_post == pytest.approx(0.0)
     assert wife_portfolio.total_value_post == pytest.approx(0.0)
-    assert husband_portfolio.total_value_pre == pytest.approx(10_000.0)
-    assert wife_portfolio.total_value_pre == pytest.approx(70_000.0)
+    assert husband_portfolio.total_value_pre == pytest.approx(7_272.727272727273)
+    assert wife_portfolio.total_value_pre == pytest.approx(72_727.27272727272)
 
 
 def test_single_person_withdrawal_uses_real_estate_after_hsa():
