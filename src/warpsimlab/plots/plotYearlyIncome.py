@@ -207,20 +207,25 @@ def draw_yearly_income(
 
     if sim_config.sim_type == "income_sim":
         if sim_config.always_use_expense_mode:
-            sim_type_text = "Income and Expenses"
+            sim_type_text = "Income  (Expense Mode -"
         else:
-            sim_type_text = "Income and Withdrawals"
+            sim_type_text = "Income  (Withdrawal Mode -"
+
     elif sim_config.sim_type == "cashflow_sim":
         if sim_config.always_use_expense_mode:
-            sim_type_text = "Cash Flow and Expenses"
+            sim_type_text = "Cash Flow  (Expense Mode -"
         else:
-            sim_type_text = "Cash Flow and Withdrawals"
+            sim_type_text = "Cash Flow  (Withdrawal Mode -"
 
-    value_type = "Real" if getattr(sim_config, "plot_mode", "nominal") == "real" else "Nominal"
+    if sim_config.plot_mode == "real":
+        value_type = "Real"
+    else:
+        value_type = "Nominal"
 
-    plt.title(f"{sim_type_text} ({value_type})")
+    plt.title(f"{sim_type_text} {value_type})")
     plt.xlabel("Year")
     plt.ylabel("Amount ($)")
+
 
     # Optional subtitle with extra info
     subtitle_text = f"Start Year: {sim_config.start_year} | Inflation: {sim_config.inflation_rate*100:.1f}%"

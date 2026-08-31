@@ -98,8 +98,17 @@ def draw_operating_balance(
     # Retirement overlay (easy / already implemented)
     _plot_retirement_age_overlay(husband, wife, years_to_simulate, sim_config, plot_operating_balance)
 
-    value_type = "Real" if getattr(sim_config, "plot_mode", "nominal") == "real" else "Nominal"
-    ax.set_title(f"Cumulative Operating Balance ({value_type})", pad=20)
+    if sim_config.always_use_expense_mode:
+        spending_mode = "Expense Mode"
+    else:
+        spending_mode = "Withdrawal Mode"
+
+    if sim_config.plot_mode == "real":
+        value_type = "Real"
+    else:
+        value_type = "Nominal"
+
+    ax.set_title(f"Cumulative Operating Balance  ({spending_mode} - {value_type})", pad=20)
 
     subtitle_text = "Running total of household income - expenses - taxes.\nExcludes investment returns."
 
