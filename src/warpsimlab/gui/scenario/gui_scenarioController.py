@@ -3,7 +3,6 @@
 import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
-import copy
 
 SCENARIO_MODE_SCENARIO_VIEW = "scenario_view"
 SCENARIO_MODE_CASHFLOW_COMPARE = "cashflow_compare"
@@ -15,28 +14,13 @@ SCENARIO_MODE_OPTIONS = [
     ("Compare Portfolio", SCENARIO_MODE_PORTFOLIO_COMPARE),
 ]
 
-PLOT_FAMILY_CASHFLOW = "cashflow"
-PLOT_FAMILY_PORTFOLIO = "portfolio"
-
-RESULT_SOURCE_BASELINE = "baseline"
-RESULT_SOURCE_SCENARIO = "scenario"
-
-from src.warpsimlab.plots.plotYearlyIncome import draw_yearly_income
-from src.warpsimlab.plots.plotPortfolioProjection import draw_portfolio_projection
-
 from src.warpsimlab.gui.scenario.gui_scenarioSliders import ScenarioSlidersFrame
-from src.warpsimlab.gui.scenario.gui_scenarioSnapshots import ScenarioSnapshots
-
-from src.warpsimlab.sim.simulation import run_pipeline
-from src.warpsimlab.gui.gui_utils import set_tk_button_soft_disabled, noop
-
-from src.warpsimlab.gui.gui_annotations import build_scenario_explorer_annotations
-
-from src.warpsimlab.gui.gui_settings import (
-    SCENARIO_LAYOUT_REMEMBER,
-    geometry_is_visible,
-    save_display_settings,
+from src.warpsimlab.gui.scenario.gui_scenarioPlots import (
+    ScenarioPlotManager, PLOT_FAMILY_CASHFLOW, PLOT_FAMILY_PORTFOLIO, RESULT_SOURCE_BASELINE, RESULT_SOURCE_SCENARIO
 )
+
+from src.warpsimlab.gui.gui_utils import set_tk_button_soft_disabled, noop
+from src.warpsimlab.gui.scenario.gui_scenarioState import ScenarioStateManager
 
 class ScenarioController:
     """
@@ -45,6 +29,8 @@ class ScenarioController:
 
     def __init__(self, main_gui):
         self.main_gui = main_gui
+        self.plot_manager = ScenarioPlotManager(self)
+        self.state_manager = ScenarioStateManager(self)
         self.session_active = False
         self.window = None
 
@@ -188,272 +174,23 @@ class ScenarioController:
 
 
     def _create_persistent_plots(self):
-        """
-        Create two persistent matplotlib figures and store references.
-        """
+        self.plot_manager.create_persistent_plots()
 
-        # Income figure
-        self.income_fig, self.income_ax = plt.subplots(figsize=(8, 5))
-        self.income_fig.canvas.manager.set_window_title("Scenario Explorer")
-
-        # Portfolio figure
-        self.portfolio_fig, self.portfolio_ax = plt.subplots(figsize=(8, 5))
-        self.portfolio_fig.canvas.manager.set_window_title("Scenario Explorer")
-
-        # Connect close handlers
-        self.income_fig.canvas.mpl_connect("close_event", lambda event: self._stop_session())
-        self.portfolio_fig.canvas.mpl_connect("close_event", lambda event: self._stop_session())
-
-        # Restore the remembered layout when valid.
-        # Otherwise use the automatic layout.
-        if not self._restore_saved_layout():
-            self._position_windows()
-
-        try:
-            plt.show(block=False)
-        except Exception:
-            pass
 
     def _get_plot_window(self, figure):
-        """
-        Return the native Tk window owned by a Matplotlib figure.
-        """
-        if figure is None:
-            return None
-
-        canvas = getattr(figure, "canvas", None)
-        manager = getattr(canvas, "manager", None)
-
-        if manager is None:
-            return None
-
-        return getattr(manager, "window", None)
+        return self.plot_manager.get_plot_window(figure)
 
 
     def capture_current_layout(self):
-        """
-        Save the three Scenario Explorer window geometries when enabled.
-        """
-        scenario_settings = self.main_gui.display_settings[
-            "scenario_explorer"
-        ]
-
-        if (
-            scenario_settings.get("layout_mode")
-            != SCENARIO_LAYOUT_REMEMBER
-        ):
-            return
-
-        income_window = self._get_plot_window(
-            self.income_fig
-        )
-        portfolio_window = self._get_plot_window(
-            self.portfolio_fig
-        )
-
-        if (
-            income_window is None
-            or portfolio_window is None
-            or self.window is None
-        ):
-            return
-
-        try:
-            income_window.update_idletasks()
-            portfolio_window.update_idletasks()
-            self.window.update_idletasks()
-
-            scenario_settings["layout"] = {
-                "income_plot": income_window.winfo_geometry(),
-                "portfolio_plot": (
-                    portfolio_window.winfo_geometry()
-                ),
-                "dashboard": self.window.winfo_geometry(),
-            }
-        except tk.TclError:
-            return
-
-        save_display_settings(
-            self.main_gui.display_settings
-        )
+        self.plot_manager.capture_current_layout()
 
 
     def _restore_saved_layout(self):
-        """
-        Restore the three saved Scenario Explorer geometries.
-
-        Returns True only when all three saved windows are valid and visible.
-        """
-        scenario_settings = self.main_gui.display_settings[
-            "scenario_explorer"
-        ]
-
-        if (
-            scenario_settings.get("layout_mode")
-            != SCENARIO_LAYOUT_REMEMBER
-        ):
-            return False
-
-        layout = scenario_settings.get("layout")
-        if not isinstance(layout, dict):
-            return False
-
-        income_geometry = layout.get("income_plot")
-        portfolio_geometry = layout.get("portfolio_plot")
-        dashboard_geometry = layout.get("dashboard")
-
-        screen_width = (
-            self.main_gui.root.winfo_screenwidth()
-        )
-        screen_height = (
-            self.main_gui.root.winfo_screenheight()
-        )
-
-        geometries = (
-            income_geometry,
-            portfolio_geometry,
-            dashboard_geometry,
-        )
-
-        if not all(
-            geometry_is_visible(
-                geometry,
-                screen_width,
-                screen_height,
-            )
-            for geometry in geometries
-        ):
-            scenario_settings["layout"] = None
-            save_display_settings(
-                self.main_gui.display_settings
-            )
-            return False
-
-        income_window = self._get_plot_window(
-            self.income_fig
-        )
-        portfolio_window = self._get_plot_window(
-            self.portfolio_fig
-        )
-
-        if (
-            income_window is None
-            or portfolio_window is None
-            or self.window is None
-        ):
-            return False
-
-        try:
-            income_window.geometry(income_geometry)
-            portfolio_window.geometry(
-                portfolio_geometry
-            )
-            self.window.geometry(dashboard_geometry)
-        except tk.TclError:
-            return False
-
-        return True
+        return self.plot_manager.restore_saved_layout()
 
 
     def _position_windows(self):
-        """
-        Position the two plot windows side-by-side and center the
-        Scenario Dashboard below them.
-
-        Window sizes are scaled from the Windows development layout.
-        Windows are positioned on the monitor containing the main
-        WARPSimLab window.
-        """
-        try:
-            root = self.main_gui.root
-            root.update_idletasks()
-
-            root_center_x = (
-                root.winfo_rootx()
-                + root.winfo_width() // 2
-            )
-            root_center_y = (
-                root.winfo_rooty()
-                + root.winfo_height() // 2
-            )
-
-            (
-                work_left,
-                work_top,
-                work_right,
-                work_bottom,
-            ) = self.main_gui._get_monitor_work_area(
-                root_center_x,
-                root_center_y,
-            )
-
-            screen_width = work_right - work_left
-            screen_height = work_bottom - work_top
-
-            development_screen_width = 1707
-            development_screen_height = 1067
-
-            width_scale = (
-                screen_width
-                / development_screen_width
-            )
-            height_scale = (
-                screen_height
-                / development_screen_height
-            )
-
-            scale = min(width_scale, height_scale)
-
-            plot_width = int(850 * scale)
-            plot_height = int(600 * scale)
-
-            top_y = work_top + int(20 * scale)
-
-            total_plots_width = plot_width * 2
-
-            left_x = (
-                work_left
-                + (screen_width - total_plots_width) // 2
-            )
-
-            right_x = left_x + plot_width
-
-            self.income_fig.canvas.manager.window.geometry(
-                f"{plot_width}x{plot_height}"
-                f"+{left_x}+{top_y}"
-            )
-
-            self.portfolio_fig.canvas.manager.window.geometry(
-                f"{plot_width}x{plot_height}"
-                f"+{right_x}+{top_y}"
-            )
-
-            if self.window is not None:
-                control_width = int(1060 * scale)
-                control_height = int(280 * scale)
-                control_gap = int(40 * scale)
-
-                control_y = (
-                    top_y
-                    + plot_height
-                    + control_gap
-                )
-
-                control_x = (
-                    left_x
-                    + (
-                        total_plots_width
-                        - control_width
-                    ) // 2
-                )
-
-                self.window.geometry(
-                    f"{control_width}x{control_height}"
-                    f"+{control_x}+{control_y}"
-                )
-
-        except Exception:
-            pass
+        self.plot_manager.position_windows()
 
 
     def _resolve_panels_for_mode(self):
@@ -487,206 +224,33 @@ class ScenarioController:
             {"plot_family": PLOT_FAMILY_PORTFOLIO, "result_source": RESULT_SOURCE_SCENARIO},
         )
 
+
     def _panel_role_label(self, panel):
-        """
-        Human-readable label shown inside the plot, centered just below the title.
-        """
-        if panel["result_source"] == RESULT_SOURCE_BASELINE:
-            return "Original"
-        elif panel["result_source"] == RESULT_SOURCE_SCENARIO:
-            return "Changed" if self.mode != SCENARIO_MODE_SCENARIO_VIEW else "Scenario"
-        return "Scenario"
+        return self.plot_manager.panel_role_label(panel)
 
 
     def _panel_window_title(self, panel):
-        """
-        Human-readable figure window title for the current panel.
-        """
-        role = self._panel_role_label(panel)
-
-        if panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
-            family = "Cashflow"
-        else:
-            family = "Portfolio"
-
-        return f"{role} {family}"
+        return self.plot_manager.panel_window_title(panel)
 
 
     def _apply_panel_window_title(self, fig, panel):
-        try:
-            manager = getattr(fig.canvas, "manager", None)
-            if manager is not None:
-                manager.set_window_title(self._panel_window_title(panel))
-        except Exception:
-            pass
+        self.plot_manager.apply_panel_window_title(fig, panel)
 
 
     def _draw_panel_role_label(self, ax, panel):
-        """
-        Draw a centered role label inside the plot area, just below the title.
-        """
-        label = self._panel_role_label(panel)
-
-        ax.text(
-            0.5,
-            0.985,
-            label,
-            transform=ax.transAxes,
-            ha="center",
-            va="top",
-            fontsize=10,
-            fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.20", facecolor="white", edgecolor="none", alpha=0.75),
-            zorder=20
-        )
+        self.plot_manager.draw_panel_role_label(ax, panel)
 
 
     def _display_sim_config(self, result, panel):
-        """
-        Return a display-only sim_config copy for plot rendering tweaks.
-
-        Important:
-        - Do NOT deepcopy Simulation because it contains tkinter state (root),
-          which is not deepcopy/pickle safe.
-        - A shallow copy is sufficient here because we only override a simple
-          display flag for the current render pass.
-        """
-        sim_config = copy.copy(result["sim_config"])
-
-        annotate_enabled = False
-        if self.sliders_frame is not None and hasattr(self.sliders_frame, "enable_annotations"):
-            try:
-                annotate_enabled = bool(self.sliders_frame.enable_annotations.get())
-            except Exception:
-                annotate_enabled = False
-
-        sim_config.use_snapshot_annotations = annotate_enabled
-
-        if panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
-            sim_config.sim_type = "cashflow_sim"
-
-        return sim_config
+        return self.plot_manager.display_sim_config(result, panel)
 
 
     def _sync_compare_axes(self, left_panel, right_panel):
-        """
-        In compare modes, keep x/y scales identical across both windows.
-        Scenario View is exempt by design.
-        """
-        if left_panel["plot_family"] != right_panel["plot_family"]:
-            return
-
-        left_ax = self.income_ax
-        right_ax = self.portfolio_ax
-
-        left_xlim = left_ax.get_xlim()
-        right_xlim = right_ax.get_xlim()
-        left_ylim = left_ax.get_ylim()
-        right_ylim = right_ax.get_ylim()
-
-        shared_xlim = (
-            min(left_xlim[0], right_xlim[0]),
-            max(left_xlim[1], right_xlim[1]),
-        )
-        shared_ylim = (
-            min(left_ylim[0], right_ylim[0]),
-            max(left_ylim[1], right_ylim[1]),
-        )
-
-        left_ax.set_xlim(shared_xlim)
-        right_ax.set_xlim(shared_xlim)
-        left_ax.set_ylim(shared_ylim)
-        right_ax.set_ylim(shared_ylim)
-
-        self.income_fig.canvas.draw_idle()
-        self.portfolio_fig.canvas.draw_idle()
+        self.plot_manager.sync_compare_axes(left_panel, right_panel)
 
 
     def _draw_panel(self, ax, fig, panel):
-        """
-        Draw a panel based on plot family and result source.
-        """
-
-        if panel["result_source"] == RESULT_SOURCE_BASELINE:
-            result = self.baseline_results
-        else:
-            result = self.scenario_results
-
-        if result is None:
-            return
-
-        p = result["p"]
-        sim_config = self._display_sim_config(result, panel)
-        husband = result["husband"]
-        wife = result["wife"]
-
-        ax.clear()
-
-        if panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
-
-            breakdown = dict(p["breakdown_by_class"])
-
-            income_keys = [
-                "work",
-                "pension",
-                "annuity",
-                "ss",
-                "special_income",
-            ]
-
-            breakdown["income"] = sum(
-                breakdown[key]
-                for key in income_keys
-            )
-
-            cashflow_keys = [
-                "income",
-                "rmd",
-                "withdrawal",
-                "cash_interest",
-                "bond_interest",
-                "qualified_equity_distributions",
-            ]
-
-            cashflow_total = sum(
-                breakdown[key]
-                for key in cashflow_keys
-            )
-
-            draw_yearly_income(
-                ax,
-                p["years"],
-                p["net_profit"],
-                cashflow_total,
-                breakdown,
-                p["taxes"],
-                p["expense_amt"],
-                husband,
-                wife,
-                sim_config
-            )
-        elif panel["plot_family"] == PLOT_FAMILY_PORTFOLIO:
-            draw_portfolio_projection(
-                ax,
-                p["years_list"],
-                p["portfolio_plot_data"],
-                sim_config=sim_config,
-                annotate_plots=sim_config.annotate_plots,
-                husband=husband,
-                wife=wife
-            )
-
-        role = self._panel_role_label(panel)
-        current_title = ax.get_title()
-
-        if current_title:
-            ax.set_title(f"{role} {current_title}")
-        else:
-            ax.set_title(role)
-
-        self._apply_panel_window_title(fig, panel)
-
-        fig.canvas.draw_idle()
+        self.plot_manager.draw_panel(ax, fig, panel)
 
 
     def resync(self):
@@ -843,24 +407,7 @@ class ScenarioController:
 
 
     def _build_snapshots_from_truth(self):
-        controls = self.main_gui.simulation_controls
-
-        # Persons
-        self.person_snapshots = {"husband": copy.deepcopy(self.main_gui.husband)}
-        if controls.get("second_person_enabled", False):
-            self.person_snapshots["wife"] = copy.deepcopy(self.main_gui.wife)
-
-        # Portfolios
-        self.portfolio_snapshots = {"husband": copy.deepcopy(self.main_gui.husband_portfolio)}
-        if controls.get("second_person_enabled", False):
-            self.portfolio_snapshots["wife"] = copy.deepcopy(self.main_gui.wife_portfolio)
-
-        # Scenario assumptions snapshots
-        self.retirement_snapshots = ScenarioSnapshots()
-        self.retirement_snapshots.inflation = self.main_gui.inflation
-        self.retirement_snapshots.fund_expense = self.main_gui.simulation_settings.get("fund_expense")
-        self.retirement_snapshots.historical_data_multiplier = 100.0  # baseline (percent)
-
+        self.state_manager.build_snapshots_from_truth()
 
     def _build_controls_ui(self):
         # Clear existing UI (if resync)
@@ -977,162 +524,31 @@ class ScenarioController:
 
 
     def _apply_slider_values_to_snapshots(self):
-        if self.sliders_frame is None:
-            return
-
-        controls = self.main_gui.simulation_controls
-
-        # Read slider values -> scenario retirement_snapshots
-        inflation = self.sliders_frame.inflation_value.get()
-        fund_expense = self.sliders_frame.fund_expense_value.get()
-        historical_data_multiplier = self.sliders_frame.market_adjustment_percent.get()
-
-        stocks = self.sliders_frame.stocks_percent.get()
-        bonds = self.sliders_frame.bonds_percent.get()
-        cash = self.sliders_frame.cash_percent.get()
-
-        self.retirement_snapshots.inflation = inflation
-        self.retirement_snapshots.adjust_hist_for_infl_delta = (
-            self.sliders_frame.adjust_hist_for_infl_delta.get()
-        )
-
-        # delta_inflation is in percent-points
-        self.retirement_snapshots.delta_inflation = (
-            float(self.retirement_snapshots.inflation) - float(self.main_gui.inflation)
-        )
-        self.retirement_snapshots.fund_expense = fund_expense
-        self.retirement_snapshots.historical_data_multiplier = historical_data_multiplier
-
-        self.retirement_snapshots.custom_stock_percent = stocks
-        self.retirement_snapshots.custom_bonds_percent = bonds
-        self.retirement_snapshots.custom_cash_percent = cash
-
-        # Update person snapshot retirement ages (and related fields)
-        husband_snapshot = self.person_snapshots.get("husband")
-        tmp_ret_age_h = self.sliders_frame.tmp_ret_age_h.get()
-        husband_snapshot.retire_age = tmp_ret_age_h
-        husband_snapshot.ss_age = tmp_ret_age_h
-
-        wife_snapshot = None
-        tmp_ret_age_w = None
-        if controls.get("second_person_enabled", False):
-            wife_snapshot = self.person_snapshots.get("wife")
-            if wife_snapshot is not None and self.sliders_frame.tmp_ret_age_w is not None:
-                tmp_ret_age_w = self.sliders_frame.tmp_ret_age_w.get()
-                wife_snapshot.retire_age = tmp_ret_age_w
-                wife_snapshot.ss_age = tmp_ret_age_w
-
-        # Snapshot annotations
-        self.retirement_snapshots.use_snapshot_annotations = self.sliders_frame.enable_annotations.get()
-
-        baseline_stocks, baseline_bonds, baseline_cash = self.sliders_frame._compute_initial_portfolio_percents()
-
-        self.retirement_snapshots.annotation_strings = build_scenario_explorer_annotations(
-            main_gui=self.main_gui,
-            tmp_ret_age_h=tmp_ret_age_h,
-            tmp_ret_age_w=tmp_ret_age_w,
-            inflation=inflation,
-            fund_expense=fund_expense,
-            historical_data_multiplier=historical_data_multiplier,
-            stocks=stocks,
-            bonds=bonds,
-            cash=cash,
-            baseline_stocks=baseline_stocks,
-            baseline_bonds=baseline_bonds,
-            baseline_cash=baseline_cash,
-            wife_snapshot=wife_snapshot,
-            scenario_expense_multiplier=self.retirement_snapshots.scenario_expense_multiplier,
-            scenario_withdraw_pct=self.retirement_snapshots.scenario_withdraw_pct,
-        )
+        self.state_manager.apply_slider_values_to_snapshots()
 
 
     def _clone_result_inputs(self, persons, portfolios, retirement_snapshots):
-        """
-        Return fully detached copies of all simulation inputs so cached baseline
-        and scenario results cannot be mutated later by sliders or redraw logic.
-        """
-        persons_copy = copy.deepcopy(persons)
-        portfolios_copy = copy.deepcopy(portfolios)
-        retirement_copy = copy.deepcopy(retirement_snapshots)
-        return persons_copy, portfolios_copy, retirement_copy
+        return self.state_manager.clone_result_inputs(persons, portfolios, retirement_snapshots)
 
 
     def _compute_results_from_inputs(self, persons, portfolios, retirement_snapshots):
-        """
-        Compute one result bundle from the supplied snapshots and return a cacheable dict.
-        """
-        persons_copy, portfolios_copy, retirement_copy = self._clone_result_inputs(
-            persons, portfolios, retirement_snapshots
-        )
-
-        sim_config = self.main_gui.build_simulation_from_gui(
-            sim_type="portfolio_sim",
-            use_snapshots=True,
-            retirement_snapshots=retirement_copy
-        )
-
-        husband = persons_copy["husband"]
-        wife = persons_copy.get("wife") if sim_config.second_person_enabled else None
-
-        husband_portfolio = portfolios_copy["husband"]
-        wife_portfolio = portfolios_copy.get("wife") if wife else None
-
-        expenses = self.main_gui.expensesDict
-
-        p = run_pipeline(
-            husband_portfolio, wife_portfolio,
-            husband, wife,
-            expenses, sim_config
-        )
-
-        return {
-            "p": p,
-            "sim_config": sim_config,
-            "husband": husband,
-            "wife": wife,
-        }
+        return self.state_manager.compute_results_from_inputs(persons, portfolios, retirement_snapshots)
 
 
     def _compute_baseline_results(self):
-        """
-        Baseline/original results are computed from GUI truth once when Scenario
-        Explorer starts and whenever Resync is pressed.
-        """
-        baseline_persons = copy.deepcopy(self.person_snapshots)
-        baseline_portfolios = copy.deepcopy(self.portfolio_snapshots)
-        baseline_retirement = copy.deepcopy(self.retirement_snapshots)
-
-        self.baseline_results = self._compute_results_from_inputs(
-            baseline_persons,
-            baseline_portfolios,
-            baseline_retirement
-        )
+        self.state_manager.compute_baseline_results()
 
 
     def _compute_scenario_results(self):
-        self.scenario_results = self._compute_results_from_inputs(
-            self.person_snapshots,
-            self.portfolio_snapshots,
-            self.retirement_snapshots
-        )
-        return self.scenario_results
-
+        return self.state_manager.compute_scenario_results()
 
     def _render_panels(self):
         """
         Render both panels according to the current mode.
         """
-
         left_panel, right_panel = self._resolve_panels_for_mode()
-
-        self._draw_panel(self.income_ax, self.income_fig, left_panel)
-        self._draw_panel(self.portfolio_ax, self.portfolio_fig, right_panel)
-
-        if self.mode in (
-            SCENARIO_MODE_CASHFLOW_COMPARE,
-            SCENARIO_MODE_PORTFOLIO_COMPARE,
-        ):
-            self._sync_compare_axes(left_panel, right_panel)
+        sync_axes = self.mode in (SCENARIO_MODE_CASHFLOW_COMPARE, SCENARIO_MODE_PORTFOLIO_COMPARE)
+        self.plot_manager.render_panels(left_panel, right_panel, sync_axes=sync_axes)
 
 
     def _run_scenario_simulation(self):

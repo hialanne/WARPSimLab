@@ -105,14 +105,14 @@ DEFAULT_EXPENSE_ENTRIES = [
     {
         "start_year": 2026,
         "end_year": None,
-        "cost": 72600.0,
+        "cost": 72500.0,
         "comment": "Initial yearly expense",
         "is_hsa_eligible": False,
     },
     {
         "start_year": 2026,
         "end_year": 2030,
-        "cost": 5000.0,
+        "cost": 5200.0,
         "comment": "Car or something",
         "is_hsa_eligible": False,
     }
