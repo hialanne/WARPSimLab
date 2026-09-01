@@ -13,7 +13,7 @@ from src.warpsimlab.gui.gui_run import PortfolioSimulatorGUI_RunMixin
 from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.gui.gui_specialIncome import SpecialIncomeEditFrame
 from src.warpsimlab.utils.io_utils import *
-from src.warpsimlab.gui.gui_portfolio import *
+from src.warpsimlab.gui.gui_portfolioDollars import *
 from src.warpsimlab.dataClasses.portfolio import Portfolio
 from src.warpsimlab.gui.gui_historicalData import *
 from src.warpsimlab.gui.gui_portfolioSimulation import *

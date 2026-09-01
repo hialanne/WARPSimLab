@@ -2,7 +2,7 @@
 
 from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.gui.gui_specialIncome import SpecialIncomeEditFrame
-from src.warpsimlab.gui.gui_portfolio import *
+from src.warpsimlab.gui.gui_portfolioDollars import *
 from src.warpsimlab.gui.gui_portfolioPercentages import PortfolioPercentagesEditFrame
 from src.warpsimlab.gui.gui_historicalData import *
 from src.warpsimlab.gui.gui_portfolioSimulation import *
@@ -184,7 +184,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
         husband_portfolio = self.husband_portfolio
         wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
 
-        portfolio_frame = PortfolioEditFrame(
+        portfolio_frame = PortfolioDollarsEditFrame(
             self.edit_frame_container,
             husband_portfolio=husband_portfolio,
             wife_portfolio=wife_portfolio,

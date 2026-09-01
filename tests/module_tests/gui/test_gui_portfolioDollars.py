@@ -48,10 +48,10 @@ def tk_root():
 @pytest.fixture
 def mod_no_tooltip(monkeypatch):
     """
-    gui_portfolio imports Tooltip. Patch it to a no-op so tests don't
+    gui_portfolioDollars imports Tooltip. Patch it to a no-op so tests don't
     depend on tooltip behavior or Tk timing details.
     """
-    from src.warpsimlab.gui import gui_portfolio as mod
+    from src.warpsimlab.gui import gui_portfolioDollars as mod
 
     class DummyTooltip:
         def __init__(self, *args, **kwargs):
@@ -60,20 +60,18 @@ def mod_no_tooltip(monkeypatch):
     monkeypatch.setattr(mod, "Tooltip", DummyTooltip, raising=True)
     return mod
 
-
 def _all_texts(widget: tk.Misc) -> list[str]:
-    """
-    Collect visible 'text' strings from common text-bearing widgets.
-    (ttk.Checkbutton is critical because 'Derived Statistics' lives there.)
-    Only inspects direct children, matching how gui_portfolio lays out its UI.
-    """
     out: list[str] = []
+
     for w in widget.winfo_children():
-        if isinstance(w, (ttk.Label, ttk.Checkbutton, ttk.Button, ttk.Radiobutton)):
+        if isinstance(w, (ttk.Label, ttk.LabelFrame, ttk.Checkbutton, ttk.Button, ttk.Radiobutton)):
             try:
                 out.append(w.cget("text"))
             except tk.TclError:
                 pass
+
+        out.extend(_all_texts(w))
+
     return out
 
 
@@ -95,7 +93,7 @@ def test_basic_mode_builds_only_savings_row(mod_no_tooltip, tk_root):
     h = DummyPortfolio(cash_post=1234)
     w = DummyPortfolio(cash_post=999)
 
-    frame = mod.PortfolioEditFrame(tk_root, husband_portfolio=h, wife_portfolio=w, mode="Basic")
+    frame = mod.PortfolioDollarsEditFrame(tk_root, husband_portfolio=h, wife_portfolio=w, mode="Basic")
     frame.pack()
 
     texts = _all_texts(frame)
@@ -112,7 +110,7 @@ def test_bind_var_sets_portfolio_value_and_ignores_invalid(mod_no_tooltip, tk_ro
     mod = mod_no_tooltip
 
     h = DummyPortfolio()
-    frame = mod.PortfolioEditFrame(tk_root, husband_portfolio=h, wife_portfolio=None, mode="Advanced")
+    frame = mod.PortfolioDollarsEditFrame(tk_root, husband_portfolio=h, wife_portfolio=None, mode="Advanced")
     frame.pack()
     shown_errors = []
     monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
@@ -187,7 +185,7 @@ def test_advanced_mode_builds_roth_hsa_and_total_rows(mod_no_tooltip, tk_root):
         hsa_cash=1000,
     )
 
-    frame = mod.PortfolioEditFrame(
+    frame = mod.PortfolioDollarsEditFrame(
         tk_root,
         husband_portfolio=h,
         wife_portfolio=None,
@@ -197,19 +195,17 @@ def test_advanced_mode_builds_roth_hsa_and_total_rows(mod_no_tooltip, tk_root):
 
     texts = _all_texts(frame)
 
-    assert "Stocks Pre-Tax" in texts
-    assert "Stocks After-Tax" in texts
-    assert "Stocks Roth" in texts
-    assert "Bonds Pre-Tax" in texts
-    assert "Bonds After-Tax" in texts
-    assert "Bonds Roth" in texts
-    assert "Cash Pre-Tax" in texts
-    assert "Cash After-Tax" in texts
-    assert "Cash Roth" in texts
-    assert "Stocks HSA" in texts
-    assert "Bonds HSA" in texts
-    assert "Cash HSA" in texts
-    assert "TOTAL" in texts
+    assert "Pre-Tax" in texts
+    assert "After-Tax" in texts
+    assert "Roth" in texts
+    assert "HSA" in texts
+
+    assert texts.count("Stocks") == 4
+    assert texts.count("Bonds") == 4
+    assert texts.count("Cash") == 4
+    assert texts.count("Total") == 4
+
+    assert "Portfolio Total" in texts
 
     assert frame.h_vars["equity_roth"].get() == "300"
     assert frame.h_vars["bond_roth"].get() == "600"
@@ -229,7 +225,7 @@ def test_update_totals_populates_row_and_column_totals_for_couple(mod_no_tooltip
     h = DummyPortfolio(equity_pre=100, cash_post=50, equity_roth=25)
     w = DummyPortfolio(equity_pre=200, cash_post=75, hsa_cash=10)
 
-    frame = mod.PortfolioEditFrame(
+    frame = mod.PortfolioDollarsEditFrame(
         tk_root,
         husband_portfolio=h,
         wife_portfolio=w,

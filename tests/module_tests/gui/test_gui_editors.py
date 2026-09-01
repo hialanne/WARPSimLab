@@ -249,7 +249,7 @@ def test_edit_taxes(monkeypatch):
 def test_edit_portfolio_data(monkeypatch, second_person):
     gui = _make_gui(second_person=second_person)
     factory = FrameFactory()
-    monkeypatch.setattr(gui_editors, "PortfolioEditFrame", factory)
+    monkeypatch.setattr(gui_editors, "PortfolioDollarsEditFrame", factory)
 
     gui.edit_portfolio_data()
 
