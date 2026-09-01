@@ -51,6 +51,10 @@ class PortfolioSimulatorGUI_NavigationMixin:
             self.cashflow_button, basic_enabled, self._show_cashflow_menu, noop_command=noop
         )
 
+        if hasattr(self, "balance_sheet_menu") and hasattr(self, "_balance_sheet_portfolio_percentages_index"):
+            state = "normal" if advanced_enabled else "disabled"
+            self.balance_sheet_menu.entryconfig(self._balance_sheet_portfolio_percentages_index, state=state)
+
         if hasattr(self, "balance_sheet_menu") and hasattr(self, "_balance_sheet_real_estate_index"):
             state = "normal" if advanced_enabled else "disabled"
             self.balance_sheet_menu.entryconfig(self._balance_sheet_real_estate_index, state=state)
@@ -305,7 +309,11 @@ class PortfolioSimulatorGUI_NavigationMixin:
             row=0, column=3, padx=(0, 15), pady=2
         )
 
-        self.balance_sheet_menu.add_command(label="Portfolio", command=self.edit_portfolio_data)
+        self.balance_sheet_menu.add_command(label="Portfolio - Amounts", command=self.edit_portfolio_data)
+
+        self.balance_sheet_menu.add_command(label="Portfolio - Percentages", command=self.edit_portfolio_percentages)
+        self._balance_sheet_portfolio_percentages_index = self.balance_sheet_menu.index("end")
+
         self.balance_sheet_menu.add_command(label="Real Estate", command=self.edit_real_estate)
         self._balance_sheet_real_estate_index = self.balance_sheet_menu.index("end")
 

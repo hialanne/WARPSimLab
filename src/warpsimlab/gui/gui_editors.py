@@ -3,6 +3,7 @@
 from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.gui.gui_specialIncome import SpecialIncomeEditFrame
 from src.warpsimlab.gui.gui_portfolio import *
+from src.warpsimlab.gui.gui_portfolioPercentages import PortfolioPercentagesEditFrame
 from src.warpsimlab.gui.gui_historicalData import *
 from src.warpsimlab.gui.gui_portfolioSimulation import *
 from src.warpsimlab.gui.gui_simulationControls import *
@@ -188,6 +189,26 @@ class PortfolioSimulatorGUI_EditorsMixin:
             husband_portfolio=husband_portfolio,
             wife_portfolio=wife_portfolio,
             title="Portfolio Data",
+            mode=self.mode_var.get(),
+        )
+        portfolio_frame.pack(padx=10, pady=5, fill="x")
+
+
+    def edit_portfolio_percentages(self):
+        if not self._advanced_only():
+            return
+
+        for widget in self.edit_frame_container.winfo_children():
+            widget.destroy()
+
+        husband_portfolio = self.husband_portfolio
+        wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
+
+        portfolio_frame = PortfolioPercentagesEditFrame(
+            self.edit_frame_container,
+            husband_portfolio=husband_portfolio,
+            wife_portfolio=wife_portfolio,
+            title="Portfolio Percentages",
             mode=self.mode_var.get(),
         )
         portfolio_frame.pack(padx=10, pady=5, fill="x")
