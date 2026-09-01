@@ -26,6 +26,7 @@ def make_config(
     overlay_retirement_age=False,
     second_person_enabled=False,
     use_snapshot_annotations=False,
+    always_use_expense_mode=True,
     annotation_strings=None,
 ):
     if annotation_strings is None:
@@ -40,6 +41,7 @@ def make_config(
         overlay_retirement_age=overlay_retirement_age,
         second_person_enabled=second_person_enabled,
         use_snapshot_annotations=use_snapshot_annotations,
+        always_use_expense_mode=always_use_expense_mode,
         annotation_strings=annotation_strings,
     )
 

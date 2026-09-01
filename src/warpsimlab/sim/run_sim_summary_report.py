@@ -514,6 +514,33 @@ def _build_expense_rows(expenses):
     return rows
 
 
+def _build_special_income_rows(sim_config):
+    streams = getattr(sim_config, "special_income_streams", []) or []
+    mode_labels = {"inflation": "Inflation", "fixed": "Fixed Annual", "none": "None"}
+    rows = []
+
+    for stream in streams:
+        if not isinstance(stream, dict):
+            continue
+
+        adjustment_mode = stream.get("adjustment_mode", "inflation")
+        adjustment_pct = stream.get("adjustment_pct", stream.get("inflation_adjustment_pct", 100.0))
+
+        rows.append({
+            "Owner": str(stream.get("owner", "")).title(),
+            "Description": stream.get("name") or "Special Income",
+            "Annual Amount": stream.get("amount"),
+            "Start Age": stream.get("start_age"),
+            "End Age": stream.get("end_age"),
+            "Enabled": bool(stream.get("enabled", True)),
+            "Taxable": bool(stream.get("taxable", True)),
+            "Annual Increase": mode_labels.get(adjustment_mode, str(adjustment_mode)),
+            "Adjustment Percent": adjustment_pct,
+        })
+
+    return rows
+
+
 def _selected_visuals(options, visual_map):
     selected = []
 
@@ -626,6 +653,12 @@ def _build_assumptions_summary(
             "type": "table",
             "empty_message": "No additional expense entries.",
             "rows": _build_expense_rows(expenses),
+        },
+
+        "Special Income Inputs": {
+            "type": "table",
+            "empty_message": "No special income entries.",
+            "rows": _build_special_income_rows(sim_config),
         },
 
         "Market & Inflation Assumptions": {

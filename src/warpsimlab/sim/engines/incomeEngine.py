@@ -62,16 +62,55 @@ def _build_pension_factors(sim_config, inflation_adjustment_pct):
     return factors
 
 
+def _build_special_income_factor(sim_config, adjustment_mode, adjustment_pct, start_year, year):
+    start_factor = sim_config._income_inflation_factors[start_year]
+
+    if year <= start_year or adjustment_mode == "none":
+        return start_factor
+
+    years_since_start = year - start_year
+
+    if adjustment_mode == "fixed":
+        return start_factor * (1.0 + adjustment_pct / 100.0) ** years_since_start
+
+    if adjustment_mode != "inflation":
+        raise ValueError(f"Unsupported special income adjustment mode: {adjustment_mode!r}")
+
+    historical_mode_active = (
+        sim_config.subplot_mode == "monte_carlo"
+        and sim_config.sim_type == "portfolio_sim"
+        and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
+        and getattr(sim_config, "_active_historical_sim_index", None) is not None
+        and getattr(sim_config, "_hist_inflation", None) is not None
+    )
+
+    if historical_mode_active:
+        hist_start_idx = int(sim_config._hist_window_start_indices[sim_config._active_historical_sim_index])
+        factor = start_factor
+
+        for y in range(start_year + 1, year + 1):
+            annual_inflation = float(sim_config._hist_inflation[hist_start_idx + (y - 1)])
+            factor *= 1.0 + annual_inflation * adjustment_pct / 100.0
+
+        return factor
+
+    annual_step = sim_config.inflation_rate * adjustment_pct / 100.0
+    return start_factor * (1.0 + annual_step) ** years_since_start
+
+
 def _calculate_special_income_for_year(curr_husband_age, curr_wife_age, year, sim_config):
     """
     Calculate special income streams for the current simulation year.
 
     Special income:
       - is age-based by owner
+      - uses an amount entered in today's dollars
+      - is inflated to nominal dollars through the year the stream begins
+      - after starting, may follow inflation, a fixed annual increase, or no further increase
       - may be taxable or non-taxable
-      - may be inflation-adjusted by a percentage of inflation
       - is not payroll wage income
     """
+
     taxable_special_income = 0.0
     non_taxable_special_income = 0.0
     husband_special_income = 0.0
@@ -100,14 +139,13 @@ def _calculate_special_income_for_year(curr_husband_age, curr_wife_age, year, si
         if amount <= 0.0:
             continue
 
-        inflation_adjustment_pct = float(
-            stream.get("inflation_adjustment_pct", 100.0)
-        )
+        adjustment_mode = stream.get("adjustment_mode", "inflation")
+        adjustment_pct = float(stream.get("adjustment_pct", stream.get("inflation_adjustment_pct", 100.0)))
 
-        special_income_factor = _build_pension_factors(
-            sim_config,
-            inflation_adjustment_pct,
-        )[year]
+        start_year = max(0, year - (owner_age - start_age))
+        special_income_factor = _build_special_income_factor(
+            sim_config, adjustment_mode, adjustment_pct, start_year, year
+        )
 
         adjusted_amount = amount * special_income_factor
 
@@ -344,7 +382,6 @@ def calculate_income_breakdown(husband, wife,
             "pension": pension,
             "annuity": annuity,
             "ss": ss,
-            "rmd": rmd,
             "rmd": rmd,
             "withdrawal": withdrawal,
             "tax_funding_withdrawal": 0.0,

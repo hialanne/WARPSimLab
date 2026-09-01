@@ -20,9 +20,14 @@ class SpecialIncomeEditFrame(ttk.Frame):
         "start_age": int,
         "end_age": int,
         "taxable": bool,
-        "inflation_adjustment_pct": float,
+        "adjustment_mode": "inflation", "fixed", or "none",
+        "adjustment_pct": float,
     }
     """
+
+    ADJUSTMENT_MODE_LABELS = {"inflation": "Inflation", "fixed": "Fixed Annual", "none": "None"}
+    ADJUSTMENT_MODE_VALUES = {"Inflation": "inflation", "Fixed Annual": "fixed", "None": "none"}
+    ADJUSTMENT_MODE_DEFAULTS = {"inflation": 100.0, "fixed": 5.0, "none": 0.0}
 
     def __init__(
         self,
@@ -65,7 +70,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
         header_frame.grid(
             row=self.next_row,
             column=0,
-            columnspan=9,
+            columnspan=10,
             sticky="w",
             pady=(0, 10),
         )
@@ -96,7 +101,8 @@ class SpecialIncomeEditFrame(ttk.Frame):
             "End Age",
             "Enabled",
             "Taxable",
-            "Inflation Adj. (%)",
+            "Annual Increase",
+            "Adjustment (%)",
             "Delete",
         ]
 
@@ -148,7 +154,11 @@ class SpecialIncomeEditFrame(ttk.Frame):
         stream.setdefault("end_age", 120)
         stream.setdefault("taxable", True)
         stream.setdefault("enabled", True)
-        stream.setdefault("inflation_adjustment_pct", 100.0)
+        stream.setdefault("adjustment_mode", "inflation")
+        stream.setdefault("adjustment_pct", float(stream.get("inflation_adjustment_pct", 100.0)))
+
+        if stream["adjustment_mode"] not in self.ADJUSTMENT_MODE_LABELS:
+            stream["adjustment_mode"] = "inflation"
 
         if stream["owner"] not in self._owner_values():
             stream["owner"] = self._default_owner()
@@ -163,10 +173,23 @@ class SpecialIncomeEditFrame(ttk.Frame):
             "end_age": 120,
             "taxable": True,
             "enabled": True,
-            "inflation_adjustment_pct": 100.0,
+            "adjustment_mode": "inflation",
+            "adjustment_pct": 100.0,
         }
         self.special_income_streams.append(stream)
         self._add_stream_row(stream)
+
+
+    def _set_adjustment_mode(self, stream, mode_var, pct_var, pct_entry, reset_rate=False):
+        mode = self.ADJUSTMENT_MODE_VALUES.get(mode_var.get(), "inflation")
+        stream["adjustment_mode"] = mode
+
+        if reset_rate:
+            pct = self.ADJUSTMENT_MODE_DEFAULTS[mode]
+            stream["adjustment_pct"] = pct
+            pct_var.set(str(pct))
+
+        pct_entry.configure(state="disabled" if mode == "none" else "normal")
 
 
     def _add_stream_row(self, stream):
@@ -181,7 +204,8 @@ class SpecialIncomeEditFrame(ttk.Frame):
         end_age_var = tk.StringVar(value=str(stream["end_age"]))
         taxable_var = tk.BooleanVar(value=bool(stream["taxable"]))
         enabled_var = tk.BooleanVar(value=bool(stream["enabled"]))
-        inflation_var = tk.StringVar(value=str(stream["inflation_adjustment_pct"]))
+        adjustment_mode_var = tk.StringVar(value=self.ADJUSTMENT_MODE_LABELS[stream["adjustment_mode"]])
+        adjustment_pct_var = tk.StringVar(value=str(stream["adjustment_pct"]))
 
         owner_combo = ttk.Combobox(
             self,
@@ -287,35 +311,59 @@ class SpecialIncomeEditFrame(ttk.Frame):
         taxable_check.grid(row=row, column=6, padx=5, pady=2, sticky="w")
         Tooltip(taxable_check, "Checked means taxable ordinary income; unchecked means non-taxable", font=("Arial", 11))
 
-        inflation_entry = ttk.Entry(
-            self,
-            textvariable=inflation_var,
-            width=12,
-            validate="focusout",
+        adjustment_mode_combo = ttk.Combobox(
+            self, textvariable=adjustment_mode_var, values=list(self.ADJUSTMENT_MODE_VALUES), width=12,
+            state="readonly", style="SpecialIncome.TCombobox"
+        )
+        adjustment_mode_combo.grid(row=row, column=7, padx=5, pady=2, sticky="w")
+        adjustment_mode_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
+        Tooltip(adjustment_mode_combo, "How this income changes over time", font=("Arial", 11))
+
+        adjustment_mode_combo = ttk.Combobox(
+            self, textvariable=adjustment_mode_var, values=list(self.ADJUSTMENT_MODE_VALUES), width=12,
+            state="readonly", style="SpecialIncome.TCombobox"
+        )
+        adjustment_mode_combo.grid(row=row, column=7, padx=5, pady=2, sticky="w")
+        adjustment_mode_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
+        Tooltip(
+            adjustment_mode_combo,
+            "Inflation adjusts by a percentage of inflation. Fixed Annual increases by a fixed percentage each year. "
+            "None applies no annual increase.",
+            font=("Arial", 11)
+        )
+
+        adjustment_pct_entry = ttk.Entry(
+            self, textvariable=adjustment_pct_var, width=12, validate="focusout",
             validatecommand=(
                 self.register(
-                    lambda proposed_value, s=stream, v=inflation_var:
-                        self._validate_float_field(
-                            proposed_value,
-                            s,
-                            "inflation_adjustment_pct",
-                            v,
-                            "100.0",
-                            "True",
-                        )
+                    lambda proposed_value, s=stream, v=adjustment_pct_var:
+                        self._validate_float_field(proposed_value, s, "adjustment_pct", v, "100.0", "True")
                 ),
                 "%P",
             ),
         )
-        inflation_entry.grid(row=row, column=7, padx=5, pady=2, sticky="w")
-        Tooltip(inflation_entry, "Percent of inflation adjustment. 100 = full inflation, 0 = none.", font=("Arial", 11))
+        adjustment_pct_entry.grid(row=row, column=8, padx=5, pady=2, sticky="w")
+        Tooltip(
+            adjustment_pct_entry,
+            "Inflation: percent of inflation adjustment; 100 = full inflation, 0 = none. "
+            "Fixed Annual: annual percentage increase; 5 = 5% per year.",
+            font=("Arial", 11)
+        )
+
+        adjustment_mode_var.trace_add(
+            "write",
+            lambda *_: self._set_adjustment_mode(
+                stream, adjustment_mode_var, adjustment_pct_var, adjustment_pct_entry, reset_rate=True
+            )
+        )
+        self._set_adjustment_mode(stream, adjustment_mode_var, adjustment_pct_var, adjustment_pct_entry)
 
         delete_button = ttk.Button(
             self,
             text="Delete",
             command=lambda s=stream: self._delete_stream(s),
         )
-        delete_button.grid(row=row, column=8, padx=5, pady=2, sticky="w")
+        delete_button.grid(row=row, column=9, padx=5, pady=2, sticky="w")
 
         owner_var.trace_add("write", lambda *_: stream.__setitem__("owner", owner_var.get()))
         name_var.trace_add("write", lambda *_: stream.__setitem__("name", name_var.get()))
@@ -332,7 +380,8 @@ class SpecialIncomeEditFrame(ttk.Frame):
                 "end_age": end_age_var,
                 "taxable": taxable_var,
                 "enabled": enabled_var,
-                "inflation_adjustment_pct": inflation_var,
+                "adjustment_mode": adjustment_mode_var,
+                "adjustment_pct": adjustment_pct_var,
             },
             "widgets": [
                 owner_combo,
@@ -342,7 +391,8 @@ class SpecialIncomeEditFrame(ttk.Frame):
                 end_age_entry,
                 enabled_check,
                 taxable_check,
-                inflation_entry,
+                adjustment_mode_combo,
+                adjustment_pct_entry,
                 delete_button,
             ],
         })
@@ -361,7 +411,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
         allow_negative_text,
     ):
         allow_negative = allow_negative_text == "True"
-        field_label = "Amount" if field_key == "amount" else "Inflation Adjustment"
+        field_label = "Amount" if field_key == "amount" else "Annual Increase Adjustment"
 
         try:
             parsed = parse_finite_float(

@@ -21,6 +21,7 @@ def make_config(
     plot_mode="nominal",
     overlay_retirement_age=False,
     second_person_enabled=False,
+    always_use_expense_mode=True,
 ):
     return types.SimpleNamespace(
         start_year=start_year,
@@ -28,6 +29,7 @@ def make_config(
         plot_mode=plot_mode,
         overlay_retirement_age=overlay_retirement_age,
         second_person_enabled=second_person_enabled,
+        always_use_expense_mode=always_use_expense_mode,
     )
 
 

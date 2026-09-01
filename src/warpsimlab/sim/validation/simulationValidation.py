@@ -10,6 +10,12 @@ ROTH_FLOW_TYPES = {
     "roth_conversion",
 }
 
+SPECIAL_INCOME_ADJUSTMENT_MODES = {
+    "inflation", 
+    "fixed", 
+    "none"
+}
+
 SIM_TYPES = {
     "income_sim",
     "cashflow_sim",
@@ -247,16 +253,7 @@ def _validate_special_income_streams(sim_config):
     streams = getattr(sim_config, "special_income_streams", None)
     _require(isinstance(streams, list), "special_income_streams must be a list.")
 
-    required_keys = {
-        "owner",
-        "name",
-        "amount",
-        "start_age",
-        "end_age",
-        "taxable",
-        "enabled",
-        "inflation_adjustment_pct",
-    }
+    required_keys = {"owner", "name", "amount", "start_age", "end_age", "taxable", "enabled"}
 
     for index, stream in enumerate(streams):
         name = f"special_income_streams[{index}]"
@@ -267,13 +264,19 @@ def _validate_special_income_streams(sim_config):
         _require_real(f"{name}.amount", stream["amount"], minimum=0.0)
         _require_integer(f"{name}.start_age", stream["start_age"], minimum=0)
         _require_integer(f"{name}.end_age", stream["end_age"], minimum=0)
-        _require(
-            stream["end_age"] >= stream["start_age"],
-            f"{name}.end_age must be greater than or equal to start_age.",
-        )
+        _require(stream["end_age"] >= stream["start_age"], f"{name}.end_age must be greater than or equal to start_age.")
         _require_bool(f"{name}.taxable", stream["taxable"])
         _require_bool(f"{name}.enabled", stream["enabled"])
-        _require_real(f"{name}.inflation_adjustment_pct", stream["inflation_adjustment_pct"])
+
+        has_new_adjustment = "adjustment_mode" in stream or "adjustment_pct" in stream
+
+        if has_new_adjustment:
+            _require_dict_keys(name, stream, {"adjustment_mode", "adjustment_pct"})
+            _require_choice(f"{name}.adjustment_mode", stream["adjustment_mode"], SPECIAL_INCOME_ADJUSTMENT_MODES)
+            _require_real(f"{name}.adjustment_pct", stream["adjustment_pct"])
+        else:
+            _require_dict_keys(name, stream, {"inflation_adjustment_pct"})
+            _require_real(f"{name}.inflation_adjustment_pct", stream["inflation_adjustment_pct"])
 
 
 def _validate_roth_flows(sim_config):
