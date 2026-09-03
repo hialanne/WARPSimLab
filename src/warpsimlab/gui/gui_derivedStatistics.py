@@ -96,11 +96,18 @@ class DerivedStatisticsFrame(ttk.Frame):
         summary_frame = ttk.LabelFrame(self, text="Balance Sheet Summary", padding=6)
         summary_frame.grid(row=1, column=0, sticky="nsew", padx=(5, 20), pady=(10, 8))
 
-        for col, text in enumerate(["", "Husband", "Wife", "Household", "% Wealth"]):
-            if text:
-                ttk.Label(summary_frame, text=text, font=("Arial", 10, "bold")).grid(
-                    row=0, column=col, sticky="w", padx=8, pady=(0, 5)
-                )
+        owners = [("Husband", "husband")]
+        if self.wife_portfolio is not None:
+            owners.append(("Wife", "wife"))
+        owners.append(("Household", "household"))
+
+        for col, (text, owner) in enumerate(owners, start=1):
+            ttk.Label(summary_frame, text=text, font=("Arial", 10, "bold")).grid(
+                row=0, column=col, sticky="w", padx=8, pady=(0, 5))
+
+        pct_col = len(owners) + 1
+        ttk.Label(summary_frame, text="% Wealth", font=("Arial", 10, "bold")).grid(
+            row=0, column=pct_col, sticky="w", padx=8, pady=(0, 5))
 
         for row, (label, key, bold) in enumerate([
             ("Investable Assets", "investable", False),
@@ -110,20 +117,18 @@ class DerivedStatisticsFrame(ttk.Frame):
             font = ("Arial", 10, "bold") if bold else None
             ttk.Label(summary_frame, text=label, font=font).grid(row=row, column=0, sticky="w", padx=8, pady=2)
 
-            for col, owner in enumerate(("husband", "wife", "household"), start=1):
+            for col, (text, owner) in enumerate(owners, start=1):
                 self._add_value_entry(summary_frame, row, col, f"summary_{key}_{owner}", bold=bold)
 
-            self._add_value_entry(summary_frame, row, 4, f"summary_{key}_pct", width=10, bold=bold)
+            self._add_value_entry(summary_frame, row, pct_col, f"summary_{key}_pct", width=10, bold=bold)
 
         overall_frame = ttk.LabelFrame(self, text="Overall Asset Allocation", padding=6)
         overall_frame.grid(row=1, column=1, sticky="nsew", padx=(20, 5), pady=(10, 8))
 
         ttk.Label(overall_frame, text="Dollars", font=("Arial", 10, "bold")).grid(
-            row=0, column=1, sticky="w", padx=8, pady=(0, 5)
-        )
+            row=0, column=1, sticky="w", padx=8, pady=(0, 5))
         ttk.Label(overall_frame, text="% Portfolio", font=("Arial", 10, "bold")).grid(
-            row=0, column=2, sticky="w", padx=8, pady=(0, 5)
-        )
+            row=0, column=2, sticky="w", padx=8, pady=(0, 5))
 
         for row, (label, key, bold) in enumerate([
             ("Stocks", "stocks", False),
@@ -142,8 +147,7 @@ class DerivedStatisticsFrame(ttk.Frame):
         for col, text in enumerate(["", "Dollars", "% Portfolio", "Stocks", "Bonds", "Cash"]):
             if text:
                 ttk.Label(bucket_frame, text=text, font=("Arial", 10, "bold")).grid(
-                    row=0, column=col, sticky="w", padx=8, pady=(0, 5)
-                )
+                    row=0, column=col, sticky="w", padx=8, pady=(0, 5))
 
         for row, (label, key, bold) in enumerate([
             ("Pre-Tax", "pre", False),
@@ -220,7 +224,8 @@ class DerivedStatisticsFrame(ttk.Frame):
 
         for key in ("investable", "real_estate", "wealth"):
             self.vars[f"summary_{key}_husband"].set(self._format_money(husband[key]))
-            self.vars[f"summary_{key}_wife"].set(self._format_money(wife[key]) if self.wife_portfolio else "--")
+            if self.wife_portfolio is not None:
+                self.vars[f"summary_{key}_wife"].set(self._format_money(wife[key]))
             self.vars[f"summary_{key}_household"].set(self._format_money(household[key]))
             self.vars[f"summary_{key}_pct"].set(self._safe_pct(household[key], household["wealth"]))
 

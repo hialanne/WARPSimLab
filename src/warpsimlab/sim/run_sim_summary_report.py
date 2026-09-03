@@ -1,17 +1,16 @@
 # run_sim_summary_report.py
 
-from datetime import datetime
 import os
+from datetime import datetime
 
+from .simulation import run_pipeline
+from src.warpsimlab.reports.report_data import SummaryReportData
+from src.warpsimlab.reports.summary_report import generate_summary_report
 from src.warpsimlab.reports.report_plot_helpers import (
     save_cumulative_operating_balance_report_plot,
     save_income_projection_report_plot,
     save_portfolio_projection_report_plot,
 )
-
-from .simulation import run_pipeline
-from src.warpsimlab.reports.report_data import SummaryReportData
-from src.warpsimlab.reports.summary_report import generate_summary_report
 
 
 def _get_report_option(report_options, path, default=False):
@@ -28,6 +27,7 @@ def _get_report_option(report_options, path, default=False):
 def _as_float(value, default=0.0):
     if value is None:
         return default
+
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -36,8 +36,10 @@ def _as_float(value, default=0.0):
 
 def _array_value(results, key, index, default=0.0):
     values = results.get(key)
+
     if values is None:
         return default
+
     try:
         return _as_float(values[index], default=default)
     except (IndexError, TypeError, ValueError):
@@ -47,12 +49,14 @@ def _array_value(results, key, index, default=0.0):
 def _clamp_index(index, length):
     if length <= 0:
         return 0
+
     return min(max(int(index), 0), length - 1)
 
 
 def _rate_fraction_to_percent(value):
     if value is None:
         return None
+
     return _as_float(value) * 100.0
 
 
@@ -95,12 +99,7 @@ def _build_portfolio_milestone(results, index):
     hsa_assets = _array_value(results, "hsa_assets", index)
     real_estate = _array_value(results, "real_estate", index)
 
-    total_portfolio = (
-        pre_tax_assets
-        + post_tax_assets
-        + roth_assets
-        + hsa_assets
-    )
+    total_portfolio = pre_tax_assets + post_tax_assets + roth_assets + hsa_assets
 
     return {
         "Year": _array_value(results, "year", index),
@@ -112,18 +111,14 @@ def _build_portfolio_milestone(results, index):
         "Real Estate": real_estate,
         "Total Assets": total_portfolio + real_estate,
     }
-    
+
 
 def _build_income_milestone(results, index):
     employee_401k_contribution = _array_value(results, "employee_401k_contributions", index)
     employee_hsa_contribution = _array_value(results, "hsa_employee_contributions", index)
 
     gross_wages = _array_value(results, "wages", index) + employee_401k_contribution + employee_hsa_contribution
-
-    pensions_and_annuities = (
-        _array_value(results, "pensions", index)
-        + _array_value(results, "annuities", index)
-    )
+    pensions_and_annuities = _array_value(results, "pensions", index) + _array_value(results, "annuities", index)
 
     investment_income = (
         _array_value(results, "bond_interest", index)
@@ -148,11 +143,7 @@ def _build_income_milestone(results, index):
 
         "Household Expenses": _array_value(results, "expenses", index),
         "Net Cash Flow": _array_value(results, "net_cash_flow", index),
-        "Cash Flow Shortfall": _array_value(
-            results,
-            "cash_flow_shortfall",
-            index,
-        ),
+        "Cash Flow Shortfall": _array_value(results, "cash_flow_shortfall", index),
         "Fund Expenses": _array_value(results, "fund_expenses", index),
     }
 
@@ -167,10 +158,7 @@ def _calculate_retirement_index(results, husband, wife, sim_config):
             getattr(wife, "retire_age", 0) - getattr(wife, "age", 0),
         )
     else:
-        retirement_index = (
-            getattr(husband, "retire_age", 0)
-            - getattr(husband, "age", 0)
-        )
+        retirement_index = getattr(husband, "retire_age", 0) - getattr(husband, "age", 0)
 
     return _clamp_index(retirement_index, length)
 
@@ -181,18 +169,9 @@ def _build_portfolio_milestones(results, husband, wife, sim_config):
     retirement_index = _calculate_retirement_index(results, husband, wife, sim_config)
 
     return {
-        "Start of Simulation": _build_portfolio_milestone(
-            results,
-            _clamp_index(0, length),
-        ),
-        "Retirement": _build_portfolio_milestone(
-            results,
-            retirement_index,
-        ),
-        "End of Simulation": _build_portfolio_milestone(
-            results,
-            _clamp_index(length - 1, length),
-        ),
+        "Start of Simulation": _build_portfolio_milestone(results, _clamp_index(0, length)),
+        "Retirement": _build_portfolio_milestone(results, retirement_index),
+        "End of Simulation": _build_portfolio_milestone(results, _clamp_index(length - 1, length)),
     }
 
 
@@ -208,14 +187,8 @@ def _build_income_milestones(results, husband, wife, sim_config):
 
     return {
         "First Income Year": _build_income_milestone(results, start_index),
-        "Year Before Retirement": _build_income_milestone(
-            results,
-            before_retirement_index,
-        ),
-        "Year After Retirement": _build_income_milestone(
-            results,
-            after_retirement_index,
-        ),
+        "Year Before Retirement": _build_income_milestone(results, before_retirement_index),
+        "Year After Retirement": _build_income_milestone(results, after_retirement_index),
         "End Simulation": _build_income_milestone(results, end_index),
     }
 
@@ -232,12 +205,7 @@ def _build_simulation_totals(results, simulated_shortfall_rate=None):
     if hsa_assets is None:
         hsa_assets = [0.0] * len(pre_tax_assets)
 
-    length = min(
-        len(pre_tax_assets),
-        len(post_tax_assets),
-        len(roth_assets),
-        len(hsa_assets),
-    )
+    length = min(len(pre_tax_assets), len(post_tax_assets), len(roth_assets), len(hsa_assets))
 
     total_portfolio = [
         _as_float(pre_tax_assets[i])
@@ -270,13 +238,7 @@ def _build_simulation_totals(results, simulated_shortfall_rate=None):
         "Taxes Paid": float(sum(results.get("taxes", []))),
         "Household Expenses": float(sum(results.get("expenses", []))),
         "Net Cash Flow": float(sum(results.get("net_cash_flow", []))),
-        "Total Cash Flow Shortfall": float(
-            sum(results.get("cash_flow_shortfall", []))
-        ),
-        "Fund Expenses": float(sum(results.get("fund_expenses", []))),
-        "Total Cash Flow Shortfall": float(
-            sum(results.get("cash_flow_shortfall", []))
-        ),
+        "Total Cash Flow Shortfall": float(sum(results.get("cash_flow_shortfall", []))),
         "Fund Expenses": float(sum(results.get("fund_expenses", []))),
         "Scenarios That Depleted Portfolio": simulated_shortfall_rate,
     }
@@ -292,9 +254,7 @@ def _build_simulation_snapshot(sim_config):
         "Start Year": getattr(sim_config, "start_year", None),
         "Years Simulated": getattr(sim_config, "years_to_simulate", None),
         "Projection End Year": projection_end_year,
-        "Inflation Rate": _rate_fraction_to_percent(
-            getattr(sim_config, "inflation_rate", None)
-        ),
+        "Inflation Rate": _rate_fraction_to_percent(getattr(sim_config, "inflation_rate", None)),
         "Plot Mode": getattr(sim_config, "plot_mode", None),
         "Second Person Enabled": getattr(sim_config, "second_person_enabled", None),
         "Taxes Enabled": getattr(sim_config, "calculate_income_taxes", None),
@@ -321,6 +281,7 @@ def _friendly_label(value):
         "None": "None",
         "Off": "Off",
     }
+
     return labels.get(value, value)
 
 
@@ -329,8 +290,10 @@ def _portfolio_amount(portfolio, *attrs):
         return 0.0
 
     total = 0.0
+
     for attr in attrs:
         total += _as_float(getattr(portfolio, attr, 0.0))
+
     return total
 
 
@@ -346,14 +309,13 @@ def _portfolio_total(portfolio, attrs):
 
 
 def _build_portfolio_inputs(husband_portfolio, wife_portfolio, sim_config):
-    show_wife = (
-        getattr(sim_config, "second_person_enabled", False)
-        and wife_portfolio is not None
-    )
+    show_wife = getattr(sim_config, "second_person_enabled", False) and wife_portfolio is not None
 
     portfolio_columns = ["Asset / Account Type", "Husband"]
+
     if show_wife:
         portfolio_columns.append("Wife")
+
     portfolio_columns.append("Total")
 
     asset_rows = [
@@ -402,10 +364,7 @@ def _build_portfolio_inputs(husband_portfolio, wife_portfolio, sim_config):
         wife_value = _portfolio_total(wife_portfolio, attrs) if show_wife else 0.0
         total_value = husband_value + wife_value
 
-        row = [
-            label,
-            _fmt_assumption_currency(husband_value),
-        ]
+        row = [label, _fmt_assumption_currency(husband_value)]
 
         if show_wife:
             row.append(_fmt_assumption_currency(wife_value))
@@ -421,9 +380,7 @@ def _build_portfolio_inputs(husband_portfolio, wife_portfolio, sim_config):
         },
         "Portfolio Settings": {
             "Fund Expenses Enabled": getattr(sim_config, "use_fund_expenses", None),
-            "Fund Expense Rate": _rate_fraction_to_percent(
-                getattr(sim_config, "fund_expense", None)
-            ),
+            "Fund Expense Rate": _rate_fraction_to_percent(getattr(sim_config, "fund_expense", None)),
             "Rebalance Strategy": _friendly_label(getattr(sim_config, "sim_initial_allocation_mode", None)),
             "Rebalance Every Year": getattr(sim_config, "rebalance_every_year", None),
         },
@@ -431,10 +388,7 @@ def _build_portfolio_inputs(husband_portfolio, wife_portfolio, sim_config):
 
 
 def _build_household_retirement_table(husband, wife, sim_config):
-    show_wife = (
-        getattr(sim_config, "second_person_enabled", False)
-        and wife is not None
-    )
+    show_wife = getattr(sim_config, "second_person_enabled", False) and wife is not None
 
     if show_wife:
         columns = ["Field", "Husband", "Wife", "Total"]
@@ -461,10 +415,7 @@ def _build_household_retirement_table(husband, wife, sim_config):
 
     for field_label, attr, formatter, include_total in fields:
         husband_raw = getattr(husband, attr, None)
-        row = [
-            field_label,
-            formatter(husband_raw),
-        ]
+        row = [field_label, formatter(husband_raw)]
 
         if show_wife:
             wife_raw = getattr(wife, attr, None)
@@ -497,19 +448,18 @@ def _build_expense_rows(expenses):
         raw_expenses = []
 
     rows = []
+
     for expense in raw_expenses:
         if not isinstance(expense, dict):
             continue
 
-        rows.append(
-            {
-                "Description": expense.get("comment") or "Expense",
-                "Start Year": expense.get("start_year"),
-                "End Year": expense.get("end_year") or "Ongoing",
-                "Annual Amount": expense.get("cost"),
-                "HSA Eligible": bool(expense.get("is_hsa_eligible", False)),
-            }
-        )
+        rows.append({
+            "Description": expense.get("comment") or "Expense",
+            "Start Year": expense.get("start_year"),
+            "End Year": expense.get("end_year") or "Ongoing",
+            "Annual Amount": expense.get("cost"),
+            "HSA Eligible": bool(expense.get("is_hsa_eligible", False)),
+        })
 
     return rows
 
@@ -558,23 +508,13 @@ def _build_withdrawal_assumptions(sim_config):
     mode = getattr(sim_config, "retirement_withdraw_mode", None)
     normalized_mode = str(mode or "").lower()
 
-    assumptions = {
-        "Withdrawal Method": _friendly_label(mode),
-    }
+    assumptions = {"Withdrawal Method": _friendly_label(mode)}
 
     if "percent" in normalized_mode or "percentage" in normalized_mode:
-        assumptions["Annual Withdrawal Rate"] = getattr(
-            sim_config,
-            "retirement_withdraw_pct",
-            None,
-        )
+        assumptions["Annual Withdrawal Rate"] = getattr(sim_config, "retirement_withdraw_pct", None)
 
     if "dollar" in normalized_mode:
-        assumptions["Fixed Annual Withdrawal"] = getattr(
-            sim_config,
-            "retirement_withdraw_dollars",
-            None,
-        )
+        assumptions["Fixed Annual Withdrawal"] = getattr(sim_config, "retirement_withdraw_dollars", None)
 
     return assumptions
 
@@ -601,23 +541,11 @@ def _build_withdrawal_settings(sim_config):
     }
 
     if "percent" in normalized_mode or "percentage" in normalized_mode:
-        settings["Withdrawal Percent"] = getattr(
-            sim_config,
-            "retirement_withdraw_pct",
-            None,
-        )
+        settings["Withdrawal Percent"] = getattr(sim_config, "retirement_withdraw_pct", None)
     elif "dollar" in normalized_mode:
-        settings["Withdrawal Dollar Amount"] = getattr(
-            sim_config,
-            "retirement_withdraw_dollars",
-            None,
-        )
+        settings["Withdrawal Dollar Amount"] = getattr(sim_config, "retirement_withdraw_dollars", None)
 
-    settings["Scenario Expense Multiplier"] = getattr(
-        sim_config,
-        "scenario_expense_multiplier",
-        None,
-    )
+    settings["Scenario Expense Multiplier"] = getattr(sim_config, "scenario_expense_multiplier", None)
 
     return settings
 
@@ -631,23 +559,14 @@ def _build_assumptions_summary(
     sim_config,
     report_options,
 ):
-    household = _build_household_retirement_table(
-        husband,
-        wife,
-        sim_config,
-    )
-
+    household = _build_household_retirement_table(husband, wife, sim_config)
     withdrawal_assumptions = _build_withdrawal_assumptions(sim_config)
     sequence_assumptions = _build_sequence_of_returns_assumptions(sim_config)
 
     assumptions = {
         "Household & Retirement": household,
 
-        "Portfolio Inputs": _build_portfolio_inputs(
-            husband_portfolio,
-            wife_portfolio,
-            sim_config,
-        ),
+        "Portfolio Inputs": _build_portfolio_inputs(husband_portfolio, wife_portfolio, sim_config),
 
         "Expense Inputs": {
             "type": "table",
@@ -662,38 +581,16 @@ def _build_assumptions_summary(
         },
 
         "Market & Inflation Assumptions": {
-            "Inflation Rate": _rate_fraction_to_percent(
-                getattr(sim_config, "inflation_rate", None)
-            ),
-            "Equity / Stock Mean Return": _rate_fraction_to_percent(
-                getattr(sim_config, "eq_mean", None)
-            ),
-            "Bond Mean Return": _rate_fraction_to_percent(
-                getattr(sim_config, "bd_mean", None)
-            ),
-            "Cash Mean Return": _rate_fraction_to_percent(
-                getattr(sim_config, "cs_mean", None)
-            ),
-            "Real Estate Mean Return": _rate_fraction_to_percent(
-                getattr(sim_config, "re_mean", None)
-            ),
-            "Equity / Stock Standard Deviation": _rate_fraction_to_percent(
-                getattr(sim_config, "eq_std", None)
-            ),
-            "Bond Standard Deviation": _rate_fraction_to_percent(
-                getattr(sim_config, "bd_std", None)
-            ),
-            "Cash Standard Deviation": _rate_fraction_to_percent(
-                getattr(sim_config, "cs_std", None)
-            ),
-            "Real Estate Standard Deviation": _rate_fraction_to_percent(
-                getattr(sim_config, "re_std", None)
-            ),
-            "Sequence Risk Enabled": getattr(
-                sim_config,
-                "sequence_risk_enabled",
-                None,
-            ),
+            "Inflation Rate": _rate_fraction_to_percent(getattr(sim_config, "inflation_rate", None)),
+            "Equity / Stock Mean Return": _rate_fraction_to_percent(getattr(sim_config, "eq_mean", None)),
+            "Bond Mean Return": _rate_fraction_to_percent(getattr(sim_config, "bd_mean", None)),
+            "Cash Mean Return": _rate_fraction_to_percent(getattr(sim_config, "cs_mean", None)),
+            "Real Estate Mean Return": _rate_fraction_to_percent(getattr(sim_config, "re_mean", None)),
+            "Equity / Stock Standard Deviation": _rate_fraction_to_percent(getattr(sim_config, "eq_std", None)),
+            "Bond Standard Deviation": _rate_fraction_to_percent(getattr(sim_config, "bd_std", None)),
+            "Cash Standard Deviation": _rate_fraction_to_percent(getattr(sim_config, "cs_std", None)),
+            "Real Estate Standard Deviation": _rate_fraction_to_percent(getattr(sim_config, "re_std", None)),
+            "Sequence Risk Enabled": getattr(sim_config, "sequence_risk_enabled", None),
         },
 
         "Tax Assumptions": {
@@ -716,19 +613,12 @@ def _build_assumptions_summary(
 
 
 def _get_report_output_folder():
-    return os.path.join(
-        os.path.expanduser("~"),
-        "Desktop",
-        "WARPSimLab",
-        "Reports",
-    )
+    return os.path.join(os.path.expanduser("~"), "Desktop", "WARPSimLab", "Reports")
 
 
 def _safe_report_id(report_id):
-    return "".join(
-        ch if ch.isalnum() or ch in {"-", "_"} else "_"
-        for ch in str(report_id)
-    )
+    return "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in str(report_id))
+
 
 def _save_portfolio_plot_with_temporary_modes(
     husband_portfolio,
@@ -744,15 +634,20 @@ def _save_portfolio_plot_with_temporary_modes(
     sim_type,
     monte_carlo_mode=None,
     force_num_sims=None,
+    calculate_simulated_shortfall_rate=True,
+    simulated_shortfall_rate=None,
+    save_plot=True,
 ):
     original_subplot_mode = getattr(sim_config, "subplot_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
     original_monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", None)
     original_include_realestate = getattr(sim_config, "include_realestate", None)
+    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
     try:
         sim_config.subplot_mode = subplot_mode
         sim_config.sim_type = sim_type
+        sim_config.calculate_simulated_shortfall_rate = calculate_simulated_shortfall_rate
 
         if monte_carlo_mode is not None:
             sim_config.monte_carlo_mode = monte_carlo_mode
@@ -773,24 +668,26 @@ def _save_portfolio_plot_with_temporary_modes(
 
         p["portfolio_plot_data"].total_label = "Total Portfolio"
 
-        image_path = save_portfolio_projection_report_plot(
-            output_folder=output_folder,
-            filename=filename,
-            years_list=p["years_list"],
-            portfolio_plot_data=p["portfolio_plot_data"],
-            sim_config=sim_config,
-            husband=husband,
-            wife=wife,
-            summary_results=None,
-        )
+        if simulated_shortfall_rate is not None:
+            p["portfolio_plot_data"].simulated_shortfall_rate = simulated_shortfall_rate
+
+        image_path = None
+
+        if save_plot:
+            image_path = save_portfolio_projection_report_plot(
+                output_folder=output_folder,
+                filename=filename,
+                years_list=p["years_list"],
+                portfolio_plot_data=p["portfolio_plot_data"],
+                sim_config=sim_config,
+                husband=husband,
+                wife=wife,
+                summary_results=None,
+            )
 
         return {
             "image_path": image_path,
-            "simulated_shortfall_rate": getattr(
-                p["portfolio_plot_data"],
-                "simulated_shortfall_rate",
-                None,
-            ),
+            "simulated_shortfall_rate": getattr(p["portfolio_plot_data"], "simulated_shortfall_rate", None),
         }
 
     finally:
@@ -798,6 +695,7 @@ def _save_portfolio_plot_with_temporary_modes(
         sim_config.sim_type = original_sim_type
         sim_config.monte_carlo_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
+        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
 
 def _save_income_plot_with_temporary_modes(
@@ -816,10 +714,12 @@ def _save_income_plot_with_temporary_modes(
 ):
     original_subplot_mode = getattr(sim_config, "subplot_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
+    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
     try:
         sim_config.subplot_mode = subplot_mode
         sim_config.sim_type = sim_type
+        sim_config.calculate_simulated_shortfall_rate = False
 
         p = run_pipeline(
             husband_portfolio,
@@ -830,15 +730,10 @@ def _save_income_plot_with_temporary_modes(
             sim_config,
             force_num_sims=force_num_sims,
         )
+
         breakdown = p["breakdown_by_class"]
 
-        income_keys = [
-            "work",
-            "pension",
-            "annuity",
-            "ss",
-            "special_income",
-        ]
+        income_keys = ["work", "pension", "annuity", "ss", "special_income"]
 
         cashflow_extra_keys = [
             "rmd",
@@ -850,15 +745,10 @@ def _save_income_plot_with_temporary_modes(
         ]
 
         if sim_type == "income_sim":
-            plot_breakdown = {
-                key: breakdown[key].copy()
-                for key in income_keys
-            }
+            plot_breakdown = {key: breakdown[key].copy() for key in income_keys}
 
         elif sim_type == "cashflow_sim":
-            plot_breakdown = {
-                "income": sum(breakdown[key] for key in income_keys)
-            }
+            plot_breakdown = {"income": sum(breakdown[key] for key in income_keys)}
 
             for key in cashflow_extra_keys:
                 plot_breakdown[key] = breakdown[key].copy()
@@ -885,6 +775,7 @@ def _save_income_plot_with_temporary_modes(
     finally:
         sim_config.subplot_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
+        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
 
 def _build_report_plot_assets(
@@ -901,21 +792,52 @@ def _build_report_plot_assets(
 ):
     output_folder = _get_report_output_folder()
     safe_report_id = _safe_report_id(report_id)
-    assets_folder = os.path.join(
-        output_folder,
-        f"executive_summary_{safe_report_id}_assets",
-    )
+    assets_folder = os.path.join(output_folder, f"executive_summary_{safe_report_id}_assets")
 
     plot_assets = {}
-    report_shortfall_rate = p["summary_results"].get(
-        "simulated_shortfall_rate"
+    report_shortfall_rate = None
+
+    include_historical_windows = _get_report_option(
+        report_options, ["portfolio_visuals", "include_historical_windows_analysis"], False
     )
 
-    if _get_report_option(
-        report_options,
-        ["portfolio_visuals", "include_normal_projection"],
-        False,
-    ):
+    # Run Historical Windows once if needed either for the shortfall rate or the plot.
+    if sim_config.show_simulated_shortfall_rate or include_historical_windows:
+        try:
+            plot_result = _save_portfolio_plot_with_temporary_modes(
+                husband_portfolio,
+                wife_portfolio,
+                husband,
+                wife,
+                expenses,
+                sim_config,
+                output_folder=assets_folder,
+                filename="historical_windows_analysis.png",
+                subplot_mode="monte_carlo",
+                sim_type="portfolio_sim",
+                monte_carlo_mode="rollingHistoricalWindows",
+                force_num_sims=None,
+                calculate_simulated_shortfall_rate=True,
+                save_plot=include_historical_windows,
+            )
+
+            if sim_config.show_simulated_shortfall_rate:
+                report_shortfall_rate = plot_result["simulated_shortfall_rate"]
+
+            if include_historical_windows:
+                plot_assets["historical_windows_analysis"] = {
+                    "path": plot_result["image_path"],
+                    "title": "Historical Windows Analysis",
+                    "alt": "Historical rolling-window portfolio projection range",
+                }
+
+        except Exception as exc:
+            if include_historical_windows:
+                warnings.append(f"Historical Windows plot could not be generated: {exc}")
+            else:
+                warnings.append(f"Historical Windows depletion rate could not be calculated: {exc}")
+
+    if _get_report_option(report_options, ["portfolio_visuals", "include_normal_projection"], False):
         try:
             plot_result = _save_portfolio_plot_with_temporary_modes(
                 husband_portfolio,
@@ -930,27 +852,22 @@ def _build_report_plot_assets(
                 sim_type="portfolio_sim",
                 monte_carlo_mode=None,
                 force_num_sims=1,
+                calculate_simulated_shortfall_rate=False,
+                simulated_shortfall_rate=report_shortfall_rate,
             )
-            image_path = plot_result["image_path"]
-            
+
             plot_assets["portfolio_projection"] = {
-                "path": image_path,
+                "path": plot_result["image_path"],
                 "title": "Portfolio Projection",
                 "alt": "Portfolio projection over the simulated period",
             }
 
         except Exception as exc:
-            warnings.append(
-                f"Portfolio projection plot could not be generated: {exc}"
-            )
+            warnings.append(f"Portfolio projection plot could not be generated: {exc}")
 
-    if _get_report_option(
-        report_options,
-        ["portfolio_visuals", "include_subcategories_projection"],
-        False,
-    ):
+    if _get_report_option(report_options, ["portfolio_visuals", "include_subcategories_projection"], False):
         try:
-            plot_result  = _save_portfolio_plot_with_temporary_modes(
+            plot_result = _save_portfolio_plot_with_temporary_modes(
                 husband_portfolio,
                 wife_portfolio,
                 husband,
@@ -962,25 +879,20 @@ def _build_report_plot_assets(
                 subplot_mode="sub_categories",
                 sim_type="portfolio_sim",
                 force_num_sims=1,
+                calculate_simulated_shortfall_rate=False,
+                simulated_shortfall_rate=report_shortfall_rate,
             )
-            image_path = plot_result["image_path"]
 
             plot_assets["subcategories_projection"] = {
-                "path": image_path,
+                "path": plot_result["image_path"],
                 "title": "Portfolio Subcategories",
                 "alt": "Portfolio projection by asset subcategory",
             }
 
         except Exception as exc:
-            warnings.append(
-                f"Portfolio subcategories plot could not be generated: {exc}"
-            )
+            warnings.append(f"Portfolio subcategories plot could not be generated: {exc}")
 
-    if _get_report_option(
-        report_options,
-        ["income_visuals", "include_normal_income"],
-        False,
-    ):
+    if _get_report_option(report_options, ["income_visuals", "include_normal_income"], False):
         try:
             image_path = _save_income_plot_with_temporary_modes(
                 husband_portfolio,
@@ -1003,15 +915,9 @@ def _build_report_plot_assets(
             }
 
         except Exception as exc:
-            warnings.append(
-                f"Income projection plot could not be generated: {exc}"
-            )
+            warnings.append(f"Income projection plot could not be generated: {exc}")
 
-    if _get_report_option(
-        report_options,
-        ["income_visuals", "include_subcategories_income"],
-        False,
-    ):
+    if _get_report_option(report_options, ["income_visuals", "include_subcategories_income"], False):
         try:
             image_path = _save_income_plot_with_temporary_modes(
                 husband_portfolio,
@@ -1034,15 +940,9 @@ def _build_report_plot_assets(
             }
 
         except Exception as exc:
-            warnings.append(
-                f"Income subcategory plot could not be generated: {exc}"
-            )
+            warnings.append(f"Income subcategory plot could not be generated: {exc}")
 
-    if _get_report_option(
-        report_options,
-        ["cashflow_visuals", "include_normal_cashflow"],
-        False,
-    ):
+    if _get_report_option(report_options, ["cashflow_visuals", "include_normal_cashflow"], False):
         try:
             image_path = _save_income_plot_with_temporary_modes(
                 husband_portfolio,
@@ -1065,15 +965,9 @@ def _build_report_plot_assets(
             }
 
         except Exception as exc:
-            warnings.append(
-                f"Cash Flow projection plot could not be generated: {exc}"
-            )
+            warnings.append(f"Cash Flow projection plot could not be generated: {exc}")
 
-    if _get_report_option(
-        report_options,
-        ["cashflow_visuals", "include_subcategories_cashflow"],
-        False,
-    ):
+    if _get_report_option(report_options, ["cashflow_visuals", "include_subcategories_cashflow"], False):
         try:
             image_path = _save_income_plot_with_temporary_modes(
                 husband_portfolio,
@@ -1096,14 +990,10 @@ def _build_report_plot_assets(
             }
 
         except Exception as exc:
-            warnings.append(
-                f"Cash Flow subcategory plot could not be generated: {exc}"
-            )
+            warnings.append(f"Cash Flow subcategory plot could not be generated: {exc}")
 
     if _get_report_option(
-        report_options,
-        ["operating_balance_visuals", "include_cumulative_operating_balance"],
-        True,
+        report_options, ["operating_balance_visuals", "include_cumulative_operating_balance"], True
     ):
         try:
             image_path = save_cumulative_operating_balance_report_plot(
@@ -1124,15 +1014,9 @@ def _build_report_plot_assets(
             }
 
         except Exception as exc:
-            warnings.append(
-                f"Cumulative operating balance plot could not be generated: {exc}"
-            )
+            warnings.append(f"Cumulative operating balance plot could not be generated: {exc}")
 
-    if _get_report_option(
-        report_options,
-        ["portfolio_visuals", "include_monte_carlo_analysis"],
-        False,
-    ):
+    if _get_report_option(report_options, ["portfolio_visuals", "include_monte_carlo_analysis"], False):
         try:
             plot_result = _save_portfolio_plot_with_temporary_modes(
                 husband_portfolio,
@@ -1148,10 +1032,9 @@ def _build_report_plot_assets(
                 monte_carlo_mode="pathBasedAnnualSampling",
                 force_num_sims=None,
             )
-            image_path = plot_result["image_path"]
 
             plot_assets["monte_carlo_analysis"] = {
-                "path": image_path,
+                "path": plot_result["image_path"],
                 "title": "Monte Carlo Analysis",
                 "alt": "Monte Carlo portfolio projection range",
             }
@@ -1159,38 +1042,8 @@ def _build_report_plot_assets(
         except Exception as exc:
             warnings.append(f"Monte Carlo plot could not be generated: {exc}")
 
-    if _get_report_option(
-        report_options,
-        ["portfolio_visuals", "include_historical_windows_analysis"],
-        False,
-    ):
-        try:
-            plot_result = _save_portfolio_plot_with_temporary_modes(
-                husband_portfolio,
-                wife_portfolio,
-                husband,
-                wife,
-                expenses,
-                sim_config,
-                output_folder=assets_folder,
-                filename="historical_windows_analysis.png",
-                subplot_mode="monte_carlo",
-                sim_type="portfolio_sim",
-                monte_carlo_mode="rollingHistoricalWindows",
-                force_num_sims=None,
-            )
-            image_path = plot_result["image_path"]
-
-            plot_assets["historical_windows_analysis"] = {
-                "path": image_path,
-                "title": "Historical Windows Analysis",
-                "alt": "Historical rolling-window portfolio projection range",
-            }
-
-        except Exception as exc:
-            warnings.append(f"Historical Windows plot could not be generated: {exc}")
-
     return plot_assets, report_shortfall_rate
+
 
 def _fmt_assumption_currency(value):
     if value is None:
@@ -1230,9 +1083,11 @@ def build_summary_report_data_from_pipeline(
     sim_config,
 ):
     original_include_realestate = sim_config.include_realestate
+    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
     try:
         sim_config.include_realestate = True
+        sim_config.calculate_simulated_shortfall_rate = False
 
         p = run_pipeline(
             husband_portfolio,
@@ -1243,8 +1098,10 @@ def build_summary_report_data_from_pipeline(
             sim_config,
             force_num_sims=1,
         )
+
     finally:
         sim_config.include_realestate = original_include_realestate
+        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
     results = p["summary_results"]
     report_options = dict(getattr(sim_config, "report_options", {}) or {})
@@ -1280,24 +1137,13 @@ def build_summary_report_data_from_pipeline(
         },
         simulation_snapshot=_build_simulation_snapshot(sim_config),
         results_summary={
-            "portfolio_milestones": _build_portfolio_milestones(
-                results,
-                husband,
-                wife,
-                sim_config,
-            ),
-            "income_milestones": _build_income_milestones(
-                results,
-                husband,
-                wife,
-                sim_config,
-            ),
+            "portfolio_milestones": _build_portfolio_milestones(results, husband, wife, sim_config),
+            "income_milestones": _build_income_milestones(results, husband, wife, sim_config),
             "simulation_totals": _build_simulation_totals(
                 results,
                 simulated_shortfall_rate=report_shortfall_rate,
             ),
         },
-
         assumptions_summary=_build_assumptions_summary(
             husband,
             wife,
@@ -1307,7 +1153,6 @@ def build_summary_report_data_from_pipeline(
             sim_config,
             report_options,
         ),
-
         monte_carlo_summary=None,
         historical_windows_summary=None,
         plot_assets=plot_assets,

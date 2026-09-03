@@ -1,18 +1,17 @@
 # run_sim_risk_reports.py
 
-from datetime import datetime
 import os
+from datetime import datetime
 
 import numpy as np
 
 from src.warpsimlab.reports.report_data import RiskReportData
 from src.warpsimlab.reports.risk_report import generate_risk_report
-
-
 from src.warpsimlab.reports.report_plot_helpers import (
     save_portfolio_projection_report_plot,
     save_historical_window_highlight_report_plot,
 )
+
 
 def _run_risk_pipeline_with_temporary_modes(
     husband_portfolio,
@@ -30,11 +29,8 @@ def _run_risk_pipeline_with_temporary_modes(
     original_sim_type = getattr(sim_config, "sim_type", None)
     original_monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", None)
     original_include_realestate = getattr(sim_config, "include_realestate", None)
-    original_show_simulated_shortfall_rate = getattr(
-        sim_config,
-        "show_simulated_shortfall_rate",
-        None,
-    )
+    original_show_simulated_shortfall_rate = getattr(sim_config, "show_simulated_shortfall_rate", None)
+    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
     try:
         sim_config.subplot_mode = "monte_carlo"
@@ -47,9 +43,10 @@ def _run_risk_pipeline_with_temporary_modes(
         # Real estate is excluded by default to match Monte Carlo and Historical Window plots.
         sim_config.include_realestate = False
 
-        # Risk reports will calculate failure statistics from the primary
-        # multi-path result. Do not let run_pipeline launch any extra helper runs.
+        # Risk reports calculate failure statistics from the primary multi-path result.
+        # Do not let run_pipeline launch any extra helper runs.
         sim_config.show_simulated_shortfall_rate = False
+        sim_config.calculate_simulated_shortfall_rate = False
 
         result = run_pipeline(
             husband_portfolio,
@@ -75,6 +72,7 @@ def _run_risk_pipeline_with_temporary_modes(
         sim_config.monte_carlo_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
         sim_config.show_simulated_shortfall_rate = original_show_simulated_shortfall_rate
+        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
 
 def _as_float(value, default=0.0):
@@ -87,14 +85,17 @@ def _as_float(value, default=0.0):
 def _rate(success_count, total_count):
     if total_count <= 0:
         return 0.0
+
     return 100.0 * float(success_count) / float(total_count)
 
 
 def _safe_report_method(monte_carlo_mode):
     if monte_carlo_mode == "rollingHistoricalWindows":
         return "Historical Windows"
+
     if monte_carlo_mode == "pathBasedAnnualSampling":
         return "Monte Carlo"
+
     return str(monte_carlo_mode)
 
 
@@ -128,53 +129,21 @@ def _build_simulation_snapshot(sim_config, method, scenario_count):
         "Years Simulated": getattr(sim_config, "years_to_simulate", None),
         "Plot Mode": getattr(sim_config, "plot_mode", None),
         "Monte Carlo Mode": getattr(sim_config, "monte_carlo_mode", None),
-        "Historical Asset Returns File": getattr(
-            sim_config,
-            "historical_asset_returns_file",
-            None,
-        ),
-        "Historical Inflation File": getattr(
-            sim_config,
-            "historical_inflation_file",
-            None,
-        ),
-        "Historical Window Mode": getattr(
-            sim_config,
-            "historical_window_mode",
-            None,
-        ),
+        "Historical Asset Returns File": getattr(sim_config, "historical_asset_returns_file", None),
+        "Historical Inflation File": getattr(sim_config, "historical_inflation_file", None),
+        "Historical Window Mode": getattr(sim_config, "historical_window_mode", None),
     }
 
     if method == "Monte Carlo":
         snapshot["Sampling Method"] = "Path-Based Annual Sampling"
-        snapshot["Correlated Returns"] = bool(
-            getattr(sim_config, "use_correlated_returns", True)
-        )
-        snapshot["Sequence Risk"] = bool(
-            getattr(sim_config, "sequence_risk_enabled", False)
-        )
-        snapshot["Random Seed"] = getattr(
-            sim_config,
-            "_mc_seed",
-            None,
-        )
+        snapshot["Correlated Returns"] = bool(getattr(sim_config, "use_correlated_returns", True))
+        snapshot["Sequence Risk"] = bool(getattr(sim_config, "sequence_risk_enabled", False))
+        snapshot["Random Seed"] = getattr(sim_config, "_mc_seed", None)
 
         if snapshot["Sequence Risk"]:
-            snapshot["Sequence Risk Timing"] = getattr(
-                sim_config,
-                "sequence_risk_timing",
-                None,
-            )
-            snapshot["Sequence Risk Length"] = getattr(
-                sim_config,
-                "sequence_risk_length",
-                None,
-            )
-            snapshot["Sequence Risk Depth"] = getattr(
-                sim_config,
-                "sequence_risk_depth",
-                None,
-            )
+            snapshot["Sequence Risk Timing"] = getattr(sim_config, "sequence_risk_timing", None)
+            snapshot["Sequence Risk Length"] = getattr(sim_config, "sequence_risk_length", None)
+            snapshot["Sequence Risk Depth"] = getattr(sim_config, "sequence_risk_depth", None)
 
     return snapshot
 
@@ -198,7 +167,6 @@ def _build_failure_statistics(total_assets, years):
     years = np.asarray(years)
 
     scenario_count = int(total_assets.shape[0])
-
     failed_mask = np.any(total_assets <= 0.0, axis=1)
     failure_count = int(np.sum(failed_mask))
     success_count = int(scenario_count - failure_count)
@@ -207,6 +175,7 @@ def _build_failure_statistics(total_assets, years):
 
     for path in total_assets[failed_mask]:
         failure_year = _first_failure_year(path, years)
+
         if failure_year is not None:
             failure_years.append(failure_year)
 
@@ -272,6 +241,7 @@ def _build_historical_insights(core, total_assets, failure_statistics):
     valid_indices = np.where(start_years >= 0)[0]
 
     rows = []
+
     for index in valid_indices:
         path = total_assets[index]
         depleted = bool(np.any(path <= 0.0))
@@ -299,11 +269,7 @@ def _build_historical_insights(core, total_assets, failure_statistics):
         depletion_index = first_depletion_index(path)
         path_total = float(np.sum(path))
 
-        return (
-            row["Ending Portfolio"],
-            depletion_index,
-            path_total,
-        )
+        return row["Ending Portfolio"], depletion_index, path_total
 
     def worst_sort_key(row):
         index = row["Index"]
@@ -312,22 +278,10 @@ def _build_historical_insights(core, total_assets, failure_statistics):
         depletion_index = first_depletion_index(path)
         path_total = float(np.sum(path))
 
-        return (
-            depletion_index,
-            path_total,
-            row["Ending Portfolio"],
-        )
+        return depletion_index, path_total, row["Ending Portfolio"]
 
-    sorted_best = sorted(
-        rows,
-        key=best_sort_key,
-        reverse=True,
-    )
-
-    sorted_worst = sorted(
-        rows,
-        key=worst_sort_key,
-    )
+    sorted_best = sorted(rows, key=best_sort_key, reverse=True)
+    sorted_worst = sorted(rows, key=worst_sort_key)
 
     best = sorted_best[:5]
     worst = sorted_worst[:5]
@@ -345,16 +299,11 @@ def _build_historical_insights(core, total_assets, failure_statistics):
 
 
 def _generate_historical_commentary(failure_statistics, ending_values):
-    shortfall_rate = _as_float(
-        failure_statistics.get("Simulated Shortfall Rate")
-    )
-
+    shortfall_rate = _as_float(failure_statistics.get("Simulated Shortfall Rate"))
     ending_values = np.asarray(ending_values, dtype=float)
 
     if len(ending_values) == 0:
-        return [
-            "Historical Window results were not available for interpretation."
-        ]
+        return ["Historical Window results were not available for interpretation."]
 
     worst = float(np.min(ending_values))
     median = float(np.median(ending_values))
@@ -391,19 +340,11 @@ def _generate_historical_commentary(failure_statistics, ending_values):
 
 
 def _get_report_output_folder():
-    return os.path.join(
-        os.path.expanduser("~"),
-        "Desktop",
-        "WARPSimLab",
-        "Reports",
-    )
+    return os.path.join(os.path.expanduser("~"), "Desktop", "WARPSimLab", "Reports")
 
 
 def _safe_report_id(report_id):
-    return "".join(
-        ch if ch.isalnum() or ch in {"-", "_"} else "_"
-        for ch in str(report_id)
-    )
+    return "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in str(report_id))
 
 
 def _build_risk_plot_assets(
@@ -416,14 +357,8 @@ def _build_risk_plot_assets(
     historical_insights=None,
 ):
     output_folder = _get_report_output_folder()
-    safe_report_id = _safe_report_id(
-        report_metadata.get("Report ID", "risk_report")
-    )
-
-    assets_folder = os.path.join(
-        output_folder,
-        f"risk_report_{safe_report_id}_assets",
-    )
+    safe_report_id = _safe_report_id(report_metadata.get("Report ID", "risk_report"))
+    assets_folder = os.path.join(output_folder, f"risk_report_{safe_report_id}_assets")
 
     plot_assets = {}
 
@@ -446,14 +381,9 @@ def _build_risk_plot_assets(
         }
 
     except Exception as exc:
-        warnings.append(
-            f"Portfolio range projection plot could not be generated: {exc}"
-        )
+        warnings.append(f"Portfolio range projection plot could not be generated: {exc}")
 
-    if (
-        getattr(sim_config, "monte_carlo_mode", None) == "rollingHistoricalWindows"
-        and historical_insights
-    ):
+    if getattr(sim_config, "monte_carlo_mode", None) == "rollingHistoricalWindows" and historical_insights:
         try:
             core = pipeline_result["core"]
 
@@ -475,9 +405,7 @@ def _build_risk_plot_assets(
             }
 
         except Exception as exc:
-            warnings.append(
-                f"Historical Window insight plot could not be generated: {exc}"
-            )
+            warnings.append(f"Historical Window insight plot could not be generated: {exc}")
 
     return plot_assets
 
@@ -514,44 +442,28 @@ def _build_and_generate_risk_report(
     }
 
     if method == "Historical Windows":
-        start_years = np.asarray(
-            core.get("historical_window_start_year", []),
-            dtype=int,
-        )
-
+        start_years = np.asarray(core.get("historical_window_start_year", []), dtype=int)
         valid_start_years = start_years[start_years >= 0]
 
         analysis_summary["Historical Window Count"] = scenario_count
 
         if len(valid_start_years) > 0:
-            analysis_summary["Earliest Simulation Start Year"] = int(
-                np.min(valid_start_years)
-            )
-            analysis_summary["Latest Simulation Start Year"] = int(
-                np.max(valid_start_years)
-            )
+            analysis_summary["Earliest Simulation Start Year"] = int(np.min(valid_start_years))
+            analysis_summary["Latest Simulation Start Year"] = int(np.max(valid_start_years))
 
     historical_insights = {}
 
     if method == "Historical Windows":
-        historical_insights = _build_historical_insights(
-            core,
-            total_assets,
-            failure_statistics,
-        )
+        historical_insights = _build_historical_insights(core, total_assets, failure_statistics)
 
         best_years = historical_insights.get("Best Retirement Years", [])
         worst_years = historical_insights.get("Worst Retirement Years", [])
 
         if best_years:
-            analysis_summary["Best Historical Retirement Start Year"] = (
-                best_years[0]["Retirement Start Year"]
-            )
+            analysis_summary["Best Historical Retirement Start Year"] = best_years[0]["Retirement Start Year"]
 
         if worst_years:
-            analysis_summary["Worst Historical Retirement Start Year"] = (
-                worst_years[0]["Retirement Start Year"]
-            )
+            analysis_summary["Worst Historical Retirement Start Year"] = worst_years[0]["Retirement Start Year"]
 
     report_options = getattr(sim_config, "report_options", {})
 
@@ -576,24 +488,16 @@ def _build_and_generate_risk_report(
     report_data = RiskReportData(
         report_options=report_options,
         report_metadata=report_metadata,
-        simulation_snapshot=_build_simulation_snapshot(
-            sim_config,
-            method,
-            scenario_count,
-        ),
+        simulation_snapshot=_build_simulation_snapshot(sim_config, method, scenario_count),
         analysis_summary=analysis_summary,
-
         historical_insights=historical_insights,
-
         percentile_table=_build_percentile_table(total_assets, years),
         failure_statistics=failure_statistics,
         plot_assets=plot_assets,
         warnings=warnings,
     )
 
-    result = generate_risk_report(report_data)
-
-    return result
+    return generate_risk_report(report_data)
 
 
 def run_sim_historical_window_risk_report(

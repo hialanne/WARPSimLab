@@ -39,8 +39,7 @@ def _build_projection_period_label(sim_config):
     try:
         start_year = int(start_year)
         years = int(years)
-        end_year = start_year + years
-        return f"{start_year}-{end_year} ({years} Years)"
+        return f"{start_year}-{start_year + years} ({years} Years)"
     except (TypeError, ValueError):
         return "N/A"
 
@@ -74,17 +73,8 @@ def _build_year_row(results, index, husband, wife, sim_config):
     hsa_assets = _array_value(results, "hsa_assets", index)
     real_estate = _array_value(results, "real_estate", index)
 
-    total_portfolio = (
-        pre_tax_assets
-        + post_tax_assets
-        + roth_assets
-        + hsa_assets
-    )
-
-    pensions_and_annuities = (
-        _array_value(results, "pensions", index)
-        + _array_value(results, "annuities", index)
-    )
+    total_portfolio = pre_tax_assets + post_tax_assets + roth_assets + hsa_assets
+    pensions_and_annuities = _array_value(results, "pensions", index) + _array_value(results, "annuities", index)
 
     employee_401k_contributions = _array_value(results, "employee_401k_contributions", index)
     hsa_employee_contributions = _array_value(results, "hsa_employee_contributions", index)
@@ -104,26 +94,10 @@ def _build_year_row(results, index, husband, wife, sim_config):
 
         "Bond Interest": _array_value(results, "bond_interest", index),
         "Cash Interest": _array_value(results, "cash_interest", index),
-        "Qualified Equity Distribution": _array_value(
-            results,
-            "qualified_equity_distributions",
-            index,
-        ),
-        "Retirement Withdrawals": _array_value(
-            results,
-            "withdrawal",
-            index,
-        ),
-        "Cash Flow Shortfall": _array_value(
-            results,
-            "cash_flow_shortfall",
-            index,
-        ),
-        "Emergency Pre-Tax Withdrawal": _array_value(
-            results,
-            "emergency_pre_tax_used",
-            index,
-        ),
+        "Qualified Equity Distribution": _array_value(results, "qualified_equity_distributions", index),
+        "Retirement Withdrawals": _array_value(results, "withdrawal", index),
+        "Cash Flow Shortfall": _array_value(results, "cash_flow_shortfall", index),
+        "Emergency Pre-Tax Withdrawal": _array_value(results, "emergency_pre_tax_used", index),
 
         "Gross Income": _array_value(results, "gross_income", index),
 
@@ -143,55 +117,19 @@ def _build_year_row(results, index, husband, wife, sim_config):
 
         "Fund Expenses": _array_value(results, "fund_expenses", index),
 
-        "Pre-Tax Equity": _array_value(
-            results,
-            "pre_tax_equity",
-            index,
-        ),
-        "Pre-Tax Bonds": _array_value(
-            results,
-            "pre_tax_bonds",
-            index,
-        ),
-        "Pre-Tax Cash": _array_value(
-            results,
-            "pre_tax_cash",
-            index,
-        ),
+        "Pre-Tax Equity": _array_value(results, "pre_tax_equity", index),
+        "Pre-Tax Bonds": _array_value(results, "pre_tax_bonds", index),
+        "Pre-Tax Cash": _array_value(results, "pre_tax_cash", index),
         "Pre-Tax Assets": pre_tax_assets,
 
-        "Post-Tax Equity": _array_value(
-            results,
-            "post_tax_equity",
-            index,
-        ),
-        "Post-Tax Bonds": _array_value(
-            results,
-            "post_tax_bonds",
-            index,
-        ),
-        "Post-Tax Cash": _array_value(
-            results,
-            "post_tax_cash",
-            index,
-        ),
+        "Post-Tax Equity": _array_value(results, "post_tax_equity", index),
+        "Post-Tax Bonds": _array_value(results, "post_tax_bonds", index),
+        "Post-Tax Cash": _array_value(results, "post_tax_cash", index),
         "Post-Tax Assets": post_tax_assets,
 
-        "Roth Equity": _array_value(
-            results,
-            "roth_equity",
-            index,
-        ),
-        "Roth Bonds": _array_value(
-            results,
-            "roth_bonds",
-            index,
-        ),
-        "Roth Cash": _array_value(
-            results,
-            "roth_cash",
-            index,
-        ),
+        "Roth Equity": _array_value(results, "roth_equity", index),
+        "Roth Bonds": _array_value(results, "roth_bonds", index),
+        "Roth Cash": _array_value(results, "roth_cash", index),
         "Roth Assets": roth_assets,
 
         "HSA Equity": _array_value(results, "hsa_equity", index),
@@ -212,20 +150,7 @@ def _build_year_row(results, index, husband, wife, sim_config):
 
 def _build_year_rows(results, husband, wife, sim_config):
     years = results.get("year", [])
-    rows = []
-
-    for index in range(len(years)):
-        rows.append(
-            _build_year_row(
-                results,
-                index,
-                husband,
-                wife,
-                sim_config,
-            )
-        )
-
-    return rows
+    return [_build_year_row(results, index, husband, wife, sim_config) for index in range(len(years))]
 
 
 def build_year_by_year_report_data_from_pipeline(
@@ -237,9 +162,11 @@ def build_year_by_year_report_data_from_pipeline(
     sim_config,
 ):
     original_include_realestate = getattr(sim_config, "include_realestate", False)
+    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
     try:
         sim_config.include_realestate = True
+        sim_config.calculate_simulated_shortfall_rate = False
 
         p = run_pipeline(
             husband_portfolio,
@@ -250,8 +177,10 @@ def build_year_by_year_report_data_from_pipeline(
             sim_config,
             force_num_sims=1,
         )
+
     finally:
         sim_config.include_realestate = original_include_realestate
+        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
     results = p["summary_results"]
     report_options = dict(getattr(sim_config, "report_options", {}) or {})
@@ -269,12 +198,7 @@ def build_year_by_year_report_data_from_pipeline(
             "Projection Period": _build_projection_period_label(sim_config),
             "Report Basis": _build_report_basis_label(sim_config),
         },
-        year_rows=_build_year_rows(
-            results,
-            husband,
-            wife,
-            sim_config,
-        ),
+        year_rows=_build_year_rows(results, husband, wife, sim_config),
         warnings=[],
     )
 

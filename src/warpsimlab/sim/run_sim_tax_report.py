@@ -17,11 +17,7 @@ def _as_float(value, default=0.0):
 
 def _safe_array(results, key):
     value = results.get(key)
-
-    if value is None:
-        return []
-
-    return list(value)
+    return [] if value is None else list(value)
 
 
 def _sum(results, key):
@@ -30,31 +26,18 @@ def _sum(results, key):
 
 def _max(results, key):
     values = [_as_float(v) for v in _safe_array(results, key)]
-
-    if not values:
-        return 0.0
-
-    return float(max(values))
+    return float(max(values)) if values else 0.0
 
 
 def _min(results, key):
     values = [_as_float(v) for v in _safe_array(results, key)]
-
-    if not values:
-        return 0.0
-
-    return float(min(values))
+    return float(min(values)) if values else 0.0
 
 
 def _build_yearly_tax_rows(results, husband, wife, sim_config):
     years = _safe_array(results, "year")
-
     rows = []
-
-    second_person_enabled = (
-        getattr(sim_config, "second_person_enabled", False)
-        and wife is not None
-    )
+    second_person_enabled = getattr(sim_config, "second_person_enabled", False) and wife is not None
 
     for i, year in enumerate(years):
         if i == 0:
@@ -62,11 +45,7 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
 
         gross_income = _as_float(results.get("gross_income", [])[i])
         total_taxes = _as_float(results.get("taxes", [])[i])
-
-        effective_tax_rate = 0.0
-        if gross_income > 0.0:
-            effective_tax_rate = total_taxes / gross_income
-
+        effective_tax_rate = total_taxes / gross_income if gross_income > 0.0 else 0.0
         husband_age = getattr(husband, "age", 0) + i
 
         federal_income_tax = (
@@ -74,9 +53,7 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             + _as_float(results.get("federal_qualified_dividend_tax", [])[i])
         )
 
-        row = {
-            "Year": int(year),
-        }
+        row = {"Year": int(year)}
 
         if second_person_enabled:
             row["Husband Age"] = husband_age
@@ -131,14 +108,8 @@ def _build_lifetime_tax_summary(results):
     lifetime_total = _sum(results, "taxes")
     lifetime_gross_income = _sum(results, "gross_income")
 
-    annual_taxes = [
-        _as_float(value)
-        for value in _safe_array(results, "taxes")[1:]
-    ]
-
-    average_effective_rate = 0.0
-    if lifetime_gross_income > 0.0:
-        average_effective_rate = lifetime_total / lifetime_gross_income
+    annual_taxes = [_as_float(value) for value in _safe_array(results, "taxes")[1:]]
+    average_effective_rate = lifetime_total / lifetime_gross_income if lifetime_gross_income > 0.0 else 0.0
 
     return {
         "Lifetime Federal Ordinary Tax": lifetime_federal_ordinary,
@@ -179,16 +150,8 @@ def _build_roth_summary(results):
     roth_assets = _safe_array(results, "roth_assets")
 
     return {
-        "Starting Roth Balance": (
-            _as_float(roth_assets[0])
-            if roth_assets
-            else 0.0
-        ),
-        "Ending Roth Balance": (
-            _as_float(roth_assets[-1])
-            if roth_assets
-            else 0.0
-        ),
+        "Starting Roth Balance": _as_float(roth_assets[0]) if roth_assets else 0.0,
+        "Ending Roth Balance": _as_float(roth_assets[-1]) if roth_assets else 0.0,
         "Total Roth Conversions": _sum(results, "roth_conversions"),
         "Total Roth Withdrawals": _sum(results, "roth_withdrawals"),
     }
@@ -216,17 +179,12 @@ def _build_rmd_summary(results, second_person_enabled):
         for i, value in enumerate(values):
             if value > 0.0:
                 return int(years[i])
+
         return None
 
     if second_person_enabled:
-        husband_rmd = [
-            _as_float(v)
-            for v in _safe_array(results, "rmd_husband")
-        ]
-        wife_rmd = [
-            _as_float(v)
-            for v in _safe_array(results, "rmd_wife")
-        ]
+        husband_rmd = [_as_float(v) for v in _safe_array(results, "rmd_husband")]
+        wife_rmd = [_as_float(v) for v in _safe_array(results, "rmd_wife")]
 
         return {
             "Husband First RMD Year": first_rmd_year(husband_rmd),
@@ -252,26 +210,30 @@ def build_tax_report_data_from_pipeline(
     expenses,
     sim_config,
 ):
-    p = run_pipeline(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-        force_num_sims=1,
-    )
+    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
+
+    try:
+        sim_config.calculate_simulated_shortfall_rate = False
+
+        p = run_pipeline(
+            husband_portfolio,
+            wife_portfolio,
+            husband,
+            wife,
+            expenses,
+            sim_config,
+            force_num_sims=1,
+        )
+
+    finally:
+        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
     results = p["summary_results"]
     report_options = dict(getattr(sim_config, "report_options", {}) or {})
 
     generated_timestamp = datetime.now()
     visible_report_id = generated_timestamp.strftime("%Y-%m-%d %H:%M:%S")
-
-    second_person_enabled = (
-        getattr(sim_config, "second_person_enabled", False)
-        and wife is not None
-    )
+    second_person_enabled = getattr(sim_config, "second_person_enabled", False) and wife is not None
 
     return {
         "report_options": report_options,
@@ -302,17 +264,8 @@ def build_tax_report_data_from_pipeline(
         "tax_source_summary": _build_tax_source_summary(results),
         "roth_summary": _build_roth_summary(results),
         "hsa_summary": _build_hsa_summary(results),
-
-        "rmd_summary": _build_rmd_summary(
-            results,
-            second_person_enabled,
-        ),
-        "yearly_tax_rows": _build_yearly_tax_rows(
-            results,
-            husband,
-            wife,
-            sim_config,
-        ),
+        "rmd_summary": _build_rmd_summary(results, second_person_enabled),
+        "yearly_tax_rows": _build_yearly_tax_rows(results, husband, wife, sim_config),
         "warnings": [],
     }
 

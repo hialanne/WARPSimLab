@@ -26,6 +26,7 @@ class Simulation:
             historical_window_mode="rolling_overlapping_all",
             disable_sequence_risk_for_historical=True,
             show_simulated_shortfall_rate=True,
+            calculate_simulated_shortfall_rate=True,
 
             custom_stock=0.0, custom_bonds=0.0, custom_cash=100.0,
             annotate_plots=False,
@@ -156,7 +157,11 @@ class Simulation:
         self.historical_inflation_file = historical_inflation_file
         self.historical_window_mode = historical_window_mode
         self.disable_sequence_risk_for_historical = disable_sequence_risk_for_historical
+
+        # Users really only have one toggle for simulated shortfall rate - show_simulated_shortfall_rate
+        #   However, we need two in the simulator.  One to show shortfall on plots, one to calculate the shortfall.
         self.show_simulated_shortfall_rate = show_simulated_shortfall_rate
+        self.calculate_simulated_shortfall_rate = show_simulated_shortfall_rate
 
         self.historical_window_start_year = historical_window_start_year
         self.historical_window_stop_year = historical_window_stop_year

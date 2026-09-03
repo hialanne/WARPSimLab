@@ -300,9 +300,7 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
 
     simulated_shortfall_rate = None
 
-    simulated_shortfall_rate = None
-
-    if sim_config.show_simulated_shortfall_rate:
+    if sim_config.calculate_simulated_shortfall_rate:
         primary_run_is_multi_path_portfolio = (
             sim_config.subplot_mode == "monte_carlo"
             and sim_config.sim_type == "portfolio_sim"
