@@ -42,7 +42,7 @@ class PortfolioDollarsEditFrame(ttk.Frame):
 
         ttk.Label(
             header_frame,
-            text="Balance Sheet > Portfolio",
+            text="Balance Sheet > Portfolio Amounts",
             font=("Arial", 11, "bold"),
         ).pack(side="left")
 

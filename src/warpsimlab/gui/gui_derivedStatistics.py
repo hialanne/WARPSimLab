@@ -1,4 +1,4 @@
-# gui_desrivedStatistics.py
+# gui_derivedStatistics.py
 
 import tkinter as tk
 from tkinter import ttk
@@ -74,181 +74,182 @@ class DerivedStatisticsFrame(ttk.Frame):
             self._portfolio_value(portfolio, "hsa_bond")
         )
 
+
     def _combined(self, key):
         return (
             self._portfolio_value(self.husband_portfolio, key) +
             self._portfolio_value(self.wife_portfolio, key)
         )
 
+
     def _combined_hsa(self):
         return self._hsa_total(self.husband_portfolio) + self._hsa_total(self.wife_portfolio)
 
+
     def _build_fields(self):
-        row = 1
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
 
-        ttk.Label(self, text="Balance Sheet Summary", font=("Arial", 12, "bold")).grid(
-            row=row, column=0, sticky="w", pady=(10, 5)
+        style = ttk.Style(self)
+        style.configure("DerivedTotal.TEntry", font=("Arial", 10, "bold"))
+
+        summary_frame = ttk.LabelFrame(self, text="Balance Sheet Summary", padding=6)
+        summary_frame.grid(row=1, column=0, sticky="nsew", padx=(5, 20), pady=(10, 8))
+
+        for col, text in enumerate(["", "Husband", "Wife", "Household", "% Wealth"]):
+            if text:
+                ttk.Label(summary_frame, text=text, font=("Arial", 10, "bold")).grid(
+                    row=0, column=col, sticky="w", padx=8, pady=(0, 5)
+                )
+
+        for row, (label, key, bold) in enumerate([
+            ("Investable Assets", "investable", False),
+            ("Real Estate", "real_estate", False),
+            ("Total Wealth", "wealth", True),
+        ], start=1):
+            font = ("Arial", 10, "bold") if bold else None
+            ttk.Label(summary_frame, text=label, font=font).grid(row=row, column=0, sticky="w", padx=8, pady=2)
+
+            for col, owner in enumerate(("husband", "wife", "household"), start=1):
+                self._add_value_entry(summary_frame, row, col, f"summary_{key}_{owner}", bold=bold)
+
+            self._add_value_entry(summary_frame, row, 4, f"summary_{key}_pct", width=10, bold=bold)
+
+        overall_frame = ttk.LabelFrame(self, text="Overall Asset Allocation", padding=6)
+        overall_frame.grid(row=1, column=1, sticky="nsew", padx=(20, 5), pady=(10, 8))
+
+        ttk.Label(overall_frame, text="Dollars", font=("Arial", 10, "bold")).grid(
+            row=0, column=1, sticky="w", padx=8, pady=(0, 5)
         )
-        row += 1
-
-        for label, key, tooltip_text in [
-            (
-                "Investable Assets",
-                "investable_assets",
-                "Total stocks, bonds, cash, and HSA assets; excludes real estate",
-            ),
-            (
-                "Real Estate",
-                "real_estate",
-                "Combined net real estate value after loans",
-            ),
-            (
-                "Total Wealth",
-                "total_wealth",
-                "Investable assets plus real estate",
-            ),
-        ]:
-            self._add_readonly_row(row, label, key, tooltip_text)
-            row += 1
-
-        row += 1
-
-        ttk.Label(self, text="Tax Bucket Percentages", font=("Arial", 12, "bold")).grid(
-            row=row, column=0, sticky="w", pady=(10, 5)
+        ttk.Label(overall_frame, text="% Portfolio", font=("Arial", 10, "bold")).grid(
+            row=0, column=2, sticky="w", padx=8, pady=(0, 5)
         )
-        row += 1
 
-        for label, key, tooltip_text in [
-            (
-                "Pre-Tax",
-                "pct_pre",
-                "Pre-tax assets as a percentage of investable assets",
-            ),
-            (
-                "After-Tax",
-                "pct_post",
-                "Taxable assets as a percentage of investable assets",
-            ),
-            (
-                "Roth",
-                "pct_roth",
-                "Roth assets as a percentage of investable assets",
-            ),
-            (
-                "HSA",
-                "pct_hsa",
-                "HSA assets as a percentage of investable assets",
-            ),
-        ]:
-            self._add_readonly_row(row, label, key, tooltip_text)
-            row += 1
+        for row, (label, key, bold) in enumerate([
+            ("Stocks", "stocks", False),
+            ("Bonds", "bonds", False),
+            ("Cash", "cash", False),
+            ("Total", "total", True),
+        ], start=1):
+            font = ("Arial", 10, "bold") if bold else None
+            ttk.Label(overall_frame, text=label, font=font).grid(row=row, column=0, sticky="w", padx=8, pady=2)
+            self._add_value_entry(overall_frame, row, 1, f"overall_{key}_dollars", bold=bold)
+            self._add_value_entry(overall_frame, row, 2, f"overall_{key}_pct", width=10, bold=bold)
 
-        row += 1
+        bucket_frame = ttk.LabelFrame(self, text="Portfolio by Tax Bucket", padding=6)
+        bucket_frame.grid(row=2, column=0, columnspan=2, sticky="nw", padx=5, pady=8)
 
-        ttk.Label(self, text="Asset Class Percentages", font=("Arial", 12, "bold")).grid(
-            row=row, column=0, sticky="w", pady=(10, 5)
-        )
-        row += 1
+        for col, text in enumerate(["", "Dollars", "% Portfolio", "Stocks", "Bonds", "Cash"]):
+            if text:
+                ttk.Label(bucket_frame, text=text, font=("Arial", 10, "bold")).grid(
+                    row=0, column=col, sticky="w", padx=8, pady=(0, 5)
+                )
 
-        for label, key, tooltip_text in [
-            (
-                "Stocks",
-                "pct_equity",
-                "Stock assets, including HSA stocks, as a percentage of investable assets",
-            ),
-            (
-                "Bonds",
-                "pct_bonds",
-                "Bond assets, including HSA bonds, as a percentage of investable assets",
-            ),
-            (
-                "Cash",
-                "pct_cash",
-                "Cash assets, including HSA cash, as a percentage of investable assets",
-            ),
-        ]:
-            self._add_readonly_row(row, label, key, tooltip_text)
-            row += 1
+        for row, (label, key, bold) in enumerate([
+            ("Pre-Tax", "pre", False),
+            ("After-Tax", "post", False),
+            ("Roth", "roth", False),
+            ("HSA", "hsa", False),
+            ("Total", "total", True),
+        ], start=1):
+            font = ("Arial", 10, "bold") if bold else None
+            ttk.Label(bucket_frame, text=label, font=font).grid(row=row, column=0, sticky="w", padx=8, pady=2)
+            self._add_value_entry(bucket_frame, row, 1, f"bucket_{key}_dollars", bold=bold)
+            self._add_value_entry(bucket_frame, row, 2, f"bucket_{key}_portfolio_pct", width=10, bold=bold)
+            self._add_value_entry(bucket_frame, row, 3, f"bucket_{key}_stocks_pct", width=10, bold=bold)
+            self._add_value_entry(bucket_frame, row, 4, f"bucket_{key}_bonds_pct", width=10, bold=bold)
+            self._add_value_entry(bucket_frame, row, 5, f"bucket_{key}_cash_pct", width=10, bold=bold)
 
-    def _add_readonly_row(self, row, label_text, key, tooltip_text):
-        label = ttk.Label(self, text=label_text)
-        label.grid(
-            row=row, column=0, sticky="w", padx=5, pady=2
-        )
-        Tooltip(label, tooltip_text, font=("Arial", 11))
 
+    def _add_value_entry(self, parent, row, column, key, width=14, bold=False):
         var = tk.StringVar(value="--")
         self.vars[key] = var
+        entry = ttk.Entry(parent, textvariable=var, width=width, state="readonly")
+        if bold:
+            entry.configure(font=("Arial", 10, "bold"))
+        entry.grid(row=row, column=column, sticky="w", padx=8, pady=2)
 
-        entry = ttk.Entry(
-            self,
-            textvariable=var,
-            width=18,
-            state="readonly",
-        )
-        entry.grid(row=row, column=1, sticky="w", padx=10)
-        Tooltip(entry, tooltip_text, font=("Arial", 11))
+
+    def _bucket_components(self, portfolio, bucket):
+        fields = {
+            "pre": ("equity_pre", "bond_pre", "cash_pre"),
+            "post": ("equity_post", "bond_post", "cash_post"),
+            "roth": ("equity_roth", "bond_roth", "cash_roth"),
+            "hsa": ("hsa_equity", "hsa_bond", "hsa_cash"),
+        }
+        return tuple(self._portfolio_value(portfolio, key) for key in fields[bucket])
+
+
+    def _person_statistics(self, portfolio):
+        buckets = {bucket: self._bucket_components(portfolio, bucket) for bucket in ("pre", "post", "roth", "hsa")}
+        stocks = sum(values[0] for values in buckets.values())
+        bonds = sum(values[1] for values in buckets.values())
+        cash = sum(values[2] for values in buckets.values())
+        investable = stocks + bonds + cash
+        real_estate = self._portfolio_value(portfolio, "real_estate")
+
+        return {
+            "buckets": buckets,
+            "stocks": stocks,
+            "bonds": bonds,
+            "cash": cash,
+            "investable": investable,
+            "real_estate": real_estate,
+            "wealth": investable + real_estate,
+        }
+
 
     def _safe_pct(self, numerator, denominator):
         if denominator <= 0:
             return "--"
         return self._format_pct(numerator / denominator * 100.0)
 
+
     def _update_statistics(self):
-        equity_total = (
-            self._combined("equity_pre") +
-            self._combined("equity_post") +
-            self._combined("equity_roth") +
-            self._combined("hsa_equity")
-        )
+        husband = self._person_statistics(self.husband_portfolio)
+        wife = self._person_statistics(self.wife_portfolio)
+        household = {}
 
-        bond_total = (
-            self._combined("bond_pre") +
-            self._combined("bond_post") +
-            self._combined("bond_roth") +
-            self._combined("hsa_bond")
-        )
+        for key in ("stocks", "bonds", "cash", "investable", "real_estate", "wealth"):
+            household[key] = husband[key] + wife[key]
 
-        cash_total = (
-            self._combined("cash_pre") +
-            self._combined("cash_post") +
-            self._combined("cash_roth") +
-            self._combined("hsa_cash")
-        )
+        household["buckets"] = {
+            bucket: tuple(husband["buckets"][bucket][i] + wife["buckets"][bucket][i] for i in range(3))
+            for bucket in ("pre", "post", "roth", "hsa")
+        }
 
-        pre_total = (
-            self._combined("equity_pre") +
-            self._combined("bond_pre") +
-            self._combined("cash_pre")
-        )
+        for key in ("investable", "real_estate", "wealth"):
+            self.vars[f"summary_{key}_husband"].set(self._format_money(husband[key]))
+            self.vars[f"summary_{key}_wife"].set(self._format_money(wife[key]) if self.wife_portfolio else "--")
+            self.vars[f"summary_{key}_household"].set(self._format_money(household[key]))
+            self.vars[f"summary_{key}_pct"].set(self._safe_pct(household[key], household["wealth"]))
 
-        post_total = (
-            self._combined("equity_post") +
-            self._combined("bond_post") +
-            self._combined("cash_post")
-        )
+        for key in ("stocks", "bonds", "cash"):
+            self.vars[f"overall_{key}_dollars"].set(self._format_money(household[key]))
+            self.vars[f"overall_{key}_pct"].set(self._safe_pct(household[key], household["investable"]))
 
-        roth_total = (
-            self._combined("equity_roth") +
-            self._combined("bond_roth") +
-            self._combined("cash_roth")
-        )
+        self.vars["overall_total_dollars"].set(self._format_money(household["investable"]))
+        self.vars["overall_total_pct"].set(self._safe_pct(household["investable"], household["investable"]))
 
-        hsa_total = self._combined_hsa()
+        for bucket in ("pre", "post", "roth", "hsa"):
+            stocks, bonds, cash = household["buckets"][bucket]
+            bucket_total = stocks + bonds + cash
 
-        investable_assets = equity_total + bond_total + cash_total
-        real_estate = self._combined("real_estate")
-        total_wealth = investable_assets + real_estate
+            self.vars[f"bucket_{bucket}_dollars"].set(self._format_money(bucket_total))
+            self.vars[f"bucket_{bucket}_portfolio_pct"].set(self._safe_pct(bucket_total, household["investable"]))
 
-        self.vars["investable_assets"].set(self._format_money(investable_assets))
-        self.vars["real_estate"].set(self._format_money(real_estate))
-        self.vars["total_wealth"].set(self._format_money(total_wealth))
+            if bucket_total > 0:
+                self.vars[f"bucket_{bucket}_stocks_pct"].set(self._safe_pct(stocks, bucket_total))
+                self.vars[f"bucket_{bucket}_bonds_pct"].set(self._safe_pct(bonds, bucket_total))
+                self.vars[f"bucket_{bucket}_cash_pct"].set(self._safe_pct(cash, bucket_total))
+            else:
+                self.vars[f"bucket_{bucket}_stocks_pct"].set("--")
+                self.vars[f"bucket_{bucket}_bonds_pct"].set("--")
+                self.vars[f"bucket_{bucket}_cash_pct"].set("--")
 
-        self.vars["pct_pre"].set(self._safe_pct(pre_total, investable_assets))
-        self.vars["pct_post"].set(self._safe_pct(post_total, investable_assets))
-        self.vars["pct_roth"].set(self._safe_pct(roth_total, investable_assets))
-        self.vars["pct_hsa"].set(self._safe_pct(hsa_total, investable_assets))
+        self.vars["bucket_total_dollars"].set(self._format_money(household["investable"]))
+        self.vars["bucket_total_portfolio_pct"].set(self._safe_pct(household["investable"], household["investable"]))
+        self.vars["bucket_total_stocks_pct"].set(self._safe_pct(household["stocks"], household["investable"]))
+        self.vars["bucket_total_bonds_pct"].set(self._safe_pct(household["bonds"], household["investable"]))
+        self.vars["bucket_total_cash_pct"].set(self._safe_pct(household["cash"], household["investable"]))
 
-        self.vars["pct_equity"].set(self._safe_pct(equity_total, investable_assets))
-        self.vars["pct_bonds"].set(self._safe_pct(bond_total, investable_assets))
-        self.vars["pct_cash"].set(self._safe_pct(cash_total, investable_assets))
