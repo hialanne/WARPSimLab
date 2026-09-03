@@ -484,9 +484,7 @@ def _render_historical_window_risk_visualization(
 """
 
 
-def _render_method_note(
-    report_data,
-):
+def _render_method_note(report_data):
     return """
 <section>
     <h2>Comparison Method</h2>
@@ -494,9 +492,14 @@ def _render_method_note(
     <p class="section-intro">
         Each allocation case uses the same household assumptions and
         deterministic market-return assumptions. Portfolio risk is
-        evaluated using the same rolling historical return windows for
-        each allocation case. Only the modeled Stock/Bond/Cash
-        allocation is changed.
+        evaluated using rolling historical return windows.
+        Only the modeled Stock/Bond/Cash allocation is changed.
+    </p>
+
+    <p class="section-intro">
+        To reduce report generation time, comparison allocations use
+        every second valid historical starting year. The household's
+        current allocation uses all available Historical Windows.
     </p>
 
     <p class="section-intro">

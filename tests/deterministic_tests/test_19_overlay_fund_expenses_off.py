@@ -122,8 +122,7 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
     sim_config.overlay_fund_expense_impacts = True
     sim_config.calculate_income_taxes = True
     sim_config.use_fund_expenses = True
-
-    # REQUIRED (same fix as test 18)
+    sim_config.calculate_simulated_shortfall_rate = False
     sim_config.show_simulated_shortfall_rate = False
 
     result = simulation.run_pipeline(

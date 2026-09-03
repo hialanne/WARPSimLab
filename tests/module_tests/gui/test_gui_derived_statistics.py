@@ -87,10 +87,9 @@ def test_builds_expected_readonly_rows(tk_root):
     assert "Total" in texts
 
     expected_keys = {
-        "summary_investable_husband", "summary_investable_wife", "summary_investable_household",
-        "summary_investable_pct", "summary_real_estate_husband", "summary_real_estate_wife",
-        "summary_real_estate_household", "summary_real_estate_pct", "summary_wealth_husband",
-        "summary_wealth_wife", "summary_wealth_household", "summary_wealth_pct",
+        "summary_investable_husband", "summary_investable_household", "summary_investable_pct",
+        "summary_real_estate_husband", "summary_real_estate_household", "summary_real_estate_pct",
+        "summary_wealth_husband", "summary_wealth_household", "summary_wealth_pct",
         "overall_stocks_dollars", "overall_stocks_pct", "overall_bonds_dollars", "overall_bonds_pct",
         "overall_cash_dollars", "overall_cash_pct", "overall_total_dollars", "overall_total_pct",
     }
@@ -223,7 +222,9 @@ def test_update_statistics_single_person_full_balances(tk_root):
     frame = DerivedStatisticsFrame(tk_root, husband_portfolio=h, wife_portfolio=None)
 
     assert frame.vars["summary_investable_husband"].get() == "7,800"
-    assert frame.vars["summary_investable_wife"].get() == "--"
+    assert "summary_investable_wife" not in frame.vars
+    assert "summary_real_estate_wife" not in frame.vars
+    assert "summary_wealth_wife" not in frame.vars
     assert frame.vars["summary_investable_household"].get() == "7,800"
     assert frame.vars["summary_investable_pct"].get() == " 85.7%"
 

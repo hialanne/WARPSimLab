@@ -474,6 +474,28 @@ def _render_financial_effects(report_data):
 """
 
 
+def _render_method_note(report_data):
+    return """
+<section>
+    <h2>Comparison Method</h2>
+
+    <p class="section-intro">
+        Each spending case uses the same household assumptions and
+        deterministic market-return assumptions. Only the modeled
+        household spending level is changed.
+    </p>
+
+    <p class="section-intro">
+        Portfolio depletion risk and historical outcome ranges are
+        evaluated using Historical Windows. To reduce report generation
+        time, comparison spending levels use every second valid historical
+        starting year. The household's current spending level uses all
+        available Historical Windows.
+    </p>
+</section>
+"""
+
+
 def _render_warnings(report_data):
     if not report_data.warnings:
         return ""
@@ -596,6 +618,8 @@ def generate_spending_comparison_report(
         {_render_portfolio_outcomes(report_data)}
 
         {_render_financial_effects(report_data)}
+
+        {_render_method_note(report_data)}
 
         {_render_warnings(report_data)}
 

@@ -173,6 +173,7 @@ def make_config(**overrides):
         overlay_household_expenses=False,
         overlay_profit_loss=True,
         overlay_retirement_age=False,
+        calculate_simulated_shortfall_rate=False,
         show_simulated_shortfall_rate=False,
         use_snapshot_annotations=False,
         user_annotation_strings=[],

@@ -120,6 +120,7 @@ def test_overlay_taxes_off_attaches_median_without_taxes_and_exceeds_taxed_basel
     sim_config.overlay_fund_expense_impacts = False
     sim_config.calculate_income_taxes = True
     sim_config.use_fund_expenses = True
+    sim_config.calculate_simulated_shortfall_rate = False
     sim_config.show_simulated_shortfall_rate = False
 
     result = simulation.run_pipeline(

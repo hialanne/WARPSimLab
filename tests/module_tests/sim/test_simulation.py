@@ -23,9 +23,9 @@ class DummySimConfig:
     calculate_income_taxes: bool = True
     use_fund_expenses: bool = True
 
+    calculate_simulated_shortfall_rate: bool = False
     show_simulated_shortfall_rate: bool = False
     sim_type: str = "portfolio_sim"
-
 
 class DummyPerson:
     pass
@@ -615,7 +615,7 @@ def test_run_pipeline_monte_carlo_shortfall_rate_uses_existing_core(monkeypatch)
     monkeypatch.setattr(mod, "PortfolioPlotData", FakePortfolioPlotData, raising=True)
     monkeypatch.setattr(mod, "_compute_simulated_shortfall_rate", fake_compute_simulated_shortfall_rate, raising=True)
 
-    sim_config = DummySimConfig(subplot_mode="monte_carlo", show_simulated_shortfall_rate=True, sim_type="portfolio_sim")
+    sim_config = DummySimConfig(subplot_mode="monte_carlo", calculate_simulated_shortfall_rate=True, sim_type="portfolio_sim")
 
     result = mod.run_pipeline(
         DummyPortfolio(),
@@ -657,7 +657,7 @@ def test_run_pipeline_non_monte_carlo_shortfall_rate_runs_secondary_sim_except_c
 
     sim_config = DummySimConfig(
         subplot_mode="pre_post_tax",
-        show_simulated_shortfall_rate=True,
+        calculate_simulated_shortfall_rate=True,
         sim_type="summary_sim",
     )
 
@@ -700,7 +700,7 @@ def test_run_pipeline_cashflow_sim_does_not_compute_secondary_shortfall_rate(mon
 
     sim_config = DummySimConfig(
         subplot_mode="pre_post_tax",
-        show_simulated_shortfall_rate=True,
+        calculate_simulated_shortfall_rate=True,
         sim_type="cashflow_sim",
     )
 

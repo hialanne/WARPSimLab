@@ -126,8 +126,7 @@ def test_overlay_taxes_and_fund_expenses_both_off_attaches_combined_and_combined
     sim_config.overlay_fund_expense_impacts = True
     sim_config.calculate_income_taxes = True
     sim_config.use_fund_expenses = True
-
-    # REQUIRED (same fix as tests 18 & 19)
+    sim_config.calculate_simulated_shortfall_rate = False
     sim_config.show_simulated_shortfall_rate = False
 
     result = simulation.run_pipeline(
