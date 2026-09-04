@@ -162,7 +162,10 @@ class PortfolioSimulatorGUI_EditorsMixin:
         for widget in self.edit_frame_container.winfo_children():
             widget.destroy()
 
-        expenses_frame = ExpensesEditFrame(self.edit_frame_container, expensesDict=self.expensesDict, title="Expenses")
+        expenses_frame = ExpensesEditFrame(
+            self.edit_frame_container, expensesDict=self.expensesDict,
+            start_year=self.simulation_settings["start_year"], title="Expenses"
+        )
         expenses_frame.pack(padx=10, pady=5, fill="x")
 
 

@@ -13,9 +13,10 @@ class ExpensesEditFrame(ttk.Frame):
     Each expense has: start_year, end_year, cost, comment.
     """
 
-    def __init__(self, parent, expensesDict, title="Expenses"):
+    def __init__(self, parent, expensesDict, start_year, title="Expenses"):
         super().__init__(parent, padding=10)
         self.expensesDict = expensesDict
+        self.start_year = start_year
         
         header_frame = ttk.Frame(self)
         header_frame.grid(
@@ -73,13 +74,12 @@ class ExpensesEditFrame(ttk.Frame):
 
     def _add_new_expense(self):
         expense = {
-            "start_year": None,
-            "end_year": None,
-            "cost": None,
+            "start_year": self.start_year,
+            "end_year": self.start_year,
+            "cost": 0.0,
             "comment": "",
             "is_hsa_eligible": False
         }
-
         self.expensesDict.expenses.append(expense)
         self._add_expense_row(expense)
 
