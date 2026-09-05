@@ -204,6 +204,7 @@ class PortfolioSimulatorGUI_IOMixin:
                 for widget in container.winfo_children():
                     widget.destroy()
 
+            self.loaded_data_file = str(file_path)
             messagebox.showinfo("Loaded", f"Financial data loaded successfully from:\n{file_path}")
 
         except Exception as e:

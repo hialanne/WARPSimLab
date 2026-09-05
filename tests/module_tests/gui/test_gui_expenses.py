@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+TEST_START_YEAR = 2025
 
 @pytest.fixture
 def tk_root():
@@ -47,7 +48,7 @@ def test_initial_rows_created_from_model(tk_root, no_tooltip):
     expenses = [_make_expense(), _make_expense(2030, 2040, 2000)]
     model = SimpleNamespace(expenses=expenses)
 
-    frame = mod.ExpensesEditFrame(tk_root, model)
+    frame = mod.ExpensesEditFrame(tk_root, model, start_year=TEST_START_YEAR)
     frame.pack()
 
     assert frame.expensesDict is model
@@ -65,7 +66,7 @@ def test_add_new_expense_updates_model_and_ui(tk_root, no_tooltip):
     mod = no_tooltip
 
     model = SimpleNamespace(expenses=[])
-    frame = mod.ExpensesEditFrame(tk_root, model)
+    frame = mod.ExpensesEditFrame(tk_root, model, start_year=TEST_START_YEAR)
     frame.pack()
 
     frame._add_new_expense()
@@ -74,10 +75,11 @@ def test_add_new_expense_updates_model_and_ui(tk_root, no_tooltip):
     assert len(frame.row_vars) == 1
 
     new_exp = model.expenses[0]
-    assert new_exp["start_year"] is None
-    assert new_exp["cost"] is None
-    assert new_exp["end_year"] is None
+    assert new_exp["start_year"] == TEST_START_YEAR
+    assert new_exp["end_year"] == TEST_START_YEAR
+    assert new_exp["cost"] == 0.0
     assert new_exp["comment"] == ""
+    assert new_exp["is_hsa_eligible"] is False
 
 
 def test_stringvar_updates_model_values(tk_root, no_tooltip):
@@ -86,7 +88,7 @@ def test_stringvar_updates_model_values(tk_root, no_tooltip):
     exp = _make_expense()
     model = SimpleNamespace(expenses=[exp])
 
-    frame = mod.ExpensesEditFrame(tk_root, model)
+    frame = mod.ExpensesEditFrame(tk_root, model, start_year=TEST_START_YEAR)
     frame.pack()
 
     expense_id_str = str(id(exp))
@@ -120,7 +122,7 @@ def test_delete_row_removes_model_and_widgets(tk_root, no_tooltip):
 
     model = SimpleNamespace(expenses=[e1, e2])
 
-    frame = mod.ExpensesEditFrame(tk_root, model)
+    frame = mod.ExpensesEditFrame(tk_root, model, start_year=TEST_START_YEAR)
     frame.pack()
 
     assert len(frame.row_vars) == 2
@@ -137,7 +139,7 @@ def test_regrid_rows_after_delete(tk_root, no_tooltip):
     expenses = [_make_expense(), _make_expense(), _make_expense()]
     model = SimpleNamespace(expenses=expenses)
 
-    frame = mod.ExpensesEditFrame(tk_root, model)
+    frame = mod.ExpensesEditFrame(tk_root, model, start_year=TEST_START_YEAR)
     frame.pack()
 
     frame._delete_row(expenses[1])

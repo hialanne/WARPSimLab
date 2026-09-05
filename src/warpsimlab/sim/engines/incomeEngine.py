@@ -1,5 +1,6 @@
 # incomeEngine.py
 
+from . import diagnosticEngine
 
 def _build_income_inflation_factors(sim_config):
     years = sim_config.years_to_simulate + 1
@@ -444,10 +445,10 @@ def calculate_pre_tax_401k_contributions(person, current_age, year, sim_config):
     tuple
         (employee_contribution, employer_contribution)
     """
+
     if not hasattr(sim_config, "_income_inflation_factors"):
-        raise RuntimeError(
-            "Income engine not initialized before 401(k) contribution calculation."
-        )
+        diagnosticEngine.raise_internal_error("Income engine not initialized before 401(k) contribution calculation.", sim_config,
+                                              context={"year": year, "current_age": current_age})
 
     if current_age >= person.retire_age:
         return 0.0, 0.0

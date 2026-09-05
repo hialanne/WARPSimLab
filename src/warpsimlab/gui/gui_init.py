@@ -60,6 +60,8 @@ class PortfolioSimulatorGUI(
     def __init__(self, root):
         self.root = root
         self.legal_accepted = False
+        self.warpsimlab_version = WARPSIMLAB_VERSION
+        self.loaded_data_file = None
 
         root.title(WARPSIMLAB_TITLE)
 

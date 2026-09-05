@@ -6,6 +6,7 @@ from datetime import datetime
 import numpy as np
 
 from .simulation import run_pipeline
+from .engines import diagnosticEngine
 
 from src.warpsimlab.reports.report_data import AssetAllocationComparisonReportData
 from src.warpsimlab.reports.asset_allocation_comparison_report import generate_asset_allocation_comparison_report
@@ -232,7 +233,7 @@ def _build_case_result(
     }
 
 
-def _find_historical_plot_cases(cases, current_equity_percentage):
+def _find_historical_plot_cases(cases, current_equity_percentage, sim_config=None):
     target_percentages = {
         "minus_20": max(0.0, current_equity_percentage - 20.0),
         "current": current_equity_percentage,
@@ -259,14 +260,17 @@ def _find_historical_plot_cases(cases, current_equity_percentage):
             )
 
         if matching_case is None:
-            raise RuntimeError(f"Could not find historical plot case for {target_percentage:.1f}% equity.")
+            diagnosticEngine.raise_internal_error("Could not find requested historical asset-allocation plot case.", sim_config,
+                                                  context={"target_percentage": target_percentage, "case_key": key,
+                                                           "current_equity_percentage": current_equity_percentage,
+                                                           "available_case_count": len(cases)})
 
         plot_cases[key] = matching_case
 
     return plot_cases
 
 
-def _build_shared_historical_plot_limits(plot_cases):
+def _build_shared_historical_plot_limits(plot_cases, sim_config=None):
     x_min = None
     x_max = None
     y_max = 0.0
@@ -276,7 +280,8 @@ def _build_shared_historical_plot_limits(plot_cases):
         years = np.asarray(plot_data.years, dtype=float)
 
         if years.size == 0:
-            raise RuntimeError("Historical plot data contains no years.")
+            diagnosticEngine.raise_internal_error("Historical asset-allocation plot data contains no years.", sim_config,
+                                                  context={"case_equity_percentage": case.get("equity_percentage")})
 
         case_x_min = float(np.min(years))
         case_x_max = float(np.max(years))
@@ -287,7 +292,8 @@ def _build_shared_historical_plot_limits(plot_cases):
         pct99 = np.asarray(plot_data.percentiles["pct99"], dtype=float)
 
         if pct99.size == 0:
-            raise RuntimeError("Historical plot data contains no 99th percentile values.")
+            diagnosticEngine.raise_internal_error("Historical asset-allocation plot data contains no 99th percentile values.", sim_config,
+                                                  context={"case_equity_percentage": case.get("equity_percentage")})
 
         y_max = max(y_max, float(np.max(pct99)))
 
@@ -313,8 +319,8 @@ def _generate_historical_allocation_plots(
     wife,
     report_id,
 ):
-    plot_cases = _find_historical_plot_cases(cases, current_equity_percentage)
-    shared_limits = _build_shared_historical_plot_limits(plot_cases)
+    plot_cases = _find_historical_plot_cases(cases, current_equity_percentage, sim_config)
+    shared_limits = _build_shared_historical_plot_limits(plot_cases, sim_config)
 
     output_folder = get_report_output_folder()
     safe_id = safe_report_id(report_id)

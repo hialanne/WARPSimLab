@@ -15,6 +15,7 @@ from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.utils.io_utils import *
 from src.warpsimlab.utils.utilities import *
 from src.warpsimlab.gui.gui_annotations import build_normal_run_annotations
+from src.warpsimlab.sim.engines.diagnosticEngine import WARPSimLabInternalError
 
 
 class PortfolioSimulatorGUI_RunMixin:
@@ -24,44 +25,28 @@ class PortfolioSimulatorGUI_RunMixin:
 
     def _build_report_options(self, sim_type):
         if sim_type == "summary_report":
-            return copy.deepcopy(
-                self.report_options["executive_summary"]
-            )
+            return copy.deepcopy(self.report_options["executive_summary"])
 
         if sim_type == "year_by_year_report":
-            return copy.deepcopy(
-                self.report_options["year_by_year_details"]
-            )
+            return copy.deepcopy(self.report_options["year_by_year_details"])
 
         if sim_type == "tax_report":
-            return copy.deepcopy(
-                self.report_options["tax_report"]
-            )
+            return copy.deepcopy(self.report_options["tax_report"])
 
         if sim_type == "historical_window_risk_report":
-            return copy.deepcopy(
-                self.report_options["historical_window_risk"]
-            )
+            return copy.deepcopy(self.report_options["historical_window_risk"])
 
         if sim_type == "monte_carlo_risk_report":
-            return copy.deepcopy(
-                self.report_options["monte_carlo_risk"]
-            )
+            return copy.deepcopy(self.report_options["monte_carlo_risk"])
 
         if sim_type == "spending_comparison_report":
-            return copy.deepcopy(
-                self.report_options["spending_comparison"]
-            )
+            return copy.deepcopy(self.report_options["spending_comparison"])
 
         if sim_type == "asset_allocation_comparison_report":
-            return copy.deepcopy(
-                self.report_options["asset_allocation_comparison"]
-            )
+            return copy.deepcopy(self.report_options["asset_allocation_comparison"])
 
         if sim_type == "retirement_ss_comparison_report":
-            return copy.deepcopy(
-                self.report_options["retirement_ss_comparison"]
-            )
+            return copy.deepcopy(self.report_options["retirement_ss_comparison"])
 
         return {}
 
@@ -149,6 +134,8 @@ class PortfolioSimulatorGUI_RunMixin:
         # --- Build Simulation object ---
         sim_config = Simulation(
             root=self.root,
+            warpsimlab_version=self.warpsimlab_version,
+            loaded_data_file=self.loaded_data_file,
             start_year=self._simulation_int("Simulation start year", sim_cfg.get("start_year", 2023)),
             years_to_simulate=self._simulation_int("Years to simulate", sim_cfg.get("years_to_simulate", 30)),
             inflation_rate=self._simulation_float("Inflation rate", inflation) / 100,
@@ -448,6 +435,10 @@ class PortfolioSimulatorGUI_RunMixin:
                 expenses=self.expensesDict,
                 sim_config=sim_config
             )
+
         except SimulationValidationError as exc:
             messagebox.showerror("Simulation Input Error", str(exc), parent=self.root)
+            return
+        except WARPSimLabInternalError as exc:
+            messagebox.showerror("WARPSimLab Internal Error", str(exc), parent=self.root)
             return

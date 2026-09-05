@@ -10,6 +10,7 @@ from .engines import (
     taxEngine,
     monteCarloEngine,
     rothEngine,
+    diagnosticEngine,
 )
 from .run_sim_core_expenses import simulate_expense_year
 from .run_sim_core_withdrawals import simulate_withdrawal_year
@@ -100,10 +101,9 @@ def simulate_yearly_portfolios(
     if historical_window_mode_active:
         effective_num_sims = int(getattr(sim_config, "_hist_num_windows", 0))
         if effective_num_sims <= 0:
-            raise RuntimeError(
-                "Historical rolling-window mode prepared zero windows. "
-                "Check the historical data file and years_to_simulate."
-            )
+            diagnosticEngine.raise_internal_error("Historical rolling-window mode prepared zero windows.", sim_config,
+                                                  context={"effective_num_sims": effective_num_sims,
+                                                           "years_to_simulate": years_to_simulate})
 
     expenseEngine.initialize_expense_engine_for_simulation(sim_config)
 

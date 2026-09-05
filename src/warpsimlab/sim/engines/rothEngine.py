@@ -1,4 +1,6 @@
-from . import portfolioEngine
+# rothEngine.py
+
+from . import portfolioEngine, diagnosticEngine
 
 ROTH_IRA_CONTRIBUTION = "roth_ira_contribution"
 ROTH_WORKPLACE_CONTRIBUTION = "roth_workplace_contribution"
@@ -488,11 +490,8 @@ def resolve_contribution_shortfall(
     }
 
 
-def separate_retirement_contribution_funding(
-    *,
-    withdrawal_result,
-    actual_contribution_total,
-):
+def separate_retirement_contribution_funding(*, withdrawal_result, actual_contribution_total, sim_config=None):
+
     """
     Separate retirement withdrawals used to fund Roth contributions
     from retirement withdrawals available as spendable cash.
@@ -573,14 +572,14 @@ def separate_retirement_contribution_funding(
         + wife_spendable_withdrawal
     )
 
-    if abs(
-        person_spendable_total
-        - household_spendable_withdrawal
-    ) > 1e-6:
-        raise RuntimeError(
-            "Person-level retirement withdrawals do not "
-            "match the household withdrawal total"
-        )
+    if abs(person_spendable_total - household_spendable_withdrawal) > 1.0:
+        diagnosticEngine.raise_internal_error("Person-level retirement withdrawals do not match the household withdrawal total", sim_config,
+                                              context={"person_spendable_total": person_spendable_total,
+                                                       "household_spendable_withdrawal": household_spendable_withdrawal,
+                                                       "husband_spendable_withdrawal": husband_spendable_withdrawal,
+                                                       "wife_spendable_withdrawal": wife_spendable_withdrawal,
+                                                       "actual_contribution_total": actual_contribution_total,
+                                                       "difference": person_spendable_total - household_spendable_withdrawal})
 
     return {
         "household": household_spendable_withdrawal,

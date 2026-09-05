@@ -62,10 +62,14 @@ class Simulation:
             root=None,
             historical_window_start_year=None,
             historical_window_stop_year=None,
-            historical_window_stride=1
+            historical_window_stride=1,
+            warpsimlab_version="Unknown",
+            loaded_data_file=None
     ):
 
 
+        self.warpsimlab_version = warpsimlab_version
+        self.loaded_data_file = loaded_data_file
         self.root = root
         self.start_year = start_year
         self.years_to_simulate = years_to_simulate

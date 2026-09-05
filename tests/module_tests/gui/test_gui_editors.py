@@ -69,7 +69,7 @@ def _make_gui(advanced=True, second_person=True):
     gui.wife_portfolio = object()
 
     gui.simulation_controls = {"second_person_enabled": second_person}
-    gui.simulation_settings = {"test": True}
+    gui.simulation_settings = {"test": True, "start_year": 2025}
     gui.special_income_streams = [{"test": 1}]
     gui.roth_flows = [{"test": 2}]
     gui.expensesDict = object()

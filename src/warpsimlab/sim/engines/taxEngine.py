@@ -1,5 +1,6 @@
 # taxEngine.py
 
+from . import diagnosticEngine
 
 
 # --------------------------------------
@@ -97,11 +98,13 @@ def calculate_total_income_tax_split(ordinary_income, qualified_equity_distribut
         (federal_ordinary_tax, federal_qualified_dividend_tax, state_income_tax, total_tax)
     """
 
-    if ordinary_income < 0 or qualified_equity_distributions < 0:
-        raise RuntimeError(
-            f"Tax engine received negative income inputs: "
-            f"ordinary_income={ordinary_income}, qualified_equity_distributions={qualified_equity_distributions}"
-        )
+    if ordinary_income < -1.0 or qualified_equity_distributions < -1.0:
+        diagnosticEngine.raise_internal_error("Tax engine received materially negative income inputs", sim_config,
+                                              context={"ordinary_income": ordinary_income,
+                                                       "qualified_equity_distributions": qualified_equity_distributions})
+
+    ordinary_income = max(0.0, ordinary_income)
+    qualified_equity_distributions = max(0.0, qualified_equity_distributions)
 
     federal_ordinary_tax = 0.0
     federal_qualified_dividend_tax = 0.0

@@ -1,5 +1,6 @@
-from . import portfolioEngine
+# hsaEngine.py
 
+from . import portfolioEngine, diagnosticEngine
 
 def calculate_hsa_contributions(person, current_age, year, gross_wages, employee_401k_contribution, sim_config):
     """
@@ -23,7 +24,8 @@ def calculate_hsa_contributions(person, current_age, year, gross_wages, employee
         return {"employee": 0.0, "employer": 0.0, "total": 0.0}
 
     if not hasattr(sim_config, "_income_inflation_factors"):
-        raise RuntimeError("Income engine not initialized before HSA contribution calculation.")
+        diagnosticEngine.raise_internal_error("Income engine not initialized before HSA contribution calculation.", sim_config,
+                                              context={"year": year, "current_age": current_age})
 
     infl_factor = sim_config._income_inflation_factors[year]
 

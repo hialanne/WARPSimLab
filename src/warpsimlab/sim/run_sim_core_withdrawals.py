@@ -6,6 +6,7 @@ from .engines import (
     withdrawalEngine,
     taxEngine,
     rothEngine,
+    diagnosticEngine,
 )
 
 # -----------------------------------------------------------------------------
@@ -254,6 +255,7 @@ def simulate_withdrawal_year(
     retirement_cash = rothEngine.separate_retirement_contribution_funding(
         withdrawal_result=wd,
         actual_contribution_total=funded_roth_contributions["total"],
+        sim_config=sim_config,
     )
 
     additional_withdrawal_cash = retirement_cash["household"]
@@ -268,14 +270,11 @@ def simulate_withdrawal_year(
 
     income["non_taxable_income"] = income.get("non_taxable_income", 0.0) + additional_withdrawal_cash
 
-    if qualified_equity_distributions > income["total"]:
-        print(
-            "qualified_equity_distributions: "
-            + str(qualified_equity_distributions)
-            + " income-total: "
-            + str(income["total"])
-        )
-        raise RuntimeError("Qualified dividends exceed total income")
+    if qualified_equity_distributions > income["total"] + 1.0:
+        diagnosticEngine.raise_internal_error("Qualified dividends exceed total income", sim_config,
+                                              context={"year": year, "qualified_equity_distributions": qualified_equity_distributions,
+                                                       "income_total": income["total"],
+                                                       "difference": qualified_equity_distributions - income["total"]})
 
     qualified_equity_distributions = income["by_class"].get("qualified_equity_distributions", 0.0)
 
@@ -325,6 +324,7 @@ def simulate_withdrawal_year(
             revised_retirement_cash = rothEngine.separate_retirement_contribution_funding(
                 withdrawal_result=wd,
                 actual_contribution_total=revised_funded_roth_contributions["total"],
+                sim_config=sim_config,
             )
 
             released_household_cash = revised_retirement_cash["household"] - additional_withdrawal_cash
@@ -395,7 +395,11 @@ def simulate_withdrawal_year(
     )
 
     if abs(deposited_roth_contributions["total"] - funded_roth_contributions["total"]) > 1e-6:
-        raise RuntimeError("Deposited Roth contributions do not match the funded contribution total")
+        diagnosticEngine.raise_internal_error("Deposited Roth contributions do not match the funded contribution total", sim_config,
+                                              context={"year": year,
+                                                       "deposited_total": deposited_roth_contributions["total"],
+                                                       "funded_total": funded_roth_contributions["total"],
+                                                       "difference": deposited_roth_contributions["total"] - funded_roth_contributions["total"]})
 
     # Portfolio returns and fund expenses.
     equity_total_return = year_returns["eq"]
@@ -461,8 +465,18 @@ def simulate_withdrawal_year(
         expected_person_income_total = income["total"] + emergency_pre_tax_used + roth_conversion_total
         actual_person_income_total = husband_income_for_tax_alloc + wife_income_for_tax_alloc
 
-        if abs(actual_person_income_total - expected_person_income_total) > 1e-6:
-            raise RuntimeError("Person-level income does not match household income")
+        if abs(actual_person_income_total - expected_person_income_total) > 1.0:
+            diagnosticEngine.raise_internal_error("Person-level income does not match household income", sim_config,
+                                                  context={"year": year, "second_person_enabled": second_person_enabled,
+                                                           "income_total": income["total"],
+                                                           "husband_income": income["by_person"]["husband"],
+                                                           "wife_income": income["by_person"]["wife"],
+                                                           "husband_roth_conversion": husband_roth_conversion,
+                                                           "wife_roth_conversion": wife_roth_conversion,
+                                                           "emergency_pre_tax_used": emergency_pre_tax_used,
+                                                           "expected_total": expected_person_income_total,
+                                                           "actual_total": actual_person_income_total,
+                                                           "difference": actual_person_income_total - expected_person_income_total})
 
         husband_tax_alloc, wife_tax_alloc = taxEngine.allocate_tax_proportionally_couple(
             total_tax, husband_income_for_tax_alloc, wife_income_for_tax_alloc

@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from src.warpsimlab.sim.engines import monteCarloEngine
+from src.warpsimlab.sim.engines.diagnosticEngine import WARPSimLabInternalError
 
 
 def make_historical_config(*, years_to_simulate=2, historical_window_mode="rolling_overlapping_all"):
@@ -193,14 +194,8 @@ def test_historical_inflation_path_rejects_unprepared_cache():
         _hist_num_windows=0,
     )
 
-    with pytest.raises(RuntimeError) as exc_info:
-        monteCarloEngine.build_historical_inflation_rate_path(
-            config,
-            years_to_simulate=2,
-            sim_index=0,
-        )
+    with pytest.raises(WARPSimLabInternalError) as exc_info:
+        monteCarloEngine.build_historical_inflation_rate_path(config, years_to_simulate=2, sim_index=0)
 
-    assert str(exc_info.value) == (
-        "Historical rolling-window data not prepared. "
-        "Call prepare_market_path_sampling(sim_config) before simulation."
-    )
+    assert exc_info.value.original_message == "Historical rolling-window data not prepared before inflation-path generation."
+    assert exc_info.value.diagnostic_path is not None

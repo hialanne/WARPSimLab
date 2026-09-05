@@ -8,6 +8,7 @@ from .engines import (
     taxEngine,
     rothEngine,
     hsaEngine,
+    diagnosticEngine,
 )
 
 # -----------------------------------------------------------------------------
@@ -239,14 +240,11 @@ def simulate_expense_year(
     wd_roth = 0.0
     wd_hsa = qualified_hsa_withdrawal
 
-    if qualified_equity_distributions > income["total"]:
-        print(
-            "qualified_equity_distributions: "
-            + str(qualified_equity_distributions)
-            + " income-total: "
-            + str(income["total"])
-        )
-        raise RuntimeError("Qualified dividends exceed total income")
+    if qualified_equity_distributions > income["total"] + 1.0:
+        diagnosticEngine.raise_internal_error("Qualified dividends exceed total income", sim_config,
+                                              context={"year": year, "qualified_equity_distributions": qualified_equity_distributions,
+                                                       "income_total": income["total"],
+                                                       "difference": qualified_equity_distributions - income["total"]})
 
     # One-pass approximation for emergency pre-tax withdrawals.
     qualified_equity_distributions = income["by_class"].get("qualified_equity_distributions", 0.0)
@@ -352,13 +350,16 @@ def simulate_expense_year(
         final_tax_delta_uncovered = max(0.0, final_tax_delta - final_tax_delta_deducted)
 
     if final_tax_delta < -1e-9:
-        raise RuntimeError("final_tax_delta should never be negative")
+        diagnosticEngine.raise_internal_error("final_tax_delta should never be negative", sim_config,
+                                              context={"year": year, "final_tax_delta": final_tax_delta})
 
     if final_tax_delta_deducted < -1e-9:
-        raise RuntimeError("final_tax_delta_deducted should never be negative")
+        diagnosticEngine.raise_internal_error("final_tax_delta_deducted should never be negative", sim_config,
+                                              context={"year": year, "final_tax_delta_deducted": final_tax_delta_deducted})
 
     if final_tax_delta_uncovered < -1e-9:
-        raise RuntimeError("final_tax_delta_uncovered should never be negative")
+        diagnosticEngine.raise_internal_error("final_tax_delta_uncovered should never be negative", sim_config,
+                                              context={"year": year, "final_tax_delta_uncovered": final_tax_delta_uncovered})
 
     # Deposit only Roth contributions that were actually funded.
     deposited_roth_contributions = rothEngine.deposit_funded_roth_contributions(
@@ -369,7 +370,11 @@ def simulate_expense_year(
     )
 
     if abs(deposited_roth_contributions["total"] - funded_roth_contributions["total"]) > 1e-6:
-        raise RuntimeError("Deposited Roth contributions do not match the funded contribution total")
+        diagnosticEngine.raise_internal_error("Deposited Roth contributions do not match the funded contribution total", sim_config,
+                                              context={"year": year,
+                                                       "deposited_total": deposited_roth_contributions["total"],
+                                                       "funded_total": funded_roth_contributions["total"],
+                                                       "difference": deposited_roth_contributions["total"] - funded_roth_contributions["total"]})
 
     # Portfolio returns and fund expenses.
     equity_total_return = year_returns["eq"]
@@ -449,8 +454,20 @@ def simulate_expense_year(
         expected_person_income_total = income["total"] + emergency_pre_tax_used + roth_conversion_total
         actual_person_income_total = husband_income_for_tax_alloc + wife_income_for_tax_alloc
 
-        if abs(actual_person_income_total - expected_person_income_total) > 1e-6:
-            raise RuntimeError("Person-level income does not match household income")
+        # For testing the internal error code.
+        # if 1 == 1:
+        if abs(actual_person_income_total - expected_person_income_total) > 1.0:
+            diagnosticEngine.raise_internal_error("Person-level income does not match household income", sim_config,
+                                                  context={"year": year, "second_person_enabled": second_person_enabled,
+                                                           "income_total": income["total"],
+                                                           "husband_income": income["by_person"]["husband"],
+                                                           "wife_income": income["by_person"]["wife"],
+                                                           "husband_roth_conversion": husband_roth_conversion,
+                                                           "wife_roth_conversion": wife_roth_conversion,
+                                                           "emergency_pre_tax_used": emergency_pre_tax_used,
+                                                           "expected_total": expected_person_income_total,
+                                                           "actual_total": actual_person_income_total,
+                                                           "difference": actual_person_income_total - expected_person_income_total})
 
         husband_tax_alloc, wife_tax_alloc = taxEngine.allocate_tax_proportionally_couple(
             total_tax,

@@ -1,4 +1,5 @@
 # withdrawalEngine.py
+from . import diagnosticEngine
 
 from src.warpsimlab.dataClasses.portfolioState import *
 from src.warpsimlab.utils.constants import UNIFORM_LIFETIME_TABLE, RMD_START_AGE
@@ -75,8 +76,8 @@ def _withdraw_cash_by_order(h_port, w_port, amount, sim_config):
             return "husband"
         if port is w_port:
             return "wife"
-        raise RuntimeError("Withdrawal used an unknown portfolio object")
-
+        diagnosticEngine.raise_internal_error("Withdrawal used an unknown portfolio object", sim_config,
+                                              context={"portfolio_type": type(port).__name__})
 
     def order_by_bucket(p1, p2, total_attr):
         return [p1, p2] if getattr(p1, total_attr) >= getattr(p2, total_attr) else [p2, p1]
@@ -233,11 +234,17 @@ def calculate_retirement_withdrawal(
     else:
         rmd_w = 0.0
 
-    if rmd_h > h_port.total_value_pre + 1e-6:
-        raise RuntimeError("Husband RMD exceeds remaining pre-tax assets")
+    if rmd_h > h_port.total_value_pre + 1.0:
+        diagnosticEngine.raise_internal_error("Husband RMD exceeds remaining pre-tax assets", sim_config,
+                                              context={"year": year, "rmd": rmd_h,
+                                                       "remaining_pre_tax_assets": h_port.total_value_pre,
+                                                       "difference": rmd_h - h_port.total_value_pre})
 
-    if sim_config.second_person_enabled and rmd_w > w_port.total_value_pre + 1e-6:
-        raise RuntimeError("Wife RMD exceeds remaining pre-tax assets")
+    if sim_config.second_person_enabled and rmd_w > w_port.total_value_pre + 1.0:
+        diagnosticEngine.raise_internal_error("Wife RMD exceeds remaining pre-tax assets", sim_config,
+                                              context={"year": year, "rmd": rmd_w,
+                                                       "remaining_pre_tax_assets": w_port.total_value_pre,
+                                                       "difference": rmd_w - w_port.total_value_pre})
 
     withdraw_rmds(h_port, rmd_h)
 

@@ -3,6 +3,8 @@
 import numpy as np
 import copy
 
+from . import diagnosticEngine
+
 from src.warpsimlab.utils.io_utils import (
     load_historical_asset_returns_csv,
     load_historical_inflation_csv,
@@ -439,18 +441,14 @@ def _build_historical_market_path(sim_config, years_to_simulate, sim_index):
         )
 
     if sim_config._hist_window_start_indices is None or sim_config._hist_num_windows <= 0:
-        raise RuntimeError(
-            "Historical rolling-window data not prepared. "
-            "Call prepare_market_path_sampling(sim_config) before simulation."
-        )
+        diagnosticEngine.raise_internal_error("Historical rolling-window data not prepared before market-path generation.", sim_config,
+                                              context={"sim_index": sim_index, "years_to_simulate": years_to_simulate,
+                                                       "hist_num_windows": sim_config._hist_num_windows})
 
     sim_index = int(sim_index)
 
     if sim_index < 0 or sim_index >= sim_config._hist_num_windows:
-        raise IndexError(
-            f"Historical sim_index {sim_index} is out of range for "
-            f"{sim_config._hist_num_windows} available rolling windows."
-        )
+        raise IndexError(f"Historical sim_index {sim_index} is out of range for {sim_config._hist_num_windows} available rolling windows.")
 
     start_idx = int(sim_config._hist_window_start_indices[sim_index])
     end_idx = start_idx + int(years_to_simulate)
@@ -478,10 +476,9 @@ def build_historical_inflation_rate_path(sim_config, years_to_simulate, sim_inde
         raise ValueError("sim_index is required for rollingHistoricalWindows mode")
 
     if sim_config._hist_window_start_indices is None or sim_config._hist_num_windows <= 0:
-        raise RuntimeError(
-            "Historical rolling-window data not prepared. "
-            "Call prepare_market_path_sampling(sim_config) before simulation."
-        )
+        diagnosticEngine.raise_internal_error("Historical rolling-window data not prepared before inflation-path generation.", sim_config,
+                                              context={"sim_index": sim_index, "years_to_simulate": years_to_simulate,
+                                                       "hist_num_windows": sim_config._hist_num_windows})
 
     sim_index = int(sim_index)
 
@@ -566,18 +563,15 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
         std_devs = sim_config._mc_std_devs
 
         if means is None or std_devs is None:
-            raise RuntimeError(
-                "Monte Carlo sampling data not prepared. "
-                "Call prepare_market_path_sampling(sim_config) before simulation."
-            )
+            diagnosticEngine.raise_internal_error("Monte Carlo sampling data not prepared before market-path generation.", sim_config,
+                                                  context={"means_is_none": means is None, "std_devs_is_none": std_devs is None,
+                                                           "years_to_simulate": years_to_simulate, "sim_index": sim_index})
 
         if use_correlated:
             chol = sim_config._mc_cholesky
             if chol is None:
-                raise RuntimeError(
-                    "Cholesky factor not prepared. "
-                    "Call prepare_market_path_sampling(sim_config) before simulation."
-                )
+                diagnosticEngine.raise_internal_error("Cholesky factor not prepared before correlated market-path generation.", sim_config,
+                                                      context={"years_to_simulate": years_to_simulate, "sim_index": sim_index})
 
             rng = sim_config._mc_rng
             z = rng.normal(size=(years_to_simulate, 4))
