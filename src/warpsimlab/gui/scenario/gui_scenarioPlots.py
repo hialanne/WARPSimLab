@@ -139,9 +139,10 @@ class ScenarioPlotManager:
 
         return True
 
+
     def position_windows(self):
         """
-        Position the two plot windows side-by-side and center the Scenario Dashboard below them.
+        Position the Scenario Dashboard on the left, with Cash Flow above Portfolio on the right.
         """
         c = self.controller
 
@@ -151,40 +152,34 @@ class ScenarioPlotManager:
 
             root_center_x = root.winfo_rootx() + root.winfo_width() // 2
             root_center_y = root.winfo_rooty() + root.winfo_height() // 2
-            work_left, work_top, work_right, work_bottom = self.main_gui._get_monitor_work_area(
-                root_center_x, root_center_y
-            )
+            work_left, work_top, work_right, work_bottom = self.main_gui._get_monitor_work_area(root_center_x, root_center_y)
 
             screen_width = work_right - work_left
             screen_height = work_bottom - work_top
 
             development_screen_width = 1707
             development_screen_height = 1067
+            scale = min(screen_width / development_screen_width, screen_height / development_screen_height)
 
-            width_scale = screen_width / development_screen_width
-            height_scale = screen_height / development_screen_height
-            scale = min(width_scale, height_scale)
+            gap = max(10, int(20 * scale))
+            usable_width = screen_width - gap * 3
+            usable_height = screen_height - gap * 3
 
-            plot_width = int(850 * scale)
-            plot_height = int(600 * scale)
-            top_y = work_top + int(20 * scale)
+            dashboard_width = int(usable_width * 0.43)
+            plot_width = usable_width - dashboard_width
+            plot_height = usable_height // 2
+            dashboard_height = plot_height * 2 + gap
 
-            total_plots_width = plot_width * 2
-            left_x = work_left + (screen_width - total_plots_width) // 2
-            right_x = left_x + plot_width
-
-            c.income_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{left_x}+{top_y}")
-            c.portfolio_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{right_x}+{top_y}")
+            dashboard_x = work_left + gap
+            plot_x = dashboard_x + dashboard_width + gap
+            top_y = work_top + gap
+            portfolio_y = top_y + plot_height + gap
 
             if c.window is not None:
-                control_width = int(1060 * scale)
-                control_height = int(280 * scale)
-                control_gap = int(40 * scale)
+                c.window.geometry(f"{dashboard_width}x{dashboard_height}+{dashboard_x}+{top_y}")
 
-                control_y = top_y + plot_height + control_gap
-                control_x = left_x + (total_plots_width - control_width) // 2
-
-                c.window.geometry(f"{control_width}x{control_height}+{control_x}+{control_y}")
+            c.income_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{plot_x}+{top_y}")
+            c.portfolio_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{plot_x}+{portfolio_y}")
 
         except Exception:
             pass
@@ -247,6 +242,7 @@ class ScenarioPlotManager:
                 annotate_enabled = False
 
         sim_config.use_snapshot_annotations = annotate_enabled
+        sim_config.scenario_explorer_annotations = []
 
         if panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
             sim_config.sim_type = "cashflow_sim"

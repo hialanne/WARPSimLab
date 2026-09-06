@@ -1,9 +1,12 @@
 # gui_scenarioSliders.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk
 
 from src.warpsimlab.utils.tooltip import *
+
+
 
 class ScenarioSlidersFrame(ttk.LabelFrame):
     def __init__(
@@ -21,11 +24,15 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
     ):
         super().__init__(
             parent,
-            text="Scenario assumptions for educational exploration only.\nThese settings do not change saved data",
+            text="These settings do not change\nsaved data",
             padding=10
         )
 
         self.main_gui = main_gui
+        self.normal_label_font = tkfont.nametofont("TkDefaultFont").copy()
+        self.changed_label_font = self.normal_label_font.copy()
+        self.changed_label_font.configure(weight="bold")
+        self._highlight_controls = []
 
         self.husband = persons["husband"]
 
@@ -43,7 +50,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.inflation = retirement_snapshots.inflation
         self.fund_expense = retirement_snapshots.fund_expense
         self.historical_data_multiplier = retirement_snapshots.historical_data_multiplier
-
 
         # --------------------
         # Enable Temporary Portfolio Overrides checkbox (optional)
@@ -80,42 +86,47 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.sliders_container = ttk.Frame(self)
         self.sliders_container.grid(row=1, column=0, columnspan=2, sticky="nsew")
 
-        # 3 columns x 3 rows
-        for c in range(3):
-            self.sliders_container.columnconfigure(c, weight=1, uniform="slidercols")
-        for r in range(3):
-            self.sliders_container.rowconfigure(r, weight=1)
+        self.sliders_container.columnconfigure(0, weight=1)
 
-        # --------------------
-        # 3x3 cell frames (each cell holds label + slider)
-        # --------------------
-        def _make_cell(row, col, padx):
-            cell = ttk.Frame(self.sliders_container)
-            cell.grid(row=row, column=col, sticky="nsew", padx=padx, pady=(0, 8))
+        timing_group = ttk.Frame(self.sliders_container)
+        economic_group = ttk.Frame(self.sliders_container)
+        portfolio_group = ttk.Frame(self.sliders_container)
+
+        timing_group.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        economic_group.grid(row=1, column=0, sticky="ew", pady=(0, 8))
+        portfolio_group.grid(row=2, column=0, sticky="ew")
+
+        timing_group.columnconfigure(0, weight=1)
+        economic_group.columnconfigure(0, weight=1)
+        portfolio_group.columnconfigure(0, weight=1)
+
+        def _make_cell(parent, row):
+            cell = ttk.Frame(parent)
+            cell.grid(row=row, column=0, sticky="ew", pady=(0, 6))
             cell.columnconfigure(0, weight=1)
             return cell
 
-        PAD = 6
-        cell00 = _make_cell(0, 0, padx=(PAD, PAD))
-        cell10 = _make_cell(1, 0, padx=(PAD, PAD))
-        cell20 = _make_cell(2, 0, padx=(PAD, PAD))
+        cell00 = _make_cell(timing_group, 0)
+        cell10 = _make_cell(timing_group, 1)
+        cell20 = _make_cell(timing_group, 2)
+        cell30 = _make_cell(timing_group, 3)
 
-        cell01 = _make_cell(0, 1, padx=(PAD, PAD))
-        cell11 = _make_cell(1, 1, padx=(PAD, PAD))
+        cell01 = _make_cell(economic_group, 0)
+        cell11 = _make_cell(economic_group, 1)
+        cell21 = _make_cell(economic_group, 2)
+        cell31 = _make_cell(economic_group, 3)
 
-        #cell21 = _make_cell(2, 1, padx=(PAD, PAD))
-        # Dynamic Withdrawal / Expense Slider (2,1)
+        cell02 = _make_cell(portfolio_group, 0)
+        cell12 = _make_cell(portfolio_group, 1)
+        cell22 = _make_cell(portfolio_group, 2)
+
         self.dynamic_value = tk.DoubleVar()
-
         self.dynamic_label_var = tk.StringVar()
-        self.dynamic_label = ttk.Label(cell21 := _make_cell(2, 1, padx=(PAD, PAD)), textvariable=self.dynamic_label_var)
+        self.dynamic_label = ttk.Label(cell31, textvariable=self.dynamic_label_var)
         self.dynamic_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
 
         self.dynamic_slider = ttk.Scale(
-            cell21,
-            orient="horizontal",
-            variable=self.dynamic_value,
-            command=self._update_dynamic_slider_label
+            cell31, orient="horizontal", variable=self.dynamic_value, command=self._update_dynamic_slider_label
         )
         self.dynamic_slider.grid(row=1, column=0, sticky="ew")
 
@@ -125,14 +136,10 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             font=("Arial", 11)
         )
 
-        cell02 = _make_cell(0, 2, padx=(PAD, PAD))
-        cell12 = _make_cell(1, 2, padx=(PAD, PAD))
-        cell22 = _make_cell(2, 2, padx=(PAD, PAD))
+        # --------------------
+        # Retirement and Social Security
+        # --------------------
 
-        # --------------------
-        # Column 1: Husband, Wife, Inflation
-        # --------------------
-        # Husband Retirement Age (0,0)
         self.tmp_ret_age_h = tk.IntVar(value=self.husband.retire_age)
         self.tmp_ret_age_h.trace_add("write", self._update_husband_label)
         self.husband_label_var = tk.StringVar(value=f"Husband Retirement Age: {self.tmp_ret_age_h.get()}")
@@ -149,21 +156,54 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             font=("Arial", 11)
         )
 
-        # Wife Retirement Age (1,0) optional
+        # Husband Social Security Age (1,0)
+        self.tmp_ss_age_h = tk.IntVar(value=self.husband.ss_age)
+        self.tmp_ss_age_h.trace_add("write", self._update_husband_ss_label)
+        self.husband_ss_label_var = tk.StringVar(value=f"Husband Social Security Age: {self.tmp_ss_age_h.get()}")
+        self.husband_ss_label = ttk.Label(cell10, textvariable=self.husband_ss_label_var)
+        self.husband_ss_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
+
+        self.husband_ss_slider = ttk.Scale(
+            cell10, from_=62, to=70, orient="horizontal", variable=self.tmp_ss_age_h
+        )
+        self.husband_ss_slider.grid(row=1, column=0, sticky="ew")
+        Tooltip(
+            self.husband_ss_slider,
+            "Adjust the husband's Social Security start age for the simulation.",
+            font=("Arial", 11)
+        )
+
+        # Wife Retirement Age (2,0) optional
         if self.wife is not None:
             self.tmp_ret_age_w = tk.IntVar(value=self.wife.retire_age)
             self.tmp_ret_age_w.trace_add("write", self._update_wife_label)
             self.wife_label_var = tk.StringVar(value=f"Wife Retirement Age: {self.tmp_ret_age_w.get()}")
-            self.wife_label = ttk.Label(cell10, textvariable=self.wife_label_var)
+            self.wife_label = ttk.Label(cell20, textvariable=self.wife_label_var)
             self.wife_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
+
             self.wife_slider = ttk.Scale(
-                cell10, from_=55, to=75, orient="horizontal",
-                variable=self.tmp_ret_age_w
+                cell20, from_=55, to=75, orient="horizontal", variable=self.tmp_ret_age_w
             )
             self.wife_slider.grid(row=1, column=0, sticky="ew")
             Tooltip(
                 self.wife_slider,
-                "Adjust the wife's retirement age for the simulation. This affects retirement date and scales Social Security appropriately. Pensions/annuity amounts are not changed.",
+                "Adjust the wife's retirement age for the simulation.",
+                font=("Arial", 11)
+            )
+
+            self.tmp_ss_age_w = tk.IntVar(value=self.wife.ss_age)
+            self.tmp_ss_age_w.trace_add("write", self._update_wife_ss_label)
+            self.wife_ss_label_var = tk.StringVar(value=f"Wife Social Security Age: {self.tmp_ss_age_w.get()}")
+            self.wife_ss_label = ttk.Label(cell30, textvariable=self.wife_ss_label_var)
+            self.wife_ss_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
+
+            self.wife_ss_slider = ttk.Scale(
+                cell30, from_=62, to=70, orient="horizontal", variable=self.tmp_ss_age_w
+            )
+            self.wife_ss_slider.grid(row=1, column=0, sticky="ew")
+            Tooltip(
+                self.wife_ss_slider,
+                "Adjust the wife's Social Security start age for the simulation.",
                 font=("Arial", 11)
             )
         else:
@@ -171,14 +211,19 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             self.wife_label_var = None
             self.wife_label = None
             self.wife_slider = None
+            self.tmp_ss_age_w = None
+            self.wife_ss_label_var = None
+            self.wife_ss_label = None
+            self.wife_ss_slider = None
 
-        # Inflation (2,0)
+        # Inflation
         self.inflation_value = tk.DoubleVar(value=self.inflation)
         self.inflation_label_var = tk.StringVar(value=f"Inflation Rate (%): {self.inflation_value.get():.1f}")
-        self.inflation_label = ttk.Label(cell20, textvariable=self.inflation_label_var)
+        self.inflation_label = ttk.Label(cell01, textvariable=self.inflation_label_var)
+
         self.inflation_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
         self.inflation_slider = ttk.Scale(
-            cell20, from_=0, to=10, orient="horizontal",
+            cell01, from_=0, to=10, orient="horizontal",
             variable=self.inflation_value,
             command=self._update_inflation_label
         )
@@ -190,15 +235,15 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         )
 
         # --------------------
-        # Column 2: Fund Expenses, Market Adjustment, (empty)
+        # Economic assumptions
         # --------------------
-        # Fund Expenses (0,1)
+        # Fund Expenses
         self.fund_expense_value = tk.DoubleVar(value=self.fund_expense)
         self.fund_expense_label_var = tk.StringVar(value=f"Fund Expenses (%): {self.fund_expense_value.get():.2f}")
-        self.fund_expense_label = ttk.Label(cell01, textvariable=self.fund_expense_label_var)
+        self.fund_expense_label = ttk.Label(cell11, textvariable=self.fund_expense_label_var)
         self.fund_expense_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
         self.fund_expense_slider = ttk.Scale(
-            cell01, from_=0, to=2.5, orient="horizontal",
+            cell11, from_=0, to=2.5, orient="horizontal",
             variable=self.fund_expense_value,
             command=self._update_fund_expenses_label
         )
@@ -209,15 +254,15 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             font=("Arial", 11)
         )
 
-        # Hypothetical Market Adjustment (1,1)
+        # Hypothetical Market Adjustment
         self.market_adjustment_percent = tk.DoubleVar(value=self.historical_data_multiplier)
         self.market_adjustment_label_var = tk.StringVar(
             value=f"Hypothetical Market Adjustment: {int(self.market_adjustment_percent.get()):>3}%"
         )
-        self.market_adjustment_label = ttk.Label(cell11, textvariable=self.market_adjustment_label_var, anchor="w")
+        self.market_adjustment_label = ttk.Label(cell21, textvariable=self.market_adjustment_label_var, anchor="w")
         self.market_adjustment_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
         self.market_adjustment_slider = ttk.Scale(
-            cell11, from_=50, to=200, orient="horizontal",
+            cell21, from_=50, to=200, orient="horizontal",
             variable=self.market_adjustment_percent,
             command=self._update_market_adjustment_label
         )
@@ -231,8 +276,9 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self._configure_dynamic_slider()
 
         # --------------------
-        # Column 3: Stocks, Bonds, Cash
+        # Portfolio allocation
         # --------------------
+
         stocks_pct, bonds_pct, cash_pct = self._compute_initial_portfolio_percents()
 
         # Stocks (0,2)
@@ -271,14 +317,9 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.cash_percent = tk.DoubleVar(value=cash_pct)
         self.cash_label_var = tk.StringVar(value=f"Percent Cash (calculated): {self.cash_percent.get()}%")
         self.cash_label = ttk.Label(cell22, textvariable=self.cash_label_var)
-        self.cash_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
-        self.cash_dummy_slider = ttk.Scale(
-            cell22, from_=0, to=100, orient="horizontal", state="disabled",
-            variable=self.cash_percent
-        )
-        self.cash_dummy_slider.grid(row=1, column=0, sticky="ew")
+
         Tooltip(
-            self.cash_dummy_slider,
+            self.cash_label,
             "Cash = 100% - (Stock % + Bonds %).",
             font=("Arial", 11)
         )
@@ -287,10 +328,9 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self._update_stocks_label()
         self._update_bonds_label()
 
-
-        # Force update labels and cash
-        self._update_stocks_label()
-        self._update_bonds_label()
+        ttk.Label(self, text="Changed assumptions are shown\nin bold.").grid(
+            row=2, column=0, columnspan=2, sticky="w", pady=(6, 0)
+        )
 
         # --------------------
         # Initialize slider states
@@ -308,23 +348,95 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             self.enable_overrides.set(True)
             self._update_slider_state()
 
+        self._initialize_changed_highlighting()
+
+
+    # --------------------
+    # Changed-control highlighting
+    # --------------------
+    def _initialize_changed_highlighting(self):
+        self._highlight_controls = [
+            (self.tmp_ret_age_h, self.husband_label),
+            (self.tmp_ss_age_h, self.husband_ss_label),
+            (self.inflation_value, self.inflation_label),
+            (self.fund_expense_value, self.fund_expense_label),
+            (self.market_adjustment_percent, self.market_adjustment_label),
+            (self.dynamic_value, self.dynamic_label),
+            (self.stocks_percent, self.stocks_label),
+            (self.bonds_percent, self.bonds_label),
+            (self.cash_percent, self.cash_label),
+        ]
+
+        if self.tmp_ret_age_w is not None:
+            self._highlight_controls.append((self.tmp_ret_age_w, self.wife_label))
+        if self.tmp_ss_age_w is not None:
+            self._highlight_controls.append((self.tmp_ss_age_w, self.wife_ss_label))
+
+        self._highlight_controls = [
+            (variable, label, self._numeric_value(variable.get())) for variable, label in self._highlight_controls
+        ]
+
+        for variable, _label, _baseline in self._highlight_controls:
+            variable.trace_add("write", lambda *_args: self._refresh_changed_highlights())
+
+        self._refresh_changed_highlights()
+
+
+    def _numeric_value(self, value):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return value
+
+
+    def _refresh_changed_highlights(self):
+        for variable, label, baseline in self._highlight_controls:
+            current = self._numeric_value(variable.get())
+            changed = abs(current - baseline) > 1e-9 if isinstance(current, float) and isinstance(baseline, float) else current != baseline
+            label.configure(font=self.changed_label_font if changed else self.normal_label_font)
+
 
     # --------------------
     # Slider update callbacks
     # --------------------
     def _update_husband_label(self, *args):
         self.husband.retire_age = self.tmp_ret_age_h.get()
+        baseline = self.baseline_persons.get("husband")
+        if baseline is not None:
+            self.adjust_retirement_benefits_year_by_year(self.husband, baseline)
         self.husband_label_var.set(f"Husband Retirement Age: {self.husband.retire_age}")
+
+    def _update_husband_ss_label(self, *args):
+        self.husband.ss_age = self.tmp_ss_age_h.get()
+        baseline = self.baseline_persons.get("husband")
+        if baseline is not None:
+            self.adjust_retirement_benefits_year_by_year(self.husband, baseline)
+        self.husband_ss_label_var.set(f"Husband Social Security Age: {self.husband.ss_age}")
+
+
+    def _update_wife_ss_label(self, *args):
+        self.wife.ss_age = self.tmp_ss_age_w.get()
+        baseline = self.baseline_persons.get("wife")
+        if baseline is not None:
+            self.adjust_retirement_benefits_year_by_year(self.wife, baseline)
+        self.wife_ss_label_var.set(f"Wife Social Security Age: {self.wife.ss_age}")
+
 
     def _update_wife_label(self, *args):
         self.wife.retire_age = self.tmp_ret_age_w.get()
+        baseline = self.baseline_persons.get("wife")
+        if baseline is not None:
+            self.adjust_retirement_benefits_year_by_year(self.wife, baseline)
         self.wife_label_var.set(f"Wife Retirement Age: {self.wife.retire_age}")
+
 
     def _update_inflation_label(self, val):
         self.inflation_label_var.set(f"Inflation Rate (%): {float(val):.1f}")
 
+
     def _update_fund_expenses_label(self, val):
         self.fund_expense_label_var.set(f"Fund Expenses (%): {float(val):.2f}")
+
 
     def _update_stocks_label(self):
         new_stocks = self.stocks_percent.get()
@@ -338,7 +450,8 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.stocks_label_var.set(f"Percent Stock: {round(new_stocks)}%")
         self.bonds_label_var.set(f"Percent Bonds: {round(bonds)}%")
         self.cash_label_var.set(f"Percent Cash (calculated): {round(cash)}%")
-        self.cash_percent.set(round(cash))
+        self.cash_percent.set(cash)
+
 
     def _update_bonds_label(self):
         new_bonds = self.bonds_percent.get()
@@ -351,7 +464,8 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.stocks_label_var.set(f"Percent Stock: {round(stocks)}%")
         self.bonds_label_var.set(f"Percent Bonds: {round(new_bonds)}%")
         self.cash_label_var.set(f"Percent Cash (calculated): {round(cash)}%")
-        self.cash_percent.set(round(cash))
+        self.cash_percent.set(cash)
+
 
     def _update_market_adjustment_label(self, val):
         val_int = int(float(val))
@@ -403,6 +517,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         # Sliders/labels that always exist
         slider_label_pairs = [
             (self.husband_slider, self.husband_label),
+            (self.husband_ss_slider, self.husband_ss_label),
             (self.inflation_slider, self.inflation_label),
             (self.fund_expense_slider, self.fund_expense_label),
             (self.market_adjustment_slider, self.market_adjustment_label),
@@ -410,9 +525,10 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             (self.bonds_slider, self.bonds_label),
         ]
 
-        # Wife controls are optional
         if self.wife_slider is not None and self.wife_label is not None:
-            slider_label_pairs.insert(1, (self.wife_slider, self.wife_label))
+            slider_label_pairs.append((self.wife_slider, self.wife_label))
+        if self.wife_ss_slider is not None and self.wife_ss_label is not None:
+            slider_label_pairs.append((self.wife_ss_slider, self.wife_ss_label))
 
         for slider, label in slider_label_pairs:
             slider.configure(state=state)
@@ -443,18 +559,20 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
     # --------------------
     def adjust_retirement_benefits_year_by_year(self, snapshot, baseline):
         ss_factors = {62:0.70, 63:0.75, 64:0.80, 65:0.867, 66:0.933, 67:1.0, 68:1.08, 69:1.16, 70:1.24}
-        baseline_age = min(max(baseline.retire_age, 62), 70)
-        new_age = min(max(snapshot.retire_age, 62), 70)
-        baseline_factor = ss_factors[baseline_age]
-        new_factor = ss_factors[new_age]
+
+        baseline_ss_age = min(max(baseline.ss_age, 62), 70)
+        new_ss_age = min(max(snapshot.ss_age, 62), 70)
+        baseline_factor = ss_factors[baseline_ss_age]
+        new_factor = ss_factors[new_ss_age]
 
         baseline_pia = baseline.ss / baseline_factor if baseline_factor > 0 else baseline.ss
         snapshot.ss = round(baseline_pia * new_factor, 2)
+
         snapshot.pension = baseline.pension
         snapshot.annuity = baseline.annuity
-        snapshot.ss_age = snapshot.retire_age
         snapshot.pension_age = snapshot.retire_age
         snapshot.annuity_age = snapshot.retire_age
+
 
     def _configure_dynamic_slider(self):
         controls = self.main_gui.simulation_controls

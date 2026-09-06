@@ -16,6 +16,7 @@ class ScenarioStateManager:
         self.controller = controller
         self.main_gui = controller.main_gui
 
+
     def build_snapshots_from_truth(self):
         c = self.controller
         controls = self.main_gui.simulation_controls
@@ -32,6 +33,7 @@ class ScenarioStateManager:
         c.retirement_snapshots.inflation = self.main_gui.inflation
         c.retirement_snapshots.fund_expense = self.main_gui.simulation_settings.get("fund_expense")
         c.retirement_snapshots.historical_data_multiplier = 100.0
+
 
     def apply_slider_values_to_snapshots(self):
         c = self.controller
@@ -61,8 +63,9 @@ class ScenarioStateManager:
 
         husband_snapshot = c.person_snapshots.get("husband")
         tmp_ret_age_h = c.sliders_frame.tmp_ret_age_h.get()
+        tmp_ss_age_h = c.sliders_frame.tmp_ss_age_h.get()
         husband_snapshot.retire_age = tmp_ret_age_h
-        husband_snapshot.ss_age = tmp_ret_age_h
+        husband_snapshot.ss_age = tmp_ss_age_h
 
         wife_snapshot = None
         tmp_ret_age_w = None
@@ -71,7 +74,7 @@ class ScenarioStateManager:
             if wife_snapshot is not None and c.sliders_frame.tmp_ret_age_w is not None:
                 tmp_ret_age_w = c.sliders_frame.tmp_ret_age_w.get()
                 wife_snapshot.retire_age = tmp_ret_age_w
-                wife_snapshot.ss_age = tmp_ret_age_w
+                wife_snapshot.ss_age = c.sliders_frame.tmp_ss_age_w.get()
 
         c.retirement_snapshots.use_snapshot_annotations = c.sliders_frame.enable_annotations.get()
 
@@ -86,11 +89,13 @@ class ScenarioStateManager:
             scenario_withdraw_pct=c.retirement_snapshots.scenario_withdraw_pct,
         )
 
+
     def clone_result_inputs(self, persons, portfolios, retirement_snapshots):
         persons_copy = copy.deepcopy(persons)
         portfolios_copy = copy.deepcopy(portfolios)
         retirement_copy = copy.deepcopy(retirement_snapshots)
         return persons_copy, portfolios_copy, retirement_copy
+
 
     def compute_results_from_inputs(self, persons, portfolios, retirement_snapshots):
         persons_copy, portfolios_copy, retirement_copy = self.clone_result_inputs(
@@ -108,7 +113,11 @@ class ScenarioStateManager:
 
         p = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, self.main_gui.expensesDict, sim_config)
 
-        return {"p": p, "sim_config": sim_config, "husband": husband, "wife": wife}
+        return {
+            "p": p, "sim_config": sim_config, "husband": husband, "wife": wife,
+            "retirement_snapshots": retirement_copy,
+        }
+
 
     def compute_baseline_results(self):
         c = self.controller
@@ -120,6 +129,7 @@ class ScenarioStateManager:
         c.baseline_results = self.compute_results_from_inputs(
             baseline_persons, baseline_portfolios, baseline_retirement
         )
+
 
     def compute_scenario_results(self):
         c = self.controller

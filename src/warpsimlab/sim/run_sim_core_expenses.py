@@ -459,7 +459,7 @@ def simulate_expense_year(
         if abs(actual_person_income_total - expected_person_income_total) > 1.0:
             diagnosticEngine.raise_internal_error("Person-level income does not match household income", sim_config,
                                                   context={"year": year, "second_person_enabled": second_person_enabled,
-                                                           "income_total": income["total"],
+                                                           "income_total": income["total"], "income_by_class": income["by_class"],
                                                            "husband_income": income["by_person"]["husband"],
                                                            "wife_income": income["by_person"]["wife"],
                                                            "husband_roth_conversion": husband_roth_conversion,

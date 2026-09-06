@@ -21,6 +21,7 @@ from src.warpsimlab.gui.scenario.gui_scenarioPlots import (
 
 from src.warpsimlab.gui.gui_utils import set_tk_button_soft_disabled, noop
 from src.warpsimlab.gui.scenario.gui_scenarioState import ScenarioStateManager
+from src.warpsimlab.gui.scenario.gui_scenarioResults import ScenarioResultsFrame
 
 class ScenarioController:
     """
@@ -44,6 +45,7 @@ class ScenarioController:
         self.portfolio_snapshots = None       # dict: "husband", optional "wife"
         self.retirement_snapshots = None      # RetirementSnapshots container
         self.sliders_frame = None             # RetirementSlidersFrame widget
+        self.results_frame = None
 
         # Epic 2 caches
         self.baseline_results = None          # original/truth results; recomputed on start/resync
@@ -357,8 +359,10 @@ class ScenarioController:
             return
 
         # Any change to these variables should schedule an update.
+        
         vars_to_trace = [
             self.sliders_frame.tmp_ret_age_h,
+            self.sliders_frame.tmp_ss_age_h,
             self.sliders_frame.inflation_value,
             self.sliders_frame.fund_expense_value,
             self.sliders_frame.market_adjustment_percent,
@@ -373,6 +377,8 @@ class ScenarioController:
         # Wife retirement age is optional
         if getattr(self.sliders_frame, "tmp_ret_age_w", None) is not None:
             vars_to_trace.append(self.sliders_frame.tmp_ret_age_w)
+        if getattr(self.sliders_frame, "tmp_ss_age_w", None) is not None:
+            vars_to_trace.append(self.sliders_frame.tmp_ss_age_w)
 
         for v in vars_to_trace:
             if v is None:
@@ -381,6 +387,40 @@ class ScenarioController:
                 v.trace_add("write", lambda *args: self.schedule_update())
             except Exception:
                 pass
+        '''
+        vars_to_trace = [
+            ("husband_retirement", self.sliders_frame.tmp_ret_age_h),
+            ("husband_ss", self.sliders_frame.tmp_ss_age_h),
+            ("inflation", self.sliders_frame.inflation_value),
+            ("fund_expense", self.sliders_frame.fund_expense_value),
+            ("market_adjustment", self.sliders_frame.market_adjustment_percent),
+            ("stocks", self.sliders_frame.stocks_percent),
+            ("bonds", self.sliders_frame.bonds_percent),
+            ("cash", self.sliders_frame.cash_percent),
+            ("annotations", self.sliders_frame.enable_annotations),
+            ("adjust_inflation", self.sliders_frame.adjust_hist_for_infl_delta),
+            ("dynamic", self.sliders_frame.dynamic_value),
+        ]
+
+        if getattr(self.sliders_frame, "tmp_ret_age_w", None) is not None:
+            vars_to_trace.append(("wife_retirement", self.sliders_frame.tmp_ret_age_w))
+        if getattr(self.sliders_frame, "tmp_ss_age_w", None) is not None:
+            vars_to_trace.append(("wife_ss", self.sliders_frame.tmp_ss_age_w))
+
+        def _trace_update(name):
+            def _callback(*_args):
+                print(f"Scenario trace: {name}")
+                self.schedule_update()
+            return _callback
+
+        for name, variable in vars_to_trace:
+            if variable is None:
+                continue
+            try:
+                variable.trace_add("write", _trace_update(name))
+            except Exception:
+                pass
+    '''
 
 
     def _on_mode_dropdown_selected(self, event=None):
@@ -425,8 +465,8 @@ class ScenarioController:
         main.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
         main.rowconfigure(0, weight=1)
-        main.columnconfigure(0, weight=1)  # sliders expand
-        main.columnconfigure(1, weight=0)  # controls fixed width
+        main.columnconfigure(0, weight=3)
+        main.columnconfigure(1, weight=2, minsize=360)
 
         # ---- Sliders (left) ----
         self.sliders_frame = ScenarioSlidersFrame(
@@ -447,80 +487,68 @@ class ScenarioController:
 
         self._wire_live_update_traces()
 
-        # ---- Controls stack (right) ----
-        right_stack = ttk.Frame(main)
-        right_stack.grid(row=0, column=1, sticky="ne")
-
-        ttk.Label(right_stack, text="Mode").grid(
-            row=0, column=0, sticky="w", pady=(0, 4)
-        )
+        # ---- Scenario controls (left, below assumptions) ----
+        controls_frame = ttk.LabelFrame(main, text="Scenario Controls", padding=8)
+        controls_frame.grid(row=1, column=0, sticky="ew", padx=(0, 12), pady=(10, 0))
+        controls_frame.columnconfigure(0, weight=1)
 
         current_mode_label = self.mode_value_to_label.get(
-            self.mode,
-            self.mode_value_to_label[SCENARIO_MODE_SCENARIO_VIEW]
+            self.mode, self.mode_value_to_label[SCENARIO_MODE_SCENARIO_VIEW]
         )
         self.mode_var = tk.StringVar(value=current_mode_label)
 
         style = ttk.Style(self.window)
-
         combo_foreground = style.lookup("TLabel", "foreground")
         combo_background = style.lookup("TCombobox", "fieldbackground")
 
-        style.configure(
-            "Scenario.TCombobox",
-            foreground=combo_foreground,
-            fieldbackground=combo_background,
-        )
-
-        style.map(
-            "Scenario.TCombobox",
-            foreground=[
-                ("readonly", combo_foreground),
-            ],
-            fieldbackground=[
-                ("readonly", combo_background),
-            ],
-        )
+        style.configure("Scenario.TCombobox", foreground=combo_foreground, fieldbackground=combo_background)
+        style.map("Scenario.TCombobox", foreground=[("readonly", combo_foreground)],
+                  fieldbackground=[("readonly", combo_background)])
 
         self.mode_dropdown = ttk.Combobox(
-            right_stack,
-            textvariable=self.mode_var,
-            values=[label for label, _value in SCENARIO_MODE_OPTIONS],
-            state="readonly",
-            width=20,
-            style="Scenario.TCombobox"
+            controls_frame, textvariable=self.mode_var, values=[label for label, _value in SCENARIO_MODE_OPTIONS],
+            state="readonly", width=20, style="Scenario.TCombobox"
         )
-
-        self.mode_dropdown.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.mode_dropdown.grid(row=1, column=0, sticky="w", pady=(2, 6))
         self.mode_dropdown.bind("<<ComboboxSelected>>", self._on_mode_dropdown_selected)
 
-        self.annotate_cb = ttk.Checkbutton(
-            right_stack,
-            text="Annotate Plots",
-            variable=self.sliders_frame.enable_annotations
-        )
-        self.annotate_cb.grid(row=2, column=0, sticky="e", pady=(0, 10))
+        # Currently does nothing.  We moved this functionality from the plots into the left sidebar Results column.
+        #self.annotate_cb = ttk.Checkbutton(
+        #    controls_frame, text="Annotate Plots", variable=self.sliders_frame.enable_annotations
+        #)
+        #self.annotate_cb.grid(row=2, column=0, sticky="w", pady=(0, 2))
 
         self.adjust_infl_delta_cb = ttk.Checkbutton(
-            right_stack,
-            text="Adjust returns\nfor local\ninflation change",
+            controls_frame, text="Real Returns (Inflation Adjusted)",
             variable=self.sliders_frame.adjust_hist_for_infl_delta
         )
-        self.adjust_infl_delta_cb.grid(row=3, column=0, sticky="e", pady=(0, 10))
+        self.adjust_infl_delta_cb.grid(row=2, column=0, sticky="w")
 
-        ttk.Button(right_stack, text="Resync", command=self.resync).grid(
-            row=4, column=0, sticky="ew"
+        button_frame = ttk.Frame(controls_frame)
+        button_frame.grid(row=3, column=0, sticky="w", pady=(8, 0))
+
+        ttk.Button(button_frame, text="Restore Layout", width=18, command=self._position_windows).grid(
+            row=0, column=0, sticky="w", pady=(0, 4)
         )
-        ttk.Button(right_stack, text="Stop", command=self._stop_session).grid(
-            row=5, column=0, sticky="ew", pady=(0, 8)
+        ttk.Button(button_frame, text="Resync", width=18, command=self.resync).grid(
+            row=1, column=0, sticky="w", pady=(0, 4)
         )
+        ttk.Button(button_frame, text="Stop", width=18, command=self._stop_session).grid(
+            row=2, column=0, sticky="w"
+        )
+        
+        # ---- Results (right) ----
+        self.results_frame = ScenarioResultsFrame(main)
+        self.results_frame.grid(row=0, column=1, rowspan=2, sticky="nsew")
 
         # Disable annotate checkbox when overrides are disabled (for non-scenario uses)
-        try:
-            if not bool(self.sliders_frame.enable_overrides.get()):
-                self.annotate_cb.state(["disabled"])
-        except Exception:
-            pass
+        # Currently does nothing.  We moved this functionality from the plots into the left sidebar Results column.
+
+        #try:
+        #    if not bool(self.sliders_frame.enable_overrides.get()):
+        #        self.annotate_cb.state(["disabled"])
+        #except Exception:
+        #    pass
 
 
     def _apply_slider_values_to_snapshots(self):
@@ -553,8 +581,8 @@ class ScenarioController:
 
     def _run_scenario_simulation(self):
         self._compute_scenario_results()
-        #self._debug_compare_baseline_vs_scenario("after scenario recompute")
+        if self.results_frame is not None:
+            self.results_frame.update_results(self.baseline_results, self.scenario_results)
         self._render_panels()
-
 
 

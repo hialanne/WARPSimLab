@@ -230,7 +230,7 @@ def test_update_slider_state_disables_and_grays_controls(tk_root, no_tooltip, ma
     assert str(frame.husband_label.cget("foreground")) == ""
     assert str(frame.cash_label.cget("foreground")) == ""
 
-def test_adjust_retirement_benefits_year_by_year_clamps_ages_and_scales_ss(tk_root, no_tooltip, main_gui_manual_expenses):
+def test_adjust_retirement_benefits_year_by_year_clamps_ss_ages_and_scales_ss(tk_root, no_tooltip, main_gui_manual_expenses):
     mod = no_tooltip
 
     frame, persons, _, _ = _make_frame(
@@ -239,8 +239,8 @@ def test_adjust_retirement_benefits_year_by_year_clamps_ages_and_scales_ss(tk_ro
         main_gui=main_gui_manual_expenses,
         show_enable_overrides_checkbox=False,
         show_wife=False,
-        h_person=DummyPerson(retire_age=55, ss=2000.0, pension=111.0, annuity=222.0),
-        baseline_persons={"husband": DummyPerson(retire_age=75, ss=2480.0, pension=111.0, annuity=222.0)},
+        h_person=DummyPerson(retire_age=55, ss=2000.0, pension=111.0, annuity=222.0, ss_age=55),
+        baseline_persons={"husband": DummyPerson(retire_age=75, ss=2480.0, pension=111.0, annuity=222.0, ss_age=75)},
     )
 
     snapshot = persons["husband"]
@@ -248,15 +248,14 @@ def test_adjust_retirement_benefits_year_by_year_clamps_ages_and_scales_ss(tk_ro
 
     frame.adjust_retirement_benefits_year_by_year(snapshot, baseline)
 
-    # Baseline age clamps to 70; snapshot age clamps to 62. :contentReference[oaicite:5]{index=5}
+    # Baseline SS age clamps to 70; snapshot SS age clamps to 62.
     # baseline_factor(70)=1.24, new_factor(62)=0.70 => baseline_pia=2480/1.24=2000 => new_ss=2000*0.70=1400
     assert snapshot.ss == 1400.00
     assert snapshot.pension == baseline.pension
     assert snapshot.annuity == baseline.annuity
-    assert snapshot.ss_age == snapshot.retire_age
+    assert snapshot.ss_age == 55
     assert snapshot.pension_age == snapshot.retire_age
     assert snapshot.annuity_age == snapshot.retire_age
-
 
 def test_dynamic_slider_manual_expenses_config_and_update_stores_multiplier(tk_root, no_tooltip, main_gui_manual_expenses):
     mod = no_tooltip
