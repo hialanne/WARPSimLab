@@ -291,7 +291,7 @@ class SimulationControlsEditFrame(ttk.Frame):
 
         subplot_mode_label_to_value = {
             "Fill": "fill",
-            "Percentile Bands": "monte_carlo",
+            "Risk Analysis": "monte_carlo",
             "Sub Categories": "sub_categories",
             "Pre / Post Tax Savings": "pre_post_tax",
         }

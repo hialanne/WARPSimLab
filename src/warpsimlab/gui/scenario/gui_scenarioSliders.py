@@ -254,10 +254,10 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             font=("Arial", 11)
         )
 
-        # Hypothetical Market Adjustment
+        # Market Adjustment
         self.market_adjustment_percent = tk.DoubleVar(value=self.historical_data_multiplier)
         self.market_adjustment_label_var = tk.StringVar(
-            value=f"Hypothetical Market Adjustment: {int(self.market_adjustment_percent.get()):>3}%"
+            value=f"Market Adjustment: {int(self.market_adjustment_percent.get()):>3}%"
         )
         self.market_adjustment_label = ttk.Label(cell21, textvariable=self.market_adjustment_label_var, anchor="w")
         self.market_adjustment_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
@@ -283,7 +283,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
         # Stocks (0,2)
         self.stocks_percent = tk.DoubleVar(value=stocks_pct)
-        self.stocks_label_var = tk.StringVar(value=f"Percent Stock: {self.stocks_percent.get()}%")
+        self.stocks_label_var = tk.StringVar(value=f"Stock: {self.stocks_percent.get()}%")
         self.stocks_label = ttk.Label(cell02, textvariable=self.stocks_label_var)
         self.stocks_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
         self.stocks_slider = ttk.Scale(
@@ -299,7 +299,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
         # Bonds (1,2)
         self.bonds_percent = tk.DoubleVar(value=bonds_pct)
-        self.bonds_label_var = tk.StringVar(value=f"Percent Bonds: {self.bonds_percent.get()}%")
+        self.bonds_label_var = tk.StringVar(value=f"Bonds: {self.bonds_percent.get()}%")
         self.bonds_label = ttk.Label(cell12, textvariable=self.bonds_label_var)
         self.bonds_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
         self.bonds_slider = ttk.Scale(
@@ -315,7 +315,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
         # Cash (2,2) calculated
         self.cash_percent = tk.DoubleVar(value=cash_pct)
-        self.cash_label_var = tk.StringVar(value=f"Percent Cash (calculated): {self.cash_percent.get()}%")
+        self.cash_label_var = tk.StringVar(value=f"Cash (calculated): {self.cash_percent.get()}%")
         self.cash_label = ttk.Label(cell22, textvariable=self.cash_label_var)
 
         Tooltip(
@@ -447,9 +447,9 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             bonds += cash  # cash is negative
             self.bonds_percent.set(bonds)
             cash = 0
-        self.stocks_label_var.set(f"Percent Stock: {round(new_stocks)}%")
-        self.bonds_label_var.set(f"Percent Bonds: {round(bonds)}%")
-        self.cash_label_var.set(f"Percent Cash (calculated): {round(cash)}%")
+        self.stocks_label_var.set(f"Stock: {round(new_stocks)}%")
+        self.bonds_label_var.set(f"Bonds: {round(bonds)}%")
+        self.cash_label_var.set(f"Cash (calculated): {round(cash)}%")
         self.cash_percent.set(cash)
 
 
@@ -461,16 +461,16 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             stocks += cash  # cash negative
             self.stocks_percent.set(stocks)
             cash = 0
-        self.stocks_label_var.set(f"Percent Stock: {round(stocks)}%")
-        self.bonds_label_var.set(f"Percent Bonds: {round(new_bonds)}%")
-        self.cash_label_var.set(f"Percent Cash (calculated): {round(cash)}%")
+        self.stocks_label_var.set(f"Stock: {round(stocks)}%")
+        self.bonds_label_var.set(f"Bonds: {round(new_bonds)}%")
+        self.cash_label_var.set(f"Cash (calculated): {round(cash)}%")
         self.cash_percent.set(cash)
 
 
     def _update_market_adjustment_label(self, val):
         val_int = int(float(val))
         self.market_adjustment_label_var.set(
-            f"Hypothetical Market Adjustment: {val_int:>3}%"
+            f"Market Adjustment: {val_int:>3}%"
         )
         self.retirement_snapshots.historical_data_multiplier = float(val)
 

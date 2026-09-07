@@ -204,7 +204,7 @@ class ScenarioPlotManager:
         Human-readable figure window title for the current panel.
         """
         role = self.panel_role_label(panel)
-        family = "Cashflow" if panel["plot_family"] == PLOT_FAMILY_CASHFLOW else "Portfolio"
+        family = "Cash Flow" if panel["plot_family"] == PLOT_FAMILY_CASHFLOW else "Portfolio"
         return f"{role} {family}"
 
 

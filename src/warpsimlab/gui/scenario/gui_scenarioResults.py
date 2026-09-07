@@ -21,6 +21,16 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         self.changed_label_font = self.normal_label_font.copy()
         self.changed_label_font.configure(weight="bold")
 
+        label_background = style.lookup("TLabel", "background")
+        try:
+            red, green, blue = (value // 256 for value in parent.winfo_rgb(label_background))
+            dark_background = 0.2126 * red + 0.7152 * green + 0.0722 * blue < 128
+        except tk.TclError:
+            dark_background = False
+
+        changed_result_color = "#ff6b6b" if dark_background else "#c62828"
+        style.configure("ScenarioChangedResult.TLabel", foreground=changed_result_color, font=self.changed_label_font)
+
         results_frame = ttk.Frame(self)
         results_frame.grid(row=0, column=0, sticky="ew")
         results_frame.columnconfigure(0, weight=1)
@@ -28,21 +38,23 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         self.results_table = results_frame
         self._build_results_table()
 
-        assumptions_group = ttk.LabelFrame(
-            self, text="Assumptions", padding=6, style="ScenarioResults.TLabelframe"
-        )
-
+        assumptions_group = ttk.Frame(self)
         assumptions_group.grid(row=1, column=0, sticky="nsew", pady=(10, 0))
         assumptions_group.columnconfigure(0, weight=1)
-        assumptions_group.rowconfigure(0, weight=1)
+        assumptions_group.rowconfigure(2, weight=1)
+
+        ttk.Separator(assumptions_group, orient="horizontal").grid(
+                row=0, column=0, columnspan=2, sticky="ew", pady=(0, 5))
+        ttk.Label(assumptions_group, text="Assumptions", font=("Arial", 10, "bold")).grid(
+                row=1, column=0, columnspan=2, sticky="nw")
 
         self.assumptions_canvas = tk.Canvas(assumptions_group, highlightthickness=0, height=150)        
         assumptions_scrollbar = ttk.Scrollbar(assumptions_group, orient="vertical",
                                               command=self.assumptions_canvas.yview)
         self.assumptions_canvas.configure(yscrollcommand=assumptions_scrollbar.set)
 
-        self.assumptions_canvas.grid(row=0, column=0, sticky="nsew")
-        assumptions_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.assumptions_canvas.grid(row=2, column=0, sticky="nsew", pady=(4, 0))
+        assumptions_scrollbar.grid(row=2, column=1, sticky="ns", pady=(4, 0))
 
         self.assumptions_frame = ttk.Frame(self.assumptions_canvas)
         self.assumptions_window = self.assumptions_canvas.create_window(
@@ -70,7 +82,7 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         row = 1
         row = self._add_section(table, row, "Key Results")
         row = self._add_metric_row(table, row, "ending_portfolio", "Ending Portfolio")
-        row = self._add_metric_row(table, row, "depletion_rate", "Depletion Rate")
+        row = self._add_metric_row(table, row, "depletion_rate", "Portfolio Depletion Rate")
 
         row = self._add_section(table, row, "Cash Flow Results")
         row = self._add_metric_row(table, row, "ending_cash_flow", "Ending Net Cash Flow")
@@ -207,9 +219,11 @@ class ScenarioResultsFrame(ttk.LabelFrame):
 
     def _add_assumption_row(self, parent, row, label, original, changed, value_type):
         is_changed = abs(float(changed) - float(original)) > 1e-9
-        font = self.changed_label_font if is_changed else self.normal_label_font
+        changed_style = "ScenarioChangedResult.TLabel" if is_changed else "TLabel"
 
-        ttk.Label(parent, text=label, font=font).grid(row=row, column=0, sticky="w", padx=(12, 10), pady=2)
+        ttk.Label(parent, text=label, font=self.normal_label_font).grid(
+            row=row, column=0, sticky="w", padx=(12, 10), pady=2
+        )
 
         if value_type == "age":
             original_text = f"{original:g}"
@@ -218,23 +232,31 @@ class ScenarioResultsFrame(ttk.LabelFrame):
             original_text = f"{original:.2f}%"
             changed_text = f"{changed:.2f}%"
 
-        ttk.Label(parent, text=original_text, anchor="e").grid(row=row, column=1, sticky="e", padx=4, pady=2)
-        ttk.Label(parent, text=changed_text, anchor="e", font=font).grid(
+        ttk.Label(parent, text=original_text, anchor="e", font=self.normal_label_font).grid(
+            row=row, column=1, sticky="e", padx=4, pady=2
+        )
+        ttk.Label(parent, text=changed_text, anchor="e", font=self.changed_label_font if is_changed else self.normal_label_font, style=changed_style).grid(
             row=row, column=2, sticky="e", padx=(4, 0), pady=2
         )
         return row + 1
 
 
     def _set_currency_row(self, key, original, changed):
-        self.metric_rows[key]["original"].configure(text=f"${original:,.0f}")
-        self.metric_rows[key]["changed"].configure(text=f"${changed:,.0f}")
+        is_changed = abs(float(changed) - float(original)) > 1e-9
+        self.metric_rows[key]["original"].configure(text=f"${original:,.0f}", style="TLabel")
+        self.metric_rows[key]["changed"].configure(
+            text=f"${changed:,.0f}", style="ScenarioChangedResult.TLabel" if is_changed else "TLabel"
+        )
 
 
     def _set_percent_row(self, key, original, changed):
         if original is None or changed is None:
-            self.metric_rows[key]["original"].configure(text="-")
-            self.metric_rows[key]["changed"].configure(text="-")
+            self.metric_rows[key]["original"].configure(text="-", style="TLabel")
+            self.metric_rows[key]["changed"].configure(text="-", style="TLabel")
             return
 
-        self.metric_rows[key]["original"].configure(text=f"{original:.1f}%")
-        self.metric_rows[key]["changed"].configure(text=f"{changed:.1f}%")
+        is_changed = abs(float(changed) - float(original)) > 1e-9
+        self.metric_rows[key]["original"].configure(text=f"{original:.1f}%", style="TLabel")
+        self.metric_rows[key]["changed"].configure(
+            text=f"{changed:.1f}%", style="ScenarioChangedResult.TLabel" if is_changed else "TLabel"
+        )

@@ -10,7 +10,7 @@ SCENARIO_MODE_PORTFOLIO_COMPARE = "portfolio_compare"
 
 SCENARIO_MODE_OPTIONS = [
     ("Scenario View", SCENARIO_MODE_SCENARIO_VIEW),
-    ("Compare Cashflow", SCENARIO_MODE_CASHFLOW_COMPARE),
+    ("Compare Cash Flow", SCENARIO_MODE_CASHFLOW_COMPARE),
     ("Compare Portfolio", SCENARIO_MODE_PORTFOLIO_COMPARE),
 ]
 
@@ -527,13 +527,13 @@ class ScenarioController:
         button_frame = ttk.Frame(controls_frame)
         button_frame.grid(row=3, column=0, sticky="w", pady=(8, 0))
 
-        ttk.Button(button_frame, text="Restore Layout", width=18, command=self._position_windows).grid(
+        ttk.Button(button_frame, text="Restore Layout", width=20, command=self._position_windows).grid(
             row=0, column=0, sticky="w", pady=(0, 4)
         )
-        ttk.Button(button_frame, text="Resync", width=18, command=self.resync).grid(
+        ttk.Button(button_frame, text="Reset Scenario", width=20, command=self.resync).grid(
             row=1, column=0, sticky="w", pady=(0, 4)
         )
-        ttk.Button(button_frame, text="Stop", width=18, command=self._stop_session).grid(
+        ttk.Button(button_frame, text="Close Explorer", width=20, command=self._stop_session).grid(
             row=2, column=0, sticky="w"
         )
         
