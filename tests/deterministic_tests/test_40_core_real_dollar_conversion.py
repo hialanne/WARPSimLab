@@ -82,7 +82,7 @@ def make_portfolio(
 
 def make_config(
     *,
-    plot_mode,
+    inflation_mode,
     years_to_simulate=2,
     always_use_expense_mode=True,
     include_rmd=False,
@@ -99,7 +99,7 @@ def make_config(
         num_sims=1,
         fund_expense=fund_expense,
         use_fund_expenses=use_fund_expenses,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode="baseline",
         include_rmd=include_rmd,
         calculate_income_taxes=False,
@@ -226,7 +226,7 @@ def assert_breakdown_is_deflated(
 def run_expense_mode(
     monkeypatch,
     *,
-    plot_mode,
+    inflation_mode,
 ):
     years_to_simulate = 2
 
@@ -251,7 +251,7 @@ def run_expense_mode(
             amount=30_000.0,
         ),
         make_config(
-            plot_mode=plot_mode,
+            inflation_mode=inflation_mode,
             years_to_simulate=years_to_simulate,
             always_use_expense_mode=True,
             use_fund_expenses=True,
@@ -265,7 +265,7 @@ def run_expense_mode(
 def run_retirement_mode(
     monkeypatch,
     *,
-    plot_mode,
+    inflation_mode,
 ):
     years_to_simulate = 1
 
@@ -289,7 +289,7 @@ def run_retirement_mode(
         make_person(),
         DynamicExpenses(),
         make_config(
-            plot_mode=plot_mode,
+            inflation_mode=inflation_mode,
             years_to_simulate=years_to_simulate,
             always_use_expense_mode=False,
             include_rmd=True,
@@ -305,11 +305,11 @@ def test_expense_mode_monetary_results_are_deflated(
 ):
     raw_results = run_expense_mode(
         monkeypatch,
-        plot_mode="raw",
+        inflation_mode="nominal",
     )
     real_results = run_expense_mode(
         monkeypatch,
-        plot_mode="real",
+        inflation_mode="real",
     )
 
     factors = discount_factors(2)
@@ -360,11 +360,11 @@ def test_expense_mode_income_breakdown_is_deflated(
 ):
     raw_results = run_expense_mode(
         monkeypatch,
-        plot_mode="raw",
+        inflation_mode="nominal",
     )
     real_results = run_expense_mode(
         monkeypatch,
-        plot_mode="real",
+        inflation_mode="real",
     )
 
     factors = discount_factors(2)
@@ -396,11 +396,11 @@ def test_retirement_mode_monetary_results_are_deflated(
 ):
     raw_results = run_retirement_mode(
         monkeypatch,
-        plot_mode="raw",
+        inflation_mode="nominal",
     )
     real_results = run_retirement_mode(
         monkeypatch,
-        plot_mode="real",
+        inflation_mode="real",
     )
 
     factors = discount_factors(1)
@@ -433,11 +433,11 @@ def test_retirement_withdrawal_breakdown_is_deflated(
 ):
     raw_results = run_retirement_mode(
         monkeypatch,
-        plot_mode="raw",
+        inflation_mode="nominal",
     )
     real_results = run_retirement_mode(
         monkeypatch,
-        plot_mode="real",
+        inflation_mode="real",
     )
 
     factors = discount_factors(1)
@@ -461,15 +461,15 @@ def test_real_mode_does_not_modify_nominal_raw_run(
 ):
     first_raw = run_expense_mode(
         monkeypatch,
-        plot_mode="raw",
+        inflation_mode="nominal",
     )
     run_expense_mode(
         monkeypatch,
-        plot_mode="real",
+        inflation_mode="real",
     )
     second_raw = run_expense_mode(
         monkeypatch,
-        plot_mode="raw",
+        inflation_mode="nominal",
     )
 
     keys = [

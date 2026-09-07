@@ -103,7 +103,7 @@ def draw_operating_balance(
     else:
         spending_mode = "Withdrawal Mode"
 
-    if sim_config.plot_mode == "real":
+    if sim_config.inflation_mode == "real":
         value_type = "Real"
     else:
         value_type = "Nominal"

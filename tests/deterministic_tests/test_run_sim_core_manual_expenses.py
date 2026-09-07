@@ -109,7 +109,7 @@ def test_manual_expense_results_can_be_real_dollar_deflated(scenario_builders):
 
     sim_config = make_config(
         years_to_simulate=1,
-        plot_mode="real",
+        inflation_mode="real",
         inflation_rate=0.10,
         always_use_expense_mode=True,
         second_person_enabled=False,

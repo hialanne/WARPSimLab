@@ -43,7 +43,7 @@ INITIAL_ALLOCATION_MODES = {
 }
 
 PLOT_MODES = {
-    "raw",
+    "nominal",
     "real",
 }
 
@@ -321,7 +321,7 @@ def _validate_sim_config(sim_config):
         getattr(sim_config, "sim_initial_allocation_mode", None),
         INITIAL_ALLOCATION_MODES,
     )
-    _require_choice("sim_config.plot_mode", getattr(sim_config, "plot_mode", None), PLOT_MODES)
+    _require_choice("sim_config.inflation_mode", getattr(sim_config, "inflation_mode", None), PLOT_MODES)
     _require_choice("sim_config.subplot_mode", getattr(sim_config, "subplot_mode", None), SUBPLOT_MODES)
     _require_choice(
         "sim_config.monte_carlo_plot_style",

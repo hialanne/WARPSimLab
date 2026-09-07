@@ -74,7 +74,7 @@ def test_init_vars_loads_market_data_and_defaults(monkeypatch):
     assert gui.simulation_settings["num_sims"] == gui_init.DEFAULT_SIMULATIONS
     assert gui.simulation_settings["fund_expense"] == gui_init.DEFAULT_FUND_EXPENSE
 
-    assert gui.simulation_controls["plot_mode"] == "real"
+    assert gui.simulation_controls["inflation_mode"] == "real"
     assert gui.simulation_controls["overlay_profit_loss"] is True
     assert gui.simulation_controls["user_annotation_strings"] == []
     assert gui.simulation_controls["state_of_residence"] == gui_init.DEFAULT_STATE_OF_RESIDENCE

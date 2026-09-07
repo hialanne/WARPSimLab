@@ -26,7 +26,7 @@ def _build_report_metadata(sim_config):
         "Projection Period": f"{start_year}-{end_year} ({years} Years)",
         "Report Basis": (
             "Real Dollars (Inflation Adjusted)"
-            if getattr(sim_config, "plot_mode", None) == "real"
+            if getattr(sim_config, "inflation_mode", None) == "real"
             else "Raw Dollars (Future Nominal Values)"
         ),
         "Report ID": now.strftime("%Y-%m-%d_%H_%M_%S"),

@@ -89,9 +89,9 @@ class PortfolioSimulatorGUI_RunMixin:
             calculate_real_dollars = bool(getattr(retirement_snapshots, "calculate_real_dollars", False))
 
             if calculate_real_dollars:
-                plot_mode = "real"
+                inflation_mode = "real"
             else:
-                plot_mode = "raw"
+                inflation_mode = "nominal"
 
             use_snapshot_annotations = retirement_snapshots.use_snapshot_annotations
             scenario_explorer_annotations = retirement_snapshots.annotation_strings
@@ -107,7 +107,7 @@ class PortfolioSimulatorGUI_RunMixin:
             custom_cash = self._simulation_float("Custom cash allocation", sim_cfg.get("custom_cash", 0)) / 100
             historical_multiplier   = 1
             inflation_delta = 0.0
-            plot_mode = controls.get("plot_mode", "real")
+            inflation_mode = controls.get("inflation_mode", "real")
 
             use_snapshot_annotations = controls.get("annotate_plots")
             user_annotation_strings = controls.get("user_annotation_strings", [])
@@ -189,7 +189,7 @@ class PortfolioSimulatorGUI_RunMixin:
             calculate_state_taxes=controls.get("calculate_state_taxes", False),
             state_of_residence=controls.get("state_of_residence", ""),
 
-            plot_mode=plot_mode,
+            inflation_mode=inflation_mode,
             subplot_mode=controls.get("subplot_mode", "fill"),
             monte_carlo_plot_style=controls.get("monte_carlo_plot_style", "fill"),
             use_correlated_returns=controls.get("use_correlated_returns", True),

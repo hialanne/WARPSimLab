@@ -114,7 +114,7 @@ def _build_report_metadata(sim_config, method):
         "Projection Period": f"{start_year}-{end_year} ({years} Years)",
         "Report Basis": (
             "Real Dollars (Inflation Adjusted)"
-            if getattr(sim_config, "plot_mode", None) == "real"
+            if getattr(sim_config, "inflation_mode", None) == "real"
             else "Raw Dollars (Future Nominal Values)"
         ),
         "Report ID": report_id,
@@ -127,7 +127,7 @@ def _build_simulation_snapshot(sim_config, method, scenario_count):
         "Scenario Count": scenario_count,
         "Start Year": getattr(sim_config, "start_year", None),
         "Years Simulated": getattr(sim_config, "years_to_simulate", None),
-        "Plot Mode": getattr(sim_config, "plot_mode", None),
+        "Plot Mode": getattr(sim_config, "inflation_mode", None),
         "Monte Carlo Mode": getattr(sim_config, "monte_carlo_mode", None),
         "Historical Asset Returns File": getattr(sim_config, "historical_asset_returns_file", None),
         "Historical Inflation File": getattr(sim_config, "historical_inflation_file", None),
@@ -395,7 +395,7 @@ def _build_risk_plot_assets(
                 start_years=core.get("historical_window_start_year", []),
                 best_indices=historical_insights.get("Best Indices", []),
                 worst_indices=historical_insights.get("Worst Indices", []),
-                plot_mode=getattr(sim_config, "plot_mode", "real"),
+                inflation_mode=getattr(sim_config, "inflation_mode", "real"),
             )
 
             plot_assets["historical_window_highlights"] = {

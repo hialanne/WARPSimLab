@@ -85,7 +85,7 @@ def save_historical_window_highlight_report_plot(
     best_indices,
     worst_indices,
     *,
-    plot_mode="real",
+    inflation_mode="real",
 ):
     """
     Save a Historical Window insight plot.
@@ -191,7 +191,7 @@ def save_historical_window_highlight_report_plot(
             "Five weakest historical windows",
         )
 
-        value_type = "Real" if plot_mode == "real" else "Nominal"
+        value_type = "Real" if inflation_mode == "real" else "Nominal"
 
         ax.set_title(
             f"Historical Window Outcomes: Strongest and Weakest Retirement Starts ({value_type} Dollars)"

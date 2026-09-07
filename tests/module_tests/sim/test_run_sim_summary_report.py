@@ -85,16 +85,9 @@ def test_build_projection_period_label_returns_na_for_invalid_values():
 
 
 def test_build_report_basis_label():
-    assert (
-        mod._build_report_basis_label(SimpleNamespace(plot_mode="real"))
-        == "Real Dollars (Inflation Adjusted)"
-    )
-    assert (
-        mod._build_report_basis_label(SimpleNamespace(plot_mode="raw"))
-        == "Raw Dollars (Future Nominal Values)"
-    )
-    assert mod._build_report_basis_label(SimpleNamespace(plot_mode="nominal")) == "N/A"
-
+    assert mod._build_report_basis_label(SimpleNamespace(inflation_mode="real")) == "Real Dollars (Inflation Adjusted)"
+    assert mod._build_report_basis_label(SimpleNamespace(inflation_mode="nominal")) == "Raw Dollars (Future Nominal Values)"
+    assert mod._build_report_basis_label(SimpleNamespace(inflation_mode="invalid")) == "N/A"
 
 def test_friendly_label_maps_known_values_and_preserves_unknowns():
     assert mod._friendly_label("pathBasedAnnualSampling") == "Path-Based Annual Sampling"
@@ -210,7 +203,7 @@ def test_build_simulation_snapshot_includes_payroll_tax_setting():
         start_year=2025,
         years_to_simulate=30,
         inflation_rate=0.03,
-        plot_mode="raw",
+        inflation_mode="nominal",
         second_person_enabled=True,
         calculate_income_taxes=True,
         calculate_payroll_taxes=False,

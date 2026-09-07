@@ -61,7 +61,7 @@ def control_vars():
             "include_realestate": True,
             "constant_y_plots": False,
             "rebalance_every_year": False,
-            "plot_mode": "real",
+            "inflation_mode": "real",
             "subplot_mode": "none",
             "output_csv": "None",
             "annotation_strings": [],
@@ -90,9 +90,9 @@ def test_plot_mode_combobox_updates_controls(tk_root, no_tooltip, no_annotations
     frame.pack()
 
     # simulate user switching mode
-    control_vars["_controls_dict"]["plot_mode"] = "raw"
+    control_vars["_controls_dict"]["inflation_mode"] = "nominal"
 
-    assert control_vars["_controls_dict"]["plot_mode"] == "raw"
+    assert control_vars["_controls_dict"]["inflation_mode"] == "nominal"
 
 
 def test_subplot_mode_mapping_exists(tk_root, no_tooltip, no_annotations_editor, control_vars):

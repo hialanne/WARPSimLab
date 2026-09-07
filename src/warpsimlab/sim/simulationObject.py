@@ -5,7 +5,7 @@ from src.warpsimlab.utils.constants import EQUITY_MEAN, BOND_MEAN, CASH_MEAN, EQ
 
 class Simulation:
     def __init__(self, start_year, years_to_simulate, inflation_rate, num_sims, 
-            fund_expense, use_fund_expenses, plot_mode, subplot_mode, 
+            fund_expense, use_fund_expenses, inflation_mode, subplot_mode, 
             include_rmd, calculate_income_taxes, calculate_payroll_taxes, tax_filing_status, calculate_state_taxes, state_of_residence,
             second_person_enabled, 
             eq_mean, bd_mean, cs_mean,
@@ -86,7 +86,7 @@ class Simulation:
         self.output_csv = output_csv
         self.csv_output_dir = csv_output_dir
         
-        self.plot_mode = plot_mode  # "raw" or "real"
+        self.inflation_mode = inflation_mode  # "nominal" or "real"
         self.subplot_mode = subplot_mode # Currently controls all subplots, including logic for monte carlo.  Should be split.
         #self.monte_carlo = monte_carlo # This variable, not currently used, should be what controls the monte carlo simulation.
 

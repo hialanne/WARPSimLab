@@ -43,7 +43,7 @@ def make_portfolio(*, equity_post=0.0, bond_post=0.0, cash_post=0.0):
     )
 
 
-def make_sim(*, years, use_fund_expenses, fund_expense, inflation_rate=0.0, plot_mode="raw"):
+def make_sim(*, years, use_fund_expenses, fund_expense, inflation_rate=0.0, inflation_mode="nominal"):
     return SimpleNamespace(
         start_year=2026,
         years_to_simulate=years,
@@ -52,7 +52,7 @@ def make_sim(*, years, use_fund_expenses, fund_expense, inflation_rate=0.0, plot
         num_sims=1,
         fund_expense=fund_expense,
         use_fund_expenses=use_fund_expenses,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode="fixed",
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
@@ -127,8 +127,8 @@ def assert_discounted(raw_results, real_results, key, inflation_rate):
 
 
 def test_fund_expense_drag_nominal():
-    no_fee_cfg = make_sim(years=2, use_fund_expenses=False, fund_expense=0.01, inflation_rate=0.0, plot_mode="raw")
-    fee_cfg = make_sim(years=2, use_fund_expenses=True, fund_expense=0.01, inflation_rate=0.0, plot_mode="raw")
+    no_fee_cfg = make_sim(years=2, use_fund_expenses=False, fund_expense=0.01, inflation_rate=0.0, inflation_mode="nominal")
+    fee_cfg = make_sim(years=2, use_fund_expenses=True, fund_expense=0.01, inflation_rate=0.0, inflation_mode="nominal")
 
     no_fee = run_sim(no_fee_cfg)
     fee = run_sim(fee_cfg)
@@ -144,8 +144,8 @@ def test_fund_expense_drag_nominal():
 
 def test_fund_expense_drag_real_mode_deflates_correctly():
     infl = 0.03
-    raw_cfg = make_sim(years=2, use_fund_expenses=True, fund_expense=0.01, inflation_rate=infl, plot_mode="raw")
-    real_cfg = make_sim(years=2, use_fund_expenses=True, fund_expense=0.01, inflation_rate=infl, plot_mode="real")
+    raw_cfg = make_sim(years=2, use_fund_expenses=True, fund_expense=0.01, inflation_rate=infl, inflation_mode="nominal")
+    real_cfg = make_sim(years=2, use_fund_expenses=True, fund_expense=0.01, inflation_rate=infl, inflation_mode="real")
 
     raw_results = run_sim(raw_cfg)
     real_results = run_sim(real_cfg)

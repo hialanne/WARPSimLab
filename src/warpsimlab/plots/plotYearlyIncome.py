@@ -217,7 +217,7 @@ def draw_yearly_income(
         else:
             sim_type_text = "Cash Flow  (Withdrawal Mode -"
 
-    if sim_config.plot_mode == "real":
+    if sim_config.inflation_mode == "real":
         value_type = "Real"
     else:
         value_type = "Nominal"

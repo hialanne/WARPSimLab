@@ -47,7 +47,7 @@ class SummaryDialog(tk.Toplevel):
 
         value_basis = (
             "Real"
-            if self.sim_config.plot_mode == "real"
+            if self.sim_config.inflation_mode == "real"
             else "Nominal"
         )
 

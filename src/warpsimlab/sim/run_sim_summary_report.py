@@ -81,12 +81,12 @@ def _build_projection_period_label(sim_config):
 
 
 def _build_report_basis_label(sim_config):
-    plot_mode = getattr(sim_config, "plot_mode", None)
+    inflation_mode = getattr(sim_config, "inflation_mode", None)
 
-    if plot_mode == "real":
+    if inflation_mode == "real":
         return "Real Dollars (Inflation Adjusted)"
 
-    if plot_mode == "raw":
+    if inflation_mode == "nominal":
         return "Raw Dollars (Future Nominal Values)"
 
     return "N/A"
@@ -255,7 +255,7 @@ def _build_simulation_snapshot(sim_config):
         "Years Simulated": getattr(sim_config, "years_to_simulate", None),
         "Projection End Year": projection_end_year,
         "Inflation Rate": _rate_fraction_to_percent(getattr(sim_config, "inflation_rate", None)),
-        "Plot Mode": getattr(sim_config, "plot_mode", None),
+        "Plot Mode": getattr(sim_config, "inflation_mode", None),
         "Second Person Enabled": getattr(sim_config, "second_person_enabled", None),
         "Taxes Enabled": getattr(sim_config, "calculate_income_taxes", None),
         "Payroll Taxes Enabled": getattr(sim_config, "calculate_payroll_taxes", None),

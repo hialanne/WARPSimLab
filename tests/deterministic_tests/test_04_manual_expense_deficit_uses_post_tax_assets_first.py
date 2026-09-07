@@ -44,7 +44,7 @@ def make_portfolio(*, equity_pre=0.0, equity_post=0.0):
     )
 
 
-def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
+def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal"):
     return SimpleNamespace(
         start_year=2026,
         years_to_simulate=years,
@@ -53,7 +53,7 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
         num_sims=1,
         fund_expense=0.0,
         use_fund_expenses=False,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode="fixed",
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
@@ -120,7 +120,7 @@ def test_manual_expense_deficit_uses_post_tax_assets_first_nominal():
     husband = make_person(age=40, retire_age=100, income=20_000.0)
     expenses = FlatExpenses(50_000.0)
     husband_portfolio = make_portfolio(equity_pre=80_000.0, equity_post=100_000.0)
-    cfg = make_sim(years=1, inflation_rate=0.0, plot_mode="raw")
+    cfg = make_sim(years=1, inflation_rate=0.0, inflation_mode="nominal")
 
     results = run_sim(cfg, husband, expenses, husband_portfolio)
 
@@ -140,8 +140,8 @@ def test_manual_expense_deficit_uses_post_tax_assets_first_real_mode_deflates_co
     husband_portfolio = make_portfolio(equity_pre=80_000.0, equity_post=100_000.0)
     infl = 0.03
 
-    raw_cfg = make_sim(years=1, inflation_rate=infl, plot_mode="raw")
-    real_cfg = make_sim(years=1, inflation_rate=infl, plot_mode="real")
+    raw_cfg = make_sim(years=1, inflation_rate=infl, inflation_mode="nominal")
+    real_cfg = make_sim(years=1, inflation_rate=infl, inflation_mode="real")
 
     raw_results = run_sim(raw_cfg, husband, expenses, husband_portfolio)
     real_results = run_sim(real_cfg, husband, expenses, husband_portfolio)

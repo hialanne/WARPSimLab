@@ -95,7 +95,7 @@ def make_config(
         num_sims=1,
         fund_expense=0.0,
         use_fund_expenses=False,
-        plot_mode="raw",
+        inflation_mode="nominal",
         subplot_mode="baseline",
         include_rmd=False,
         calculate_income_taxes=False,

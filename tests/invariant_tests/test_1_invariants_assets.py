@@ -9,7 +9,7 @@ EPS = 1e-9
 def run_case(make_case, **overrides):
     """
     Helper that runs the real simulation pipeline using the scenario
-    produced by make_case and returns the raw core results.
+    produced by make_case and returns the nominal core results.
     """
     husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config = make_case(**overrides)
 

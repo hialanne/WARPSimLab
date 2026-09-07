@@ -17,7 +17,7 @@ def make_person(age, retire_age):
 
 def make_config(
     *,
-    plot_mode="nominal",
+    inflation_mode="nominal",
     subplot_mode="pre_post_tax",
     years_to_simulate=3,
     constant_y_plots=False,
@@ -32,7 +32,7 @@ def make_config(
     if annotation_strings is None:
         annotation_strings = []
     return types.SimpleNamespace(
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode=subplot_mode,
         years_to_simulate=years_to_simulate,
         constant_y_plots=constant_y_plots,

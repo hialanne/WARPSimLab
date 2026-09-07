@@ -44,7 +44,7 @@ def make_portfolio(*, equity_post=0.0):
     )
 
 
-def make_sim(*, years, inflation_rate, plot_mode):
+def make_sim(*, years, inflation_rate, inflation_mode):
     return SimpleNamespace(
         start_year=2026,
         years_to_simulate=years,
@@ -53,7 +53,7 @@ def make_sim(*, years, inflation_rate, plot_mode):
         num_sims=1,
         fund_expense=0.0,
         use_fund_expenses=False,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode="fixed",
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
@@ -119,8 +119,8 @@ def row(results, key):
 
 def test_real_dollar_deflation_mode_nominal_to_real_conversion():
     infl = 0.03
-    raw_cfg = make_sim(years=3, inflation_rate=infl, plot_mode="raw")
-    real_cfg = make_sim(years=3, inflation_rate=infl, plot_mode="real")
+    raw_cfg = make_sim(years=3, inflation_rate=infl, inflation_mode="nominal")
+    real_cfg = make_sim(years=3, inflation_rate=infl, inflation_mode="real")
 
     raw_results = run_sim(raw_cfg)
     real_results = run_sim(real_cfg)

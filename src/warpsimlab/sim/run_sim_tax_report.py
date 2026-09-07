@@ -248,7 +248,7 @@ def build_tax_report_data_from_pipeline(
             ),
             "Report Basis": (
                 "Real Dollars (Inflation Adjusted)"
-                if getattr(sim_config, "plot_mode", None) == "real"
+                if getattr(sim_config, "inflation_mode", None) == "real"
                 else "Raw Dollars (Future Nominal Values)"
             ),
         },

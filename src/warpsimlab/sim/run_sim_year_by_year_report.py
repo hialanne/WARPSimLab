@@ -45,12 +45,12 @@ def _build_projection_period_label(sim_config):
 
 
 def _build_report_basis_label(sim_config):
-    plot_mode = getattr(sim_config, "plot_mode", None)
+    inflation_mode = getattr(sim_config, "inflation_mode", None)
 
-    if plot_mode == "real":
+    if inflation_mode == "real":
         return "Real Dollars (Inflation Adjusted)"
 
-    if plot_mode == "raw":
+    if inflation_mode == "nominal":
         return "Raw Dollars (Future Nominal Values)"
 
     return "N/A"

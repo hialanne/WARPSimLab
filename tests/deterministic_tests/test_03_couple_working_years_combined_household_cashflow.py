@@ -44,7 +44,7 @@ def make_portfolio():
     )
 
 
-def make_sim(*, years, inflation_rate=0.0, plot_mode="raw", **overrides):
+def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal", **overrides):
     cfg = SimpleNamespace(
         start_year=2026,
         years_to_simulate=years,
@@ -53,7 +53,7 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw", **overrides):
         num_sims=1,
         fund_expense=0.0,
         use_fund_expenses=False,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode="fixed",
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
@@ -120,7 +120,7 @@ def test_couple_working_years_combined_household_cashflow_nominal():
     husband = make_person(age=40, retire_age=100, income=100_000.0)
     wife = make_person(age=38, retire_age=100, income=50_000.0)
     expenses = FlatExpenses(60_000.0)
-    cfg = make_sim(years=2, inflation_rate=0.0, plot_mode="raw")
+    cfg = make_sim(years=2, inflation_rate=0.0, inflation_mode="nominal")
 
     results = run_sim(cfg, husband, wife, expenses)
 
@@ -139,8 +139,8 @@ def test_couple_working_years_combined_household_cashflow_real_mode_deflates_cor
     expenses = FlatExpenses(60_000.0)
     infl = 0.03
 
-    raw_cfg = make_sim(years=2, inflation_rate=infl, plot_mode="raw")
-    real_cfg = make_sim(years=2, inflation_rate=infl, plot_mode="real")
+    raw_cfg = make_sim(years=2, inflation_rate=infl, inflation_mode="nominal")
+    real_cfg = make_sim(years=2, inflation_rate=infl, inflation_mode="real")
 
     raw_results = run_sim(raw_cfg, husband, wife, expenses)
     real_results = run_sim(real_cfg, husband, wife, expenses)

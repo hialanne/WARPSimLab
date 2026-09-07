@@ -317,7 +317,7 @@ def simulate_yearly_portfolios(
             if sequence_risk_meta["end_year"] is not None else -1
         )
 
-        if sim_config.plot_mode == "real":
+        if sim_config.inflation_mode == "real":
             if historical_window_mode_active:
                 real_discount_factors[s, :] = monteCarloEngine.build_historical_inflation_factor_path(
                     sim_config=sim_config,
@@ -619,7 +619,7 @@ def simulate_yearly_portfolios(
     # --------------------------
     # Deflate arrays if real dollars requested
     # --------------------------
-    if sim_config.plot_mode == "real":
+    if sim_config.inflation_mode == "real":
         discount_factors = real_discount_factors
         #print('total_assets: '+str(results["total_assets"][0])+' discount_factors: '+str(discount_factors))
 

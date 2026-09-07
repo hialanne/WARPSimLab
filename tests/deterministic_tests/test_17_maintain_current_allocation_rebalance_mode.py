@@ -52,7 +52,7 @@ def make_portfolio(
     )
 
 
-def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
+def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal"):
     return SimpleNamespace(
         start_year=2026,
         years_to_simulate=years,
@@ -61,7 +61,7 @@ def make_sim(*, years, inflation_rate=0.0, plot_mode="raw"):
         num_sims=1,
         fund_expense=0.0,
         use_fund_expenses=False,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode="fixed",
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
@@ -136,7 +136,7 @@ def assert_discounted(raw_results, real_results, key, inflation_rate):
 
 
 def test_maintain_current_allocation_rebalance_mode_nominal():
-    results, cfg = run_sim(make_sim(years=1, inflation_rate=0.0, plot_mode="raw"))
+    results, cfg = run_sim(make_sim(years=1, inflation_rate=0.0, inflation_mode="nominal"))
 
     # Household targets are computed once from the combined starting investable assets.
     assert cfg.household_eq_target == pytest.approx(0.50)
@@ -154,8 +154,8 @@ def test_maintain_current_allocation_rebalance_mode_nominal():
 
 def test_maintain_current_allocation_rebalance_mode_real_mode_deflates_correctly():
     infl = 0.03
-    raw_results, _ = run_sim(make_sim(years=1, inflation_rate=infl, plot_mode="raw"))
-    real_results, _ = run_sim(make_sim(years=1, inflation_rate=infl, plot_mode="real"))
+    raw_results, _ = run_sim(make_sim(years=1, inflation_rate=infl, inflation_mode="nominal"))
+    real_results, _ = run_sim(make_sim(years=1, inflation_rate=infl, inflation_mode="real"))
 
     for key in ["total_assets", "cash", "bonds", "pre_tax_assets", "post_tax_assets"]:
         assert_discounted(raw_results, real_results, key, infl)

@@ -69,7 +69,7 @@ def make_config(
         root=root,
         second_person_enabled=second_person_enabled,
         always_use_expense_mode=always_use_expense_mode,
-        plot_mode="real",
+        inflation_mode="real",
         eq_mean=0.07,
         bd_mean=0.03,
         cs_mean=0.01,

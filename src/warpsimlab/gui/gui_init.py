@@ -220,7 +220,7 @@ class PortfolioSimulatorGUI(
         self.simulation_controls = {
             "second_person_enabled": bool(DEFAULT_ENABLE_SECOND_PERSON),
             "include_realestate": False,
-            "plot_mode": "real",
+            "inflation_mode": "real",
             "subplot_mode": "fill",
             "monte_carlo_plot_style": "fill",
             "use_correlated_returns": True,

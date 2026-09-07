@@ -481,7 +481,7 @@ def run_sim_retirement_ss_comparison_report(
             ),
             "Report Basis": (
                 "Real Dollars (Inflation Adjusted)"
-                if getattr(sim_config, "plot_mode", None) == "real"
+                if getattr(sim_config, "inflation_mode", None) == "real"
                 else "Raw Dollars (Future Nominal Values)"
             ),
         },

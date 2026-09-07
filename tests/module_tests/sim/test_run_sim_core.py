@@ -23,7 +23,7 @@ class DummySimConfig:
     fund_expense: float = 0.0
 
     rebalance_every_year: bool = False
-    plot_mode: str = "raw"
+    inflation_mode: str = "nominal"
     subplot_mode: str = "deterministic"
     sim_type: str = "portfolio_sim"
     monte_carlo_mode: str = "pathBasedAnnualSampling"
@@ -608,7 +608,7 @@ def test_allocates_couple_net_income_after_tax(mod, monkeypatch):
 
 
 def test_real_mode_deflates_selected_series(mod, monkeypatch):
-    sim_config = DummySimConfig(plot_mode="real", inflation_rate=0.10)
+    sim_config = DummySimConfig(inflation_mode="real", inflation_rate=0.10)
     _patch_baseline(monkeypatch, mod, sim_config)
 
     monkeypatch.setattr(

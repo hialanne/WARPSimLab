@@ -25,7 +25,7 @@ def make_sim_config(**overrides):
         num_sims=1000,
         fund_expense=0.0,
         use_fund_expenses=False,
-        plot_mode="raw",
+        inflation_mode="nominal",
         subplot_mode="monte_carlo",
         include_rmd=False,
         calculate_income_taxes=False,

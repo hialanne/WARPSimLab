@@ -172,7 +172,7 @@ def _build_portfolio_plot_data(core, sim_config):
 def _run_overlay_total_assets_line(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
     """
     Deterministic (num_sims=1) overlay line for total assets.
-    Core handles plot_mode 'real' deflation internally.
+    Core handles inflation_mode 'real' deflation internally.
     """
     overlay_core = simulate_yearly_portfolios(
         husband_portfolio,
@@ -263,7 +263,7 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
     """
     Returns a dict with:
       - years, years_list
-      - core (raw)
+      - core (nominal)
       - net_income, net_profit, breakdown_by_class, taxes, expense_amt
       - summary_results
       - portfolio_plot_data (with overlays attached when enabled)

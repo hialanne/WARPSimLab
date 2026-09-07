@@ -30,7 +30,7 @@ class SimulationControlsEditFrame(ttk.Frame):
         self.controls.setdefault("user_annotation_strings", [])
         self.controls.setdefault("annotate_plots", False)
 
-        self.controls.setdefault("plot_mode", "real")
+        self.controls.setdefault("inflation_mode", "real")
         self.controls.setdefault("subplot_mode", "fill")
         self.controls.setdefault("monte_carlo_plot_style", "fill")
         self.controls.setdefault("use_correlated_returns", True)
@@ -246,12 +246,12 @@ class SimulationControlsEditFrame(ttk.Frame):
         )
         right_col0_row += 1
 
-        plot_mode = self.controls.get("plot_mode", "real")
-        if plot_mode not in {"raw", "real"}:
-            plot_mode = "real"
-            self.controls["plot_mode"] = plot_mode
+        inflation_mode = self.controls.get("inflation_mode", "real")
+        if inflation_mode not in {"nominal", "real"}:
+            inflation_mode = "real"
+            self.controls["inflation_mode"] = inflation_mode
 
-        plot_mode_var = tk.StringVar(value=plot_mode)
+        plot_mode_var = tk.StringVar(value=inflation_mode)
 
         plot_mode_frame = ttk.Frame(right_left_col)
         plot_mode_frame.grid(row=right_col0_row, column=0, sticky="nw", pady=2)
@@ -270,13 +270,13 @@ class SimulationControlsEditFrame(ttk.Frame):
             plot_mode_frame,
             text="Raw (nominal)",
             variable=plot_mode_var,
-            value="raw"
+            value="nominal"
         )
         raw_rb.grid(row=1, column=0, sticky="w", pady=1)
         Tooltip(raw_rb, "Show non-inflation-adjusted nominal values.", font=("Arial", 11))
 
         def on_plot_mode_changed(*_):
-            self.controls["plot_mode"] = plot_mode_var.get()
+            self.controls["inflation_mode"] = plot_mode_var.get()
 
         plot_mode_var.trace_add("write", on_plot_mode_changed)
 

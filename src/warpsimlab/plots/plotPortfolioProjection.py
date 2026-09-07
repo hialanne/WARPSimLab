@@ -119,7 +119,7 @@ def draw_portfolio_projection(
     else:
         spending_mode = "Withdrawal Mode"
 
-    if sim_config.plot_mode == "real":
+    if sim_config.inflation_mode == "real":
         value_type = "Real"
     else:
         value_type = "Nominal"

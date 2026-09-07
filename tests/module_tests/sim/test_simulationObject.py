@@ -16,7 +16,7 @@ def _base_args():
         num_sims=100,
         fund_expense=0.01,
         use_fund_expenses=True,
-        plot_mode="raw",
+        inflation_mode="nominal",
         subplot_mode="monte_carlo",
         include_rmd=True,
         calculate_income_taxes=True,
@@ -50,7 +50,7 @@ def test_simulation_assigns_plot_configuration():
     args = _base_args()
     sim = Simulation(**args)
 
-    assert sim.plot_mode == "raw"
+    assert sim.inflation_mode == "nominal"
     assert sim.subplot_mode == "monte_carlo"
     assert sim.annotate_plots is False
     assert sim.constant_y_plots is False

@@ -42,7 +42,7 @@ def test_simulate_yearly_portfolios_all_paths_identical_when_monte_carlo_is_off(
         num_sims=5,
         second_person_enabled=False,
         include_realestate=True,
-        plot_mode="raw",
+        inflation_mode="nominal",
         monte_carlo_mode="pathBasedAnnualSampling",
     )
 

@@ -18,7 +18,7 @@ def make_config(
     *,
     start_year=2025,
     inflation_rate=0.02,
-    plot_mode="nominal",
+    inflation_mode="nominal",
     overlay_retirement_age=False,
     second_person_enabled=False,
     always_use_expense_mode=True,
@@ -26,7 +26,7 @@ def make_config(
     return types.SimpleNamespace(
         start_year=start_year,
         inflation_rate=inflation_rate,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         overlay_retirement_age=overlay_retirement_age,
         second_person_enabled=second_person_enabled,
         always_use_expense_mode=always_use_expense_mode,

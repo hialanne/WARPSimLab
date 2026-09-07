@@ -20,7 +20,7 @@ def make_config(
     *,
     start_year=2025,
     inflation_rate=0.02,
-    plot_mode="nominal",
+    inflation_mode="nominal",
     subplot_mode="total",
     sim_type="income_sim",
     annotate_plots=False,
@@ -38,7 +38,7 @@ def make_config(
     return types.SimpleNamespace(
         start_year=start_year,
         inflation_rate=inflation_rate,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode=subplot_mode,
         sim_type=sim_type,
         annotate_plots=annotate_plots,

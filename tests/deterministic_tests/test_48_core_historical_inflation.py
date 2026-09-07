@@ -56,7 +56,7 @@ def make_portfolio():
 
 def make_config(
     *,
-    plot_mode="raw",
+    inflation_mode="nominal",
     years_to_simulate=2,
     special_income_streams=None,
 ):
@@ -67,7 +67,7 @@ def make_config(
         num_sims=1,
         fund_expense=0.0,
         use_fund_expenses=False,
-        plot_mode=plot_mode,
+        inflation_mode=inflation_mode,
         subplot_mode="monte_carlo",
         include_rmd=False,
         calculate_income_taxes=False,
@@ -226,7 +226,7 @@ def run_core(
     *,
     husband=None,
     expenses=None,
-    plot_mode="raw",
+    inflation_mode="nominal",
     special_income_streams=None,
     inflation_rates=None,
     window_start_indices=None,
@@ -263,7 +263,7 @@ def run_core(
         make_person(),
         expenses,
         make_config(
-            plot_mode=plot_mode,
+            inflation_mode=inflation_mode,
             years_to_simulate=2,
             special_income_streams=special_income_streams,
         ),
@@ -478,7 +478,7 @@ def test_real_mode_deflates_using_each_historical_window(
         expenses=make_expenses(
             annual_amount=40_000.0,
         ),
-        plot_mode="raw",
+        inflation_mode="nominal",
     )
 
     real_results = run_core(
@@ -489,7 +489,7 @@ def test_real_mode_deflates_using_each_historical_window(
         expenses=make_expenses(
             annual_amount=40_000.0,
         ),
-        plot_mode="real",
+        inflation_mode="real",
     )
 
     window_0_factors = np.array(
