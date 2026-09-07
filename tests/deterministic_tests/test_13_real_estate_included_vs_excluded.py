@@ -48,6 +48,7 @@ def make_sim(*, years, include_realestate, inflation_rate=0.0, plot_mode="raw"):
     return SimpleNamespace(
         start_year=2026,
         years_to_simulate=years,
+        inflation_delta=0.0,
         inflation_rate=inflation_rate,
         num_sims=1,
         fund_expense=0.0,

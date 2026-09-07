@@ -8,6 +8,7 @@ def make_config(
     *,
     years_to_simulate=5,
     inflation_rate=0.0,
+    inflation_delta=0.0,
     calculate_income_taxes=True,
     calculate_state_taxes=False,
     tax_filing_status="Single",
@@ -16,6 +17,7 @@ def make_config(
     return types.SimpleNamespace(
         years_to_simulate=years_to_simulate,
         inflation_rate=inflation_rate,
+        inflation_delta=inflation_delta,
         calculate_income_taxes=calculate_income_taxes,
         calculate_state_taxes=calculate_state_taxes,
         tax_filing_status=tax_filing_status,

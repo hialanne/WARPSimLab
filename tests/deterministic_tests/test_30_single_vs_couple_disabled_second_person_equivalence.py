@@ -62,6 +62,7 @@ def make_sim(years):
         monte_carlo_plot_style="fill",
         use_correlated_returns=True,
         inflation_rate=0.0,
+        inflation_delta=0.0,
         num_sims=1,
         fund_expense=0.0,
         use_fund_expenses=False,

@@ -45,11 +45,13 @@ def make_person(
 def make_config(
     *,
     inflation_rate=0.0,
+    inflation_delta=0.0,
     second_person_enabled=False,
     years_to_simulate=10,
 ):
     return types.SimpleNamespace(
         inflation_rate=inflation_rate,
+        inflation_delta=inflation_delta,
         second_person_enabled=second_person_enabled,
         years_to_simulate=years_to_simulate,
         subplot_mode="standard",

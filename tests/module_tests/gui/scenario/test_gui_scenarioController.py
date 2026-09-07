@@ -153,4 +153,5 @@ def test_build_snapshots_from_truth(monkeypatch, dummy_gui):
     assert "husband" in ctrl.portfolio_snapshots
 
     assert ctrl.retirement_snapshots is not None
-    assert ctrl.retirement_snapshots.inflation == dummy_gui.inflation
+    assert ctrl.retirement_snapshots.delta_inflation == 0.0
+

@@ -84,6 +84,7 @@ def make_config(
     retirement_withdraw_pct=4.0,
     retirement_withdraw_dollars=0.0,
     inflation_rate=0.0,
+    inflation_delta=0.0,
 ):
     return types.SimpleNamespace(
         include_rmd=include_rmd,
@@ -93,6 +94,7 @@ def make_config(
         retirement_withdraw_pct=retirement_withdraw_pct,
         retirement_withdraw_dollars=retirement_withdraw_dollars,
         inflation_rate=inflation_rate,
+        inflation_delta=inflation_delta,
 
         subplot_mode="standard",
         sim_type="cashflow_sim",

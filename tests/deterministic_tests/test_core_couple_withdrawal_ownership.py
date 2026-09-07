@@ -42,6 +42,7 @@ def make_config(
     second_person_enabled=False,
     withdrawal_mode="Fixed Dollar Amount",
     inflation_rate=0.0,
+    inflation_delta=0.0,
 ):
     return SimpleNamespace(
         include_rmd=False,
@@ -54,6 +55,7 @@ def make_config(
         sim_type="portfolio_sim",
         monte_carlo_mode="pathBasedAnnualSampling",
         _ret_withdraw_base_dollars=None,
+        inflation_delta=float(inflation_delta),
     )
 
 

@@ -117,6 +117,7 @@ def make_config(**overrides):
         start_year=2025,
         years_to_simulate=1,
         inflation_rate=0.0,
+        inflation_delta=0.0,
         num_sims=1,
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",

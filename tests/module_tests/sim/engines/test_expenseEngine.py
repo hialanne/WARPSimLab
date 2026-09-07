@@ -17,10 +17,11 @@ class DummyExpenses:
         return {"total": self.yearly_amount, "hsa_eligible": 0.0, "non_hsa": self.yearly_amount}
 
 
-def make_config(*, inflation_rate: float, start_year: int, scenario_expense_multiplier: float, years_to_simulate: int = 5):
+def make_config(*, inflation_rate: float, start_year: int, scenario_expense_multiplier: float, years_to_simulate: int = 5, inflation_delta: float = 0.0):
     cfg = types.SimpleNamespace(
         years_to_simulate=years_to_simulate,
         inflation_rate=inflation_rate,
+        inflation_delta=inflation_delta,
         start_year=start_year,
         scenario_expense_multiplier=scenario_expense_multiplier,
         subplot_mode=None,

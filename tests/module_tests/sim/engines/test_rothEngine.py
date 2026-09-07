@@ -21,12 +21,14 @@ def make_sim_config(
     roth_flows=None,
     years_to_simulate: int = 10,
     inflation_rate: float = 0.03,
+    inflation_delta=0.0,
 ):
     return SimpleNamespace(
         second_person_enabled=second_person_enabled,
         roth_flows=[] if roth_flows is None else roth_flows,
         years_to_simulate=years_to_simulate,
         inflation_rate=inflation_rate,
+        inflation_delta=inflation_delta,
         subplot_mode="default",
         sim_type="portfolio_sim",
         monte_carlo_mode="pathBasedAnnualSampling",

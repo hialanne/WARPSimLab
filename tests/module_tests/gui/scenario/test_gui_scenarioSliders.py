@@ -35,7 +35,7 @@ class DummyPortfolio:
 
 @dataclass
 class DummySnapshots:
-    inflation: float = 3.0
+    delta_inflation: float = 0.0
     fund_expense: float = 0.5
     historical_data_multiplier: float = 100.0
     scenario_expense_multiplier: float | None = None
@@ -70,6 +70,7 @@ def no_tooltip(monkeypatch):
 @pytest.fixture
 def main_gui_manual_expenses():
     return SimpleNamespace(
+        inflation=3.0,
         simulation_controls={
             "manual_expenses": True,
             "retirement_withdraw_pct": 4.0,
@@ -82,6 +83,7 @@ def main_gui_manual_expenses():
 @pytest.fixture
 def main_gui_withdraw_mode():
     return SimpleNamespace(
+        inflation=3.0,
         simulation_controls={
             "manual_expenses": False,
             "retirement_withdraw_pct": 4.25,
@@ -173,9 +175,9 @@ def test_update_stocks_label_reduces_bonds_when_cash_would_go_negative(tk_root, 
     assert round(frame.bonds_percent.get()) == 20
     assert frame.cash_percent.get() == 0
 
-    assert "Percent Stock: 80%" in frame.stocks_label_var.get()
-    assert "Percent Bonds: 20%" in frame.bonds_label_var.get()
-    assert "Percent Cash" in frame.cash_label_var.get()
+    assert "Stock: 80%" in frame.stocks_label_var.get()
+    assert "Bonds: 20%" in frame.bonds_label_var.get()
+    assert "Cash" in frame.cash_label_var.get()
 
 
 def test_update_bonds_label_reduces_stocks_when_cash_would_go_negative(tk_root, no_tooltip, main_gui_manual_expenses):
@@ -198,8 +200,8 @@ def test_update_bonds_label_reduces_stocks_when_cash_would_go_negative(tk_root, 
     assert round(frame.bonds_percent.get()) == 30
     assert frame.cash_percent.get() == 0
 
-    assert "Percent Stock: 70%" in frame.stocks_label_var.get()
-    assert "Percent Bonds: 30%" in frame.bonds_label_var.get()
+    assert "Stock: 70%" in frame.stocks_label_var.get()
+    assert "Bonds: 30%" in frame.bonds_label_var.get()
 
 
 def test_update_slider_state_disables_and_grays_controls(tk_root, no_tooltip, main_gui_manual_expenses):

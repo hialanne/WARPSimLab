@@ -10,7 +10,8 @@ from src.warpsimlab.gui.scenario.gui_scenarioSnapshots import ScenarioSnapshots
 def test_defaults_are_assigned():
     s = ScenarioSnapshots()
 
-    assert s.inflation == 0.0
+    assert s.calculate_real_dollars is False
+    assert s.delta_inflation == 0.0
     assert s.fund_expense == 0.0
     assert s.custom_stock_percent == 0.0
     assert s.custom_bonds_percent == 0.0
@@ -22,9 +23,8 @@ def test_defaults_are_assigned():
     assert s.scenario_withdraw_pct is None
     assert s.scenario_expense_multiplier is None
 
-    assert s.adjust_hist_for_infl_delta is False
+    assert s.calculate_real_dollars is False
     assert s.delta_inflation == 0.0
-
 
 def test_annotation_strings_defaults_to_new_list_when_none():
     s1 = ScenarioSnapshots(annotation_strings=None)
@@ -58,7 +58,8 @@ def test_can_set_optional_scenario_fields():
 
 
 def test_inflation_delta_fields():
-    s = ScenarioSnapshots(adjust_hist_for_infl_delta=True, delta_inflation=0.75)
+    s = ScenarioSnapshots(calculate_real_dollars=True, delta_inflation=0.75)
 
-    assert s.adjust_hist_for_infl_delta is True
+    assert s.calculate_real_dollars is True
     assert s.delta_inflation == pytest.approx(0.75)
+

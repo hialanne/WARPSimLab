@@ -128,10 +128,12 @@ def test_panel_role_label(mode, result_source, expected):
 @pytest.mark.parametrize(
     "plot_family,expected",
     [
-        (mod.PLOT_FAMILY_CASHFLOW, "Original Cashflow"),
+        (mod.PLOT_FAMILY_CASHFLOW, "Original Cash Flow"),
         (mod.PLOT_FAMILY_PORTFOLIO, "Original Portfolio"),
     ],
 )
+
+
 def test_panel_window_title_uses_role_and_family(plot_family, expected):
     manager = _make_manager()
     panel = {"result_source": mod.RESULT_SOURCE_BASELINE, "plot_family": plot_family}

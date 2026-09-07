@@ -57,10 +57,9 @@ def test_build_snapshots_from_truth_single_person_creates_independent_copies():
     assert set(controller.portfolio_snapshots) == {"husband"}
     assert controller.person_snapshots["husband"] is not main_gui.husband
     assert controller.portfolio_snapshots["husband"] is not main_gui.husband_portfolio
-    assert controller.retirement_snapshots.inflation == 3.25
+    assert controller.retirement_snapshots.delta_inflation == 0.0
     assert controller.retirement_snapshots.fund_expense == 0.55
     assert controller.retirement_snapshots.historical_data_multiplier == 100.0
-
 
 def test_build_snapshots_from_truth_second_person_includes_wife():
     main_gui = _make_main_gui(second_person_enabled=True)

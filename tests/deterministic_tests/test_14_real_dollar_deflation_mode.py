@@ -49,6 +49,7 @@ def make_sim(*, years, inflation_rate, plot_mode):
         start_year=2026,
         years_to_simulate=years,
         inflation_rate=inflation_rate,
+        inflation_delta=0.0,
         num_sims=1,
         fund_expense=0.0,
         use_fund_expenses=False,
