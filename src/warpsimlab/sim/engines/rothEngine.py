@@ -59,21 +59,13 @@ def _build_percent_of_inflation_factors(
         )
 
         for year in range(1, years):
-            annual_inflation = float(
-                sim_config._hist_inflation[
-                    start_idx + year - 1
-                ]
-            )
-
-            factors[year] = factors[year - 1] * (
-                1.0
-                + annual_inflation * adjustment_fraction
-            )
+            annual_inflation = float(sim_config._hist_inflation[start_idx + year - 1]) + sim_config.inflation_delta
+            factors[year] = factors[year - 1] * (1.0 + annual_inflation * adjustment_fraction)
 
         return factors
 
     annual_adjustment = (
-        float(sim_config.inflation_rate)
+        (float(sim_config.inflation_rate) + sim_config.inflation_delta)
         * adjustment_fraction
     )
 

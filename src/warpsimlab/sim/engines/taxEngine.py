@@ -254,10 +254,10 @@ def initialize_tax_engine_for_simulation(sim_config):
             sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
         )
         for year in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (year - 1)])
+            annual_inflation = float(sim_config._hist_inflation[start_idx + (year - 1)]) + sim_config.inflation_delta
             inflation_factors[year] = inflation_factors[year - 1] * (1.0 + annual_inflation)
     else:
-        multiplier = 1.0 + sim_config.inflation_rate
+        multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
         for year in range(1, years):
             inflation_factors[year] = inflation_factors[year - 1] * multiplier
 

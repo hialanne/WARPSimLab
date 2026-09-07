@@ -492,7 +492,7 @@ def build_historical_inflation_rate_path(sim_config, years_to_simulate, sim_inde
     end_idx = start_idx + int(years_to_simulate)
 
     inflation_rates = np.zeros(years_to_simulate + 1, dtype=float)
-    inflation_rates[1:] = sim_config._hist_inflation[start_idx:end_idx]
+    inflation_rates[1:] = sim_config._hist_inflation[start_idx:end_idx] + sim_config.inflation_delta
 
     return inflation_rates
 

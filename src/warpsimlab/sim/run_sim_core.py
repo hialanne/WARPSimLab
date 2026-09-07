@@ -73,6 +73,9 @@ def simulate_yearly_portfolios(
     #print("DEBUG tax_filing_status:", sim_config.tax_filing_status)
     #print("DEBUG second_person_enabled:", sim_config.second_person_enabled)
 
+    #print("DEBUG inflation_rate:", sim_config.inflation_rate)
+    #print("DEBUG inflation_delta:", sim_config.inflation_delta)
+
     #print('num_sims: '+str(num_sims))
     years_to_simulate = sim_config.years_to_simulate
     second_person_enabled = sim_config.second_person_enabled
@@ -322,10 +325,10 @@ def simulate_yearly_portfolios(
                     sim_index=s,
                 )
             else:
-                real_discount_factors[s, :] = np.array(
-                    [(1.0 + sim_config.inflation_rate) ** t for t in range(years_to_simulate + 1)],
-                    dtype=float,
-                )
+                real_discount_factors[s, :] = np.zeros(years_to_simulate + 1, dtype=float)
+
+                for t in range(years_to_simulate + 1):
+                    real_discount_factors[s, t] = (1.0 + sim_config.inflation_rate + sim_config.inflation_delta) ** t
 
         # Year 0 - initial state
         results["year"][s,0] = sim_config.start_year

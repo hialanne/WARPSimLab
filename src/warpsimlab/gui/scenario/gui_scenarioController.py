@@ -370,7 +370,7 @@ class ScenarioController:
             self.sliders_frame.bonds_percent,
             self.sliders_frame.cash_percent,          # changes when stocks/bonds adjust cash
             self.sliders_frame.enable_annotations,    # checkbox affects plots
-            self.sliders_frame.adjust_hist_for_infl_delta, 
+            self.sliders_frame.calculate_real_dollars, 
             self.sliders_frame.dynamic_value,
         ]
 
@@ -398,7 +398,7 @@ class ScenarioController:
             ("bonds", self.sliders_frame.bonds_percent),
             ("cash", self.sliders_frame.cash_percent),
             ("annotations", self.sliders_frame.enable_annotations),
-            ("adjust_inflation", self.sliders_frame.adjust_hist_for_infl_delta),
+            ("adjust_inflation", self.sliders_frame.calculate_real_dollars),
             ("dynamic", self.sliders_frame.dynamic_value),
         ]
 
@@ -520,7 +520,7 @@ class ScenarioController:
 
         self.adjust_infl_delta_cb = ttk.Checkbutton(
             controls_frame, text="Real Returns (Inflation Adjusted)",
-            variable=self.sliders_frame.adjust_hist_for_infl_delta
+            variable=self.sliders_frame.calculate_real_dollars
         )
         self.adjust_infl_delta_cb.grid(row=2, column=0, sticky="w")
 

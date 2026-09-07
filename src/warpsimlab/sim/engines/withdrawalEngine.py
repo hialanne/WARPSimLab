@@ -20,11 +20,11 @@ def _get_withdrawal_inflation_factor(year, sim_config):
         )
         factor = 1.0
         for y in range(1, year + 1):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)])
+            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
             factor *= (1.0 + annual_inflation)
         return factor
 
-    return (1.0 + sim_config.inflation_rate) ** year
+    return (1.0 + sim_config.inflation_rate + sim_config.inflation_delta) ** year
 
 
 def calculate_rmd(balance, age):

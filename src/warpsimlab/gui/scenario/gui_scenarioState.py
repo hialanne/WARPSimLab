@@ -30,7 +30,6 @@ class ScenarioStateManager:
             c.portfolio_snapshots["wife"] = copy.deepcopy(self.main_gui.wife_portfolio)
 
         c.retirement_snapshots = ScenarioSnapshots()
-        c.retirement_snapshots.inflation = self.main_gui.inflation
         c.retirement_snapshots.fund_expense = self.main_gui.simulation_settings.get("fund_expense")
         c.retirement_snapshots.historical_data_multiplier = 100.0
 
@@ -51,9 +50,8 @@ class ScenarioStateManager:
         bonds = c.sliders_frame.bonds_percent.get()
         cash = c.sliders_frame.cash_percent.get()
 
-        c.retirement_snapshots.inflation = inflation
-        c.retirement_snapshots.adjust_hist_for_infl_delta = c.sliders_frame.adjust_hist_for_infl_delta.get()
-        c.retirement_snapshots.delta_inflation = float(c.retirement_snapshots.inflation) - float(self.main_gui.inflation)
+        c.retirement_snapshots.calculate_real_dollars = c.sliders_frame.calculate_real_dollars.get()
+        c.retirement_snapshots.delta_inflation = float(inflation) - float(self.main_gui.inflation)
         c.retirement_snapshots.fund_expense = fund_expense
         c.retirement_snapshots.historical_data_multiplier = historical_data_multiplier
 

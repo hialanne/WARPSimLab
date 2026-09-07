@@ -64,7 +64,8 @@ class Simulation:
             historical_window_stop_year=None,
             historical_window_stride=1,
             warpsimlab_version="Unknown",
-            loaded_data_file=None
+            loaded_data_file=None,
+            inflation_delta=0.0
     ):
 
 
@@ -73,7 +74,12 @@ class Simulation:
         self.root = root
         self.start_year = start_year
         self.years_to_simulate = years_to_simulate
+
+        # inflation_rate is real.
+        # inflation_delta comes from Scenario Explorer, doing "what if" analysis.
         self.inflation_rate = inflation_rate
+        self.inflation_delta = inflation_delta
+        
         self.num_sims = num_sims
         self.fund_expense = fund_expense
         self.use_fund_expenses = use_fund_expenses

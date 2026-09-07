@@ -16,7 +16,6 @@ class ScenarioSnapshots:
     """
 
     def __init__(   self, 
-                    inflation=0.0, 
                     fund_expense=0.0,
                     custom_stock_percent=0.0, 
                     custom_bonds_percent=0.0, 
@@ -27,10 +26,9 @@ class ScenarioSnapshots:
                     annotation_strings = None,  # list[list[dict]]; see class docstring
                     scenario_withdraw_pct = None,
                     scenario_expense_multiplier = None,
-                    adjust_hist_for_infl_delta = False,
+                    calculate_real_dollars = False,
                     delta_inflation = 0.0
     ):
-        self.inflation = inflation
         self.fund_expense = fund_expense
         self.custom_stock_percent = custom_stock_percent
         self.custom_bonds_percent = custom_bonds_percent
@@ -52,6 +50,6 @@ class ScenarioSnapshots:
         #     "color": Optional[str]
         # }
 
-        self.adjust_hist_for_infl_delta = adjust_hist_for_infl_delta
+        self.calculate_real_dollars = calculate_real_dollars
         self.delta_inflation = delta_inflation
 

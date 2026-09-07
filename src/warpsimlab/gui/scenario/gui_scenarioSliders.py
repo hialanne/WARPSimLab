@@ -47,7 +47,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.portfolio = portfolio
         self.retirement_snapshots = retirement_snapshots
 
-        self.inflation = retirement_snapshots.inflation
+        self.inflation = main_gui.inflation
         self.fund_expense = retirement_snapshots.fund_expense
         self.historical_data_multiplier = retirement_snapshots.historical_data_multiplier
 
@@ -78,7 +78,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.enable_annotations = tk.BooleanVar(value=True)  # ON by default
 
         # New: whether to apply inflation delta to return assumptions
-        self.adjust_hist_for_infl_delta = tk.BooleanVar(value=True)
+        self.calculate_real_dollars = tk.BooleanVar(value=True)
 
         # --------------------
         # Sliders container

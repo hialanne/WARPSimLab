@@ -19,11 +19,11 @@ def _build_income_inflation_factors(sim_config):
             sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
         )
         for y in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)])
+            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
             factors[y] = factors[y - 1] * (1.0 + annual_inflation)
         return factors
 
-    base_mult = 1.0 + sim_config.inflation_rate
+    base_mult = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
     for y in range(1, years):
         factors[y] = factors[y - 1] * base_mult
 
@@ -47,7 +47,7 @@ def _build_pension_factors(sim_config, inflation_adjustment_pct):
             sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
         )
         for y in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)])
+            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
             pension_step = 1.0 + (
                 annual_inflation * inflation_adjustment_pct / 100.0
             )
@@ -55,7 +55,7 @@ def _build_pension_factors(sim_config, inflation_adjustment_pct):
         return factors
 
     pension_mult = 1.0 + (
-        sim_config.inflation_rate * inflation_adjustment_pct / 100.0
+        (sim_config.inflation_rate + sim_config.inflation_delta) * inflation_adjustment_pct / 100.0
     )
     for y in range(1, years):
         factors[y] = factors[y - 1] * pension_mult
@@ -90,12 +90,12 @@ def _build_special_income_factor(sim_config, adjustment_mode, adjustment_pct, st
         factor = start_factor
 
         for y in range(start_year + 1, year + 1):
-            annual_inflation = float(sim_config._hist_inflation[hist_start_idx + (y - 1)])
+            annual_inflation = float(sim_config._hist_inflation[hist_start_idx + (y - 1)]) + sim_config.inflation_delta
             factor *= 1.0 + annual_inflation * adjustment_pct / 100.0
 
         return factor
 
-    annual_step = sim_config.inflation_rate * adjustment_pct / 100.0
+    annual_step = (sim_config.inflation_rate + sim_config.inflation_delta) * adjustment_pct / 100.0
     return start_factor * (1.0 + annual_step) ** years_since_start
 
 

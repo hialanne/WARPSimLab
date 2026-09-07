@@ -21,11 +21,11 @@ def _build_expense_inflation_factors(sim_config):
             sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
         )
         for y in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)])
+            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
             factors[y] = factors[y - 1] * (1.0 + annual_inflation)
         return factors
 
-    base_mult = 1.0 + sim_config.inflation_rate
+    base_mult = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
     for y in range(1, years):
         factors[y] = factors[y - 1] * base_mult
 

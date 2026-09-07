@@ -71,7 +71,7 @@ class PortfolioSimulatorGUI_RunMixin:
         controls = self.simulation_controls
 
         if use_snapshots:
-            inflation               = retirement_snapshots.inflation
+            inflation               = self.inflation
             fund_expense            = retirement_snapshots.fund_expense
             initial_allocation_mode = "custom"
             custom_stock = self._simulation_float(
@@ -82,12 +82,16 @@ class PortfolioSimulatorGUI_RunMixin:
                 "Scenario cash allocation", retirement_snapshots.custom_cash_percent) / 100
             historical_multiplier = self._simulation_float(
                 "Scenario historical data multiplier", retirement_snapshots.historical_data_multiplier) / 100
-            adjust_hist_for_infl_delta = bool(
-                getattr(retirement_snapshots, "adjust_hist_for_infl_delta", False)
-            )
-            delta_inflation = self._simulation_float(
+            inflation_delta = self._simulation_float(
                 "Scenario inflation adjustment", getattr(retirement_snapshots, "delta_inflation", 0.0)
-            ) if adjust_hist_for_infl_delta else 0.0
+            )
+
+            calculate_real_dollars = bool(getattr(retirement_snapshots, "calculate_real_dollars", False))
+
+            if calculate_real_dollars:
+                plot_mode = "real"
+            else:
+                plot_mode = "raw"
 
             use_snapshot_annotations = retirement_snapshots.use_snapshot_annotations
             scenario_explorer_annotations = retirement_snapshots.annotation_strings
@@ -102,7 +106,8 @@ class PortfolioSimulatorGUI_RunMixin:
             custom_bonds = self._simulation_float("Custom bond allocation", sim_cfg.get("custom_bonds", 0)) / 100
             custom_cash = self._simulation_float("Custom cash allocation", sim_cfg.get("custom_cash", 0)) / 100
             historical_multiplier   = 1
-            delta_inflation = 0.0
+            inflation_delta = 0.0
+            plot_mode = controls.get("plot_mode", "real")
 
             use_snapshot_annotations = controls.get("annotate_plots")
             user_annotation_strings = controls.get("user_annotation_strings", [])
@@ -139,6 +144,7 @@ class PortfolioSimulatorGUI_RunMixin:
             start_year=self._simulation_int("Simulation start year", sim_cfg.get("start_year", 2023)),
             years_to_simulate=self._simulation_int("Years to simulate", sim_cfg.get("years_to_simulate", 30)),
             inflation_rate=self._simulation_float("Inflation rate", inflation) / 100,
+            inflation_delta=inflation_delta / 100,
             num_sims=self._simulation_int("Number of simulations", sim_cfg.get("num_sims", 500)),
             fund_expense=self._simulation_float("Fund expense", fund_expense) / 100,
             use_fund_expenses=sim_cfg.get("use_fund_expenses", True),
@@ -147,14 +153,10 @@ class PortfolioSimulatorGUI_RunMixin:
 
             report_options=report_options,
 
-            eq_mean=(self._simulation_float("Equity mean return", market_data["eq_mean"]) * historical_multiplier
-                     + delta_inflation) / 100,
-            bd_mean=(self._simulation_float("Bond mean return", market_data["bd_mean"]) * historical_multiplier
-                     + delta_inflation) / 100,
-            cs_mean=(self._simulation_float("Cash mean return", market_data["cs_mean"]) * historical_multiplier
-                     + delta_inflation) / 100,
-            re_mean=(self._simulation_float("Real estate mean return", market_data["re_mean"]) * historical_multiplier
-                     + delta_inflation) / 100,
+            eq_mean=self._simulation_float("Equity mean return", market_data["eq_mean"]) * historical_multiplier / 100,
+            bd_mean=self._simulation_float("Bond mean return", market_data["bd_mean"]) * historical_multiplier / 100,
+            cs_mean=self._simulation_float("Cash mean return", market_data["cs_mean"]) * historical_multiplier / 100,
+            re_mean=self._simulation_float("Real estate mean return", market_data["re_mean"]) * historical_multiplier / 100,
             eq_std=self._simulation_float("Equity standard deviation", market_data["eq_std"]) / 100,
             bd_std=self._simulation_float("Bond standard deviation", market_data["bd_std"]) / 100,
             cs_std=self._simulation_float("Cash standard deviation", market_data["cs_std"]) / 100,
@@ -187,7 +189,7 @@ class PortfolioSimulatorGUI_RunMixin:
             calculate_state_taxes=controls.get("calculate_state_taxes", False),
             state_of_residence=controls.get("state_of_residence", ""),
 
-            plot_mode=controls.get("plot_mode", "real"),
+            plot_mode=plot_mode,
             subplot_mode=controls.get("subplot_mode", "fill"),
             monte_carlo_plot_style=controls.get("monte_carlo_plot_style", "fill"),
             use_correlated_returns=controls.get("use_correlated_returns", True),
