@@ -32,7 +32,7 @@ class SimulationControlsEditFrame(ttk.Frame):
 
         self.controls.setdefault("inflation_mode", "real")
         self.controls.setdefault("results_mode", "fill")
-        self.controls.setdefault("monte_carlo_plot_style", "fill")
+        self.controls.setdefault("risk_analysis_plot_style", "fill")
         self.controls.setdefault("use_correlated_returns", True)
         self.controls.setdefault("show_simulated_shortfall_rate", True)
         self.controls.setdefault("risk_analysis_mode", "monte_carlo")
@@ -502,7 +502,7 @@ class SimulationControlsEditFrame(ttk.Frame):
         ).grid(row=3, column=0, sticky="w", pady=(20, 2))
 
         monte_carlo_plot_style_var = tk.StringVar(
-            value=self.controls.get("monte_carlo_plot_style", "fill")
+            value=self.controls.get("risk_analysis_plot_style", "fill")
         )
 
         monte_carlo_plot_style_frame = ttk.Frame(monte_carlo_section)
@@ -536,7 +536,7 @@ class SimulationControlsEditFrame(ttk.Frame):
         Tooltip(mc_plot_all_lines_rb, "Display all Monte Carlo paths as lines.", font=("Arial", 11))
 
         def on_monte_carlo_plot_style_changed(*_):
-            self.controls["monte_carlo_plot_style"] = monte_carlo_plot_style_var.get()
+            self.controls["risk_analysis_plot_style"] = monte_carlo_plot_style_var.get()
 
         monte_carlo_plot_style_var.trace_add("write", on_monte_carlo_plot_style_changed)
 

@@ -277,9 +277,9 @@ def _plot_assets(years_list, simulation_data, total_color=COLOR_TOTAL_REAL, sim_
     if mode == "pre_post_tax":
         _plot_pre_post_tax_assets(years_list, simulation_data)
     elif mode == "risk_analysis":
-        monte_carlo_plot_style = getattr(sim_config, "monte_carlo_plot_style", "fill")
+        risk_analysis_plot_style = getattr(sim_config, "risk_analysis_plot_style", "fill")
 
-        if monte_carlo_plot_style == "all_lines":
+        if risk_analysis_plot_style == "all_lines":
             _plot_monte_carlo_all_lines(years_list, simulation_data, total_color)
         else:
             _plot_monte_carlo_assets(years_list, simulation_data, total_color, sim_config)
@@ -403,7 +403,7 @@ def _plot_pre_post_tax_assets(years_list, simulation_data):
 def _plot_monte_carlo_assets(years_list, simulation_data, total_color, sim_config=None):
     percentiles = simulation_data.percentiles
 
-    plot_style = getattr(sim_config, "monte_carlo_plot_style", "fill")
+    plot_style = getattr(sim_config, "risk_analysis_plot_style", "fill")
 
     percentile_keys = [
         "pct1", "pct10", "pct20", "pct30", "pct40",

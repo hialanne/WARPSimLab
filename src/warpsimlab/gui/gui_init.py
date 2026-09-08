@@ -222,7 +222,7 @@ class PortfolioSimulatorGUI(
             "include_realestate": False,
             "inflation_mode": "real",
             "results_mode": "fill",
-            "monte_carlo_plot_style": "fill",
+            "risk_analysis_plot_style": "fill",
             "use_correlated_returns": True,
             # "risk_analysis_mode": "monte_carlo",
             "risk_analysis_mode": "historical_windows",

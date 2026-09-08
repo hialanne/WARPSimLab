@@ -324,8 +324,8 @@ def _validate_sim_config(sim_config):
     _require_choice("sim_config.inflation_mode", getattr(sim_config, "inflation_mode", None), PLOT_MODES)
     _require_choice("sim_config.results_mode", getattr(sim_config, "results_mode", None), SUBPLOT_MODES)
     _require_choice(
-        "sim_config.monte_carlo_plot_style",
-        getattr(sim_config, "monte_carlo_plot_style", None),
+        "sim_config.risk_analysis_plot_style",
+        getattr(sim_config, "risk_analysis_plot_style", None),
         MONTE_CARLO_PLOT_STYLES,
     )
     _require_choice(

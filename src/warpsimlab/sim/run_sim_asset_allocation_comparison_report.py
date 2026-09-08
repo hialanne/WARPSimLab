@@ -393,7 +393,7 @@ def run_sim_asset_allocation_comparison_report(
     original_subplot_mode = getattr(sim_config, "results_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
     original_monte_carlo_mode = getattr(sim_config, "risk_analysis_mode", None)
-    original_monte_carlo_plot_style = getattr(sim_config, "monte_carlo_plot_style", "fill")
+    original_monte_carlo_plot_style = getattr(sim_config, "risk_analysis_plot_style", "fill")
     original_include_realestate = getattr(sim_config, "include_realestate", None)
     original_show_simulated_shortfall_rate = getattr(sim_config, "show_simulated_shortfall_rate", None)
     original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
@@ -415,7 +415,7 @@ def run_sim_asset_allocation_comparison_report(
         # Depletion is calculated directly from the Historical Window results.
         sim_config.show_simulated_shortfall_rate = False
         sim_config.calculate_simulated_shortfall_rate = False
-        sim_config.monte_carlo_plot_style = "fill"
+        sim_config.risk_analysis_plot_style = "fill"
 
         # Prevent run_pipeline() from performing unrelated overlay simulations for every case.
         sim_config.overlay_tax_impacts = False
@@ -551,7 +551,7 @@ def run_sim_asset_allocation_comparison_report(
         sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
         sim_config.risk_analysis_mode = original_monte_carlo_mode
-        sim_config.monte_carlo_plot_style = original_monte_carlo_plot_style
+        sim_config.risk_analysis_plot_style = original_monte_carlo_plot_style
         sim_config.include_realestate = original_include_realestate
         sim_config.show_simulated_shortfall_rate = original_show_simulated_shortfall_rate
         sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate

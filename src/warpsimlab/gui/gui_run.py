@@ -191,7 +191,7 @@ class PortfolioSimulatorGUI_RunMixin:
 
             inflation_mode=inflation_mode,
             results_mode=controls.get("results_mode", "fill"),
-            monte_carlo_plot_style=controls.get("monte_carlo_plot_style", "fill"),
+            risk_analysis_plot_style=controls.get("risk_analysis_plot_style", "fill"),
             use_correlated_returns=controls.get("use_correlated_returns", True),
             risk_analysis_mode=controls.get("risk_analysis_mode", "monte_carlo"),
             historical_asset_returns_file=controls.get(

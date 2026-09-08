@@ -18,7 +18,7 @@ class Simulation:
             sim_type=False,
             report_options=None,
             sim_initial_allocation_mode="none",
-            monte_carlo_plot_style="fill",
+            risk_analysis_plot_style="fill",
             use_correlated_returns=True,
             risk_analysis_mode="monte_carlo",
             historical_asset_returns_file="us_asset_returns_1876_2025.csv",
@@ -160,7 +160,7 @@ class Simulation:
         self.scenario_explorer_annotations = scenario_explorer_annotations
 
         self.sim_initial_allocation_mode = sim_initial_allocation_mode
-        self.monte_carlo_plot_style = monte_carlo_plot_style
+        self.risk_analysis_plot_style = risk_analysis_plot_style
         self.use_correlated_returns = use_correlated_returns
         self.risk_analysis_mode = risk_analysis_mode
         self.historical_asset_returns_file = historical_asset_returns_file
