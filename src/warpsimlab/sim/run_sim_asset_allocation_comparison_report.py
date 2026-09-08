@@ -390,7 +390,7 @@ def run_sim_asset_allocation_comparison_report(
         ):
             simulation_equity_percentages.append(equity_percentage)
 
-    original_subplot_mode = getattr(sim_config, "subplot_mode", None)
+    original_subplot_mode = getattr(sim_config, "results_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
     original_monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", None)
     original_monte_carlo_plot_style = getattr(sim_config, "monte_carlo_plot_style", "fill")
@@ -435,7 +435,7 @@ def run_sim_asset_allocation_comparison_report(
             # Deterministic projection
             # -------------------------------------------------
 
-            sim_config.subplot_mode = "fill"
+            sim_config.results_mode = "fill"
             sim_config.sim_type = "portfolio_sim"
 
             deterministic_pipeline_result = run_pipeline(
@@ -452,7 +452,7 @@ def run_sim_asset_allocation_comparison_report(
             # Historical Window risk analysis
             # -------------------------------------------------
 
-            sim_config.subplot_mode = "monte_carlo"
+            sim_config.results_mode = "risk_analysis"
             sim_config.sim_type = "portfolio_sim"
             sim_config.monte_carlo_mode = "rollingHistoricalWindows"
 
@@ -495,7 +495,7 @@ def run_sim_asset_allocation_comparison_report(
 
         # Deterministic projection
 
-        sim_config.subplot_mode = "fill"
+        sim_config.results_mode = "fill"
         sim_config.sim_type = "portfolio_sim"
 
         deterministic_pipeline_result = run_pipeline(
@@ -510,7 +510,7 @@ def run_sim_asset_allocation_comparison_report(
 
         # Historical Window risk analysis
 
-        sim_config.subplot_mode = "monte_carlo"
+        sim_config.results_mode = "risk_analysis"
         sim_config.sim_type = "portfolio_sim"
         sim_config.monte_carlo_mode = "rollingHistoricalWindows"
 
@@ -548,7 +548,7 @@ def run_sim_asset_allocation_comparison_report(
         )
 
     finally:
-        sim_config.subplot_mode = original_subplot_mode
+        sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
         sim_config.monte_carlo_mode = original_monte_carlo_mode
         sim_config.monte_carlo_plot_style = original_monte_carlo_plot_style

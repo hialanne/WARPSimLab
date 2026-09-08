@@ -24,7 +24,7 @@ def test_pipeline_median_matches_raw_path_median(monkeypatch):
     sim_config = make_sim_config(
         years_to_simulate=4,
         num_sims=5,
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
         overlay_tax_impacts=False,
         overlay_fund_expense_impacts=False,
@@ -71,7 +71,7 @@ def test_pipeline_preserves_raw_total_assets_shape(monkeypatch):
     sim_config = make_sim_config(
         years_to_simulate=3,
         num_sims=4,
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
     )
 
@@ -113,7 +113,7 @@ def test_pipeline_does_not_assert_mean_equals_median(monkeypatch):
     sim_config = make_sim_config(
         years_to_simulate=4,
         num_sims=5,
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
     )
 

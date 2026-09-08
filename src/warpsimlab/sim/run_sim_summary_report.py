@@ -630,7 +630,7 @@ def _save_portfolio_plot_with_temporary_modes(
     *,
     output_folder,
     filename,
-    subplot_mode,
+    results_mode,
     sim_type,
     monte_carlo_mode=None,
     force_num_sims=None,
@@ -638,14 +638,14 @@ def _save_portfolio_plot_with_temporary_modes(
     simulated_shortfall_rate=None,
     save_plot=True,
 ):
-    original_subplot_mode = getattr(sim_config, "subplot_mode", None)
+    original_subplot_mode = getattr(sim_config, "results_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
     original_monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", None)
     original_include_realestate = getattr(sim_config, "include_realestate", None)
     original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
     try:
-        sim_config.subplot_mode = subplot_mode
+        sim_config.results_mode = results_mode
         sim_config.sim_type = sim_type
         sim_config.calculate_simulated_shortfall_rate = calculate_simulated_shortfall_rate
 
@@ -691,7 +691,7 @@ def _save_portfolio_plot_with_temporary_modes(
         }
 
     finally:
-        sim_config.subplot_mode = original_subplot_mode
+        sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
         sim_config.monte_carlo_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
@@ -708,16 +708,16 @@ def _save_income_plot_with_temporary_modes(
     *,
     output_folder,
     filename,
-    subplot_mode,
+    results_mode,
     sim_type,
     force_num_sims=1,
 ):
-    original_subplot_mode = getattr(sim_config, "subplot_mode", None)
+    original_subplot_mode = getattr(sim_config, "results_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
     original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
     try:
-        sim_config.subplot_mode = subplot_mode
+        sim_config.results_mode = results_mode
         sim_config.sim_type = sim_type
         sim_config.calculate_simulated_shortfall_rate = False
 
@@ -773,7 +773,7 @@ def _save_income_plot_with_temporary_modes(
         )
 
     finally:
-        sim_config.subplot_mode = original_subplot_mode
+        sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
         sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
@@ -813,7 +813,7 @@ def _build_report_plot_assets(
                 sim_config,
                 output_folder=assets_folder,
                 filename="historical_windows_analysis.png",
-                subplot_mode="monte_carlo",
+                results_mode="risk_analysis",
                 sim_type="portfolio_sim",
                 monte_carlo_mode="rollingHistoricalWindows",
                 force_num_sims=None,
@@ -848,7 +848,7 @@ def _build_report_plot_assets(
                 sim_config,
                 output_folder=assets_folder,
                 filename="portfolio_projection.png",
-                subplot_mode="fill",
+                results_mode="fill",
                 sim_type="portfolio_sim",
                 monte_carlo_mode=None,
                 force_num_sims=1,
@@ -876,7 +876,7 @@ def _build_report_plot_assets(
                 sim_config,
                 output_folder=assets_folder,
                 filename="subcategories_projection.png",
-                subplot_mode="sub_categories",
+                results_mode="sub_categories",
                 sim_type="portfolio_sim",
                 force_num_sims=1,
                 calculate_simulated_shortfall_rate=False,
@@ -903,7 +903,7 @@ def _build_report_plot_assets(
                 sim_config,
                 output_folder=assets_folder,
                 filename="income_projection.png",
-                subplot_mode="fill",
+                results_mode="fill",
                 sim_type="income_sim",
                 force_num_sims=1,
             )
@@ -928,7 +928,7 @@ def _build_report_plot_assets(
                 sim_config,
                 output_folder=assets_folder,
                 filename="income_subcategories.png",
-                subplot_mode="sub_categories",
+                results_mode="sub_categories",
                 sim_type="income_sim",
                 force_num_sims=1,
             )
@@ -953,7 +953,7 @@ def _build_report_plot_assets(
                 sim_config,
                 output_folder=assets_folder,
                 filename="cashflow_projection.png",
-                subplot_mode="fill",
+                results_mode="fill",
                 sim_type="cashflow_sim",
                 force_num_sims=1,
             )
@@ -978,7 +978,7 @@ def _build_report_plot_assets(
                 sim_config,
                 output_folder=assets_folder,
                 filename="cashflow_subcategories.png",
-                subplot_mode="sub_categories",
+                results_mode="sub_categories",
                 sim_type="cashflow_sim",
                 force_num_sims=1,
             )
@@ -1027,7 +1027,7 @@ def _build_report_plot_assets(
                 sim_config,
                 output_folder=assets_folder,
                 filename="monte_carlo_analysis.png",
-                subplot_mode="monte_carlo",
+                results_mode="risk_analysis",
                 sim_type="portfolio_sim",
                 monte_carlo_mode="pathBasedAnnualSampling",
                 force_num_sims=None,

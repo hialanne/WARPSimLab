@@ -62,7 +62,7 @@ def control_vars():
             "constant_y_plots": False,
             "rebalance_every_year": False,
             "inflation_mode": "real",
-            "subplot_mode": "none",
+            "results_mode": "none",
             "output_csv": "None",
             "annotation_strings": [],
             "annotate_plots": False,
@@ -102,7 +102,7 @@ def test_subplot_mode_mapping_exists(tk_root, no_tooltip, no_annotations_editor,
     frame.pack()
 
     # stale invalid backing value is normalized to the canonical default
-    assert control_vars["_controls_dict"]["subplot_mode"] == "fill"
+    assert control_vars["_controls_dict"]["results_mode"] == "fill"
 
 
 def test_annotation_checkbox_updates_dict(tk_root, no_tooltip, no_annotations_editor, control_vars):

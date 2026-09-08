@@ -29,7 +29,7 @@ def make_sim_config(
         years_to_simulate=years_to_simulate,
         inflation_rate=inflation_rate,
         inflation_delta=inflation_delta,
-        subplot_mode="default",
+        results_mode="default",
         sim_type="portfolio_sim",
         monte_carlo_mode="pathBasedAnnualSampling",
         _active_historical_sim_index=None,

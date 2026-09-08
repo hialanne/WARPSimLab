@@ -116,7 +116,7 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
     sim_config.years_to_simulate = years_to_simulate
     sim_config.inflation_rate = 0.0
     sim_config.num_sims = 10
-    sim_config.subplot_mode = "default"
+    sim_config.results_mode = "default"
     sim_config.include_realestate = False
     sim_config.overlay_tax_impacts = False
     sim_config.overlay_fund_expense_impacts = True

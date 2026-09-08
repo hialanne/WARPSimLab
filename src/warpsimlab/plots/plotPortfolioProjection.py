@@ -124,10 +124,10 @@ def draw_portfolio_projection(
     else:
         value_type = "Nominal"
 
-    subplot_mode = getattr(sim_config, "subplot_mode", "")
+    results_mode = getattr(sim_config, "results_mode", "")
     market_mode = getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling")
 
-    if subplot_mode == "monte_carlo":
+    if results_mode == "risk_analysis":
         if market_mode == "rollingHistoricalWindows":
             sim_type_text = "Historical Windows Portfolio"
         else:
@@ -197,7 +197,7 @@ def draw_portfolio_projection(
         yMin = 0
 
         if sim_config.constant_y_plots:
-            if sim_config.subplot_mode == "monte_carlo":
+            if sim_config.results_mode == "risk_analysis":
                 yMax = (
                     simulation_data.percentiles["median"][0]
                     * sim_config.years_to_simulate
@@ -235,7 +235,7 @@ def _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config):
             "simulation_data.simulated_shortfall_rate is missing"
         )
 
-    subplot_mode = getattr(sim_config, "subplot_mode", "")
+    results_mode = getattr(sim_config, "results_mode", "")
     market_mode = getattr(
         sim_config,
         "monte_carlo_mode",
@@ -243,7 +243,7 @@ def _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config):
     )
 
     if (
-        subplot_mode == "monte_carlo"
+        results_mode == "risk_analysis"
         and market_mode == "rollingHistoricalWindows"
     ):
         label = f"{rate:.0f}% of historical windows depleted the portfolio"
@@ -270,13 +270,13 @@ def _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config):
 
 def _plot_assets(years_list, simulation_data, total_color=COLOR_TOTAL_REAL, sim_config=None):
     """
-    Dispatcher for plotting portfolio assets depending on the subplot_mode.
+    Dispatcher for plotting portfolio assets depending on the results_mode.
     """
-    mode = getattr(sim_config, "subplot_mode", "pre_post_tax")
+    mode = getattr(sim_config, "results_mode", "pre_post_tax")
     
     if mode == "pre_post_tax":
         _plot_pre_post_tax_assets(years_list, simulation_data)
-    elif mode == "monte_carlo":
+    elif mode == "risk_analysis":
         monte_carlo_plot_style = getattr(sim_config, "monte_carlo_plot_style", "fill")
 
         if monte_carlo_plot_style == "all_lines":

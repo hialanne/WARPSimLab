@@ -7,7 +7,7 @@ from src.warpsimlab.utils.constants import UNIFORM_LIFETIME_TABLE, RMD_START_AGE
 
 def _get_withdrawal_inflation_factor(year, sim_config):
     historical_mode_active = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
         and getattr(sim_config, "_active_historical_sim_index", None) is not None

@@ -74,7 +74,7 @@ def make_config(
         fund_expense=0.0,
         use_fund_expenses=False,
         inflation_mode=inflation_mode,
-        subplot_mode="baseline",
+        results_mode="baseline",
         include_rmd=False,
         calculate_income_taxes=False,
         calculate_payroll_taxes=False,

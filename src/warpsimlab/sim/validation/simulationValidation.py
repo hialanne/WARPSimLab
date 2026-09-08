@@ -49,7 +49,7 @@ PLOT_MODES = {
 
 SUBPLOT_MODES = {
     "fill",
-    "monte_carlo",
+    "risk_analysis",
     "sub_categories",
     "pre_post_tax",
 }
@@ -322,7 +322,7 @@ def _validate_sim_config(sim_config):
         INITIAL_ALLOCATION_MODES,
     )
     _require_choice("sim_config.inflation_mode", getattr(sim_config, "inflation_mode", None), PLOT_MODES)
-    _require_choice("sim_config.subplot_mode", getattr(sim_config, "subplot_mode", None), SUBPLOT_MODES)
+    _require_choice("sim_config.results_mode", getattr(sim_config, "results_mode", None), SUBPLOT_MODES)
     _require_choice(
         "sim_config.monte_carlo_plot_style",
         getattr(sim_config, "monte_carlo_plot_style", None),

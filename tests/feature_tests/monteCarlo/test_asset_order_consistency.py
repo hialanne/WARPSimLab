@@ -11,7 +11,7 @@ def test_asset_order_is_consistent_with_correlation_matrix():
     sim_config = make_sim_config(
         monte_carlo_mode="pathBasedAnnualSampling",
         use_correlated_returns=True,
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
     )
 

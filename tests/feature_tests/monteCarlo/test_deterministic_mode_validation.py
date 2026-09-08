@@ -15,7 +15,7 @@ from tests.feature_tests.monteCarlo.helpers_validation import (
 
 def test_generate_market_path_returns_constant_means_when_monte_carlo_is_off():
     sim_config = make_sim_config(
-        subplot_mode="summary",   # anything except "monte_carlo"
+        results_mode="summary",   # anything except "risk_analysis"
         sim_type="portfolio_sim",
         years_to_simulate=5,
         eq_mean=0.07,
@@ -36,7 +36,7 @@ def test_simulate_yearly_portfolios_all_paths_identical_when_monte_carlo_is_off(
     install_minimal_core_engine_mocks(run_sim_core, monkeypatch)
 
     sim_config = make_sim_config(
-        subplot_mode="summary",
+        results_mode="summary",
         sim_type="portfolio_sim",
         years_to_simulate=6,
         num_sims=5,

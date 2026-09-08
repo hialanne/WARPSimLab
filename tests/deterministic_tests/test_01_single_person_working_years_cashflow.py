@@ -70,7 +70,7 @@ def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal", **overrides
         fund_expense=0.0,
         use_fund_expenses=False,
         inflation_mode=inflation_mode,
-        subplot_mode="fixed",
+        results_mode="fixed",
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
         use_correlated_returns=True,

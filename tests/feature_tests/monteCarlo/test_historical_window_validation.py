@@ -9,7 +9,7 @@ from src.warpsimlab.sim.engines.diagnosticEngine import WARPSimLabInternalError
 
 def make_historical_config(*, years_to_simulate=2, historical_window_mode="rolling_overlapping_all"):
     return SimpleNamespace(
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
         monte_carlo_mode="rollingHistoricalWindows",
         use_correlated_returns=False,

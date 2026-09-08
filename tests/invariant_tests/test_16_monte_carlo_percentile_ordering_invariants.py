@@ -13,7 +13,7 @@ EPS = 1e-9
 
 def run_case(make_case, **overrides):
     husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config = make_case(
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         num_sims=25,
         years_to_simulate=5,
         **overrides,

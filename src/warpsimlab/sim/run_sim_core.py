@@ -83,7 +83,7 @@ def simulate_yearly_portfolios(
     monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling")
 
     historical_window_mode_active = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and monte_carlo_mode == "rollingHistoricalWindows"
     )
@@ -295,7 +295,7 @@ def simulate_yearly_portfolios(
             )
 
         historical_window_mode_active = (
-            sim_config.subplot_mode == "monte_carlo"
+            sim_config.results_mode == "risk_analysis"
             and sim_config.sim_type == "portfolio_sim"
             and monte_carlo_mode == "rollingHistoricalWindows"
         )

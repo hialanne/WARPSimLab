@@ -51,7 +51,7 @@ def make_config(
         retirement_withdraw_pct=4.0,
         retirement_withdraw_dollars=float(withdrawal_amount),
         inflation_rate=float(inflation_rate),
-        subplot_mode="baseline",
+        results_mode="baseline",
         sim_type="portfolio_sim",
         monte_carlo_mode="pathBasedAnnualSampling",
         _ret_withdraw_base_dollars=None,
@@ -179,7 +179,7 @@ def test_inflation_adjusted_withdrawal_uses_historical_inflation_path():
         withdrawal_mode="Fixed Dollar Amount + Inflation",
         inflation_rate=0.99,
     )
-    config.subplot_mode = "monte_carlo"
+    config.results_mode = "risk_analysis"
     config.monte_carlo_mode = "rollingHistoricalWindows"
     config._active_historical_sim_index = 1
     config._hist_window_start_indices = np.array([0, 2], dtype=int)

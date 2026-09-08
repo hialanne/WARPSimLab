@@ -23,7 +23,7 @@ def make_config(
         tax_filing_status=tax_filing_status,
         state_of_residence=state_of_residence,
 
-        subplot_mode="standard",
+        results_mode="standard",
         sim_type="cashflow_sim",
         monte_carlo_mode="pathBasedAnnualSampling",
     )

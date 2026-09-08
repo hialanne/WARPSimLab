@@ -25,7 +25,7 @@ def _run_risk_pipeline_with_temporary_modes(
 ):
     from .simulation import run_pipeline
 
-    original_subplot_mode = getattr(sim_config, "subplot_mode", None)
+    original_subplot_mode = getattr(sim_config, "results_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
     original_monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", None)
     original_include_realestate = getattr(sim_config, "include_realestate", None)
@@ -33,7 +33,7 @@ def _run_risk_pipeline_with_temporary_modes(
     original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
     try:
-        sim_config.subplot_mode = "monte_carlo"
+        sim_config.results_mode = "risk_analysis"
         sim_config.sim_type = "portfolio_sim"
 
         if monte_carlo_mode is not None:
@@ -67,7 +67,7 @@ def _run_risk_pipeline_with_temporary_modes(
         )
 
     finally:
-        sim_config.subplot_mode = original_subplot_mode
+        sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
         sim_config.monte_carlo_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate

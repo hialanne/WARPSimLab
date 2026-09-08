@@ -54,7 +54,7 @@ def make_config(
         inflation_delta=inflation_delta,
         second_person_enabled=second_person_enabled,
         years_to_simulate=years_to_simulate,
-        subplot_mode="standard",
+        results_mode="standard",
         sim_type="cashflow_sim",
         monte_carlo_mode="pathBasedAnnualSampling",
     )

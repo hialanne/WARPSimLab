@@ -139,7 +139,7 @@ def make_config(
     custom_stock=0.7,
     custom_bonds=0.2,
     custom_cash=0.1,
-    subplot_mode="deterministic",
+    results_mode="deterministic",
     sim_type="portfolio_sim",
     eq_mean=0.0,
     bd_mean=0.0,
@@ -163,7 +163,7 @@ def make_config(
         custom_stock=custom_stock,
         custom_bonds=custom_bonds,
         custom_cash=custom_cash,
-        subplot_mode=subplot_mode,
+        results_mode=results_mode,
         sim_type=sim_type,
         eq_mean=eq_mean,
         bd_mean=bd_mean,
@@ -475,7 +475,7 @@ def test_apply_returns_deterministic_branch_applies_means_to_all_buckets_and_rea
         re_post=100,
     )
     cfg = make_config(
-        subplot_mode="not-monte-carlo",
+        results_mode="not-monte-carlo",
         sim_type="portfolio_sim",
         eq_mean=0.10,
         bd_mean=0.05,
@@ -514,7 +514,7 @@ def test_apply_returns_clamps_to_zero_when_negative():
         re_post=10,
     )
     cfg = make_config(
-        subplot_mode="not-monte-carlo",
+        results_mode="not-monte-carlo",
         sim_type="portfolio_sim",
         eq_mean=-2.0,
         bd_mean=-2.0,

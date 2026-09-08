@@ -190,7 +190,7 @@ class PortfolioSimulatorGUI_RunMixin:
             state_of_residence=controls.get("state_of_residence", ""),
 
             inflation_mode=inflation_mode,
-            subplot_mode=controls.get("subplot_mode", "fill"),
+            results_mode=controls.get("results_mode", "fill"),
             monte_carlo_plot_style=controls.get("monte_carlo_plot_style", "fill"),
             use_correlated_returns=controls.get("use_correlated_returns", True),
             monte_carlo_mode=controls.get("monte_carlo_mode", "pathBasedAnnualSampling"),
@@ -265,7 +265,7 @@ class PortfolioSimulatorGUI_RunMixin:
 
         # Normalize incompatible plot options:
         # In Monte Carlo mode, do not draw or label fund expense overlays.
-        if getattr(sim_config, "subplot_mode", None) == "monte_carlo":
+        if getattr(sim_config, "results_mode", None) == "risk_analysis":
             sim_config.overlay_fund_expense_impacts = False
 
         # Testing code for the reports

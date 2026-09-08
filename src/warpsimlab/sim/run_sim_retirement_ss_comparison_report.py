@@ -343,7 +343,7 @@ def run_sim_retirement_ss_comparison_report(
             "social_security_amount": float(wife.ss),
         }
 
-    original_subplot_mode = sim_config.subplot_mode
+    original_subplot_mode = sim_config.results_mode
     original_sim_type = sim_config.sim_type
     original_monte_carlo_mode = sim_config.monte_carlo_mode
     original_include_realestate = sim_config.include_realestate
@@ -387,7 +387,7 @@ def run_sim_retirement_ss_comparison_report(
                     husband, wife, second_person_enabled, retirement_shift, social_security_shift
                 )
 
-                sim_config.subplot_mode = "fill"
+                sim_config.results_mode = "fill"
                 sim_config.sim_type = "portfolio_sim"
 
                 deterministic_pipeline_result = run_pipeline(
@@ -408,7 +408,7 @@ def run_sim_retirement_ss_comparison_report(
                     husband, wife, second_person_enabled, retirement_shift, social_security_shift
                 )
 
-                sim_config.subplot_mode = "monte_carlo"
+                sim_config.results_mode = "risk_analysis"
                 sim_config.sim_type = "portfolio_sim"
                 sim_config.monte_carlo_mode = "rollingHistoricalWindows"
 
@@ -454,7 +454,7 @@ def run_sim_retirement_ss_comparison_report(
             stats.print_stats(40)
 
     finally:
-        sim_config.subplot_mode = original_subplot_mode
+        sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
         sim_config.monte_carlo_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate

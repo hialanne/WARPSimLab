@@ -8,7 +8,7 @@ from tests.feature_tests.monteCarlo.helpers_validation import make_sim_config
 def test_path_based_generate_market_path_returns_expected_shapes():
     sim_config = make_sim_config(
         monte_carlo_mode="pathBasedAnnualSampling",
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
     )
 
@@ -24,7 +24,7 @@ def test_path_based_generate_market_path_returns_expected_shapes():
 def test_independent_mode_generate_market_path_returns_finite_values():
     sim_config = make_sim_config(
         monte_carlo_mode="pathBasedAnnualSampling",
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
         use_correlated_returns=False,
     )
@@ -41,7 +41,7 @@ def test_independent_mode_generate_market_path_returns_finite_values():
 def test_independent_mode_one_year_returns_are_numeric():
     sim_config = make_sim_config(
         monte_carlo_mode="pathBasedAnnualSampling",
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
         use_correlated_returns=False,
     )
@@ -65,7 +65,7 @@ def test_independent_mode_one_year_returns_are_numeric():
 def test_generate_market_path_requires_prepared_sampling_data():
     sim_config = make_sim_config(
         monte_carlo_mode="pathBasedAnnualSampling",
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
     )
 

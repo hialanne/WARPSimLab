@@ -31,7 +31,7 @@ class SimulationControlsEditFrame(ttk.Frame):
         self.controls.setdefault("annotate_plots", False)
 
         self.controls.setdefault("inflation_mode", "real")
-        self.controls.setdefault("subplot_mode", "fill")
+        self.controls.setdefault("results_mode", "fill")
         self.controls.setdefault("monte_carlo_plot_style", "fill")
         self.controls.setdefault("use_correlated_returns", True)
         self.controls.setdefault("show_simulated_shortfall_rate", True)
@@ -291,18 +291,18 @@ class SimulationControlsEditFrame(ttk.Frame):
 
         subplot_mode_label_to_value = {
             "Fill": "fill",
-            "Risk Analysis": "monte_carlo",
+            "Risk Analysis": "risk_analysis",
             "Sub Categories": "sub_categories",
             "Pre / Post Tax Savings": "pre_post_tax",
         }
         subplot_mode_value_to_label = {v: k for k, v in subplot_mode_label_to_value.items()}
 
-        subplot_mode = self.controls.get("subplot_mode", "fill")
-        if subplot_mode not in subplot_mode_value_to_label:
-            subplot_mode = "fill"
-            self.controls["subplot_mode"] = subplot_mode
+        results_mode = self.controls.get("results_mode", "fill")
+        if results_mode not in subplot_mode_value_to_label:
+            results_mode = "fill"
+            self.controls["results_mode"] = results_mode
 
-        subplot_mode_var = tk.StringVar(value=subplot_mode_value_to_label[subplot_mode])
+        subplot_mode_var = tk.StringVar(value=subplot_mode_value_to_label[results_mode])
 
         plot_style_frame = ttk.Frame(right_left_col)
         plot_style_frame.grid(row=right_col0_row, column=0, sticky="nw", pady=2)
@@ -310,7 +310,7 @@ class SimulationControlsEditFrame(ttk.Frame):
 
         plot_style_options = [
             "Fill",
-            "Percentile Bands",
+            "Risk Analysis",
             "Sub Categories",
             "Pre / Post Tax Savings",
         ]
@@ -319,7 +319,7 @@ class SimulationControlsEditFrame(ttk.Frame):
             "Fill": (
                 "Display a single simulation result as filled plot areas."
             ),
-            "Percentile Bands": (
+            "Risk Analysis": (
                 "Display percentile bands from either Monte Carlo simulations "
                 "or rolling historical windows, depending on the selected "
                 "Percentile Bands Mode."
@@ -348,12 +348,12 @@ class SimulationControlsEditFrame(ttk.Frame):
             )
 
         def on_subplot_mode_changed(*_):
-            previous_mode = self.controls.get("subplot_mode", "fill")
+            previous_mode = self.controls.get("results_mode", "fill")
             new_mode = subplot_mode_label_to_value[subplot_mode_var.get()]
 
-            self.controls["subplot_mode"] = new_mode
+            self.controls["results_mode"] = new_mode
 
-            if previous_mode == "monte_carlo" and new_mode != "monte_carlo":
+            if previous_mode == "risk_analysis" and new_mode != "risk_analysis":
                 self.controls["monte_carlo_mode"] = "rollingHistoricalWindows"
                 monte_carlo_mode_var.set("rollingHistoricalWindows")
 
@@ -583,7 +583,7 @@ class SimulationControlsEditFrame(ttk.Frame):
                 historical_note.grid_remove()
 
         def update_monte_carlo_visibility(*_):
-            is_monte_carlo = (subplot_mode_label_to_value[subplot_mode_var.get()] == "monte_carlo")
+            is_monte_carlo = (subplot_mode_label_to_value[subplot_mode_var.get()] == "risk_analysis")
             
             if is_monte_carlo:
                 monte_carlo_section.grid()

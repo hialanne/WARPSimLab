@@ -66,7 +66,7 @@ def draw_yearly_income(
     # ------------------------------------------------------------
     # Sub-income breakdown (stacked bars)
     # ------------------------------------------------------------
-    if sim_config.subplot_mode == "sub_categories":
+    if sim_config.results_mode == "sub_categories":
         colors = {
             'work': "skyblue",
             'pension': "mediumpurple",

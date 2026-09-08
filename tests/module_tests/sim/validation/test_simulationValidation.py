@@ -132,7 +132,7 @@ def test_positive_integer_config_fields_reject_non_positive_values(scenario_buil
         ("sim_type", "unknown"),
         ("sim_initial_allocation_mode", "unknown"),
         ("inflation_mode", "unknown"),
-        ("subplot_mode", "unknown"),
+        ("results_mode", "unknown"),
         ("monte_carlo_plot_style", "unknown"),
         ("monte_carlo_mode", "unknown"),
         ("historical_window_mode", "unknown"),

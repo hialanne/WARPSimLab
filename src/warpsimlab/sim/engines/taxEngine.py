@@ -240,7 +240,7 @@ def initialize_tax_engine_for_simulation(sim_config):
     years = sim_config.years_to_simulate + 1
 
     historical_mode_active = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
         and getattr(sim_config, "_active_historical_sim_index", None) is not None

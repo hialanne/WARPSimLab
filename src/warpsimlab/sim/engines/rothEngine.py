@@ -33,7 +33,7 @@ def _build_percent_of_inflation_factors(
     )
 
     historical_mode_active = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(
             sim_config,

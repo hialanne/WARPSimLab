@@ -11,7 +11,7 @@ from .validation import validate_simulation_inputs
 
 def _is_historical_window_mode(sim_config):
     return (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
         and sim_config.sim_type == "portfolio_sim"
     )
@@ -137,7 +137,7 @@ def _build_portfolio_plot_data(core, sim_config):
     roth_series = None
     hsa_series = None
 
-    if sim_config.subplot_mode == "sub_categories":
+    if sim_config.results_mode == "sub_categories":
         cash_series = optional_stats(cash, years, sim_config.inflation_rate, enabled=True)
         bonds_series = optional_stats(bonds, years, sim_config.inflation_rate, enabled=True)
 
@@ -146,7 +146,7 @@ def _build_portfolio_plot_data(core, sim_config):
         else:
             realestate_series = np.zeros(years + 1)
 
-    elif sim_config.subplot_mode == "pre_post_tax":
+    elif sim_config.results_mode == "pre_post_tax":
         pre_tax_series = optional_stats(pre_tax_assets, years, sim_config.inflation_rate, enabled=True)
         post_tax_series = optional_stats(post_tax_assets, years, sim_config.inflation_rate, enabled=True)
         roth_series = optional_stats(roth_assets, years, sim_config.inflation_rate, enabled=roth_assets is not None)
@@ -223,13 +223,13 @@ def _compute_simulated_shortfall_rate(
     if num_sims <= 0:
         raise ValueError("num_sims must be > 0 for simulated shortfall rate")
 
-    original_subplot_mode = sim_config.subplot_mode
+    original_subplot_mode = sim_config.results_mode
     original_sim_type = sim_config.sim_type
     original_monte_carlo_mode = sim_config.monte_carlo_mode
     original_include_realestate = sim_config.include_realestate
 
     try:
-        sim_config.subplot_mode = "monte_carlo"
+        sim_config.results_mode = "risk_analysis"
         sim_config.sim_type = "portfolio_sim"
         sim_config.monte_carlo_mode = "rollingHistoricalWindows"
         sim_config.include_realestate = False
@@ -244,7 +244,7 @@ def _compute_simulated_shortfall_rate(
             num_sims=num_sims,
         )
     finally:
-        sim_config.subplot_mode = original_subplot_mode
+        sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
         sim_config.monte_carlo_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
@@ -275,7 +275,7 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
 
     # Centralized sim count policy (matches existing portfolio behavior)
     num_sims = sim_config.num_sims if force_num_sims is None else int(force_num_sims)
-    if sim_config.subplot_mode != "monte_carlo":
+    if sim_config.results_mode != "risk_analysis":
         num_sims = 1
 
     # Note:
@@ -302,7 +302,7 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
 
     if sim_config.calculate_simulated_shortfall_rate:
         primary_run_is_multi_path_portfolio = (
-            sim_config.subplot_mode == "monte_carlo"
+            sim_config.results_mode == "risk_analysis"
             and sim_config.sim_type == "portfolio_sim"
         )
 

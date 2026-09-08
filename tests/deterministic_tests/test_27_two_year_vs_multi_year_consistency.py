@@ -53,7 +53,7 @@ def make_sim(years):
         fund_expense=0.0,
         use_fund_expenses=False,
         inflation_mode="nominal",
-        subplot_mode="fixed",
+        results_mode="fixed",
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
         use_correlated_returns=True,

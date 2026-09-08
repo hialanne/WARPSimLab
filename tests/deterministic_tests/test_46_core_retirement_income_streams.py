@@ -73,7 +73,7 @@ def make_config(
         fund_expense=0.0,
         use_fund_expenses=False,
         inflation_mode="nominal",
-        subplot_mode="baseline",
+        results_mode="baseline",
         include_rmd=False,
         calculate_income_taxes=calculate_income_taxes,
         calculate_payroll_taxes=False,

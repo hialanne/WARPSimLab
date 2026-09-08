@@ -26,7 +26,7 @@ def run_sim_portfolio(husband_portfolio, wife_portfolio, husband, wife, expenses
         wife,
         expenses,
         sim_config,
-        force_num_sims=None,  # pipeline enforces subplot_mode != monte_carlo -> num_sims=1
+        force_num_sims=None,  # pipeline enforces results_mode != risk_analysis -> num_sims=1
     )
 
     simulation_data = p["portfolio_plot_data"]

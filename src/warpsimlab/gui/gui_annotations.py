@@ -1,8 +1,8 @@
 # gui_annotations.py
 
 def _multi_path_mode_label(simulation_controls):
-    subplot_mode = simulation_controls.get("subplot_mode", "")
-    if subplot_mode != "monte_carlo":
+    results_mode = simulation_controls.get("results_mode", "")
+    if results_mode != "risk_analysis":
         return None
 
     monte_carlo_mode = simulation_controls.get(

@@ -21,7 +21,7 @@ def make_config(
     start_year=2025,
     inflation_rate=0.02,
     inflation_mode="nominal",
-    subplot_mode="total",
+    results_mode="total",
     sim_type="income_sim",
     annotate_plots=False,
     always_use_expense_mode=True,
@@ -39,7 +39,7 @@ def make_config(
         start_year=start_year,
         inflation_rate=inflation_rate,
         inflation_mode=inflation_mode,
-        subplot_mode=subplot_mode,
+        results_mode=results_mode,
         sim_type=sim_type,
         annotate_plots=annotate_plots,
         always_use_expense_mode=always_use_expense_mode,
@@ -86,7 +86,7 @@ def test_draw_yearly_income_total_mode_draws_one_bar_series():
         expenses=[0] * xlen,
         husband=make_person(age=40, retire_age=65),
         wife=None,
-        sim_config=make_config(subplot_mode="total", always_use_expense_mode=True),
+        sim_config=make_config(results_mode="total", always_use_expense_mode=True),
     )
 
     bars = [p for p in ax.patches if p.get_width() > 0]
@@ -116,7 +116,7 @@ def test_draw_yearly_income_sub_categories_draws_stacked_bars():
         expenses=[0] * xlen,
         husband=make_person(age=40, retire_age=65),
         wife=None,
-        sim_config=make_config(subplot_mode="sub_categories", always_use_expense_mode=True),
+        sim_config=make_config(results_mode="sub_categories", always_use_expense_mode=True),
     )
 
     # Stacked: 6 categories * 3 years = 18 bars
@@ -153,7 +153,7 @@ def test_draw_yearly_income_expense_overlay_draws_hlines():
         sim_config=make_config(
             always_use_expense_mode=True,
             overlay_household_expenses=True,
-            subplot_mode="total",
+            results_mode="total",
         ),
     )
 
@@ -192,7 +192,7 @@ def test_draw_yearly_income_profit_loss_overlay_adds_lines():
         sim_config=make_config(
             always_use_expense_mode=True,
             overlay_profit_loss=True,
-            subplot_mode="total",
+            results_mode="total",
             sim_type="cashflow_sim",
         ),
     )
@@ -218,7 +218,7 @@ def test_draw_yearly_income_retirement_overlay_single_person():
     cfg = make_config(
         always_use_expense_mode=True,
         overlay_retirement_age=True,
-        subplot_mode="total",
+        results_mode="total",
     )
 
     fig, ax = plt.subplots()
@@ -258,7 +258,7 @@ def test_draw_yearly_income_retirement_overlay_couple_uses_later_retirement():
     cfg = make_config(
         always_use_expense_mode=True,
         overlay_retirement_age=True,
-        subplot_mode="total",
+        results_mode="total",
         second_person_enabled=True,
     )
 

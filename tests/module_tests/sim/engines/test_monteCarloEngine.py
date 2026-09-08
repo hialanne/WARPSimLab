@@ -11,7 +11,7 @@ from src.warpsimlab.sim.engines import monteCarloEngine
 
 @dataclass
 class SimConfigFactory:
-    subplot_mode: str = "monte_carlo"
+    results_mode: str = "risk_analysis"
     sim_type: str = "portfolio_sim"
     monte_carlo_mode: str = "pathBasedAnnualSampling"
     use_correlated_returns: bool = True
@@ -30,7 +30,7 @@ class SimConfigFactory:
 
     def build(self, **overrides) -> SimpleNamespace:
         data = {
-            "subplot_mode": self.subplot_mode,
+            "results_mode": self.results_mode,
             "sim_type": self.sim_type,
             "monte_carlo_mode": self.monte_carlo_mode,
             "use_correlated_returns": self.use_correlated_returns,
@@ -67,7 +67,7 @@ def sim_factory() -> SimConfigFactory:
 
 def test_prepare_market_path_sampling_sets_expected_arrays_for_correlated_mode(sim_factory):
     sim_config = sim_factory.build(
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         use_correlated_returns=True,
     )
 
@@ -98,7 +98,7 @@ def test_prepare_market_path_sampling_sets_expected_arrays_for_correlated_mode(s
 
 def test_prepare_market_path_sampling_non_monte_carlo_leaves_covariance_unset(sim_factory):
     sim_config = sim_factory.build(
-        subplot_mode="summary",
+        results_mode="summary",
         use_correlated_returns=True,
     )
 
@@ -118,7 +118,7 @@ def test_prepare_market_path_sampling_non_monte_carlo_leaves_covariance_unset(si
 
 def test_prepare_market_path_sampling_uncorrelated_leaves_covariance_unset(sim_factory):
     sim_config = sim_factory.build(
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         use_correlated_returns=False,
     )
 
@@ -138,7 +138,7 @@ def test_prepare_market_path_sampling_uncorrelated_leaves_covariance_unset(sim_f
 
 def test_generate_market_path_non_monte_carlo_returns_constant_means(sim_factory):
     sim_config = sim_factory.build(
-        subplot_mode="summary",
+        results_mode="summary",
         sim_type="portfolio_sim",
     )
 
@@ -223,7 +223,7 @@ def test_generate_market_path_independent_mode_returns_nan_placeholders(sim_fact
 
 def test_generate_market_path_requires_prepared_sampling_data(sim_factory):
     sim_config = sim_factory.build(
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         use_correlated_returns=False,
     )
     sim_config._mc_means = None
@@ -235,7 +235,7 @@ def test_generate_market_path_requires_prepared_sampling_data(sim_factory):
 
 def test_generate_market_path_correlated_requires_prepared_cholesky(sim_factory):
     sim_config = sim_factory.build(
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         use_correlated_returns=True,
     )
     sim_config._mc_means = np.array(

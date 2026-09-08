@@ -206,7 +206,7 @@ def prepare_market_path_sampling(sim_config):
     sim_config._hist_num_windows = 0
 
     is_monte_carlo = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
     )
 
@@ -543,7 +543,7 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
     re = np.zeros(years_to_simulate + 1)
 
     is_monte_carlo = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
     )
 

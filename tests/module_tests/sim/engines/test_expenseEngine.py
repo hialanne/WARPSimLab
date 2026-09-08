@@ -24,7 +24,7 @@ def make_config(*, inflation_rate: float, start_year: int, scenario_expense_mult
         inflation_delta=inflation_delta,
         start_year=start_year,
         scenario_expense_multiplier=scenario_expense_multiplier,
-        subplot_mode=None,
+        results_mode=None,
         sim_type=None,
     )
     initialize_expense_engine_for_simulation(cfg)

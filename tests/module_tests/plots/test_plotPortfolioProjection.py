@@ -18,7 +18,7 @@ def make_person(age, retire_age):
 def make_config(
     *,
     inflation_mode="nominal",
-    subplot_mode="pre_post_tax",
+    results_mode="pre_post_tax",
     years_to_simulate=3,
     constant_y_plots=False,
     overlay_tax_impacts=False,
@@ -33,7 +33,7 @@ def make_config(
         annotation_strings = []
     return types.SimpleNamespace(
         inflation_mode=inflation_mode,
-        subplot_mode=subplot_mode,
+        results_mode=results_mode,
         years_to_simulate=years_to_simulate,
         constant_y_plots=constant_y_plots,
         overlay_tax_impacts=overlay_tax_impacts,
@@ -90,7 +90,7 @@ def test_draw_portfolio_projection_pre_post_tax_creates_fills_and_line():
         pre_tax_assets=[40, 50, 60, 70],
         realestate=None,
     )
-    cfg = make_config(subplot_mode="pre_post_tax", years_to_simulate=3)
+    cfg = make_config(results_mode="pre_post_tax", years_to_simulate=3)
 
     fig, ax = plt.subplots()
     draw_portfolio_projection(ax, years, sim, sim_config=cfg)
@@ -109,7 +109,7 @@ def test_draw_portfolio_projection_baseline_line_turns_red_when_near_zero():
         post_tax_assets=[50, 0, 25],
         pre_tax_assets=[50, 0, 25],
     )
-    cfg = make_config(subplot_mode="pre_post_tax", years_to_simulate=2)
+    cfg = make_config(results_mode="pre_post_tax", years_to_simulate=2)
 
     fig, ax = plt.subplots()
     draw_portfolio_projection(ax, years, sim, sim_config=cfg)
@@ -129,7 +129,7 @@ def test_draw_portfolio_projection_overlay_retirement_single_person():
         pre_tax_assets=[40] * 11,
     )
     husband = make_person(age=60, retire_age=65)  # index 5
-    cfg = make_config(subplot_mode="pre_post_tax", years_to_simulate=10, overlay_retirement_age=True)
+    cfg = make_config(results_mode="pre_post_tax", years_to_simulate=10, overlay_retirement_age=True)
 
     fig, ax = plt.subplots()
     draw_portfolio_projection(ax, years, sim, sim_config=cfg, husband=husband, wife=None)
@@ -149,7 +149,7 @@ def test_draw_portfolio_projection_overlay_retirement_couple_uses_later_retireme
     husband = make_person(age=50, retire_age=60)  # 10
     wife = make_person(age=50, retire_age=65)     # 15 (later)
     cfg = make_config(
-        subplot_mode="pre_post_tax",
+        results_mode="pre_post_tax",
         years_to_simulate=20,
         overlay_retirement_age=True,
         second_person_enabled=True,
@@ -176,7 +176,7 @@ def test_draw_portfolio_projection_overlay_tax_impacts_adds_fill():
     )
 
     cfg = make_config(
-        subplot_mode="pre_post_tax",
+        results_mode="pre_post_tax",
         years_to_simulate=2,
         overlay_tax_impacts=True,
         overlay_fund_expense_impacts=False,
@@ -199,7 +199,7 @@ def test_draw_portfolio_projection_sub_categories_handles_missing_cash_bonds_rea
         realestate=None,
     )
 
-    cfg = make_config(subplot_mode="sub_categories", years_to_simulate=3)
+    cfg = make_config(results_mode="sub_categories", years_to_simulate=3)
     cfg.include_realestate = False  # required by _plot_sub_category_assets
 
     fig, ax = plt.subplots()

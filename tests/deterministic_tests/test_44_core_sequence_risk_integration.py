@@ -65,7 +65,7 @@ def make_config(
         fund_expense=0.0,
         use_fund_expenses=False,
         inflation_mode="nominal",
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         include_rmd=False,
         calculate_income_taxes=False,
         calculate_payroll_taxes=False,

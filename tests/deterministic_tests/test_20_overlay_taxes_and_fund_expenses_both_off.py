@@ -120,7 +120,7 @@ def test_overlay_taxes_and_fund_expenses_both_off_attaches_combined_and_combined
     sim_config.years_to_simulate = years_to_simulate
     sim_config.inflation_rate = 0.0
     sim_config.num_sims = 50
-    sim_config.subplot_mode = "default"
+    sim_config.results_mode = "default"
     sim_config.include_realestate = False
     sim_config.overlay_tax_impacts = True
     sim_config.overlay_fund_expense_impacts = True

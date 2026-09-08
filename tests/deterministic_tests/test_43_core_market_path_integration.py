@@ -52,7 +52,7 @@ def make_portfolio(
 def make_config(
     *,
     years_to_simulate=2,
-    subplot_mode="monte_carlo",
+    results_mode="risk_analysis",
     monte_carlo_mode="pathBasedAnnualSampling",
 ):
     config = Simulation(
@@ -63,7 +63,7 @@ def make_config(
         fund_expense=0.0,
         use_fund_expenses=False,
         inflation_mode="nominal",
-        subplot_mode=subplot_mode,
+        results_mode=results_mode,
         include_rmd=False,
         calculate_income_taxes=False,
         calculate_payroll_taxes=False,

@@ -7,7 +7,7 @@ def _build_income_inflation_factors(sim_config):
     factors = [1.0] * years
 
     historical_mode_active = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
         and getattr(sim_config, "_active_historical_sim_index", None) is not None
@@ -35,7 +35,7 @@ def _build_pension_factors(sim_config, inflation_adjustment_pct):
     factors = [1.0] * years
 
     historical_mode_active = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
         and getattr(sim_config, "_active_historical_sim_index", None) is not None
@@ -78,7 +78,7 @@ def _build_special_income_factor(sim_config, adjustment_mode, adjustment_pct, st
         raise ValueError(f"Unsupported special income adjustment mode: {adjustment_mode!r}")
 
     historical_mode_active = (
-        sim_config.subplot_mode == "monte_carlo"
+        sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
         and getattr(sim_config, "_active_historical_sim_index", None) is not None

@@ -13,7 +13,7 @@ import pytest
 class DummySimConfig:
     years_to_simulate: int = 3
     num_sims: int = 25
-    subplot_mode: str = "monte_carlo"
+    results_mode: str = "risk_analysis"
     monte_carlo_mode: str = "pathBasedAnnualSampling"
     inflation_rate: float = 0.0
     include_realestate: bool = True
@@ -261,7 +261,7 @@ def test_build_portfolio_plot_data_sub_categories_include_realestate_true(monkey
     from src.warpsimlab.sim import simulation as mod
 
     core = _core_for_extracts()
-    sim_config = DummySimConfig(years_to_simulate=3, subplot_mode="sub_categories", include_realestate=True)
+    sim_config = DummySimConfig(years_to_simulate=3, results_mode="sub_categories", include_realestate=True)
 
     captured = {"percentiles_args": None, "optional_calls": [], "ppd_kwargs": None}
 
@@ -316,7 +316,7 @@ def test_build_portfolio_plot_data_sub_categories_include_realestate_false_sets_
     from src.warpsimlab.sim import simulation as mod
 
     core = _core_for_extracts()
-    sim_config = DummySimConfig(years_to_simulate=3, subplot_mode="sub_categories", include_realestate=False)
+    sim_config = DummySimConfig(years_to_simulate=3, results_mode="sub_categories", include_realestate=False)
 
     def fake_compute_portfolio_statistics(*args, **kwargs):
         return {"median": [0, 0, 0, 0]}
@@ -340,7 +340,7 @@ def test_build_portfolio_plot_data_pre_post_tax_realestate_optional(monkeypatch)
     from src.warpsimlab.sim import simulation as mod
 
     core = _core_for_extracts()
-    sim_config = DummySimConfig(years_to_simulate=3, subplot_mode="pre_post_tax", include_realestate=False)
+    sim_config = DummySimConfig(years_to_simulate=3, results_mode="pre_post_tax", include_realestate=False)
 
     def fake_compute_portfolio_statistics(*args, **kwargs):
         return {"median": [0, 0, 0, 0]}
@@ -421,7 +421,7 @@ def test_compute_simulated_shortfall_rate_runs_monte_carlo_and_restores_subplot_
 
     def fake_simulate_yearly_portfolios(*args, **kwargs):
         sim_config = args[5]
-        observed["subplot_mode_during_call"] = sim_config.subplot_mode
+        observed["subplot_mode_during_call"] = sim_config.results_mode
         observed["num_sims"] = kwargs["num_sims"]
         return {
             "total_assets": np.array(
@@ -436,7 +436,7 @@ def test_compute_simulated_shortfall_rate_runs_monte_carlo_and_restores_subplot_
 
     monkeypatch.setattr(mod, "simulate_yearly_portfolios", fake_simulate_yearly_portfolios, raising=True)
 
-    sim_config = DummySimConfig(subplot_mode="pre_post_tax")
+    sim_config = DummySimConfig(results_mode="pre_post_tax")
     rate = mod._compute_simulated_shortfall_rate(
         DummyPortfolio(),
         DummyPortfolio(),
@@ -448,9 +448,9 @@ def test_compute_simulated_shortfall_rate_runs_monte_carlo_and_restores_subplot_
     )
 
     assert rate == 50.0
-    assert observed["subplot_mode_during_call"] == "monte_carlo"
+    assert observed["subplot_mode_during_call"] == "risk_analysis"
     assert observed["num_sims"] == 4
-    assert sim_config.subplot_mode == "pre_post_tax"
+    assert sim_config.results_mode == "pre_post_tax"
 
 
 
@@ -488,7 +488,7 @@ def test_run_pipeline_sim_count_policy_forces_one_when_not_monte_carlo(monkeypat
     monkeypatch.setattr(mod, "compute_portfolio_statistics", fake_compute_portfolio_statistics, raising=True)
     monkeypatch.setattr(mod, "PortfolioPlotData", FakePortfolioPlotData, raising=True)
 
-    sim_config = DummySimConfig(subplot_mode="pre_post_tax", num_sims=99)
+    sim_config = DummySimConfig(results_mode="pre_post_tax", num_sims=99)
 
     mod.run_pipeline(DummyPortfolio(), DummyPortfolio(), DummyPerson(), DummyPerson(), DummyExpenses(), sim_config)
     assert captured["num_sims"] == 1
@@ -525,7 +525,7 @@ def test_run_pipeline_uses_force_num_sims_when_monte_carlo(monkeypatch):
     monkeypatch.setattr(mod, "compute_portfolio_statistics", fake_compute_portfolio_statistics, raising=True)
     monkeypatch.setattr(mod, "PortfolioPlotData", FakePortfolioPlotData, raising=True)
 
-    sim_config = DummySimConfig(subplot_mode="monte_carlo", num_sims=123)
+    sim_config = DummySimConfig(results_mode="risk_analysis", num_sims=123)
 
     mod.run_pipeline(DummyPortfolio(), DummyPortfolio(), DummyPerson(), DummyPerson(), DummyExpenses(), sim_config)
     assert captured["num_sims"] == 123
@@ -615,7 +615,7 @@ def test_run_pipeline_monte_carlo_shortfall_rate_uses_existing_core(monkeypatch)
     monkeypatch.setattr(mod, "PortfolioPlotData", FakePortfolioPlotData, raising=True)
     monkeypatch.setattr(mod, "_compute_simulated_shortfall_rate", fake_compute_simulated_shortfall_rate, raising=True)
 
-    sim_config = DummySimConfig(subplot_mode="monte_carlo", calculate_simulated_shortfall_rate=True, sim_type="portfolio_sim")
+    sim_config = DummySimConfig(results_mode="risk_analysis", calculate_simulated_shortfall_rate=True, sim_type="portfolio_sim")
 
     result = mod.run_pipeline(
         DummyPortfolio(),
@@ -656,7 +656,7 @@ def test_run_pipeline_non_monte_carlo_shortfall_rate_runs_secondary_sim_except_c
     monkeypatch.setattr(mod, "_compute_simulated_shortfall_rate", fake_compute_simulated_shortfall_rate, raising=True)
 
     sim_config = DummySimConfig(
-        subplot_mode="pre_post_tax",
+        results_mode="pre_post_tax",
         calculate_simulated_shortfall_rate=True,
         sim_type="summary_sim",
     )
@@ -699,7 +699,7 @@ def test_run_pipeline_cashflow_sim_does_not_compute_secondary_shortfall_rate(mon
     monkeypatch.setattr(mod, "_compute_simulated_shortfall_rate", fake_compute_simulated_shortfall_rate, raising=True)
 
     sim_config = DummySimConfig(
-        subplot_mode="pre_post_tax",
+        results_mode="pre_post_tax",
         calculate_simulated_shortfall_rate=True,
         sim_type="cashflow_sim",
     )
@@ -742,7 +742,7 @@ def test_run_pipeline_overlay_tax_impacts_calls_overlay_with_flag_toggled_and_re
     monkeypatch.setattr(mod, "PortfolioPlotData", FakePortfolioPlotData, raising=True)
     monkeypatch.setattr(mod, "_run_overlay_total_assets_line", fake_run_overlay_total_assets_line, raising=True)
 
-    sim_config = DummySimConfig(subplot_mode="monte_carlo", overlay_tax_impacts=True, calculate_income_taxes=True)
+    sim_config = DummySimConfig(results_mode="risk_analysis", overlay_tax_impacts=True, calculate_income_taxes=True)
 
     result = mod.run_pipeline(
         DummyPortfolio(),
@@ -785,7 +785,7 @@ def test_run_pipeline_overlay_fund_expenses_impacts_calls_overlay_with_flag_togg
     monkeypatch.setattr(mod, "PortfolioPlotData", FakePortfolioPlotData, raising=True)
     monkeypatch.setattr(mod, "_run_overlay_total_assets_line", fake_run_overlay_total_assets_line, raising=True)
 
-    sim_config = DummySimConfig(subplot_mode="monte_carlo", overlay_fund_expense_impacts=True, use_fund_expenses=True)
+    sim_config = DummySimConfig(results_mode="risk_analysis", overlay_fund_expense_impacts=True, use_fund_expenses=True)
 
     result = mod.run_pipeline(
         DummyPortfolio(),
@@ -830,7 +830,7 @@ def test_run_pipeline_overlay_combined_toggles_both_flags_and_restores(monkeypat
     monkeypatch.setattr(mod, "_run_overlay_total_assets_line", fake_run_overlay_total_assets_line, raising=True)
 
     sim_config = DummySimConfig(
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         overlay_tax_impacts=True,
         overlay_fund_expense_impacts=True,
         calculate_income_taxes=True,

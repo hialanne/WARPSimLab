@@ -18,7 +18,7 @@ def test_path_based_correlated_sampler_matches_targets():
     sim_config = make_sim_config(
         monte_carlo_mode="pathBasedAnnualSampling",
         use_correlated_returns=True,
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
     )
 
@@ -38,7 +38,7 @@ def test_path_based_uncorrelated_sampler_matches_identity_corr():
     sim_config = make_sim_config(
         monte_carlo_mode="pathBasedAnnualSampling",
         use_correlated_returns=False,
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
     )
 
@@ -57,7 +57,7 @@ def test_path_based_uncorrelated_sampler_matches_identity_corr():
 def test_independent_annual_sampler_matches_identity_corr():
     sim_config = make_sim_config(
         monte_carlo_mode="independentAnnualSampling",
-        subplot_mode="monte_carlo",
+        results_mode="risk_analysis",
         sim_type="portfolio_sim",
     )
 

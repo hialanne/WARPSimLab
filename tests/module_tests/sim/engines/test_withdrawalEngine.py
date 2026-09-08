@@ -96,7 +96,7 @@ def make_config(
         inflation_rate=inflation_rate,
         inflation_delta=inflation_delta,
 
-        subplot_mode="standard",
+        results_mode="standard",
         sim_type="cashflow_sim",
         monte_carlo_mode="pathBasedAnnualSampling",
 

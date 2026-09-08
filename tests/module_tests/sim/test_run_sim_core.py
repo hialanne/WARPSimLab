@@ -24,7 +24,7 @@ class DummySimConfig:
 
     rebalance_every_year: bool = False
     inflation_mode: str = "nominal"
-    subplot_mode: str = "deterministic"
+    results_mode: str = "deterministic"
     sim_type: str = "portfolio_sim"
     monte_carlo_mode: str = "pathBasedAnnualSampling"
     monte_carlo_plot_style: str = "fill"
