@@ -90,8 +90,8 @@ def test_build_report_basis_label():
     assert mod._build_report_basis_label(SimpleNamespace(inflation_mode="invalid")) == "N/A"
 
 def test_friendly_label_maps_known_values_and_preserves_unknowns():
-    assert mod._friendly_label("pathBasedAnnualSampling") == "Path-Based Annual Sampling"
-    assert mod._friendly_label("rollingHistoricalWindows") == "Rolling Historical Windows"
+    assert mod._friendly_label("monte_carlo") == "Monte Carlo"
+    assert mod._friendly_label("historical_windows") == "Historical Windows"
     assert mod._friendly_label("maintain-current-allocation") == "Maintain Current Allocation"
     assert mod._friendly_label("custom-value") == "custom-value"
 

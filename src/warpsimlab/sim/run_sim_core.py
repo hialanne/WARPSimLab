@@ -80,12 +80,12 @@ def simulate_yearly_portfolios(
     years_to_simulate = sim_config.years_to_simulate
     second_person_enabled = sim_config.second_person_enabled
 
-    monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling")
+    risk_analysis_mode = getattr(sim_config, "risk_analysis_mode", "monte_carlo")
 
     historical_window_mode_active = (
         sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
-        and monte_carlo_mode == "rollingHistoricalWindows"
+        and risk_analysis_mode == "historical_windows"
     )
 
     # Historical rolling-window mode uses one simulation per valid window.
@@ -297,7 +297,7 @@ def simulate_yearly_portfolios(
         historical_window_mode_active = (
             sim_config.results_mode == "risk_analysis"
             and sim_config.sim_type == "portfolio_sim"
-            and monte_carlo_mode == "rollingHistoricalWindows"
+            and risk_analysis_mode == "historical_windows"
         )
 
         if historical_window_mode_active:

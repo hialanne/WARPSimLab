@@ -392,7 +392,7 @@ def run_sim_asset_allocation_comparison_report(
 
     original_subplot_mode = getattr(sim_config, "results_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
-    original_monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", None)
+    original_monte_carlo_mode = getattr(sim_config, "risk_analysis_mode", None)
     original_monte_carlo_plot_style = getattr(sim_config, "monte_carlo_plot_style", "fill")
     original_include_realestate = getattr(sim_config, "include_realestate", None)
     original_show_simulated_shortfall_rate = getattr(sim_config, "show_simulated_shortfall_rate", None)
@@ -454,7 +454,7 @@ def run_sim_asset_allocation_comparison_report(
 
             sim_config.results_mode = "risk_analysis"
             sim_config.sim_type = "portfolio_sim"
-            sim_config.monte_carlo_mode = "rollingHistoricalWindows"
+            sim_config.risk_analysis_mode = "historical_windows"
 
             # Comparison allocations use a subset of Historical Windows for speed.
             sim_config.historical_window_stride = 2
@@ -512,7 +512,7 @@ def run_sim_asset_allocation_comparison_report(
 
         sim_config.results_mode = "risk_analysis"
         sim_config.sim_type = "portfolio_sim"
-        sim_config.monte_carlo_mode = "rollingHistoricalWindows"
+        sim_config.risk_analysis_mode = "historical_windows"
 
         # Current allocation is the baseline and uses all Historical Windows.
         sim_config.historical_window_stride = 1
@@ -550,7 +550,7 @@ def run_sim_asset_allocation_comparison_report(
     finally:
         sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
-        sim_config.monte_carlo_mode = original_monte_carlo_mode
+        sim_config.risk_analysis_mode = original_monte_carlo_mode
         sim_config.monte_carlo_plot_style = original_monte_carlo_plot_style
         sim_config.include_realestate = original_include_realestate
         sim_config.show_simulated_shortfall_rate = original_show_simulated_shortfall_rate

@@ -21,13 +21,13 @@ def _run_risk_pipeline_with_temporary_modes(
     expenses,
     sim_config,
     *,
-    monte_carlo_mode,
+    risk_analysis_mode,
 ):
     from .simulation import run_pipeline
 
     original_subplot_mode = getattr(sim_config, "results_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
-    original_monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", None)
+    original_monte_carlo_mode = getattr(sim_config, "risk_analysis_mode", None)
     original_include_realestate = getattr(sim_config, "include_realestate", None)
     original_show_simulated_shortfall_rate = getattr(sim_config, "show_simulated_shortfall_rate", None)
     original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
@@ -36,8 +36,8 @@ def _run_risk_pipeline_with_temporary_modes(
         sim_config.results_mode = "risk_analysis"
         sim_config.sim_type = "portfolio_sim"
 
-        if monte_carlo_mode is not None:
-            sim_config.monte_carlo_mode = monte_carlo_mode
+        if risk_analysis_mode is not None:
+            sim_config.risk_analysis_mode = risk_analysis_mode
 
         # Risk reports measure depletion of liquid/investment portfolio assets.
         # Real estate is excluded by default to match Monte Carlo and Historical Window plots.
@@ -63,13 +63,13 @@ def _run_risk_pipeline_with_temporary_modes(
             sim_config,
             husband,
             wife,
-            monte_carlo_mode=monte_carlo_mode,
+            risk_analysis_mode=risk_analysis_mode,
         )
 
     finally:
         sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
-        sim_config.monte_carlo_mode = original_monte_carlo_mode
+        sim_config.risk_analysis_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
         sim_config.show_simulated_shortfall_rate = original_show_simulated_shortfall_rate
         sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
@@ -89,14 +89,14 @@ def _rate(success_count, total_count):
     return 100.0 * float(success_count) / float(total_count)
 
 
-def _safe_report_method(monte_carlo_mode):
-    if monte_carlo_mode == "rollingHistoricalWindows":
+def _safe_report_method(risk_analysis_mode):
+    if risk_analysis_mode == "historical_windows":
         return "Historical Windows"
 
-    if monte_carlo_mode == "pathBasedAnnualSampling":
+    if risk_analysis_mode == "monte_carlo":
         return "Monte Carlo"
 
-    return str(monte_carlo_mode)
+    return str(risk_analysis_mode)
 
 
 def _build_report_metadata(sim_config, method):
@@ -128,14 +128,14 @@ def _build_simulation_snapshot(sim_config, method, scenario_count):
         "Start Year": getattr(sim_config, "start_year", None),
         "Years Simulated": getattr(sim_config, "years_to_simulate", None),
         "Plot Mode": getattr(sim_config, "inflation_mode", None),
-        "Monte Carlo Mode": getattr(sim_config, "monte_carlo_mode", None),
+        "Monte Carlo Mode": getattr(sim_config, "risk_analysis_mode", None),
         "Historical Asset Returns File": getattr(sim_config, "historical_asset_returns_file", None),
         "Historical Inflation File": getattr(sim_config, "historical_inflation_file", None),
         "Historical Window Mode": getattr(sim_config, "historical_window_mode", None),
     }
 
     if method == "Monte Carlo":
-        snapshot["Sampling Method"] = "Path-Based Annual Sampling"
+        snapshot["Sampling Method"] = "Monte Carlo"
         snapshot["Correlated Returns"] = bool(getattr(sim_config, "use_correlated_returns", True))
         snapshot["Sequence Risk"] = bool(getattr(sim_config, "sequence_risk_enabled", False))
         snapshot["Random Seed"] = getattr(sim_config, "_mc_seed", None)
@@ -383,7 +383,7 @@ def _build_risk_plot_assets(
     except Exception as exc:
         warnings.append(f"Portfolio range projection plot could not be generated: {exc}")
 
-    if getattr(sim_config, "monte_carlo_mode", None) == "rollingHistoricalWindows" and historical_insights:
+    if getattr(sim_config, "risk_analysis_mode", None) == "historical_windows" and historical_insights:
         try:
             core = pipeline_result["core"]
 
@@ -416,14 +416,14 @@ def _build_and_generate_risk_report(
     husband,
     wife,
     *,
-    monte_carlo_mode,
+    risk_analysis_mode,
 ):
     core = pipeline_result["core"]
 
     total_assets = np.asarray(core["total_assets"], dtype=float)
     years = np.asarray(core["year"][0])
 
-    method = _safe_report_method(monte_carlo_mode)
+    method = _safe_report_method(risk_analysis_mode)
     scenario_count = int(total_assets.shape[0])
     ending_values = total_assets[:, -1]
 
@@ -515,7 +515,7 @@ def run_sim_historical_window_risk_report(
         wife,
         expenses,
         sim_config,
-        monte_carlo_mode="rollingHistoricalWindows",
+        risk_analysis_mode="historical_windows",
     )
 
 
@@ -534,5 +534,5 @@ def run_sim_monte_carlo_risk_report(
         wife,
         expenses,
         sim_config,
-        monte_carlo_mode="pathBasedAnnualSampling",
+        risk_analysis_mode="monte_carlo",
     )

@@ -61,8 +61,8 @@ MONTE_CARLO_PLOT_STYLES = {
 }
 
 MONTE_CARLO_MODES = {
-    "pathBasedAnnualSampling",
-    "rollingHistoricalWindows",
+    "monte_carlo",
+    "historical_windows",
 }
 
 HISTORICAL_WINDOW_MODES = {
@@ -329,8 +329,8 @@ def _validate_sim_config(sim_config):
         MONTE_CARLO_PLOT_STYLES,
     )
     _require_choice(
-        "sim_config.monte_carlo_mode",
-        getattr(sim_config, "monte_carlo_mode", None),
+        "sim_config.risk_analysis_mode",
+        getattr(sim_config, "risk_analysis_mode", None),
         MONTE_CARLO_MODES,
     )
     _require_choice(

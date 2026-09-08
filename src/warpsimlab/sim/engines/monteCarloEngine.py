@@ -213,9 +213,9 @@ def prepare_market_path_sampling(sim_config):
     if not is_monte_carlo:
         return
 
-    mode = getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling")
+    mode = getattr(sim_config, "risk_analysis_mode", "monte_carlo")
 
-    if mode == "pathBasedAnnualSampling":
+    if mode == "monte_carlo":
         use_correlated = bool(getattr(sim_config, "use_correlated_returns", True))
         if not use_correlated:
             return
@@ -231,12 +231,12 @@ def prepare_market_path_sampling(sim_config):
         )
         return
 
-    if mode == "rollingHistoricalWindows":
+    if mode == "historical_windows":
         _prepare_historical_window_data(sim_config)
         return
 
 
-    raise ValueError(f"Unsupported monte_carlo_mode: {mode}")
+    raise ValueError(f"Unsupported risk_analysis_mode: {mode}")
 
 
 
@@ -437,7 +437,7 @@ def _build_historical_market_path(sim_config, years_to_simulate, sim_index):
     """
     if sim_index is None:
         raise ValueError(
-            "sim_index is required for rollingHistoricalWindows mode"
+            "sim_index is required for historical_windows mode"
         )
 
     if sim_config._hist_window_start_indices is None or sim_config._hist_num_windows <= 0:
@@ -473,7 +473,7 @@ def build_historical_inflation_rate_path(sim_config, years_to_simulate, sim_inde
     Index 0 is 0.0 so year indexing aligns with simulation year indexing.
     """
     if sim_index is None:
-        raise ValueError("sim_index is required for rollingHistoricalWindows mode")
+        raise ValueError("sim_index is required for historical_windows mode")
 
     if sim_config._hist_window_start_indices is None or sim_config._hist_num_windows <= 0:
         diagnosticEngine.raise_internal_error("Historical rolling-window data not prepared before inflation-path generation.", sim_config,
@@ -554,9 +554,9 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
         re[1:] = sim_config.re_mean
         return {"eq": eq, "bd": bd, "cs": cs, "re": re}
 
-    mode = getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling")
+    mode = getattr(sim_config, "risk_analysis_mode", "monte_carlo")
 
-    if mode == "pathBasedAnnualSampling":
+    if mode == "monte_carlo":
         use_correlated = bool(getattr(sim_config, "use_correlated_returns", True))
 
         means = sim_config._mc_means
@@ -618,7 +618,7 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
         re[1:] = np.nan
         return {"eq": eq, "bd": bd, "cs": cs, "re": re}
 
-    elif mode == "rollingHistoricalWindows":
+    elif mode == "historical_windows":
         return _build_historical_market_path(
             sim_config=sim_config,
             years_to_simulate=years_to_simulate,
@@ -627,7 +627,7 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
 
     else:
         raise ValueError(
-            f"Unsupported monte_carlo_mode: {mode}"
+            f"Unsupported risk_analysis_mode: {mode}"
         )
 
 

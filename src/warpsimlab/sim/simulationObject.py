@@ -20,7 +20,7 @@ class Simulation:
             sim_initial_allocation_mode="none",
             monte_carlo_plot_style="fill",
             use_correlated_returns=True,
-            monte_carlo_mode="pathBasedAnnualSampling",
+            risk_analysis_mode="monte_carlo",
             historical_asset_returns_file="us_asset_returns_1876_2025.csv",
             historical_inflation_file="us_inflation_1876_2025_real.csv",
             historical_window_mode="rolling_overlapping_all",
@@ -162,7 +162,7 @@ class Simulation:
         self.sim_initial_allocation_mode = sim_initial_allocation_mode
         self.monte_carlo_plot_style = monte_carlo_plot_style
         self.use_correlated_returns = use_correlated_returns
-        self.monte_carlo_mode = monte_carlo_mode
+        self.risk_analysis_mode = risk_analysis_mode
         self.historical_asset_returns_file = historical_asset_returns_file
         self.historical_inflation_file = historical_inflation_file
         self.historical_window_mode = historical_window_mode

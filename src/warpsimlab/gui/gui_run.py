@@ -193,7 +193,7 @@ class PortfolioSimulatorGUI_RunMixin:
             results_mode=controls.get("results_mode", "fill"),
             monte_carlo_plot_style=controls.get("monte_carlo_plot_style", "fill"),
             use_correlated_returns=controls.get("use_correlated_returns", True),
-            monte_carlo_mode=controls.get("monte_carlo_mode", "pathBasedAnnualSampling"),
+            risk_analysis_mode=controls.get("risk_analysis_mode", "monte_carlo"),
             historical_asset_returns_file=controls.get(
                 "historical_asset_returns_file",
                 "us_asset_returns_1876_2025.csv"

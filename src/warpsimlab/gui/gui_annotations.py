@@ -5,12 +5,12 @@ def _multi_path_mode_label(simulation_controls):
     if results_mode != "risk_analysis":
         return None
 
-    monte_carlo_mode = simulation_controls.get(
-        "monte_carlo_mode",
-        "pathBasedAnnualSampling"
+    risk_analysis_mode = simulation_controls.get(
+        "risk_analysis_mode",
+        "monte_carlo"
     )
 
-    if monte_carlo_mode == "rollingHistoricalWindows":
+    if risk_analysis_mode == "historical_windows":
         return "Historical Windows"
 
     return "Monte Carlo"

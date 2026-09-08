@@ -125,10 +125,10 @@ def draw_portfolio_projection(
         value_type = "Nominal"
 
     results_mode = getattr(sim_config, "results_mode", "")
-    market_mode = getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling")
+    market_mode = getattr(sim_config, "risk_analysis_mode", "monte_carlo")
 
     if results_mode == "risk_analysis":
-        if market_mode == "rollingHistoricalWindows":
+        if market_mode == "historical_windows":
             sim_type_text = "Historical Windows Portfolio"
         else:
             sim_type_text = "Monte Carlo Portfolio"
@@ -238,13 +238,13 @@ def _draw_simulated_shortfall_rate_label(ax, simulation_data, sim_config):
     results_mode = getattr(sim_config, "results_mode", "")
     market_mode = getattr(
         sim_config,
-        "monte_carlo_mode",
-        "pathBasedAnnualSampling",
+        "risk_analysis_mode",
+        "monte_carlo",
     )
 
     if (
         results_mode == "risk_analysis"
-        and market_mode == "rollingHistoricalWindows"
+        and market_mode == "historical_windows"
     ):
         label = f"{rate:.0f}% of historical windows depleted the portfolio"
     else:

@@ -109,7 +109,7 @@ def make_config(
         root=None,
     )
 
-    config.monte_carlo_mode = "rollingHistoricalWindows"
+    config.risk_analysis_mode = "historical_windows"
     config.disable_sequence_risk_for_historical = True
     config.use_correlated_returns = False
 

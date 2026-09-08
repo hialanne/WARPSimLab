@@ -134,7 +134,7 @@ def test_positive_integer_config_fields_reject_non_positive_values(scenario_buil
         ("inflation_mode", "unknown"),
         ("results_mode", "unknown"),
         ("monte_carlo_plot_style", "unknown"),
-        ("monte_carlo_mode", "unknown"),
+        ("risk_analysis_mode", "unknown"),
         ("historical_window_mode", "unknown"),
         ("retirement_withdraw_mode", "unknown"),
     ],

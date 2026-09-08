@@ -273,8 +273,8 @@ def _value_or_na(value):
 
 def _friendly_label(value):
     labels = {
-        "pathBasedAnnualSampling": "Path-Based Annual Sampling",
-        "rollingHistoricalWindows": "Rolling Historical Windows",
+        "monte_carlo": "Monte Carlo",
+        "historical_windows": "Historical Windows",
         "rolling_overlapping_all": "Rolling Overlapping Windows",
         "maintain-current-allocation": "Maintain Current Allocation",
         "none": "None",
@@ -632,7 +632,7 @@ def _save_portfolio_plot_with_temporary_modes(
     filename,
     results_mode,
     sim_type,
-    monte_carlo_mode=None,
+    risk_analysis_mode=None,
     force_num_sims=None,
     calculate_simulated_shortfall_rate=True,
     simulated_shortfall_rate=None,
@@ -640,7 +640,7 @@ def _save_portfolio_plot_with_temporary_modes(
 ):
     original_subplot_mode = getattr(sim_config, "results_mode", None)
     original_sim_type = getattr(sim_config, "sim_type", None)
-    original_monte_carlo_mode = getattr(sim_config, "monte_carlo_mode", None)
+    original_monte_carlo_mode = getattr(sim_config, "risk_analysis_mode", None)
     original_include_realestate = getattr(sim_config, "include_realestate", None)
     original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
@@ -649,8 +649,8 @@ def _save_portfolio_plot_with_temporary_modes(
         sim_config.sim_type = sim_type
         sim_config.calculate_simulated_shortfall_rate = calculate_simulated_shortfall_rate
 
-        if monte_carlo_mode is not None:
-            sim_config.monte_carlo_mode = monte_carlo_mode
+        if risk_analysis_mode is not None:
+            sim_config.risk_analysis_mode = risk_analysis_mode
 
         # Risk reports measure depletion of liquid/investment portfolio assets.
         # Real estate is excluded by default to match Monte Carlo and Historical Window plots.
@@ -693,7 +693,7 @@ def _save_portfolio_plot_with_temporary_modes(
     finally:
         sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
-        sim_config.monte_carlo_mode = original_monte_carlo_mode
+        sim_config.risk_analysis_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
         sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
@@ -815,7 +815,7 @@ def _build_report_plot_assets(
                 filename="historical_windows_analysis.png",
                 results_mode="risk_analysis",
                 sim_type="portfolio_sim",
-                monte_carlo_mode="rollingHistoricalWindows",
+                risk_analysis_mode="historical_windows",
                 force_num_sims=None,
                 calculate_simulated_shortfall_rate=True,
                 save_plot=include_historical_windows,
@@ -850,7 +850,7 @@ def _build_report_plot_assets(
                 filename="portfolio_projection.png",
                 results_mode="fill",
                 sim_type="portfolio_sim",
-                monte_carlo_mode=None,
+                risk_analysis_mode=None,
                 force_num_sims=1,
                 calculate_simulated_shortfall_rate=False,
                 simulated_shortfall_rate=report_shortfall_rate,
@@ -1029,7 +1029,7 @@ def _build_report_plot_assets(
                 filename="monte_carlo_analysis.png",
                 results_mode="risk_analysis",
                 sim_type="portfolio_sim",
-                monte_carlo_mode="pathBasedAnnualSampling",
+                risk_analysis_mode="monte_carlo",
                 force_num_sims=None,
             )
 

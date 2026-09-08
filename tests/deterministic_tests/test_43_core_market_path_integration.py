@@ -53,7 +53,7 @@ def make_config(
     *,
     years_to_simulate=2,
     results_mode="risk_analysis",
-    monte_carlo_mode="pathBasedAnnualSampling",
+    risk_analysis_mode="monte_carlo",
 ):
     config = Simulation(
         start_year=2026,
@@ -104,7 +104,7 @@ def make_config(
         root=None,
     )
 
-    config.monte_carlo_mode = monte_carlo_mode
+    config.risk_analysis_mode = risk_analysis_mode
     config.use_correlated_returns = False
     config.disable_sequence_risk_for_historical = True
 
@@ -544,7 +544,7 @@ def test_historical_mode_overrides_requested_simulation_count(
 ):
     config = make_config(
         years_to_simulate=2,
-        monte_carlo_mode="rollingHistoricalWindows",
+        risk_analysis_mode="historical_windows",
     )
 
     install_historical_preparation(
@@ -593,7 +593,7 @@ def test_historical_window_year_metadata_is_stored(
 ):
     config = make_config(
         years_to_simulate=2,
-        monte_carlo_mode="rollingHistoricalWindows",
+        risk_analysis_mode="historical_windows",
     )
 
     install_historical_preparation(
@@ -633,7 +633,7 @@ def test_nonhistorical_mode_uses_default_historical_metadata(
 ):
     config = make_config(
         years_to_simulate=2,
-        monte_carlo_mode="pathBasedAnnualSampling",
+        risk_analysis_mode="monte_carlo",
     )
 
     monkeypatch.setattr(
@@ -686,7 +686,7 @@ def test_historical_mode_rejects_zero_windows(
 ):
     config = make_config(
         years_to_simulate=2,
-        monte_carlo_mode="rollingHistoricalWindows",
+        risk_analysis_mode="historical_windows",
     )
 
     install_historical_preparation(
@@ -709,7 +709,7 @@ def test_historical_mode_can_disable_sequence_risk_overlay(
 ):
     config = make_config(
         years_to_simulate=2,
-        monte_carlo_mode="rollingHistoricalWindows",
+        risk_analysis_mode="historical_windows",
     )
 
     config.sequence_risk_enabled = True

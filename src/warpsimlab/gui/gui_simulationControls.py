@@ -35,7 +35,7 @@ class SimulationControlsEditFrame(ttk.Frame):
         self.controls.setdefault("monte_carlo_plot_style", "fill")
         self.controls.setdefault("use_correlated_returns", True)
         self.controls.setdefault("show_simulated_shortfall_rate", True)
-        self.controls.setdefault("monte_carlo_mode", "pathBasedAnnualSampling")
+        self.controls.setdefault("risk_analysis_mode", "monte_carlo")
         self.controls.setdefault("historical_asset_returns_file", "us_asset_returns_1876_2025.csv")
         self.controls.setdefault("historical_inflation_file", "us_inflation_1876_2025_real.csv")
         self.controls.setdefault("historical_window_mode", "rolling_overlapping_all")
@@ -322,7 +322,7 @@ class SimulationControlsEditFrame(ttk.Frame):
             "Risk Analysis": (
                 "Display percentile bands from either Monte Carlo simulations "
                 "or rolling historical windows, depending on the selected "
-                "Percentile Bands Mode."
+                "Risk Analysis Mode."
             ),
             "Sub Categories": (
                 "Display simulation results separated into detailed categories."
@@ -354,8 +354,8 @@ class SimulationControlsEditFrame(ttk.Frame):
             self.controls["results_mode"] = new_mode
 
             if previous_mode == "risk_analysis" and new_mode != "risk_analysis":
-                self.controls["monte_carlo_mode"] = "rollingHistoricalWindows"
-                monte_carlo_mode_var.set("rollingHistoricalWindows")
+                self.controls["risk_analysis_mode"] = "historical_windows"
+                monte_carlo_mode_var.set("historical_windows")
 
             update_include_realestate_visibility()
 
@@ -445,11 +445,11 @@ class SimulationControlsEditFrame(ttk.Frame):
 
         ttk.Label(
             monte_carlo_section,
-            text="Percentile Bands Mode"
+            text="Risk Analysis Mode"
         ).grid(row=0, column=0, sticky="w", pady=(0, 2))
 
         monte_carlo_mode_var = tk.StringVar(
-            value=self.controls.get("monte_carlo_mode", "pathBasedAnnualSampling")
+            value=self.controls.get("risk_analysis_mode", "monte_carlo")
         )
 
         monte_carlo_mode_frame = ttk.Frame(monte_carlo_section)
@@ -459,7 +459,7 @@ class SimulationControlsEditFrame(ttk.Frame):
             monte_carlo_mode_frame,
             text="Monte Carlo",
             variable=monte_carlo_mode_var,
-            value="pathBasedAnnualSampling"
+            value="monte_carlo"
         )
         mc_mode_path_rb.grid(row=0, column=0, sticky="w", pady=1)
         
@@ -476,7 +476,7 @@ class SimulationControlsEditFrame(ttk.Frame):
             monte_carlo_mode_frame,
             text="Historical Windows",
             variable=monte_carlo_mode_var,
-            value="rollingHistoricalWindows"
+            value="historical_windows"
         )
         mc_mode_historical_rb.grid(row=2, column=0, sticky="w", pady=1)
 
@@ -490,7 +490,7 @@ class SimulationControlsEditFrame(ttk.Frame):
         )
 
         def on_monte_carlo_mode_changed(*_):
-            self.controls["monte_carlo_mode"] = monte_carlo_mode_var.get()
+            self.controls["risk_analysis_mode"] = monte_carlo_mode_var.get()
             update_monte_carlo_dependent_visibility()
 
         monte_carlo_mode_var.trace_add("write", on_monte_carlo_mode_changed)
@@ -498,7 +498,7 @@ class SimulationControlsEditFrame(ttk.Frame):
         # Monte Carlo Plot Style
         ttk.Label(
             monte_carlo_section,
-            text="Percentile Bands Plot Style"
+            text="Risk Analysis Plot Style"
         ).grid(row=3, column=0, sticky="w", pady=(20, 2))
 
         monte_carlo_plot_style_var = tk.StringVar(
@@ -573,7 +573,7 @@ class SimulationControlsEditFrame(ttk.Frame):
         historical_note.grid(row=6, column=0, sticky="w", pady=(8, 2))
 
         def update_monte_carlo_dependent_visibility(*_):
-            is_historical = (monte_carlo_mode_var.get() == "rollingHistoricalWindows")
+            is_historical = (monte_carlo_mode_var.get() == "historical_windows")
 
             if is_historical:
                 correlated_returns_cb.state(["disabled"])

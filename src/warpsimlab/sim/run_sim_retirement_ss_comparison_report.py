@@ -345,7 +345,7 @@ def run_sim_retirement_ss_comparison_report(
 
     original_subplot_mode = sim_config.results_mode
     original_sim_type = sim_config.sim_type
-    original_monte_carlo_mode = sim_config.monte_carlo_mode
+    original_monte_carlo_mode = sim_config.risk_analysis_mode
     original_include_realestate = sim_config.include_realestate
     original_show_shortfall_rate = sim_config.show_simulated_shortfall_rate
     original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
@@ -410,7 +410,7 @@ def run_sim_retirement_ss_comparison_report(
 
                 sim_config.results_mode = "risk_analysis"
                 sim_config.sim_type = "portfolio_sim"
-                sim_config.monte_carlo_mode = "rollingHistoricalWindows"
+                sim_config.risk_analysis_mode = "historical_windows"
 
                 # We are going to create a 6x6 matrix of percents portfolio goes to zero.
                 # This is very computational heavy. Lets use stride 4 except on our
@@ -456,7 +456,7 @@ def run_sim_retirement_ss_comparison_report(
     finally:
         sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
-        sim_config.monte_carlo_mode = original_monte_carlo_mode
+        sim_config.risk_analysis_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
         sim_config.show_simulated_shortfall_rate = original_show_shortfall_rate
         sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate

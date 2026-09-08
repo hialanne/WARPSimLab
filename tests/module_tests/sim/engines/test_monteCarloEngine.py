@@ -13,7 +13,7 @@ from src.warpsimlab.sim.engines import monteCarloEngine
 class SimConfigFactory:
     results_mode: str = "risk_analysis"
     sim_type: str = "portfolio_sim"
-    monte_carlo_mode: str = "pathBasedAnnualSampling"
+    risk_analysis_mode: str = "monte_carlo"
     use_correlated_returns: bool = True
 
     eq_mean: float = 0.10
@@ -32,7 +32,7 @@ class SimConfigFactory:
         data = {
             "results_mode": self.results_mode,
             "sim_type": self.sim_type,
-            "monte_carlo_mode": self.monte_carlo_mode,
+            "risk_analysis_mode": self.risk_analysis_mode,
             "use_correlated_returns": self.use_correlated_returns,
             "eq_mean": self.eq_mean,
             "bd_mean": self.bd_mean,
@@ -164,7 +164,7 @@ def test_generate_market_path_path_based_correlated_has_expected_shapes(sim_fact
     np.random.seed(12345)
 
     sim_config = sim_factory.build(
-        monte_carlo_mode="pathBasedAnnualSampling",
+        risk_analysis_mode="monte_carlo",
         use_correlated_returns=True,
     )
     monteCarloEngine.prepare_market_path_sampling(sim_config)
@@ -182,7 +182,7 @@ def test_generate_market_path_path_based_uncorrelated_has_expected_shapes(sim_fa
     np.random.seed(54321)
 
     sim_config = sim_factory.build(
-        monte_carlo_mode="pathBasedAnnualSampling",
+        risk_analysis_mode="monte_carlo",
         use_correlated_returns=False,
     )
     monteCarloEngine.prepare_market_path_sampling(sim_config)
@@ -198,17 +198,17 @@ def test_generate_market_path_path_based_uncorrelated_has_expected_shapes(sim_fa
 
 def test_prepare_market_path_sampling_rejects_independent_annual_sampling(sim_factory):
     sim_config = sim_factory.build(
-        monte_carlo_mode="independentAnnualSampling",
+        risk_analysis_mode="independentAnnualSampling",
         use_correlated_returns=False,
     )
 
-    with pytest.raises(ValueError, match="Unsupported monte_carlo_mode: independentAnnualSampling"):
+    with pytest.raises(ValueError, match="Unsupported risk_analysis_mode: independentAnnualSampling"):
         monteCarloEngine.prepare_market_path_sampling(sim_config)
 
 
 def test_generate_market_path_independent_mode_returns_nan_placeholders(sim_factory):
     sim_config = sim_factory.build(
-        monte_carlo_mode="independentAnnualSampling",
+        risk_analysis_mode="independentAnnualSampling",
         use_correlated_returns=False,
     )
 

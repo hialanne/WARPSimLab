@@ -11,7 +11,7 @@ def _build_expense_inflation_factors(sim_config):
     historical_mode_active = (
         sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
-        and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
+        and getattr(sim_config, "risk_analysis_mode", "monte_carlo") == "historical_windows"
         and getattr(sim_config, "_active_historical_sim_index", None) is not None
         and getattr(sim_config, "_hist_inflation", None) is not None
     )

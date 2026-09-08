@@ -53,7 +53,7 @@ def make_config(
         inflation_rate=float(inflation_rate),
         results_mode="baseline",
         sim_type="portfolio_sim",
-        monte_carlo_mode="pathBasedAnnualSampling",
+        risk_analysis_mode="monte_carlo",
         _ret_withdraw_base_dollars=None,
         inflation_delta=float(inflation_delta),
     )
@@ -180,7 +180,7 @@ def test_inflation_adjusted_withdrawal_uses_historical_inflation_path():
         inflation_rate=0.99,
     )
     config.results_mode = "risk_analysis"
-    config.monte_carlo_mode = "rollingHistoricalWindows"
+    config.risk_analysis_mode = "historical_windows"
     config._active_historical_sim_index = 1
     config._hist_window_start_indices = np.array([0, 2], dtype=int)
     config._hist_inflation = np.array([0.01, 0.02, 0.10, -0.20])

@@ -14,7 +14,7 @@ class DummySimConfig:
     years_to_simulate: int = 3
     num_sims: int = 25
     results_mode: str = "risk_analysis"
-    monte_carlo_mode: str = "pathBasedAnnualSampling"
+    risk_analysis_mode: str = "monte_carlo"
     inflation_rate: float = 0.0
     include_realestate: bool = True
 

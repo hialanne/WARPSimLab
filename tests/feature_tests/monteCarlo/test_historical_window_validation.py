@@ -11,7 +11,7 @@ def make_historical_config(*, years_to_simulate=2, historical_window_mode="rolli
     return SimpleNamespace(
         results_mode="risk_analysis",
         sim_type="portfolio_sim",
-        monte_carlo_mode="rollingHistoricalWindows",
+        risk_analysis_mode="historical_windows",
         use_correlated_returns=False,
         eq_mean=0.0,
         bd_mean=0.0,
@@ -155,7 +155,7 @@ def test_historical_market_path_requires_sim_index():
         )
 
     assert str(exc_info.value) == (
-        "sim_index is required for rollingHistoricalWindows mode"
+        "sim_index is required for historical_windows mode"
     )
 
 

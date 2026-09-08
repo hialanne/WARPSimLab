@@ -119,7 +119,7 @@ def make_config(**overrides):
         inflation_rate=0.0,
         inflation_delta=0.0,
         num_sims=1,
-        monte_carlo_mode="pathBasedAnnualSampling",
+        risk_analysis_mode="monte_carlo",
         monte_carlo_plot_style="fill",
         historical_window_stride=1,
         historical_window_mode="rolling_overlapping_all",

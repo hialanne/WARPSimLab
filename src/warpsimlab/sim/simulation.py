@@ -12,7 +12,7 @@ from .validation import validate_simulation_inputs
 def _is_historical_window_mode(sim_config):
     return (
         sim_config.results_mode == "risk_analysis"
-        and getattr(sim_config, "monte_carlo_mode", "pathBasedAnnualSampling") == "rollingHistoricalWindows"
+        and getattr(sim_config, "risk_analysis_mode", "monte_carlo") == "historical_windows"
         and sim_config.sim_type == "portfolio_sim"
     )
 
@@ -225,13 +225,13 @@ def _compute_simulated_shortfall_rate(
 
     original_subplot_mode = sim_config.results_mode
     original_sim_type = sim_config.sim_type
-    original_monte_carlo_mode = sim_config.monte_carlo_mode
+    original_monte_carlo_mode = sim_config.risk_analysis_mode
     original_include_realestate = sim_config.include_realestate
 
     try:
         sim_config.results_mode = "risk_analysis"
         sim_config.sim_type = "portfolio_sim"
-        sim_config.monte_carlo_mode = "rollingHistoricalWindows"
+        sim_config.risk_analysis_mode = "historical_windows"
         sim_config.include_realestate = False
 
         historical_core = simulate_yearly_portfolios(
@@ -246,7 +246,7 @@ def _compute_simulated_shortfall_rate(
     finally:
         sim_config.results_mode = original_subplot_mode
         sim_config.sim_type = original_sim_type
-        sim_config.monte_carlo_mode = original_monte_carlo_mode
+        sim_config.risk_analysis_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
 
     total_assets = np.asarray(historical_core["total_assets"])
@@ -279,7 +279,7 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
         num_sims = 1
 
     # Note:
-    # In rollingHistoricalWindows mode, simulate_yearly_portfolios()
+    # In historical_windows mode, simulate_yearly_portfolios()
     # will internally override the effective simulation count to the
     # number of valid overlapping historical windows.
 
