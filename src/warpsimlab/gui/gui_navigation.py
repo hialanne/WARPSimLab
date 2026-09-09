@@ -92,6 +92,7 @@ class PortfolioSimulatorGUI_NavigationMixin:
 
         self._apply_mode_to_results_button()
 
+
     def _rebuild_results_menu(self):
         if not hasattr(self, "results_menu"):
             return
@@ -99,7 +100,17 @@ class PortfolioSimulatorGUI_NavigationMixin:
         self.results_menu.delete(0, "end")
         is_advanced = self.mode_var.get() == "Advanced"
 
-        # Always available
+        if is_advanced and hasattr(self, "scenario_controller"):
+            self.results_menu.add_command(
+                label="Scenario Explorer", command=self.scenario_controller.start_or_focus
+            )
+
+        self.results_menu.add_command(
+            label="Simulation Summary", command=lambda: self.run_simulation_from_gui(sim_type="summary_sim")
+        )
+
+        self.results_menu.add_separator()
+
         self.results_menu.add_command(
             label="Income Plots", command=lambda: self.run_simulation_from_gui(sim_type="income_sim")
         )
@@ -112,22 +123,13 @@ class PortfolioSimulatorGUI_NavigationMixin:
         self.results_menu.add_command(
             label="Portfolio Plots", command=lambda: self.run_simulation_from_gui(sim_type="portfolio_sim")
         )
-        self.results_menu.add_command(
-            label="Simulation Summary", command=lambda: self.run_simulation_from_gui(sim_type="summary_sim")
-        )
 
         if is_advanced:
-            self.results_menu.add_separator()
-
-            if hasattr(self, "scenario_controller"):
-                self.results_menu.add_command(
-                    label="Scenario Explorer", command=self.scenario_controller.start_or_focus
-                )
-
             self.results_menu.add_command(
                 label="Cumulative Operating Balance",
                 command=lambda: self.run_simulation_from_gui(sim_type="operating_balance_sim"),
             )
+
 
     def _apply_mode_to_results_button(self):
         if not hasattr(self, "results_button"):

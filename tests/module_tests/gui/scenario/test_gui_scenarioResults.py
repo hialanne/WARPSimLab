@@ -50,7 +50,7 @@ def _make_result(summary=None, retire_age=67, ss_age=67, wife=None, inflation=0.
             custom_cash=cash,
         ),
         "retirement_snapshots": SimpleNamespace(historical_data_multiplier=market_adjustment),
-        "husband": SimpleNamespace(retire_age=retire_age, ss_age=ss_age),
+        "husband": SimpleNamespace(age=60, retire_age=retire_age, ss_age=ss_age),
         "wife": wife,
     }
 
@@ -168,8 +168,8 @@ def test_rebuild_assumptions_withdraw_mode_uses_withdrawal_rate(tk_root):
 def test_rebuild_assumptions_includes_wife_only_when_both_results_have_wife(tk_root):
     frame = mod.ScenarioResultsFrame(tk_root)
 
-    baseline_wife = SimpleNamespace(retire_age=64, ss_age=66)
-    scenario_wife = SimpleNamespace(retire_age=65, ss_age=67)
+    baseline_wife = SimpleNamespace(age=58, retire_age=64, ss_age=66)
+    scenario_wife = SimpleNamespace(age=58, retire_age=65, ss_age=67)
     baseline = _make_result(wife=baseline_wife)
     scenario = _make_result(wife=scenario_wife)
 

@@ -23,7 +23,7 @@ def _make_portfolio(value):
 
 def _make_main_gui(second_person_enabled=False):
     return SimpleNamespace(
-        simulation_controls={"second_person_enabled": second_person_enabled},
+        simulation_controls={"second_person_enabled": second_person_enabled, "include_realestate": False},
         simulation_settings={"fund_expense": 0.55},
         husband=_make_person(65, 67),
         wife=_make_person(63, 66),
@@ -43,6 +43,8 @@ def _make_controller(main_gui):
         sliders_frame=None,
         baseline_results=None,
         scenario_results=None,
+        include_realestate_var=DummyValue(False),
+        plot_style="portfolio",
     )
 
 
@@ -124,8 +126,9 @@ def test_compute_results_from_inputs_uses_copies_and_returns_simulation_inputs(m
     main_gui.build_simulation_from_gui = build_simulation_from_gui
     monkeypatch.setattr(mod, "run_pipeline", fake_run_pipeline)
 
-    result = manager.compute_results_from_inputs(persons, portfolios, retirement)
+    result = manager.compute_results_from_inputs(persons, portfolios, retirement, False)
 
+    assert result["sim_config"].include_realestate is False
     assert result["p"] == {"result": 42}
     assert result["sim_config"] is sim_config
     assert result["husband"] is not persons["husband"]
@@ -158,7 +161,7 @@ def test_compute_results_from_inputs_passes_wife_when_enabled(monkeypatch):
 
     monkeypatch.setattr(mod, "run_pipeline", fake_run_pipeline)
 
-    result = manager.compute_results_from_inputs(persons, portfolios, retirement)
+    result = manager.compute_results_from_inputs(persons, portfolios, retirement, False)
 
     assert result["wife"] is not None
     assert result["wife"] is not persons["wife"]
@@ -176,16 +179,18 @@ def test_compute_baseline_results_uses_copies_of_current_snapshots(monkeypatch):
     controller.retirement_snapshots = SimpleNamespace(inflation=3.0)
     received = {}
 
-    def fake_compute(persons, portfolios, retirement):
+    def fake_compute(persons, portfolios, retirement, include_realestate):
         received["persons"] = persons
         received["portfolios"] = portfolios
         received["retirement"] = retirement
+        received["include_realestate"] = include_realestate
         return {"baseline": True}
 
     monkeypatch.setattr(manager, "compute_results_from_inputs", fake_compute)
 
     manager.compute_baseline_results()
 
+    assert received["include_realestate"] is False
     assert controller.baseline_results == {"baseline": True}
     assert received["persons"] is not controller.person_snapshots
     assert received["persons"]["husband"] is not controller.person_snapshots["husband"]
@@ -204,16 +209,18 @@ def test_compute_scenario_results_uses_current_snapshots_and_returns_result(monk
     controller.retirement_snapshots = SimpleNamespace(inflation=3.0)
     received = {}
 
-    def fake_compute(persons, portfolios, retirement):
+    def fake_compute(persons, portfolios, retirement, include_realestate):
         received["persons"] = persons
         received["portfolios"] = portfolios
         received["retirement"] = retirement
+        received["include_realestate"] = include_realestate
         return {"scenario": True}
 
     monkeypatch.setattr(manager, "compute_results_from_inputs", fake_compute)
 
     result = manager.compute_scenario_results()
 
+    assert received["include_realestate"] is False
     assert result == {"scenario": True}
     assert controller.scenario_results is result
     assert received["persons"] is controller.person_snapshots

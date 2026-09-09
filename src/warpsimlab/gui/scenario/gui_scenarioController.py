@@ -5,18 +5,33 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 
 SCENARIO_MODE_SCENARIO_VIEW = "scenario_view"
+SCENARIO_MODE_INCOME_COMPARE = "income_compare"
 SCENARIO_MODE_CASHFLOW_COMPARE = "cashflow_compare"
 SCENARIO_MODE_PORTFOLIO_COMPARE = "portfolio_compare"
 
+SCENARIO_PLOT_STYLE_FILL = "fill"
+SCENARIO_PLOT_STYLE_HISTORICAL_RISK = "historical_risk"
+SCENARIO_PLOT_STYLE_SUB_CATEGORIES = "sub_categories"
+SCENARIO_PLOT_STYLE_PRE_POST_TAX = "pre_post_tax"
+
+SCENARIO_PLOT_STYLE_OPTIONS = [
+    ("Fill", SCENARIO_PLOT_STYLE_FILL),
+    ("Historical Risk", SCENARIO_PLOT_STYLE_HISTORICAL_RISK),
+    ("Sub Categories", SCENARIO_PLOT_STYLE_SUB_CATEGORIES),
+    ("Pre / Post Tax Savings", SCENARIO_PLOT_STYLE_PRE_POST_TAX),
+]
+
 SCENARIO_MODE_OPTIONS = [
     ("Scenario View", SCENARIO_MODE_SCENARIO_VIEW),
+    ("Compare Income", SCENARIO_MODE_INCOME_COMPARE),
     ("Compare Cash Flow", SCENARIO_MODE_CASHFLOW_COMPARE),
     ("Compare Portfolio", SCENARIO_MODE_PORTFOLIO_COMPARE),
 ]
 
 from src.warpsimlab.gui.scenario.gui_scenarioSliders import ScenarioSlidersFrame
 from src.warpsimlab.gui.scenario.gui_scenarioPlots import (
-    ScenarioPlotManager, PLOT_FAMILY_CASHFLOW, PLOT_FAMILY_PORTFOLIO, RESULT_SOURCE_BASELINE, RESULT_SOURCE_SCENARIO
+    ScenarioPlotManager, PLOT_FAMILY_INCOME, PLOT_FAMILY_CASHFLOW, 
+    PLOT_FAMILY_PORTFOLIO, RESULT_SOURCE_BASELINE, RESULT_SOURCE_SCENARIO
 )
 
 from src.warpsimlab.gui.gui_utils import set_tk_button_soft_disabled, noop
@@ -59,12 +74,15 @@ class ScenarioController:
 
         self.mode = SCENARIO_MODE_SCENARIO_VIEW
         self.mode_var = None
-        self.mode_label_to_value = {
-            label: value for label, value in SCENARIO_MODE_OPTIONS
-        }
-        self.mode_value_to_label = {
-            value: label for label, value in SCENARIO_MODE_OPTIONS
-        }
+        self.plot_style = SCENARIO_PLOT_STYLE_FILL
+        self.plot_style_var = None
+        self.include_realestate_var = None
+
+        self.mode_label_to_value = {label: value for label, value in SCENARIO_MODE_OPTIONS}
+        self.mode_value_to_label = {value: label for label, value in SCENARIO_MODE_OPTIONS}
+
+        self.plot_style_label_to_value = {label: value for label, value in SCENARIO_PLOT_STYLE_OPTIONS}
+        self.plot_style_value_to_label = {value: label for label, value in SCENARIO_PLOT_STYLE_OPTIONS}
 
     # ----------------------------------------------------------
     # Public entry point from button
@@ -208,6 +226,12 @@ class ScenarioController:
                 {"plot_family": PLOT_FAMILY_PORTFOLIO, "result_source": RESULT_SOURCE_SCENARIO},
             )
 
+        elif self.mode == SCENARIO_MODE_INCOME_COMPARE:
+            return (
+                {"plot_family": PLOT_FAMILY_INCOME, "result_source": RESULT_SOURCE_BASELINE},
+                {"plot_family": PLOT_FAMILY_INCOME, "result_source": RESULT_SOURCE_SCENARIO},
+            )
+
         elif self.mode == SCENARIO_MODE_CASHFLOW_COMPARE:
             return (
                 {"plot_family": PLOT_FAMILY_CASHFLOW, "result_source": RESULT_SOURCE_BASELINE},
@@ -266,6 +290,9 @@ class ScenarioController:
 
         self._cancel_pending_update()
         self._needs_redraw = False
+
+        self.mode = SCENARIO_MODE_SCENARIO_VIEW
+        self.plot_style = SCENARIO_PLOT_STYLE_FILL
 
         self._build_snapshots_from_truth()
         self._build_controls_ui()
@@ -428,6 +455,27 @@ class ScenarioController:
         self.mode_dropdown.selection_clear()
         self.window.focus_set()
 
+
+    def _on_plot_style_dropdown_selected(self, event=None):
+        if self.plot_style_var is None:
+            return
+
+        selected_label = self.plot_style_var.get()
+        selected_plot_style = self.plot_style_label_to_value.get(selected_label)
+        if selected_plot_style is None:
+            return
+
+        self.plot_style = selected_plot_style
+        self.plot_style_dropdown.selection_clear()
+        self.window.focus_set()
+
+        if self.session_active:
+            self._cancel_pending_update()
+            self._needs_redraw = False
+            self._compute_baseline_results()
+            self.run_and_redraw()
+
+
     def _on_mode_changed(self, *_args):
         if self.mode_var is None:
             return
@@ -512,20 +560,42 @@ class ScenarioController:
         self.mode_dropdown.grid(row=1, column=0, sticky="w", pady=(2, 6))
         self.mode_dropdown.bind("<<ComboboxSelected>>", self._on_mode_dropdown_selected)
 
+        current_plot_style_label = self.plot_style_value_to_label.get(
+            self.plot_style, self.plot_style_value_to_label[SCENARIO_PLOT_STYLE_FILL]
+        )
+        self.plot_style_var = tk.StringVar(value=current_plot_style_label)
+
+        ttk.Label(controls_frame, text="Plot Style").grid(row=2, column=0, sticky="w", pady=(2, 0))
+
+        self.plot_style_dropdown = ttk.Combobox(
+            controls_frame, textvariable=self.plot_style_var,
+            values=[label for label, _value in SCENARIO_PLOT_STYLE_OPTIONS],
+            state="readonly", width=20, style="Scenario.TCombobox"
+        )
+        self.plot_style_dropdown.grid(row=3, column=0, sticky="w", pady=(2, 6))
+        self.plot_style_dropdown.bind("<<ComboboxSelected>>", self._on_plot_style_dropdown_selected)
+
         # Currently does nothing.  We moved this functionality from the plots into the left sidebar Results column.
         #self.annotate_cb = ttk.Checkbutton(
         #    controls_frame, text="Annotate Plots", variable=self.sliders_frame.enable_annotations
         #)
         #self.annotate_cb.grid(row=2, column=0, sticky="w", pady=(0, 2))
 
+        self.include_realestate_var = tk.BooleanVar(value=bool(controls.get("include_realestate", False)))
+        self.include_realestate_cb = ttk.Checkbutton(
+            controls_frame, text="Include Real Estate", variable=self.include_realestate_var,
+            command=self.schedule_update
+        )
+        self.include_realestate_cb.grid(row=4, column=0, sticky="w")
+
         self.adjust_infl_delta_cb = ttk.Checkbutton(
             controls_frame, text="Real Returns (Inflation Adjusted)",
             variable=self.sliders_frame.calculate_real_dollars
         )
-        self.adjust_infl_delta_cb.grid(row=2, column=0, sticky="w")
+        self.adjust_infl_delta_cb.grid(row=5, column=0, sticky="w")
 
         button_frame = ttk.Frame(controls_frame)
-        button_frame.grid(row=3, column=0, sticky="w", pady=(8, 0))
+        button_frame.grid(row=6, column=0, sticky="w", pady=(8, 0))
 
         ttk.Button(button_frame, text="Restore Layout", width=20, command=self._position_windows).grid(
             row=0, column=0, sticky="w", pady=(0, 4)
@@ -575,7 +645,7 @@ class ScenarioController:
         Render both panels according to the current mode.
         """
         left_panel, right_panel = self._resolve_panels_for_mode()
-        sync_axes = self.mode in (SCENARIO_MODE_CASHFLOW_COMPARE, SCENARIO_MODE_PORTFOLIO_COMPARE)
+        sync_axes = self.mode in (SCENARIO_MODE_INCOME_COMPARE, SCENARIO_MODE_CASHFLOW_COMPARE, SCENARIO_MODE_PORTFOLIO_COMPARE)
         self.plot_manager.render_panels(left_panel, right_panel, sync_axes=sync_axes)
 
 

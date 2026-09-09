@@ -328,10 +328,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self._update_stocks_label()
         self._update_bonds_label()
 
-        ttk.Label(self, text="Changed assumptions are shown\nin bold.").grid(
-            row=2, column=0, columnspan=2, sticky="w", pady=(6, 0)
-        )
-
         # --------------------
         # Initialize slider states
         # --------------------

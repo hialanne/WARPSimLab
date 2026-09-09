@@ -11,6 +11,7 @@ from src.warpsimlab.plots.plotPortfolioProjection import draw_portfolio_projecti
 from src.warpsimlab.gui.gui_settings import SCENARIO_LAYOUT_REMEMBER, geometry_is_visible, save_display_settings
 
 
+PLOT_FAMILY_INCOME = "income"
 PLOT_FAMILY_CASHFLOW = "cashflow"
 PLOT_FAMILY_PORTFOLIO = "portfolio"
 
@@ -204,7 +205,14 @@ class ScenarioPlotManager:
         Human-readable figure window title for the current panel.
         """
         role = self.panel_role_label(panel)
-        family = "Cash Flow" if panel["plot_family"] == PLOT_FAMILY_CASHFLOW else "Portfolio"
+
+        if panel["plot_family"] == PLOT_FAMILY_INCOME:
+            family = "Income"
+        elif panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
+            family = "Cash Flow"
+        else:
+            family = "Portfolio"
+
         return f"{role} {family}"
 
 
@@ -244,7 +252,9 @@ class ScenarioPlotManager:
         sim_config.use_snapshot_annotations = annotate_enabled
         sim_config.scenario_explorer_annotations = []
 
-        if panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
+        if panel["plot_family"] == PLOT_FAMILY_INCOME:
+            sim_config.sim_type = "income_sim"
+        elif panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
             sim_config.sim_type = "cashflow_sim"
 
         return sim_config
@@ -293,7 +303,15 @@ class ScenarioPlotManager:
 
         ax.clear()
 
-        if panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
+        if panel["plot_family"] == PLOT_FAMILY_INCOME:
+            breakdown = dict(p["breakdown_by_class"])
+            income_keys = ["work", "pension", "annuity", "ss", "special_income"]
+            income_total = sum(breakdown[key] for key in income_keys)
+
+            draw_yearly_income(ax, p["years"], p["net_profit"], income_total, breakdown, p["taxes"], p["expense_amt"],
+                               husband, wife, sim_config)
+
+        elif panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
             breakdown = dict(p["breakdown_by_class"])
 
             income_keys = ["work", "pension", "annuity", "ss", "special_income"]

@@ -13,8 +13,10 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         super().__init__(parent, text="Results", padding=10, style="ScenarioResults.TLabelframe")
 
         self.columnconfigure(0, weight=1)
+
         self.rowconfigure(0, weight=0)
-        self.rowconfigure(1, weight=1, minsize=150)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=0)
 
         self.metric_rows = {}
         self.normal_label_font = tkfont.nametofont("TkDefaultFont").copy()
@@ -41,28 +43,14 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         assumptions_group = ttk.Frame(self)
         assumptions_group.grid(row=1, column=0, sticky="nsew", pady=(10, 0))
         assumptions_group.columnconfigure(0, weight=1)
-        assumptions_group.rowconfigure(2, weight=1)
 
-        ttk.Separator(assumptions_group, orient="horizontal").grid(
-                row=0, column=0, columnspan=2, sticky="ew", pady=(0, 5))
-        ttk.Label(assumptions_group, text="Assumptions", font=("Arial", 10, "bold")).grid(
-                row=1, column=0, columnspan=2, sticky="nw")
+        ttk.Separator(assumptions_group, orient="horizontal").grid(row=0, column=0, sticky="ew", pady=(0, 5))
+        ttk.Label(assumptions_group, text="Assumptions", font=("Arial", 10, "bold")).grid(row=1, column=0, sticky="w")
 
-        self.assumptions_canvas = tk.Canvas(assumptions_group, highlightthickness=0, height=150)        
-        assumptions_scrollbar = ttk.Scrollbar(assumptions_group, orient="vertical",
-                                              command=self.assumptions_canvas.yview)
-        self.assumptions_canvas.configure(yscrollcommand=assumptions_scrollbar.set)
+        self.assumptions_frame = ttk.Frame(assumptions_group)
+        self.assumptions_frame.grid(row=2, column=0, sticky="nsew", pady=(4, 0))
 
-        self.assumptions_canvas.grid(row=2, column=0, sticky="nsew", pady=(4, 0))
-        assumptions_scrollbar.grid(row=2, column=1, sticky="ns", pady=(4, 0))
-
-        self.assumptions_frame = ttk.Frame(self.assumptions_canvas)
-        self.assumptions_window = self.assumptions_canvas.create_window(
-            (0, 0), window=self.assumptions_frame, anchor="nw"
-        )
-
-        self.assumptions_frame.bind("<Configure>", self._on_assumptions_frame_configure)
-        self.assumptions_canvas.bind("<Configure>", self._on_assumptions_canvas_configure)
+        ttk.Label(self, text="Changed assumptions are shown in red.").grid(row=2, column=0, sticky="w", pady=(8, 0))
 
 
     def _build_results_table(self):
@@ -117,14 +105,6 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         return row + 1
 
 
-    def _on_assumptions_frame_configure(self, _event=None):
-        self.assumptions_canvas.configure(scrollregion=self.assumptions_canvas.bbox("all"))
-
-
-    def _on_assumptions_canvas_configure(self, event):
-        self.assumptions_canvas.itemconfigure(self.assumptions_window, width=event.width)
-
-
     def update_results(self, baseline_results, scenario_results):
         if baseline_results is None or scenario_results is None:
             return
@@ -175,17 +155,15 @@ class ScenarioResultsFrame(ttk.LabelFrame):
 
         row = 1
         row = self._add_assumption_section(frame, row, "Husband")
-        row = self._add_assumption_row(frame, row, "Retirement Age", baseline_husband.retire_age,
-                                       scenario_husband.retire_age, "age")
-        row = self._add_assumption_row(frame, row, "Social Security Age", baseline_husband.ss_age,
-                                       scenario_husband.ss_age, "age")
+        row = self._add_assumption_original_only_row(frame, row, "Age", baseline_husband.age)
+        row = self._add_assumption_row(frame, row, "Retirement Age", baseline_husband.retire_age, scenario_husband.retire_age, "age")
+        row = self._add_assumption_row(frame, row, "Social Security Age", baseline_husband.ss_age, scenario_husband.ss_age, "age")
 
         if baseline_wife is not None and scenario_wife is not None:
             row = self._add_assumption_section(frame, row, "Wife")
-            row = self._add_assumption_row(frame, row, "Retirement Age", baseline_wife.retire_age,
-                                           scenario_wife.retire_age, "age")
-            row = self._add_assumption_row(frame, row, "Social Security Age", baseline_wife.ss_age,
-                                           scenario_wife.ss_age, "age")
+            row = self._add_assumption_original_only_row(frame, row, "Age", baseline_wife.age)
+            row = self._add_assumption_row(frame, row, "Retirement Age", baseline_wife.retire_age, scenario_wife.retire_age, "age")
+            row = self._add_assumption_row(frame, row, "Social Security Age", baseline_wife.ss_age, scenario_wife.ss_age, "age")
 
         row = self._add_assumption_row(frame, row, "Inflation Rate", baseline_sim.inflation_rate * 100,
                                        scenario_sim.inflation_rate * 100, "percent")
@@ -213,6 +191,16 @@ class ScenarioResultsFrame(ttk.LabelFrame):
     def _add_assumption_section(self, parent, row, label):
         ttk.Label(parent, text=label, font=("Arial", 10, "bold")).grid(
             row=row, column=0, columnspan=3, sticky="w", pady=(7, 2)
+        )
+        return row + 1
+
+
+    def _add_assumption_original_only_row(self, parent, row, label, value):
+        ttk.Label(parent, text=label, font=self.normal_label_font).grid(
+            row=row, column=0, sticky="w", padx=(12, 10), pady=2
+        )
+        ttk.Label(parent, text=f"{value:g}", anchor="e").grid(
+            row=row, column=1, sticky="e", padx=4, pady=2
         )
         return row + 1
 

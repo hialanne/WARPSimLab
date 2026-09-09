@@ -222,11 +222,11 @@ def test_rebuild_results_menu_basic():
     labels = [item["label"] for item in gui.results_menu.commands]
 
     assert labels == [
+        "Simulation Summary",
         "Income Plots",
         "Portfolio Plots",
-        "Simulation Summary",
     ]
-    assert gui.results_menu.separator_count == 0
+    assert gui.results_menu.separator_count == 1
 
 
 def test_rebuild_results_menu_advanced():
@@ -240,11 +240,11 @@ def test_rebuild_results_menu_advanced():
     labels = [item["label"] for item in gui.results_menu.commands]
 
     assert labels == [
+        "Scenario Explorer",
+        "Simulation Summary",
         "Income Plots",
         "Cash Flow Plots",
         "Portfolio Plots",
-        "Simulation Summary",
-        "Scenario Explorer",
         "Cumulative Operating Balance",
     ]
     assert gui.results_menu.separator_count == 1

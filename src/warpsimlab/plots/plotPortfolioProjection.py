@@ -219,7 +219,7 @@ def draw_portfolio_projection(
     plt.ylabel("Portfolio Value ($)")
     plt.grid(True, axis="y", linestyle="--", alpha=0.7)
 
-    plt.subplots_adjust(left=0.15)
+    ax.figure.subplots_adjust(left=0.15, right=0.98)
 
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{int(x):,}'))
 

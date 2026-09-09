@@ -95,7 +95,7 @@ class ScenarioStateManager:
         return persons_copy, portfolios_copy, retirement_copy
 
 
-    def compute_results_from_inputs(self, persons, portfolios, retirement_snapshots):
+    def compute_results_from_inputs(self, persons, portfolios, retirement_snapshots, include_realestate):
         persons_copy, portfolios_copy, retirement_copy = self.clone_result_inputs(
             persons, portfolios, retirement_snapshots
         )
@@ -103,6 +103,17 @@ class ScenarioStateManager:
         sim_config = self.main_gui.build_simulation_from_gui(
             sim_type="portfolio_sim", use_snapshots=True, retirement_snapshots=retirement_copy
         )
+
+        plot_style = self.controller.plot_style
+
+        if plot_style == "historical_risk":
+            sim_config.results_mode = "risk_analysis"
+            sim_config.risk_analysis_mode = "historical_windows"
+            sim_config.risk_analysis_plot_style = "fill"
+        else:
+            sim_config.results_mode = plot_style
+
+        sim_config.include_realestate = bool(include_realestate)
 
         husband = persons_copy["husband"]
         wife = persons_copy.get("wife") if sim_config.second_person_enabled else None
@@ -124,14 +135,15 @@ class ScenarioStateManager:
         baseline_portfolios = copy.deepcopy(c.portfolio_snapshots)
         baseline_retirement = copy.deepcopy(c.retirement_snapshots)
 
+        include_realestate = bool(self.main_gui.simulation_controls.get("include_realestate", False))
         c.baseline_results = self.compute_results_from_inputs(
-            baseline_persons, baseline_portfolios, baseline_retirement
+            baseline_persons, baseline_portfolios, baseline_retirement, include_realestate
         )
-
 
     def compute_scenario_results(self):
         c = self.controller
+        include_realestate = c.include_realestate_var.get()
         c.scenario_results = self.compute_results_from_inputs(
-            c.person_snapshots, c.portfolio_snapshots, c.retirement_snapshots
+            c.person_snapshots, c.portfolio_snapshots, c.retirement_snapshots, include_realestate
         )
         return c.scenario_results
