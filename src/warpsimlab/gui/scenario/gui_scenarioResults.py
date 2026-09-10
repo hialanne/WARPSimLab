@@ -74,7 +74,7 @@ class ScenarioResultsFrame(ttk.LabelFrame):
 
         row = self._add_section(table, row, "Cash Flow Results")
         row = self._add_metric_row(table, row, "ending_cash_flow", "Ending Net Cash Flow")
-        row = self._add_metric_row(table, row, "lifetime_shortfall", "Lifetime Shortfall")
+        row = self._add_metric_row(table, row, "lifetime_funding_gap", "Lifetime Funding Gap")
         row = self._add_metric_row(table, row, "lifetime_taxes", "Lifetime Taxes")
 
         row = self._add_section(table, row, "Ending Assets")
@@ -116,7 +116,12 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         self._set_percent_row("depletion_rate", baseline["simulated_shortfall_rate"], scenario["simulated_shortfall_rate"])
 
         self._set_currency_row("ending_cash_flow", baseline["net_cash_flow"][-1], scenario["net_cash_flow"][-1])
-        self._set_currency_row("lifetime_shortfall", sum(baseline["cash_flow_shortfall"]), sum(scenario["cash_flow_shortfall"]))
+        self._set_currency_row(
+            "lifetime_funding_gap",
+            -sum(baseline["funding_gap"]),
+            -sum(scenario["funding_gap"]),
+            negative_red=True,
+        )
         self._set_currency_row("lifetime_taxes", sum(baseline["taxes"]), sum(scenario["taxes"]))
 
         self._set_currency_row("ending_pre_tax", baseline["pre_tax_assets"][-1], scenario["pre_tax_assets"][-1])
@@ -165,27 +170,29 @@ class ScenarioResultsFrame(ttk.LabelFrame):
             row = self._add_assumption_row(frame, row, "Retirement Age", baseline_wife.retire_age, scenario_wife.retire_age, "age")
             row = self._add_assumption_row(frame, row, "Social Security Age", baseline_wife.ss_age, scenario_wife.ss_age, "age")
 
+        baseline_inflation = baseline_sim.inflation_rate * 100
+        scenario_inflation = (scenario_sim.inflation_rate + scenario_sim.inflation_delta) * 100
         row = self._add_assumption_row(frame, row, "Inflation Rate", baseline_sim.inflation_rate * 100,
-                                       scenario_sim.inflation_rate * 100, "percent")
+                                       scenario_sim.inflation_rate * 100, "percent", indent=0)
         row = self._add_assumption_row(frame, row, "Fund Expenses", baseline_sim.fund_expense * 100,
-                                       scenario_sim.fund_expense * 100, "percent")
+                                       scenario_sim.fund_expense * 100, "percent", indent=0)
         row = self._add_assumption_row(frame, row, "Market Adjustment", baseline_snap.historical_data_multiplier,
-                                       scenario_snap.historical_data_multiplier, "percent")
+                                       scenario_snap.historical_data_multiplier, "percent", indent=0)
 
         if baseline_sim.always_use_expense_mode:
             row = self._add_assumption_row(frame, row, "Expense Multiplier",
                                            baseline_sim.scenario_expense_multiplier * 100,
-                                           scenario_sim.scenario_expense_multiplier * 100, "percent")
+                                           scenario_sim.scenario_expense_multiplier * 100, "percent", indent=0)
         else:
             row = self._add_assumption_row(frame, row, "Withdrawal Rate", baseline_sim.retirement_withdraw_pct,
-                                           scenario_sim.retirement_withdraw_pct, "percent")
+                                           scenario_sim.retirement_withdraw_pct, "percent", indent=0)
 
         row = self._add_assumption_row(frame, row, "Stock", baseline_sim.custom_stock * 100,
-                                       scenario_sim.custom_stock * 100, "percent")
+                                       scenario_sim.custom_stock * 100, "percent", indent=0)
         row = self._add_assumption_row(frame, row, "Bonds", baseline_sim.custom_bonds * 100,
-                                       scenario_sim.custom_bonds * 100, "percent")
+                                       scenario_sim.custom_bonds * 100, "percent", indent=0)
         self._add_assumption_row(frame, row, "Cash", baseline_sim.custom_cash * 100,
-                                 scenario_sim.custom_cash * 100, "percent")
+                                 scenario_sim.custom_cash * 100, "percent", indent=0)
 
 
     def _add_assumption_section(self, parent, row, label):
@@ -205,12 +212,14 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         return row + 1
 
 
-    def _add_assumption_row(self, parent, row, label, original, changed, value_type):
+    def _add_assumption_row(self, parent, row, label, original, changed, value_type, indent=12):
         is_changed = abs(float(changed) - float(original)) > 1e-9
-        changed_style = "ScenarioChangedResult.TLabel" if is_changed else "TLabel"
+        changed_style = "ScenarioChangedResult.TLabel"
+        if not is_changed:
+            changed_style = "TLabel"
 
         ttk.Label(parent, text=label, font=self.normal_label_font).grid(
-            row=row, column=0, sticky="w", padx=(12, 10), pady=2
+            row=row, column=0, sticky="w", padx=(indent, 10), pady=2
         )
 
         if value_type == "age":
@@ -229,12 +238,27 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         return row + 1
 
 
-    def _set_currency_row(self, key, original, changed):
+    def _set_currency_row(self, key, original, changed, negative_red=False):
+        if abs(original) < 0.5:
+            original = 0.0
+
+        if abs(changed) < 0.5:
+            changed = 0.0
+
         is_changed = abs(float(changed) - float(original)) > 1e-9
-        self.metric_rows[key]["original"].configure(text=f"${original:,.0f}", style="TLabel")
-        self.metric_rows[key]["changed"].configure(
-            text=f"${changed:,.0f}", style="ScenarioChangedResult.TLabel" if is_changed else "TLabel"
-        )
+        original_style = "TLabel"
+        changed_style = "TLabel"
+
+        if negative_red and original < 0:
+            original_style = "ScenarioChangedResult.TLabel"
+
+        if is_changed:
+            changed_style = "ScenarioChangedResult.TLabel"
+        elif negative_red and changed < 0:
+            changed_style = "ScenarioChangedResult.TLabel"
+
+        self.metric_rows[key]["original"].configure(text=f"${original:,.0f}", style=original_style)
+        self.metric_rows[key]["changed"].configure(text=f"${changed:,.0f}", style=changed_style)
 
 
     def _set_percent_row(self, key, original, changed):
@@ -244,7 +268,10 @@ class ScenarioResultsFrame(ttk.LabelFrame):
             return
 
         is_changed = abs(float(changed) - float(original)) > 1e-9
+        changed_style = "TLabel"
+
+        if is_changed:
+            changed_style = "ScenarioChangedResult.TLabel"
+
         self.metric_rows[key]["original"].configure(text=f"{original:.1f}%", style="TLabel")
-        self.metric_rows[key]["changed"].configure(
-            text=f"{changed:.1f}%", style="ScenarioChangedResult.TLabel" if is_changed else "TLabel"
-        )
+        self.metric_rows[key]["changed"].configure(text=f"{changed:.1f}%", style=changed_style)

@@ -427,7 +427,9 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
 
     def _update_inflation_label(self, val):
-        self.inflation_label_var.set(f"Inflation Rate (%): {float(val):.1f}")
+        value = round(float(val), 1)
+        self.inflation_value.set(value)
+        self.inflation_label_var.set(f"Inflation Rate (%): {value:.1f}")
 
 
     def _update_fund_expenses_label(self, val):
@@ -435,40 +437,44 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
 
     def _update_stocks_label(self):
-        new_stocks = self.stocks_percent.get()
+        new_stocks = round(self.stocks_percent.get())
+        self.stocks_percent.set(new_stocks)
+
         bonds = self.bonds_percent.get()
         cash = 100 - (new_stocks + bonds)
         if cash < 0:
-            # Reduce Bonds first
-            bonds += cash  # cash is negative
+            bonds = round(bonds + cash)
             self.bonds_percent.set(bonds)
             cash = 0
-        self.stocks_label_var.set(f"Stock: {round(new_stocks)}%")
+
+        self.stocks_label_var.set(f"Stock: {new_stocks}%")
         self.bonds_label_var.set(f"Bonds: {round(bonds)}%")
         self.cash_label_var.set(f"Cash (calculated): {round(cash)}%")
         self.cash_percent.set(cash)
 
 
     def _update_bonds_label(self):
-        new_bonds = self.bonds_percent.get()
+        new_bonds = round(self.bonds_percent.get())
+        self.bonds_percent.set(new_bonds)
+
         stocks = self.stocks_percent.get()
         cash = 100 - (stocks + new_bonds)
         if cash < 0:
-            stocks += cash  # cash negative
+            stocks = round(stocks + cash)
             self.stocks_percent.set(stocks)
             cash = 0
+
         self.stocks_label_var.set(f"Stock: {round(stocks)}%")
-        self.bonds_label_var.set(f"Bonds: {round(new_bonds)}%")
+        self.bonds_label_var.set(f"Bonds: {new_bonds}%")
         self.cash_label_var.set(f"Cash (calculated): {round(cash)}%")
         self.cash_percent.set(cash)
 
 
     def _update_market_adjustment_label(self, val):
-        val_int = int(float(val))
-        self.market_adjustment_label_var.set(
-            f"Market Adjustment: {val_int:>3}%"
-        )
-        self.retirement_snapshots.historical_data_multiplier = float(val)
+        value = round(float(val))
+        self.market_adjustment_percent.set(value)
+        self.market_adjustment_label_var.set(f"Market Adjustment: {value:>3}%")
+        self.retirement_snapshots.historical_data_multiplier = value
 
 
     # --------------------
@@ -572,41 +578,40 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
     def _configure_dynamic_slider(self):
         controls = self.main_gui.simulation_controls
-        manual = controls.get("manual_expenses", True)
+        expense_mode = controls.get("always_use_expense_mode", False)
 
-        if manual:
-            # Expense Multiplier Mode
+        if expense_mode:
             self.dynamic_slider.configure(from_=50, to=200)
 
             if self.retirement_snapshots.scenario_expense_multiplier is None:
                 self.dynamic_value.set(100)
             else:
-                # snapshot stores multiplier (e.g., 1.0), slider displays percent (e.g., 100)
                 self.dynamic_value.set(self.retirement_snapshots.scenario_expense_multiplier * 100.0)
 
             self.dynamic_label_var.set(f"Expense Multiplier: {self.dynamic_value.get():.0f}%")
         else:
-            # Withdrawal Percent Mode
             self.dynamic_slider.configure(from_=0, to=10)
+
             if self.retirement_snapshots.scenario_withdraw_pct is None:
-                self.dynamic_value.set(
-                    self.main_gui.simulation_controls.get("retirement_withdraw_pct", 4.0)
-                )
+                self.dynamic_value.set(self.main_gui.simulation_controls.get("retirement_withdraw_pct", 4.0))
             else:
                 self.dynamic_value.set(self.retirement_snapshots.scenario_withdraw_pct)
 
-            self.dynamic_label_var.set(f"Withdrawal %: {self.dynamic_value.get():.2f}%")
+            self.dynamic_label_var.set(f"Withdrawal: {self.dynamic_value.get():.1f}%")
 
 
     def _update_dynamic_slider_label(self, val):
-        val = float(val)
+        value = float(val)
         controls = self.main_gui.simulation_controls
-        manual = controls.get("manual_expenses", True)
+        expense_mode = controls.get("always_use_expense_mode", False)
 
-        if manual:
-            self.dynamic_label_var.set(f"Expense Multiplier: {val:.0f}%")
-            # store as multiplier (1.0 == 100%)
-            self.retirement_snapshots.scenario_expense_multiplier = val / 100.0
+        if expense_mode:
+            value = round(value)
+            self.dynamic_value.set(value)
+            self.dynamic_label_var.set(f"Expense Multiplier: {value:.0f}%")
+            self.retirement_snapshots.scenario_expense_multiplier = value / 100.0
         else:
-            self.dynamic_label_var.set(f"Withdrawal %: {val:.2f}%")
-            self.retirement_snapshots.scenario_withdraw_pct = val
+            value = round(value, 1)
+            self.dynamic_value.set(value)
+            self.dynamic_label_var.set(f"Withdrawal: {value:.1f}%")
+            self.retirement_snapshots.scenario_withdraw_pct = value

@@ -385,6 +385,9 @@ def simulate_withdrawal_year(
     final_tax_delta_deducted = 0.0
     final_tax_delta_uncovered = final_tax_delta
 
+    tax_funding_uncovered = max(0.0, float(tax_funding.get("uncovered", 0.0)))
+    funding_gap = uncovered_expense + tax_funding_uncovered + final_tax_delta_uncovered
+
     # Deposit only Roth contributions that were actually funded.
 
     deposited_roth_contributions = rothEngine.deposit_funded_roth_contributions(
@@ -506,6 +509,7 @@ def simulate_withdrawal_year(
         "additional_medicare_tax": additional_medicare_tax,
         "expense_amt": expense_amt,
         "uncovered_expense": uncovered_expense,
+        "funding_gap": funding_gap,
         "cash_flow_shortfall": cash_flow_shortfall,
         "rmd_h": rmd_h,
         "rmd_w": rmd_w,

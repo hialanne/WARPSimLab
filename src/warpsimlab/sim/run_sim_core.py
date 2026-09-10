@@ -161,6 +161,7 @@ def simulate_yearly_portfolios(
         "hsa_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "expense_amt": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "uncovered_expense": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "funding_gap": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "cash_flow_shortfall": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "ira_401k": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "rmd_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -430,6 +431,7 @@ def simulate_yearly_portfolios(
 
             expense_amt = model_result["expense_amt"]
             uncovered_expense = model_result["uncovered_expense"]
+            funding_gap = model_result["funding_gap"]
             cash_flow_shortfall = model_result["cash_flow_shortfall"]
 
             rmd_h = model_result["rmd_h"]
@@ -549,6 +551,7 @@ def simulate_yearly_portfolios(
             results["tax_bracket"][s,year] = federal_marginal_rate
             results["expense_amt"][s,year] = expense_amt
             results["uncovered_expense"][s, year] = uncovered_expense
+            results["funding_gap"][s, year] = funding_gap
             results["cash_flow_shortfall"][s, year] = cash_flow_shortfall
             results["ira_401k"][s, year] = ira_401k
             results["employee_401k_contributions"][s, year] = employee_401k_total
@@ -648,13 +651,14 @@ def simulate_yearly_portfolios(
         results["bonds"]                = results["bonds"]              / discount_factors
         results["real_estate"]          = results["real_estate"]        / discount_factors
         results["net_income"]           = results["net_income"]         / discount_factors
-        results["net_income_husband"]   = (results["net_income_husband"] / discount_factors)
-        results["net_income_wife"]      = (results["net_income_wife"]   / discount_factors)
+        results["net_income_husband"]   = results["net_income_husband"] / discount_factors
+        results["net_income_wife"]      = results["net_income_wife"]    / discount_factors
         results["gross_income"]         = results["gross_income"]       / discount_factors
         results["net_profit"]           = results["net_profit"]         / discount_factors
         results["taxes"]                = results["taxes"]              / discount_factors
         results["expense_amt"]          = results["expense_amt"]        / discount_factors
-        results["uncovered_expense"]    = (results["uncovered_expense"] / discount_factors)
+        results["uncovered_expense"]    = results["uncovered_expense"]  / discount_factors
+        results["funding_gap"]          = results["funding_gap"]        / discount_factors
         results["ira_401k"]             = results["ira_401k"]           / discount_factors
         results["employee_401k_contributions"] = (
             results["employee_401k_contributions"]
@@ -713,10 +717,10 @@ def simulate_yearly_portfolios(
         results["breakdown_by_class"]["rmd"]      = results["breakdown_by_class"]["rmd"]      / discount_factors
         results["breakdown_by_class"]["withdrawal"] = results["breakdown_by_class"]["withdrawal"] / discount_factors
         results["breakdown_by_class"]["special_income"] = results["breakdown_by_class"]["special_income"] / discount_factors
-        results["breakdown_by_class"]["bond_interest"] = (results["breakdown_by_class"]["bond_interest"] / discount_factors)
-        results["breakdown_by_class"]["cash_interest"] = (results["breakdown_by_class"]["cash_interest"] / discount_factors)
+        results["breakdown_by_class"]["bond_interest"] = results["breakdown_by_class"]["bond_interest"] / discount_factors
+        results["breakdown_by_class"]["cash_interest"] = results["breakdown_by_class"]["cash_interest"] / discount_factors
         results["breakdown_by_class"]["qualified_equity_distributions"] = \
-                (results["breakdown_by_class"]["qualified_equity_distributions"] / discount_factors)
+                results["breakdown_by_class"]["qualified_equity_distributions"] / discount_factors
         results["breakdown_by_class"]["roth_conversion"] /= discount_factors
         results["breakdown_by_class"]["tax_funding_withdrawal"] /= discount_factors
     return results
