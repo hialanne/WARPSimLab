@@ -50,6 +50,7 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
         self._load_from_portfolios()
         self._attach_traces()
         self._update_display_totals()
+        self._applied_input_state = self._get_input_state()
 
     def _format_money(self, value):
         return f"{float(value):,.0f}"
@@ -258,6 +259,17 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
                 self.asset_vars[(person_key, bucket, asset)].set(self._format_pct(asset_percentage))
 
 
+    def _get_input_state(self):
+        values = [var.get() for var in self.total_vars.values()]
+        values.extend(var.get() for var in self.tax_vars.values())
+        values.extend(var.get() for var in self.asset_vars.values())
+        return tuple(values)
+
+
+    def has_unapplied_changes(self):
+        return self._get_input_state() != self._applied_input_state
+
+
     def _attach_traces(self):
         for var in self.tax_vars.values():
             var.trace_add("write", self._on_percentage_changed)
@@ -346,4 +358,5 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
 
         self._load_from_portfolios()
         self._update_display_totals()
+        self._applied_input_state = self._get_input_state()
         self.status_var.set("Portfolio updated.")

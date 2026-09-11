@@ -1,5 +1,7 @@
 # gui_editors.py
 
+from tkinter import messagebox
+
 from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.gui.gui_specialIncome import SpecialIncomeEditFrame
 from src.warpsimlab.gui.gui_portfolioDollars import *
@@ -24,9 +26,28 @@ from .gui_notes import NotesFrame
 
 
 class PortfolioSimulatorGUI_EditorsMixin:
-    def edit_main_home(self):
+    def _clear_editor_frame(self):
+        for widget in self.edit_frame_container.winfo_children():
+            if isinstance(widget, PortfolioPercentagesEditFrame) and widget.has_unapplied_changes():
+                leave = messagebox.askyesno(
+                    "Unapplied Portfolio Changes",
+                    "You have unapplied changes in Portfolio - Percentages.\n\n"
+                    "If you leave this screen without clicking Apply Percentages, those changes will be lost.\n\n"
+                    "Leave without applying the changes?",
+                    parent=self.root,
+                )
+                if not leave:
+                    return False
+
         for widget in self.edit_frame_container.winfo_children():
             widget.destroy()
+
+        return True
+
+
+    def edit_main_home(self):
+        if not self._clear_editor_frame():
+            return
 
         home_frame = MainHomeFrame(self.edit_frame_container, title="Home", parent_gui=self)
         home_frame.pack(padx=10, pady=5, fill="x")
@@ -37,8 +58,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         """
         Clear the main editor area without displaying another frame.
         """
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
 
     def edit_tutorial_blank(self):
@@ -79,8 +100,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
 
     def edit_tutorial(self):
         # Clear any existing editor frame
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         tutorial_frame = TutorialFrame(
             self.edit_frame_container,
@@ -95,8 +116,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
 
     def edit_notes(self):
         # Clear any existing editor frame
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         notes_frame = NotesFrame(self.edit_frame_container, title="Notes")
         notes_frame.pack(padx=10, pady=5, fill="x")
@@ -104,8 +125,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
 
     def edit_person_data(self):
         # Remove previous edit frames
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         persons = {"husband": self.husband}
 
@@ -128,8 +149,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         special_income_frame = SpecialIncomeEditFrame(
             self.edit_frame_container,
@@ -145,8 +166,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         roth_frame = RothEditFrame(
             self.edit_frame_container,
@@ -159,8 +180,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
 
 
     def edit_expenses(self):
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         expenses_frame = ExpensesEditFrame(
             self.edit_frame_container, expensesDict=self.expensesDict,
@@ -170,8 +191,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
 
 
     def edit_taxes(self):
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         control_vars = {"_controls_dict": self.simulation_controls}
 
@@ -181,8 +202,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
 
     def edit_portfolio_data(self):
         # Remove previous edit frames
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         husband_portfolio = self.husband_portfolio
         wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
@@ -201,8 +222,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         husband_portfolio = self.husband_portfolio
         wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
@@ -221,8 +242,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         husband_portfolio = self.husband_portfolio
         wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
@@ -242,8 +263,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         husband_portfolio = self.husband_portfolio
         wife_portfolio = self.wife_portfolio if self.simulation_controls["second_person_enabled"] else None
@@ -265,9 +286,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        # existing code...        # Remove previous editor frame
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         control_vars = {"_controls_dict": self.simulation_controls}
 
@@ -294,8 +314,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         historical_frame = HistoricalEditFrame(
             self.edit_frame_container, historical_data=self, title="Assumptions"
@@ -307,8 +327,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         sim_vars = {"_settings_dict": self.simulation_settings}
 
@@ -322,8 +342,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
         if not self._advanced_only():
             return
 
-        for widget in self.edit_frame_container.winfo_children():
-            widget.destroy()
+        if not self._clear_editor_frame():
+            return
 
         control_vars = {"_controls_dict": self.simulation_controls}
 

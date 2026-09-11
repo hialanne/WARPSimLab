@@ -412,8 +412,31 @@ class PortfolioSimulatorGUI_RunMixin:
             self._validate_entries_recursive(child)
 
 
+    def _confirm_unapplied_portfolio_percentage_changes(self):
+        container = getattr(self, "edit_frame_container", None)
+        if container is None:
+            return True
+
+        for widget in container.winfo_children():
+            if not hasattr(widget, "has_unapplied_changes") or not widget.has_unapplied_changes():
+                continue
+
+            return messagebox.askyesno(
+                "Unapplied Portfolio Changes",
+                "You have unapplied changes in Portfolio - Percentages.\n\n"
+                "These changes will not be included in the simulation until you click Apply Percentages.\n\n"
+                "Continue using the previously applied portfolio values?",
+                parent=self.root,
+            )
+
+        return True
+
+
     def run_simulation_from_gui(self, sim_type=None):
         if not self.commit_pending_gui_edits():
+            return
+
+        if not self._confirm_unapplied_portfolio_percentage_changes():
             return
 
         try:
