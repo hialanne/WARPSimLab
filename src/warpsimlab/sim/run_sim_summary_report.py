@@ -237,7 +237,7 @@ def _build_simulation_totals(results, simulated_shortfall_rate=None):
         "Total Income": float(sum(results.get("gross_income", []))),
         "Taxes Paid": float(sum(results.get("taxes", []))),
         "Household Expenses": float(sum(results.get("expenses", []))),
-        "Net Cash Flow": float(sum(results.get("net_cash_flow", []))),
+        "Lifetime Funding Gap": float(sum(results.get("funding_gap", []))),
         "Total Cash Flow Shortfall": float(sum(results.get("cash_flow_shortfall", []))),
         "Fund Expenses": float(sum(results.get("fund_expenses", []))),
         "Scenarios That Depleted Portfolio": simulated_shortfall_rate,

@@ -85,6 +85,7 @@ def _core_for_extracts() -> dict:
         "additional_medicare_tax": np.array([[0.2, 0.2, 0.2, 0.2]]),
         "expense_amt": np.array([[50.0, 51.0, 52.0, 53.0]]),
         "cash_flow_shortfall": np.array([[0.0, 0.0, 0.0, 0.0]]),
+        "funding_gap": np.array([[0.0, 1.0, 2.0, 3.0]]),
         "rmd_husband": np.array([[0.0, 0.0, 0.0, 0.0]]),
         "rmd_wife": np.array([[0.0, 0.0, 0.0, 0.0]]),
         "year": np.array([[0.0, 1.0, 2.0, 3.0]]),
@@ -187,6 +188,7 @@ def test_extract_summary_single_run_builds_expected_keys():
     np.testing.assert_allclose(summary["tax_bracket"], core["tax_bracket"][0])
     np.testing.assert_allclose(summary["expenses"], core["expense_amt"][0])
     np.testing.assert_allclose(summary["net_cash_flow"], core["net_profit"][0])
+    np.testing.assert_allclose(summary["funding_gap"], core["funding_gap"][0])
     np.testing.assert_allclose(summary["wages"], core["breakdown_by_class"]["work"][0])
     np.testing.assert_allclose(summary["rmd"], core["breakdown_by_class"]["rmd"][0])
     np.testing.assert_allclose(

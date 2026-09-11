@@ -118,9 +118,9 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         self._set_currency_row("ending_cash_flow", baseline["net_cash_flow"][-1], scenario["net_cash_flow"][-1])
         self._set_currency_row(
             "lifetime_funding_gap",
-            -sum(baseline["funding_gap"]),
-            -sum(scenario["funding_gap"]),
-            negative_red=True,
+            sum(baseline["funding_gap"]),
+            sum(scenario["funding_gap"]),
+            positive_red=True,
         )
         self._set_currency_row("lifetime_taxes", sum(baseline["taxes"]), sum(scenario["taxes"]))
 
@@ -170,8 +170,6 @@ class ScenarioResultsFrame(ttk.LabelFrame):
             row = self._add_assumption_row(frame, row, "Retirement Age", baseline_wife.retire_age, scenario_wife.retire_age, "age")
             row = self._add_assumption_row(frame, row, "Social Security Age", baseline_wife.ss_age, scenario_wife.ss_age, "age")
 
-        baseline_inflation = baseline_sim.inflation_rate * 100
-        scenario_inflation = (scenario_sim.inflation_rate + scenario_sim.inflation_delta) * 100
         row = self._add_assumption_row(frame, row, "Inflation Rate", baseline_sim.inflation_rate * 100,
                                        scenario_sim.inflation_rate * 100, "percent", indent=0)
         row = self._add_assumption_row(frame, row, "Fund Expenses", baseline_sim.fund_expense * 100,
@@ -238,7 +236,7 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         return row + 1
 
 
-    def _set_currency_row(self, key, original, changed, negative_red=False):
+    def _set_currency_row(self, key, original, changed, negative_red=False, positive_red=False):
         if abs(original) < 0.5:
             original = 0.0
 
@@ -249,17 +247,16 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         original_style = "TLabel"
         changed_style = "TLabel"
 
-        if negative_red and original < 0:
+        if (negative_red and original < 0) or (positive_red and original > 0):
             original_style = "ScenarioChangedResult.TLabel"
 
         if is_changed:
             changed_style = "ScenarioChangedResult.TLabel"
-        elif negative_red and changed < 0:
+        elif (negative_red and changed < 0) or (positive_red and changed > 0):
             changed_style = "ScenarioChangedResult.TLabel"
 
         self.metric_rows[key]["original"].configure(text=f"${original:,.0f}", style=original_style)
         self.metric_rows[key]["changed"].configure(text=f"${changed:,.0f}", style=changed_style)
-
 
     def _set_percent_row(self, key, original, changed):
         if original is None or changed is None:

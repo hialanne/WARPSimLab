@@ -72,7 +72,7 @@ def main_gui_manual_expenses():
     return SimpleNamespace(
         inflation=3.0,
         simulation_controls={
-            "manual_expenses": True,
+            "always_use_expense_mode": True,
             "retirement_withdraw_pct": 4.0,
         },
         husband=DummyPerson(retire_age=67),
@@ -85,7 +85,7 @@ def main_gui_withdraw_mode():
     return SimpleNamespace(
         inflation=3.0,
         simulation_controls={
-            "manual_expenses": False,
+            "always_use_expense_mode": False,
             "retirement_withdraw_pct": 4.25,
         },
         husband=DummyPerson(retire_age=67),
@@ -305,4 +305,4 @@ def test_dynamic_slider_withdraw_mode_config_and_update_stores_withdraw_pct(tk_r
 
     frame._update_dynamic_slider_label("6.5")
     assert snaps.scenario_withdraw_pct == 6.5
-    assert "6.50%" in frame.dynamic_label_var.get()
+    assert "6.5%" in frame.dynamic_label_var.get()

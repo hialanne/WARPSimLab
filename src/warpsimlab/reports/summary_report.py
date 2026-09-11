@@ -132,6 +132,8 @@ def _render_kv_table(data, emphasize_keys=None):
         value_class = ""
         if isinstance(value, (int, float)) and value < 0:
             value_class = " class='negative'"
+        elif key in {"Lifetime Funding Gap", "Total Cash Flow Shortfall"} and isinstance(value, (int, float)) and value > 0:
+            value_class = " class='negative'"
         elif _is_depleted_value(key, value):
             value_class = " class='negative'"
 
@@ -591,10 +593,15 @@ def _render_income_summary(report_data):
 
         for values in milestones.values():
             value = values.get(category)
-            css_class = "negative" if isinstance(value, (int, float)) and value < 0 else ""
-            cells.append(
-                f"<td class='{css_class}'>{_safe(_fmt_value(value, key=category))}</td>"
-            )
+            css_class = ""
+
+            if isinstance(value, (int, float)) and value < 0:
+                css_class = "negative"
+
+            if category == "Cash Flow Shortfall" and isinstance(value, (int, float)) and value > 0:
+                css_class = "negative"
+
+            cells.append(f"<td class='{css_class}'>{_safe(_fmt_value(value, key=category))}</td>")
 
         rows.append(f"<tr{row_class}>" + "".join(cells) + "</tr>")
 
@@ -632,17 +639,15 @@ def _render_simulation_summary(report_data):
             set(),
         ),
         (
-            "Simulation Totals",
+            "Simulation Results",
             {
                 "Taxes Paid": totals.get("Taxes Paid"),
                 "Household Expenses": totals.get("Household Expenses"),
-                "Net Cash Flow": totals.get("Net Cash Flow"),
-                "Total Cash Flow Shortfall": totals.get(
-                    "Total Cash Flow Shortfall"
-                ),
+                "Lifetime Funding Gap": totals.get("Lifetime Funding Gap"),
+                "Total Cash Flow Shortfall": totals.get("Total Cash Flow Shortfall"),
                 "Fund Expenses": totals.get("Fund Expenses"),
             },
-            {"Net Cash Flow"},
+            {"Lifetime Funding Gap"},
         ),
     ]
 

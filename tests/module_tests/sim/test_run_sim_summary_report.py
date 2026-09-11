@@ -181,6 +181,8 @@ def test_build_simulation_totals_sums_series_and_portfolio_values():
         "taxes": [0.0, 10.0, 11.0],
         "expenses": [0.0, 60.0, 65.0],
         "net_cash_flow": [0.0, 30.0, 24.0],
+        "funding_gap": [0.0, 5.0, 7.0],
+        "cash_flow_shortfall": [0.0, 3.0, 4.0],
         "fund_expenses": [0.0, 1.0, 2.0],
     }
 
@@ -193,7 +195,8 @@ def test_build_simulation_totals_sums_series_and_portfolio_values():
     assert totals["Total Income"] == pytest.approx(200.0)
     assert totals["Taxes Paid"] == pytest.approx(21.0)
     assert totals["Household Expenses"] == pytest.approx(125.0)
-    assert totals["Net Cash Flow"] == pytest.approx(54.0)
+    assert totals["Lifetime Funding Gap"] == pytest.approx(12.0)
+    assert totals["Total Cash Flow Shortfall"] == pytest.approx(7.0)
     assert totals["Fund Expenses"] == pytest.approx(3.0)
     assert totals["Scenarios That Depleted Portfolio"] == pytest.approx(0.25)
 

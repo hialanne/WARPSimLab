@@ -54,6 +54,7 @@ def test_overlay_taxes_off_attaches_median_without_taxes_and_exceeds_taxed_basel
             "net_income": np.array([[40.0, 40.0, 40.0, 40.0]]),
             "net_profit": np.array([[5.0, 4.0, 3.0, 2.0]]),
             "cash_flow_shortfall": zeros.copy(),
+            "funding_gap": zeros.copy(),
             "rmd_husband": zeros.copy(),
             "rmd_wife": zeros.copy(),
             "taxes": np.array([[10.0, 11.0, 12.0, 13.0]]),

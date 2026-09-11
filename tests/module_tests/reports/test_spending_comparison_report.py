@@ -182,7 +182,7 @@ def test_financial_effects_only_shows_uncovered_column_when_needed():
 
     html = mod._render_financial_effects(no_uncovered)
 
-    assert "Uncovered Expenses" not in html
+    assert "<th>Lifetime Funding Gap</th>" not in html
 
     with_uncovered = make_report_data(
         [
@@ -196,7 +196,7 @@ def test_financial_effects_only_shows_uncovered_column_when_needed():
 
     html = mod._render_financial_effects(with_uncovered)
 
-    assert "Uncovered Expenses" in html
+    assert "<th>Lifetime Funding Gap</th>" in html
     assert "uncovered-expense" in html
     assert "$5,000" in html
 

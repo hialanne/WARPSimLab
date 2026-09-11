@@ -288,8 +288,8 @@ def _build_case_result(
         "deterministic_final_monthly_retirement_income": _deterministic_final_monthly_retirement_income(
             deterministic_core
         ),
-        "deterministic_lifetime_cash_flow_shortfall": _deterministic_lifetime_total(
-            deterministic_core["cash_flow_shortfall"]
+        "deterministic_lifetime_funding_gap": _deterministic_lifetime_total(
+            deterministic_core["funding_gap"]
         ),
 
         # -----------------------------------------------------

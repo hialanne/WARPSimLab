@@ -441,7 +441,7 @@ def _render_financial_effects(report_data):
 
     if include_uncovered:
         uncovered_header = (
-            "<th>Uncovered Expenses</th>"
+            "<th>Lifetime Funding Gap</th>"
         )
 
     return f"""
@@ -452,8 +452,8 @@ def _render_financial_effects(report_data):
         These values show the cumulative lifetime financial effects of each
         spending level. They compare total household expenses, taxes, the amount
         of portfolio assets needed to cover negative Cash Flow (withdrawals from
-        the portfolio), and expenses that could not be covered after the portfolio
-        was empty.
+        the portfolio), and the Lifetime Funding Gap after available assets
+        could no longer cover modeled household needs.
     </p>
 
     <table class="wide-table comparison-table lifetime-effects-table">

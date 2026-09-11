@@ -56,9 +56,13 @@ class ScenarioController:
         self.portfolio_fig = None
         self.portfolio_ax = None
 
-        self.person_snapshots = None          # dict: "husband", optional "wife"
-        self.portfolio_snapshots = None       # dict: "husband", optional "wife"
-        self.retirement_snapshots = None      # RetirementSnapshots container
+        self.baseline_person_snapshots = None
+        self.baseline_portfolio_snapshots = None
+        self.baseline_retirement_snapshots = None
+
+        self.person_snapshots = None          # mutable scenario persons
+        self.portfolio_snapshots = None       # mutable scenario portfolios
+        self.retirement_snapshots = None      # mutable scenario settings
         self.sliders_frame = None             # RetirementSlidersFrame widget
         self.results_frame = None
 
@@ -297,12 +301,13 @@ class ScenarioController:
         self._build_snapshots_from_truth()
         self._build_controls_ui()
 
-        # Synchronize initialized slider values back into snapshots
+        # Synchronize initialized slider values back into scenario snapshots.
         self._apply_slider_values_to_snapshots()
 
-        # Compute baseline only after snapshots fully reflect the UI defaults
-        self._compute_baseline_results()
+        # Freeze the fully initialized scenario state as the session baseline.
+        self.state_manager.capture_baseline_from_scenario()
 
+        self._compute_baseline_results()
         self.run_and_redraw()
 
 
@@ -526,10 +531,7 @@ class ScenarioController:
             show_enable_overrides_checkbox=False,      # Scenario: no checkbox
             allow_main_gui_override_flag=False,        # Scenario: never toggle main_gui flags
             show_wife=show_wife,                       # hide wife when not enabled
-            baseline_persons={
-                "husband": self.main_gui.husband,
-                "wife": self.main_gui.wife if show_wife else None
-            }
+            baseline_persons=self.baseline_person_snapshots
         )
         self.sliders_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
 

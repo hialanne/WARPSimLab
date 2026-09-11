@@ -406,9 +406,8 @@ def test_render_simulation_summary_contains_totals():
 
     assert "Simulation Summary" in html
     assert "Portfolio Outcome" in html
-    assert "Simulation Totals" in html
+    assert "Simulation Results" in html
     assert "Risk Indicator" in html
-
 
 def test_render_simple_table_explicit_columns():
     table_data = {

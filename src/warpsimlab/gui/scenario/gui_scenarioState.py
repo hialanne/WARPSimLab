@@ -21,17 +21,28 @@ class ScenarioStateManager:
         c = self.controller
         controls = self.main_gui.simulation_controls
 
-        c.person_snapshots = {"husband": copy.deepcopy(self.main_gui.husband)}
+        c.baseline_person_snapshots = {"husband": copy.deepcopy(self.main_gui.husband)}
         if controls.get("second_person_enabled", False):
-            c.person_snapshots["wife"] = copy.deepcopy(self.main_gui.wife)
+            c.baseline_person_snapshots["wife"] = copy.deepcopy(self.main_gui.wife)
 
-        c.portfolio_snapshots = {"husband": copy.deepcopy(self.main_gui.husband_portfolio)}
+        c.baseline_portfolio_snapshots = {"husband": copy.deepcopy(self.main_gui.husband_portfolio)}
         if controls.get("second_person_enabled", False):
-            c.portfolio_snapshots["wife"] = copy.deepcopy(self.main_gui.wife_portfolio)
+            c.baseline_portfolio_snapshots["wife"] = copy.deepcopy(self.main_gui.wife_portfolio)
 
-        c.retirement_snapshots = ScenarioSnapshots()
-        c.retirement_snapshots.fund_expense = self.main_gui.simulation_settings.get("fund_expense")
-        c.retirement_snapshots.historical_data_multiplier = 100.0
+        c.baseline_retirement_snapshots = ScenarioSnapshots()
+        c.baseline_retirement_snapshots.fund_expense = self.main_gui.simulation_settings.get("fund_expense")
+        c.baseline_retirement_snapshots.historical_data_multiplier = 100.0
+
+        c.person_snapshots = copy.deepcopy(c.baseline_person_snapshots)
+        c.portfolio_snapshots = copy.deepcopy(c.baseline_portfolio_snapshots)
+        c.retirement_snapshots = copy.deepcopy(c.baseline_retirement_snapshots)
+
+
+    def capture_baseline_from_scenario(self):
+        c = self.controller
+        c.baseline_person_snapshots = copy.deepcopy(c.person_snapshots)
+        c.baseline_portfolio_snapshots = copy.deepcopy(c.portfolio_snapshots)
+        c.baseline_retirement_snapshots = copy.deepcopy(c.retirement_snapshots)
 
 
     def apply_slider_values_to_snapshots(self):
@@ -130,15 +141,13 @@ class ScenarioStateManager:
 
     def compute_baseline_results(self):
         c = self.controller
-
-        baseline_persons = copy.deepcopy(c.person_snapshots)
-        baseline_portfolios = copy.deepcopy(c.portfolio_snapshots)
-        baseline_retirement = copy.deepcopy(c.retirement_snapshots)
-
         include_realestate = bool(self.main_gui.simulation_controls.get("include_realestate", False))
+
         c.baseline_results = self.compute_results_from_inputs(
-            baseline_persons, baseline_portfolios, baseline_retirement, include_realestate
+            c.baseline_person_snapshots, c.baseline_portfolio_snapshots,
+            c.baseline_retirement_snapshots, include_realestate
         )
+
 
     def compute_scenario_results(self):
         c = self.controller

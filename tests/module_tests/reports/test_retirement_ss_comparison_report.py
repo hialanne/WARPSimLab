@@ -29,6 +29,8 @@ def make_case(
         "deterministic_monthly_retirement_income": 5000.0,
         "deterministic_final_monthly_retirement_income": 6000.0,
         "deterministic_lifetime_cash_flow_shortfall": 100000.0,
+        "deterministic_lifetime_cash_flow_shortfall": 100000.0,
+        "deterministic_lifetime_funding_gap": 0.0,
         "depletion": {
             "reaching_zero_percent": depletion_percent,
         },
@@ -214,7 +216,7 @@ def test_render_social_security_comparison_uses_monthly_values():
     assert "$1,000" in html
 
     assert "Total Social Security Received" in html
-    assert "Lifetime Cash Flow Shortfall" in html
+    assert "Lifetime Funding Gap" in html
 
     assert (
         "the amount received during the simulation"

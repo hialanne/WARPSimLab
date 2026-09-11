@@ -56,6 +56,7 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
             "net_income": np.array([[27.0, 27.0, 27.0, 27.0]]),
             "net_profit": np.array([[2.0, 2.0, 2.0, 2.0]]),
             "cash_flow_shortfall": zeros.copy(),
+            "funding_gap": zeros.copy(),
             "rmd_husband": zeros.copy(),
             "rmd_wife": zeros.copy(),
             "taxes": np.array([[3.0, 3.0, 3.0, 3.0]]),

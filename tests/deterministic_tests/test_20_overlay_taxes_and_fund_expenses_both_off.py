@@ -65,6 +65,7 @@ def test_overlay_taxes_and_fund_expenses_both_off_attaches_combined_and_combined
             "net_income": np.array([[48.0, 48.0, 48.0, 48.0]]),
             "net_profit": np.array([[8.0, 7.0, 6.0, 5.0]]),
             "cash_flow_shortfall": zeros.copy(),
+            "funding_gap": zeros.copy(),
             "rmd_husband": zeros.copy(),
             "rmd_wife": zeros.copy(),
             "taxes": np.array([[12.0, 12.0, 12.0, 12.0]]),

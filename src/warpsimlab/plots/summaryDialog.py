@@ -969,7 +969,7 @@ class SummaryDialog(tk.Toplevel):
 
         ttk.Label(
             totals_frame,
-            text="Results / Simulation Sums",
+            text="Simulation Results",
             font=header_font
         ).pack(
             anchor="w",
@@ -1071,13 +1071,10 @@ class SummaryDialog(tk.Toplevel):
         )
 
         add_total_label(
-            "Net Cash Flow (sum):      ",
-            np.sum(r["net_cash_flow"]),
-            color_fn=(
-                lambda x: "red"
-                if x < 0
-                else None
-            )
+            "Lifetime Funding Gap:     ",
+            np.sum(r["funding_gap"]),
+            color_fn=lambda x: "red" if x > 0 else None,
+            bold=True
         )
 
         ttk.Separator(

@@ -37,6 +37,9 @@ def _make_main_gui(second_person_enabled=False):
 def _make_controller(main_gui):
     return SimpleNamespace(
         main_gui=main_gui,
+        baseline_person_snapshots=None,
+        baseline_portfolio_snapshots=None,
+        baseline_retirement_snapshots=None,
         person_snapshots={},
         portfolio_snapshots={},
         retirement_snapshots=None,
@@ -169,14 +172,19 @@ def test_compute_results_from_inputs_passes_wife_when_enabled(monkeypatch):
     assert pipeline_calls["wife_portfolio"] is not portfolios["wife"]
 
 
-def test_compute_baseline_results_uses_copies_of_current_snapshots(monkeypatch):
+def test_compute_baseline_results_uses_baseline_snapshots(monkeypatch):
     main_gui = _make_main_gui()
     controller = _make_controller(main_gui)
     manager = mod.ScenarioStateManager(controller)
 
-    controller.person_snapshots = {"husband": _make_person(65, 67)}
-    controller.portfolio_snapshots = {"husband": _make_portfolio(100)}
-    controller.retirement_snapshots = SimpleNamespace(inflation=3.0)
+    controller.baseline_person_snapshots = {"husband": _make_person(65, 67)}
+    controller.baseline_portfolio_snapshots = {"husband": _make_portfolio(100)}
+    controller.baseline_retirement_snapshots = SimpleNamespace(inflation=3.0)
+
+    controller.person_snapshots = {"husband": _make_person(70, 70)}
+    controller.portfolio_snapshots = {"husband": _make_portfolio(999)}
+    controller.retirement_snapshots = SimpleNamespace(inflation=9.0)
+
     received = {}
 
     def fake_compute(persons, portfolios, retirement, include_realestate):
@@ -192,11 +200,9 @@ def test_compute_baseline_results_uses_copies_of_current_snapshots(monkeypatch):
 
     assert received["include_realestate"] is False
     assert controller.baseline_results == {"baseline": True}
-    assert received["persons"] is not controller.person_snapshots
-    assert received["persons"]["husband"] is not controller.person_snapshots["husband"]
-    assert received["portfolios"] is not controller.portfolio_snapshots
-    assert received["portfolios"]["husband"] is not controller.portfolio_snapshots["husband"]
-    assert received["retirement"] is not controller.retirement_snapshots
+    assert received["persons"] is controller.baseline_person_snapshots
+    assert received["portfolios"] is controller.baseline_portfolio_snapshots
+    assert received["retirement"] is controller.baseline_retirement_snapshots
 
 
 def test_compute_scenario_results_uses_current_snapshots_and_returns_result(monkeypatch):

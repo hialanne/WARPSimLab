@@ -229,7 +229,6 @@ class PortfolioSimulatorGUI(
             "historical_asset_returns_file": "us_asset_returns_1876_2025.csv",
             "historical_inflation_file": "us_inflation_1876_2025_real.csv",
             "historical_window_mode": "rolling_overlapping_all",
-            "disable_sequence_risk_for_historical": True,
             "show_simulated_shortfall_rate": True,
             "include_rmd": True,
             "calculate_income_taxes": True,

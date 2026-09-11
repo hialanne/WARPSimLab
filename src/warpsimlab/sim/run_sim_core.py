@@ -272,28 +272,10 @@ def simulate_yearly_portfolios(
             sim_index=s,
         )
 
-        historical_mode_disables_sequence_risk = (
-            historical_window_mode_active
-            and bool(getattr(sim_config, "disable_sequence_risk_for_historical", True))
+        market_path, sequence_risk_meta = monteCarloEngine.apply_sequence_risk_overlay(
+            market_path=market_path, sim_config=sim_config, years_to_simulate=years_to_simulate,
+            withdrawal_start_year=withdrawal_start_year,
         )
-
-        if historical_mode_disables_sequence_risk:
-            sequence_risk_meta = {
-                "enabled": bool(getattr(sim_config, "sequence_risk_enabled", False)),
-                "applied": False,
-                "start_year": None,
-                "end_year": None,
-                "length_years": 0,
-                "timing": getattr(sim_config, "sequence_risk_timing", "None"),
-                "depth": getattr(sim_config, "sequence_risk_depth", "Moderate"),
-            }
-        else:
-            market_path, sequence_risk_meta = monteCarloEngine.apply_sequence_risk_overlay(
-                market_path=market_path,
-                sim_config=sim_config,
-                years_to_simulate=years_to_simulate,
-                withdrawal_start_year=withdrawal_start_year,
-            )
 
         historical_window_mode_active = (
             sim_config.results_mode == "risk_analysis"

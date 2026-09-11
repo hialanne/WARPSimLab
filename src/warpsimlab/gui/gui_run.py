@@ -206,10 +206,6 @@ class PortfolioSimulatorGUI_RunMixin:
                 "historical_window_mode",
                 "rolling_overlapping_all"
             ),
-            disable_sequence_risk_for_historical=controls.get(
-                "disable_sequence_risk_for_historical",
-                True
-            ),
             show_simulated_shortfall_rate=controls.get("show_simulated_shortfall_rate", True),
             output_csv=controls.get("output_csv", False),
             csv_output_dir=controls.get("csv_output_dir", ""),

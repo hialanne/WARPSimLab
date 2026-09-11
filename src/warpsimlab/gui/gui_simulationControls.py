@@ -39,7 +39,6 @@ class SimulationControlsEditFrame(ttk.Frame):
         self.controls.setdefault("historical_asset_returns_file", "us_asset_returns_1876_2025.csv")
         self.controls.setdefault("historical_inflation_file", "us_inflation_1876_2025_real.csv")
         self.controls.setdefault("historical_window_mode", "rolling_overlapping_all")
-        self.controls.setdefault("disable_sequence_risk_for_historical", True)
 
         self.controls.setdefault("output_csv", "None")
         default_dir = os.path.join(os.path.expanduser("~"), "Desktop", "WARPSimLab")

@@ -704,16 +704,13 @@ def test_historical_mode_rejects_zero_windows(
         )
 
 
-def test_historical_mode_can_disable_sequence_risk_overlay(
-    monkeypatch,
-):
+def test_historical_mode_applies_sequence_risk_overlay(monkeypatch):
     config = make_config(
         years_to_simulate=2,
         risk_analysis_mode="historical_windows",
     )
 
     config.sequence_risk_enabled = True
-    config.disable_sequence_risk_for_historical = True
 
     install_historical_preparation(
         monkeypatch,
@@ -721,15 +718,26 @@ def test_historical_mode_can_disable_sequence_risk_overlay(
     )
     install_historical_paths(monkeypatch)
 
-    def unexpected_sequence_risk_call(*args, **kwargs):
-        raise AssertionError(
-            "Sequence-risk overlay should not run in historical mode"
-        )
+    calls = []
+
+    def fake_sequence_risk_overlay(*, market_path, sim_config, years_to_simulate, withdrawal_start_year):
+        calls.append(np.array(market_path["eq"], copy=True))
+        adjusted = {key: np.array(value, copy=True) for key, value in market_path.items()}
+        adjusted["eq"][1] = -0.50
+        return adjusted, {
+            "enabled": True,
+            "applied": True,
+            "start_year": 1,
+            "end_year": 1,
+            "length_years": 1,
+            "timing": "Early downturn",
+            "depth": "Moderate",
+        }
 
     monkeypatch.setattr(
         monteCarloEngine,
         "apply_sequence_risk_overlay",
-        unexpected_sequence_risk_call,
+        fake_sequence_risk_overlay,
     )
 
     results = run_core(
@@ -737,23 +745,9 @@ def test_historical_mode_can_disable_sequence_risk_overlay(
         num_sims=20,
     )
 
-    assert results["sequence_risk_active"] == pytest.approx(
-        [
-            False,
-            False,
-        ]
-    )
+    assert len(calls) == 2
+    assert results["sequence_risk_active"] == pytest.approx([True, True])
+    assert results["sequence_risk_start_year"] == pytest.approx([1, 1])
+    assert results["sequence_risk_end_year"] == pytest.approx([1, 1])
+    assert results["total_assets"][:, 1] == pytest.approx([50_000.0, 50_000.0])
 
-    assert results["sequence_risk_start_year"] == pytest.approx(
-        [
-            -1,
-            -1,
-        ]
-    )
-
-    assert results["sequence_risk_end_year"] == pytest.approx(
-        [
-            -1,
-            -1,
-        ]
-    )

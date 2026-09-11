@@ -72,6 +72,7 @@ DETAILED_CASH_FLOW_COLUMNS = [
     "Household Expenses",
     "Net Cash Flow",
     "Cash Flow Shortfall",
+    "Funding Gap",
 ]
 
 DETAILED_PORTFOLIO_COLUMNS = [
@@ -180,16 +181,25 @@ def _calculate_summary_statistics(report_data):
 
     last = rows[-1]
 
-    return {
+    stats = {
         "Years Simulated": len(rows) - 1,
         "Total Gross Income": total("Gross Income"),
         "Total Taxes Paid": total("Taxes"),
         "Total Household Expenses": total("Household Expenses"),
-        "Total Retirement Withdrawals": total("Retirement Withdrawals"),
-        "Largest Annual Retirement Withdrawal": maximum("Retirement Withdrawals"),
-        "Ending Portfolio": last.get("Total Portfolio", 0.0),
-        "Ending Total Assets": last.get("Total Assets", 0.0),
+        "Lifetime Funding Gap": total("Funding Gap"),
     }
+
+    if report_data.report_options.get("_always_use_expense_mode", False):
+        stats["Total Cash Flow Shortfall"] = total("Cash Flow Shortfall")
+        stats["Largest Annual Cash Flow Shortfall"] = maximum("Cash Flow Shortfall")
+    else:
+        stats["Total Retirement Withdrawals"] = total("Retirement Withdrawals")
+        stats["Largest Annual Retirement Withdrawal"] = maximum("Retirement Withdrawals")
+
+    stats["Ending Portfolio"] = last.get("Total Portfolio", 0.0)
+    stats["Ending Total Assets"] = last.get("Total Assets", 0.0)
+
+    return stats
 
 
 def _render_summary_statistics(report_data):
@@ -278,6 +288,7 @@ def _render_year_table(report_data):
         "Household Expenses": "Household<br>Expenses",
         "Net Cash Flow": "Net Cash<br>Flow",
         "Cash Flow Shortfall": "Cash Flow<br>Shortfall",
+        "Funding Gap": "Funding<br>Gap",
         "Fund Expenses": "Fund<br>Expenses",
 
         "Pre-Tax Equity": "Pre-Tax<br>Equity",
@@ -433,7 +444,8 @@ def _render_year_table(report_data):
         This table starts with Gross Income and shows employee contributions, taxes,
         other contribution and HSA flows, household expenses, and resulting Net Cash Flow.
         Cash Flow Shortfall shows the amount funded from modeled assets when household
-        cash flow is insufficient to cover taxes, contributions, and household expenses.
+        cash flow is insufficient. Funding Gap shows the amount that could not be funded
+        after available modeled assets were exhausted.
     </p>
     {cash_flow_table}
 </section>

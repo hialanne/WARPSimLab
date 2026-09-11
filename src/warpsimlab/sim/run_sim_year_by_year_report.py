@@ -97,6 +97,7 @@ def _build_year_row(results, index, husband, wife, sim_config):
         "Qualified Equity Distribution": _array_value(results, "qualified_equity_distributions", index),
         "Retirement Withdrawals": _array_value(results, "withdrawal", index),
         "Cash Flow Shortfall": _array_value(results, "cash_flow_shortfall", index),
+        "Funding Gap": _array_value(results, "funding_gap", index),
         "Emergency Pre-Tax Withdrawal": _array_value(results, "emergency_pre_tax_used", index),
 
         "Gross Income": _array_value(results, "gross_income", index),
@@ -184,6 +185,7 @@ def build_year_by_year_report_data_from_pipeline(
 
     results = p["summary_results"]
     report_options = dict(getattr(sim_config, "report_options", {}) or {})
+    report_options["_always_use_expense_mode"] = bool(getattr(sim_config, "always_use_expense_mode", False))
 
     generated_timestamp = datetime.now()
     visible_report_id = generated_timestamp.strftime("%Y-%m-%d %H:%M:%S")

@@ -19,13 +19,13 @@ def tk_root():
     root.destroy()
 
 
-def _make_summary(total_assets=100000, depletion_rate=5.0, net_cash_flow=1000, shortfall=0, taxes=10000,
+def _make_summary(total_assets=100000, depletion_rate=5.0, net_cash_flow=1000, funding_gap=0, taxes=10000,
                   pre_tax=40000, post_tax=30000, roth=20000, hsa=10000):
     return {
         "total_assets": [total_assets],
         "simulated_shortfall_rate": depletion_rate,
         "net_cash_flow": [net_cash_flow],
-        "cash_flow_shortfall": [shortfall],
+        "funding_gap": [funding_gap],
         "taxes": [taxes],
         "pre_tax_assets": [pre_tax],
         "post_tax_assets": [post_tax],
@@ -59,7 +59,7 @@ def test_results_frame_builds_expected_metric_rows(tk_root):
     frame = mod.ScenarioResultsFrame(tk_root)
 
     assert set(frame.metric_rows) == {
-        "ending_portfolio", "depletion_rate", "ending_cash_flow", "lifetime_shortfall", "lifetime_taxes",
+        "ending_portfolio", "depletion_rate", "ending_cash_flow", "lifetime_funding_gap", "lifetime_taxes",
         "ending_pre_tax", "ending_after_tax", "ending_roth", "ending_hsa",
     }
 
@@ -70,11 +70,11 @@ def test_update_results_formats_all_summary_metrics(tk_root):
     frame = mod.ScenarioResultsFrame(tk_root)
 
     baseline = _make_result(summary=_make_summary(
-        total_assets=123456, depletion_rate=4.25, net_cash_flow=2345, shortfall=500, taxes=12345,
+        total_assets=123456, depletion_rate=4.25, net_cash_flow=2345, funding_gap=500, taxes=12345,
         pre_tax=50000, post_tax=30000, roth=25000, hsa=18456,
     ))
     scenario = _make_result(summary=_make_summary(
-        total_assets=234567, depletion_rate=1.5, net_cash_flow=3456, shortfall=100, taxes=15000,
+        total_assets=234567, depletion_rate=1.5, net_cash_flow=3456, funding_gap=100, taxes=15000,
         pre_tax=90000, post_tax=50000, roth=70000, hsa=24567,
     ))
 
@@ -86,8 +86,8 @@ def test_update_results_formats_all_summary_metrics(tk_root):
     assert frame.metric_rows["depletion_rate"]["changed"].cget("text") == "1.5%"
     assert frame.metric_rows["ending_cash_flow"]["original"].cget("text") == "$2,345"
     assert frame.metric_rows["ending_cash_flow"]["changed"].cget("text") == "$3,456"
-    assert frame.metric_rows["lifetime_shortfall"]["original"].cget("text") == "$500"
-    assert frame.metric_rows["lifetime_shortfall"]["changed"].cget("text") == "$100"
+    assert frame.metric_rows["lifetime_funding_gap"]["original"].cget("text") == "$500"
+    assert frame.metric_rows["lifetime_funding_gap"]["changed"].cget("text") == "$100"
     assert frame.metric_rows["lifetime_taxes"]["original"].cget("text") == "$12,345"
     assert frame.metric_rows["lifetime_taxes"]["changed"].cget("text") == "$15,000"
     assert frame.metric_rows["ending_pre_tax"]["original"].cget("text") == "$50,000"

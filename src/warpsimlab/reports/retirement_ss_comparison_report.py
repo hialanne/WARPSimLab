@@ -369,11 +369,10 @@ def _render_social_security_comparison(
                         "deterministic_final_monthly_retirement_income"
                     ]
                 ))}</td>
-                <td>{_safe(_fmt_currency(
-                    case[
-                        "deterministic_lifetime_cash_flow_shortfall"
-                    ]
-                ))}</td>
+
+                <td class="{'funding-gap' if float(case['deterministic_lifetime_funding_gap'] or 0.0) > 0.0 else ''}">
+                    {_safe(_fmt_currency(case["deterministic_lifetime_funding_gap"]))}
+                </td>
             </tr>
             """
         )
@@ -400,7 +399,7 @@ def _render_social_security_comparison(
                 <th>Total Social Security Received</th>
                 <th>Monthly Retirement Income at Age 70</th>
                 <th>Monthly Retirement Income in Final Simulation Year</th>
-                <th>Lifetime Cash Flow Shortfall</th>
+                <th>Lifetime Funding Gap</th>
             </tr>
         </thead>
         <tbody>
@@ -628,6 +627,11 @@ def generate_retirement_ss_comparison_report(
 
     .ending-portfolio-zero {
         color: #b00020;
+    }
+
+    .funding-gap {
+        color: #b00020;
+        font-weight: bold;
     }
 
     .current-cell {

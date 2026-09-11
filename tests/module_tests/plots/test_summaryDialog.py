@@ -51,9 +51,9 @@ def make_results(n=5, start_year=2025):
         "taxes": np.zeros(n),
         "tax_bracket": np.zeros(n),
         "net_income": np.linspace(60, 30, n),
-
         "expenses": np.linspace(50, 55, n),
         "net_cash_flow": np.linspace(10, -25, n),
+        "funding_gap": np.zeros(n),
         "fund_expenses": np.zeros(n),
     }
 
