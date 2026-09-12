@@ -316,6 +316,10 @@ def test_save_values_to_json_writes_expected_keys(monkeypatch, tmp_path):
     assert captured["path"] == out_file
     data = captured["data"]
 
+    assert data["WARPSIMLAB_METADATA"]["file_type"] == "financial_data"
+    assert data["WARPSIMLAB_METADATA"]["schema_version"] == 1
+    assert data["WARPSIMLAB_METADATA"]["warpsimlab_version"] == "4.3.0"
+
     # A few representative keys
     assert "DEFAULT_HUSBAND_AGE" in data
     assert "DEFAULT_EQUITY_PRE_H" in data
