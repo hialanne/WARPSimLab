@@ -46,7 +46,7 @@ from src.warpsimlab.gui.gui_settings import load_display_settings, save_display_
 from src.warpsimlab.gui.gui_display import PortfolioSimulatorGUI_DisplayMixin
 
 
-WARPSIMLAB_VERSION = "4.3.0"
+WARPSIMLAB_VERSION = "4.4.0"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 SCREEN_DEBUG = False

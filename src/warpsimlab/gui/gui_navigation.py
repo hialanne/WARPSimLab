@@ -28,14 +28,13 @@ class PortfolioSimulatorGUI_NavigationMixin:
         # Before legal acceptance, File remains available only for Exit.
         if hasattr(self, "file_menu"):
             file_state = "normal" if legal_enabled else "disabled"
+            last_index = self.file_menu.index("end")
 
-            self.file_menu.entryconfig(0, state=file_state)
-            self.file_menu.entryconfig(1, state=file_state)
-            self.file_menu.entryconfig(2, state=file_state)
-            self.file_menu.entryconfig(3, state=file_state)
+            if last_index is not None:
+                for index in range(last_index + 1):
+                    self.file_menu.entryconfig(index, state=file_state)
 
-            # Exit must always remain available.
-            self.file_menu.entryconfig(4, state="normal")
+                self.file_menu.entryconfig(self._file_exit_index, state="normal")
 
         # Prevent changing Basic/Advanced mode before legal acceptance.
         if hasattr(self, "mode_button"):
@@ -249,6 +248,24 @@ class PortfolioSimulatorGUI_NavigationMixin:
         traceback.print_stack(limit=12)
         print("")
 
+
+    def _rebuild_recent_data_dirs_menu(self):
+        if not hasattr(self, "recent_data_dirs_menu"):
+            return
+
+        self.recent_data_dirs_menu.delete(0, "end")
+        recent_dirs = self._load_recent_data_dirs()
+
+        if not recent_dirs:
+            self.recent_data_dirs_menu.add_command(label="No recent directories", state="disabled")
+            return
+
+        for directory in recent_dirs:
+            self.recent_data_dirs_menu.add_command(
+                label=str(directory), command=lambda path=directory: self._set_preferred_data_directory(path)
+            )
+
+
     def _build_top_fields(self, parent):
         # --- BUTTON FRAME ---
         self.button_frame = ttk.Frame(parent)
@@ -275,6 +292,11 @@ class PortfolioSimulatorGUI_NavigationMixin:
             padx=(0, 10),
             pady=2,
         )
+        self.recent_data_dirs_menu = tk.Menu(self.file_menu, tearoff=0)
+        self.file_menu.insert_cascade(3, label="Recent Data Directories", menu=self.recent_data_dirs_menu)
+        self.file_menu.insert_command(4, label="Reset to Default Data Directory", command=self._reset_recent_data_dirs)
+        self._file_exit_index = self.file_menu.index("end")
+        self._rebuild_recent_data_dirs_menu()
 
         self.home_button, self.home_menu, self._show_home_menu = create_dropdown_button(
             self.button_frame,

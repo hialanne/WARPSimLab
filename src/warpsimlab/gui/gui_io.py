@@ -25,6 +25,88 @@ class PortfolioSimulatorGUI_IOMixin:
         return default_dir
 
 
+    def _get_recent_data_dirs_file(self):
+        return Path.home() / "Desktop" / "WARPSimLab" / "Administration" / "recent_data_directories.json"
+
+
+    def _load_recent_data_dirs(self):
+        recent_file = self._get_recent_data_dirs_file()
+
+        try:
+            if not recent_file.exists():
+                return []
+
+            data = json.loads(recent_file.read_text(encoding="utf-8"))
+            directories = data.get("recent_data_directories", [])
+
+            recent_dirs = []
+            seen = set()
+
+            for directory in directories:
+                path = Path(directory)
+                key = os.path.normcase(str(path))
+
+                if path.is_dir() and key not in seen:
+                    recent_dirs.append(path)
+                    seen.add(key)
+
+                if len(recent_dirs) == 5:
+                    break
+
+            return recent_dirs
+        except Exception:
+            return []
+
+
+    def _save_recent_data_dirs(self, directories):
+        recent_file = self._get_recent_data_dirs_file()
+
+        try:
+            recent_file.parent.mkdir(parents=True, exist_ok=True)
+            data = {"recent_data_directories": [str(path) for path in directories[:5]]}
+            recent_file.write_text(json.dumps(data, indent=4), encoding="utf-8")
+        except Exception:
+            pass
+
+
+    def _remember_data_directory(self, file_path):
+        self._set_preferred_data_directory(Path(file_path).parent)
+
+
+    def _set_preferred_data_directory(self, directory):
+        directory = Path(directory)
+
+        if not directory.is_dir():
+            return
+
+        recent_dirs = self._load_recent_data_dirs()
+        directory_key = os.path.normcase(str(directory))
+        recent_dirs = [path for path in recent_dirs if os.path.normcase(str(path)) != directory_key]
+        recent_dirs.insert(0, directory)
+        self._save_recent_data_dirs(recent_dirs)
+
+        if hasattr(self, "_rebuild_recent_data_dirs_menu"):
+            self._rebuild_recent_data_dirs_menu()
+
+
+    def _get_financial_data_initial_dir(self):
+        recent_dirs = self._load_recent_data_dirs()
+        return recent_dirs[0] if recent_dirs else self.get_default_warpsimlab_dir()
+
+
+    def _reset_recent_data_dirs(self):
+        recent_file = self._get_recent_data_dirs_file()
+
+        try:
+            if recent_file.exists():
+                recent_file.unlink()
+        except Exception:
+            pass
+
+        if hasattr(self, "_rebuild_recent_data_dirs_menu"):
+            self._rebuild_recent_data_dirs_menu()
+
+
     def load_values_from_json(self):
         """
         Load financial data from the default location or allow user selection.
@@ -32,7 +114,7 @@ class PortfolioSimulatorGUI_IOMixin:
 
         file_path = filedialog.askopenfilename(
             title="Select Financial Data JSON",
-            initialdir=str(self.get_default_warpsimlab_dir()),
+            initialdir=str(self._get_financial_data_initial_dir()),
             filetypes=[("JSON Files", "*.json")]
         )
 
@@ -205,6 +287,7 @@ class PortfolioSimulatorGUI_IOMixin:
                     widget.destroy()
 
             self.loaded_data_file = str(file_path)
+            self._remember_data_directory(file_path)
             messagebox.showinfo("Loaded", f"Financial data loaded successfully from:\n{file_path}")
 
         except Exception as e:
@@ -337,19 +420,20 @@ class PortfolioSimulatorGUI_IOMixin:
         })
 
         # --- Ask user where to save ---
-        default_dir = self.get_default_warpsimlab_dir()
         file_path = filedialog.asksaveasfilename(
             title="Save Financial Data",
-            initialdir=str(default_dir),      # Desktop/WARPSimLab/Data
+            initialdir=str(self._get_financial_data_initial_dir()),
             defaultextension=".json",
             filetypes=[("JSON Files", "*.json")]
         )
+
         if not file_path:
             return  # user canceled
 
         # --- Save JSON to file ---
         try:
             save_financial_data_to_file(file_path, updated_values)
+            self._remember_data_directory(file_path)
             messagebox.showinfo("Saved", "Financial data saved successfully.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save file:\n{e}")
