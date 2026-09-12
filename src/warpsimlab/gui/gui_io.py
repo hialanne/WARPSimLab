@@ -14,6 +14,10 @@ from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.utils.io_utils import *
 from src.warpsimlab.utils.utilities import *
 
+WARPSIMLAB_FINANCIAL_DATA_METADATA_KEY = "WARPSIMLAB_METADATA"
+WARPSIMLAB_FINANCIAL_DATA_FILE_TYPE = "financial_data"
+WARPSIMLAB_FINANCIAL_DATA_SCHEMA_VERSION = 1
+
 
 class PortfolioSimulatorGUI_IOMixin:
     """Handles saving and loading GUI data to/from JSON."""
@@ -107,6 +111,31 @@ class PortfolioSimulatorGUI_IOMixin:
             self._rebuild_recent_data_dirs_menu()
 
 
+    def _validate_financial_data_metadata(self, data):
+        metadata = data.get(WARPSIMLAB_FINANCIAL_DATA_METADATA_KEY)
+
+        if metadata is None:
+            return True
+
+        if not isinstance(metadata, dict):
+            raise ValueError("WARPSimLab metadata is invalid.")
+
+        if metadata.get("file_type") != WARPSIMLAB_FINANCIAL_DATA_FILE_TYPE:
+            raise ValueError("This file is not a WARPSimLab financial data file.")
+
+        schema_version = metadata.get("schema_version")
+        if not isinstance(schema_version, int) or schema_version < 1:
+            raise ValueError("WARPSimLab financial data schema version is invalid.")
+
+        if schema_version > WARPSIMLAB_FINANCIAL_DATA_SCHEMA_VERSION:
+            raise ValueError(
+                f"This financial data file uses schema version {schema_version}, but this version of WARPSimLab "
+                f"supports through schema version {WARPSIMLAB_FINANCIAL_DATA_SCHEMA_VERSION}."
+            )
+
+        return False
+
+
     def load_values_from_json(self):
         """
         Load financial data from the default location or allow user selection.
@@ -164,6 +193,10 @@ class PortfolioSimulatorGUI_IOMixin:
         try:
             # Load JSON
             data = load_financial_data_from_json(file_path)
+            if data is None:
+                raise ValueError("Unable to read financial data file.")
+
+            legacy_file = self._validate_financial_data_metadata(data)
 
             # --- Husband ---
             self.husband.age           = data.get("DEFAULT_HUSBAND_AGE", self.husband.age)
@@ -288,7 +321,15 @@ class PortfolioSimulatorGUI_IOMixin:
 
             self.loaded_data_file = str(file_path)
             self._remember_data_directory(file_path)
-            messagebox.showinfo("Loaded", f"Financial data loaded successfully from:\n{file_path}")
+
+            message = f"Financial data loaded successfully from:\n{file_path}"
+            if legacy_file:
+                message += (
+                    "\n\nNote: This file does not contain WARPSimLab file identification metadata. "
+                    "It may have been created by an earlier version of WARPSimLab."
+                )
+
+            messagebox.showinfo("Loaded", message)
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load file:\n{e}")
@@ -303,6 +344,12 @@ class PortfolioSimulatorGUI_IOMixin:
 
         # --- Build the JSON structure using upper-case DEFAULT_ keys ---
         updated_values = {
+            "WARPSIMLAB_METADATA": {
+                "file_type": WARPSIMLAB_FINANCIAL_DATA_FILE_TYPE,
+                "schema_version": WARPSIMLAB_FINANCIAL_DATA_SCHEMA_VERSION,
+                "warpsimlab_version": self.warpsimlab_version,
+            },
+
             # Husband Personal Information
             "DEFAULT_HUSBAND_AGE":      self.husband.age,
             "DEFAULT_HUSBAND_RETIRE":   self.husband.retire_age,

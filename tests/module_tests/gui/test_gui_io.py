@@ -15,6 +15,7 @@ def _make_dummy_gui(tmp_path: Path):
         pass
 
     gui = DummyGUI()
+    gui.warpsimlab_version = "4.3.0"
 
     # Minimal people
     gui.husband = SimpleNamespace(
