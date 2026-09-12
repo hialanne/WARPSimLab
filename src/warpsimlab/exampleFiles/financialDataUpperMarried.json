@@ -1,4 +1,9 @@
 {
+    "WARPSIMLAB_METADATA": {
+        "file_type": "financial_data",
+        "schema_version": 1,
+        "warpsimlab_version": "4.4.0"
+    },
     "DEFAULT_HUSBAND_AGE": 62,
     "DEFAULT_HUSBAND_RETIRE": 68,
     "DEFAULT_HUSBAND_INCOME": 140000.0,
