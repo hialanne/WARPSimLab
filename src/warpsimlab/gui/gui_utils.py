@@ -7,6 +7,17 @@ def noop():
     return
 
 
+def bind_entry_commit_on_return(entry):
+    """
+    Make Enter run an Entry's configured validation without moving focus.
+    """
+    def _commit(_event):
+        entry.tk.call(entry._w, "validate")
+        return "break"
+
+    entry.bind("<Return>", _commit)
+
+
 def set_tk_button_soft_disabled(btn: tk.Button, enabled: bool, real_command, noop_command=noop):
     default_fg = btn.option_get("foreground", "Foreground")
     default_active_fg = btn.option_get("activeForeground", "Foreground")

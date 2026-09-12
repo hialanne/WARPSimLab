@@ -6,6 +6,7 @@ from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
 
 
 class RetirementEditFrame(ttk.Frame):
@@ -213,6 +214,7 @@ class RetirementEditFrame(ttk.Frame):
         )
 
         self.pct_entry.pack(side="left", padx=5)
+        bind_entry_commit_on_return(self.pct_entry)
         # Add tooltip for Percentage entry
         Tooltip(
             self.pct_entry,
@@ -227,7 +229,7 @@ class RetirementEditFrame(ttk.Frame):
         if "retirement_withdraw_dollars" not in self.controls:
             self.controls["retirement_withdraw_dollars"] = 0.0
 
-        self.dollars_var = tk.StringVar(value=self._format_retirement_field(self.controls["retirement_withdraw_dollars"]))
+        self.dollars_var = tk.StringVar(value=self._format_retirement_dollars(self.controls["retirement_withdraw_dollars"]))
         self.dollars_frame = ttk.Frame(parent)
         self.dollars_frame.grid(row=self._next_row("left"), column=0, columnspan=2, sticky="w", pady=2)
         ttk.Label(self.dollars_frame, text="Total Annual Withdrawal $:").pack(side="left")
@@ -243,6 +245,7 @@ class RetirementEditFrame(ttk.Frame):
         )
 
         self.dollars_entry.pack(side="left", padx=5)
+        bind_entry_commit_on_return(self.dollars_entry)
         # Add tooltip for Dollar entry
         Tooltip(
             self.dollars_entry,
@@ -273,8 +276,11 @@ class RetirementEditFrame(ttk.Frame):
 
 
     def _parse_retirement_field(self, field, value):
-        if field in {"retirement_withdraw_pct", "retirement_withdraw_dollars"}:
+        if field == "retirement_withdraw_pct":
             return parse_finite_float(value, minimum=0)
+
+        if field == "retirement_withdraw_dollars":
+            return parse_finite_float(value, allow_commas=True, allow_scientific=False, minimum=0)
 
         raise ValueError(f"Unknown retirement field: {field}")
 
@@ -292,18 +298,23 @@ class RetirementEditFrame(ttk.Frame):
         return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
+    def _format_retirement_dollars(self, value):
+        return f"{float(value):,.0f}"
+
+
     def _validate_retirement_field(self, proposed_value, field):
         var = self.pct_var if field == "retirement_withdraw_pct" else self.dollars_var
         current_value = self.controls[field]
+        formatter = self._format_retirement_field if field == "retirement_withdraw_pct" else self._format_retirement_dollars
 
         try:
             parsed = self._parse_retirement_field(field, proposed_value)
             self.controls[field] = parsed
-            self.after_idle(lambda: var.set(self._format_retirement_field(parsed)))
+            self.after_idle(lambda: var.set(formatter(parsed)))
             return True
 
         except ValueError as exc:
-            self.after_idle(lambda: var.set(self._format_retirement_field(current_value)))
+            self.after_idle(lambda: var.set(formatter(current_value)))
             mark_validation_failed(self)
             messagebox.showerror(
                 "Invalid Input",
@@ -522,6 +533,7 @@ class RetirementEditFrame(ttk.Frame):
             validatecommand=vcmd
         )
         self.sequence_start_year_entry.pack(side="left", padx=5)
+        bind_entry_commit_on_return(self.sequence_start_year_entry)
 
         Tooltip(
             self.sequence_start_year_entry,

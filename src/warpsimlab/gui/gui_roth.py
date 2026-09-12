@@ -5,6 +5,7 @@ from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
 
 
 class RothEditFrame(ttk.Frame):
@@ -239,7 +240,7 @@ class RothEditFrame(ttk.Frame):
         )
 
         amount_var = tk.StringVar(
-            value=str(flow["amount"])
+            value=self._format_float_field("amount", flow["amount"])
         )
 
         start_age_var = tk.StringVar(
@@ -255,7 +256,7 @@ class RothEditFrame(ttk.Frame):
         )
 
         inflation_var = tk.StringVar(
-            value=str(flow["inflation_adjustment_pct"])
+            value=self._format_float_field("inflation_adjustment_pct", flow["inflation_adjustment_pct"])
         )
 
         owner_combo = ttk.Combobox(
@@ -360,6 +361,8 @@ class RothEditFrame(ttk.Frame):
             pady=2,
             sticky="w",
         )
+        bind_entry_commit_on_return(amount_entry)
+
         Tooltip(
             amount_entry,
             "Annual Roth contribution or conversion amount.",
@@ -392,6 +395,7 @@ class RothEditFrame(ttk.Frame):
             pady=2,
             sticky="w",
         )
+        bind_entry_commit_on_return(start_age_entry)
         Tooltip(
             start_age_entry,
             "Age when this Roth flow starts.",
@@ -424,6 +428,7 @@ class RothEditFrame(ttk.Frame):
             pady=2,
             sticky="w",
         )
+        bind_entry_commit_on_return(end_age_entry)
         Tooltip(
             end_age_entry,
             "Age when this Roth flow stops.",
@@ -474,6 +479,7 @@ class RothEditFrame(ttk.Frame):
             pady=2,
             sticky="w",
         )
+        bind_entry_commit_on_return(inflation_entry)
         Tooltip(
             inflation_entry,
             (
@@ -580,6 +586,12 @@ class RothEditFrame(ttk.Frame):
             raise ValueError("End Age cannot be before Start Age.")
 
 
+    def _format_float_field(self, field_key, value):
+        if field_key == "amount":
+            return f"{float(value):,.0f}"
+        return str(float(value))
+
+
     def _validate_float_field(
         self,
         proposed_value,
@@ -598,12 +610,12 @@ class RothEditFrame(ttk.Frame):
             )
 
             flow[field_key] = value
-            self.after_idle(lambda: var.set(str(value)))
+            self.after_idle(lambda: var.set(self._format_float_field(field_key, value)))
             return True
 
         except ValueError as exc:
             current_value = flow.get(field_key, float(default_value))
-            self.after_idle(lambda: var.set(str(current_value)))
+            self.after_idle(lambda: var.set(self._format_float_field(field_key, current_value)))
             mark_validation_failed(self)
             messagebox.showerror(
                 "Invalid Input",

@@ -5,6 +5,7 @@ from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float
 from src.warpsimlab.utils.tooltip import Tooltip
+from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
 
 
 class PortfolioDollarsEditFrame(ttk.Frame):
@@ -278,6 +279,7 @@ class PortfolioDollarsEditFrame(ttk.Frame):
                     validate="focusout", validatecommand=vcmd_h
                 )
                 entry_h.grid(row=field_row, column=1, sticky="ew", padx=8)
+                bind_entry_commit_on_return(entry_h)
                 Tooltip(entry_h, tooltip_text, font=("Arial", 11))
 
                 if self.w_vars:
@@ -287,6 +289,7 @@ class PortfolioDollarsEditFrame(ttk.Frame):
                         validate="focusout", validatecommand=vcmd_w
                     )
                     entry_w.grid(row=field_row, column=2, sticky="ew", padx=8)
+                    bind_entry_commit_on_return(entry_w)
                     Tooltip(entry_w, tooltip_text, font=("Arial", 11))
 
                 total_var = tk.StringVar(value="--")
@@ -387,6 +390,7 @@ class PortfolioDollarsEditFrame(ttk.Frame):
             validatecommand=vcmd_h,
         )
         entry_h.grid(row=row, column=1, sticky="w", padx=5)
+        bind_entry_commit_on_return(entry_h)
         Tooltip(entry_h, tooltip_text, font=("Arial", 11))
 
         if self.w_vars:
@@ -405,6 +409,7 @@ class PortfolioDollarsEditFrame(ttk.Frame):
                 validatecommand=vcmd_w,
             )
             entry_w.grid(row=row, column=2, sticky="w", padx=5)
+            bind_entry_commit_on_return(entry_w)
             Tooltip(entry_w, tooltip_text, font=("Arial", 11))
 
         total_var = tk.StringVar(value="--")

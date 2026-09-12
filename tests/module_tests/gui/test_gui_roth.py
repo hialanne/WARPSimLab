@@ -80,7 +80,7 @@ def test_initial_flow_values_loaded(tk_root, patched_module):
     assert item["vars"]["owner"].get() == "husband"
     assert item["vars"]["type"].get() == frame.TYPE_LABELS["roth_ira_contribution"]
     assert item["vars"]["name"].get() == "Test Roth"
-    assert item["vars"]["amount"].get() == "1000.0"
+    assert item["vars"]["amount"].get() == "1,000"
     assert item["vars"]["start_age"].get() == "40"
     assert item["vars"]["end_age"].get() == "70"
     assert item["vars"]["enabled"].get() is True
@@ -143,7 +143,7 @@ def test_amount_zero_is_accepted(tk_root, patched_module, monkeypatch):
     assert frame._validate_float_field("0", flow, "amount", amount_var, 0.0, allow_negative=False) is True
 
     assert flow["amount"] == pytest.approx(0.0)
-    assert amount_var.get() == "0.0"
+    assert amount_var.get() == "0"
     assert shown_errors == []
 
 
@@ -155,7 +155,7 @@ def test_negative_amount_is_rejected_without_changing_flow(tk_root, patched_modu
     assert frame._validate_float_field("-1", flow, "amount", amount_var, 0.0, allow_negative=False) is True
 
     assert flow["amount"] == pytest.approx(1000.0)
-    assert amount_var.get() == "1000.0"
+    assert amount_var.get() == "1,000"
     assert len(shown_errors) == 1
     assert shown_errors[0][0][0] == "Invalid Input"
 
@@ -176,7 +176,7 @@ def test_amount_rejects_nonfinite_values(tk_root, patched_module, monkeypatch, b
     ) is True
 
     assert flow["amount"] == pytest.approx(1000.0)
-    assert amount_var.get() == "1000.0"
+    assert amount_var.get() == "1,000"
     assert len(shown_errors) == 1
 
 

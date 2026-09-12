@@ -205,7 +205,7 @@ def test_pct_and_dollars_write_back_to_controls_and_ignore_invalid(monkeypatch, 
     tk_root.update()
     tk_root.update_idletasks()
     assert frame.controls["retirement_withdraw_dollars"] == pytest.approx(12000.0)
-    assert frame.dollars_var.get() == frame._format_retirement_field(12000.0)
+    assert frame.dollars_var.get() == frame._format_retirement_dollars(12000.0)
 
     prev_pct = frame.controls["retirement_withdraw_pct"]
     assert frame._validate_retirement_field("bad", "retirement_withdraw_pct") is True
@@ -219,7 +219,7 @@ def test_pct_and_dollars_write_back_to_controls_and_ignore_invalid(monkeypatch, 
     tk_root.update()
     tk_root.update_idletasks()
     assert frame.controls["retirement_withdraw_dollars"] == pytest.approx(prev_dollars)
-    assert frame.dollars_var.get() == frame._format_retirement_field(prev_dollars)
+    assert frame.dollars_var.get() == frame._format_retirement_dollars(prev_dollars)
 
     assert len(shown_errors) == 2
     assert all(args[0] == "Invalid Input" for args, _kwargs in shown_errors)

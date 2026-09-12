@@ -5,6 +5,7 @@ from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
 
 
 class NormalIncomeEditFrame(ttk.Frame):
@@ -212,6 +213,7 @@ class NormalIncomeEditFrame(ttk.Frame):
                 validatecommand=vcmd_h,
             )
             entry_h.grid(row=r, column=1 + col_offset, sticky="w", padx=5)
+            bind_entry_commit_on_return(entry_h)
             Tooltip(entry_h, tooltip_text, font=("Arial", 11))
             
             if wife_vars:
@@ -230,6 +232,7 @@ class NormalIncomeEditFrame(ttk.Frame):
                     validatecommand=vcmd_w,
                 )
                 entry_w.grid(row=r, column=2 + col_offset, sticky="w", padx=5)
+                bind_entry_commit_on_return(entry_w)
                 Tooltip(entry_w, tooltip_text, font=("Arial", 11))
 
         if self.mode == "Basic":

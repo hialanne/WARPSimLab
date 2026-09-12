@@ -5,6 +5,7 @@ from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
 
 
 class SpecialIncomeEditFrame(ttk.Frame):
@@ -199,13 +200,13 @@ class SpecialIncomeEditFrame(ttk.Frame):
 
         owner_var = tk.StringVar(value=stream["owner"])
         name_var = tk.StringVar(value=str(stream["name"]))
-        amount_var = tk.StringVar(value=str(stream["amount"]))
+        amount_var = tk.StringVar(value=self._format_float_field("amount", stream["amount"]))
         start_age_var = tk.StringVar(value=str(stream["start_age"]))
         end_age_var = tk.StringVar(value=str(stream["end_age"]))
         taxable_var = tk.BooleanVar(value=bool(stream["taxable"]))
         enabled_var = tk.BooleanVar(value=bool(stream["enabled"]))
         adjustment_mode_var = tk.StringVar(value=self.ADJUSTMENT_MODE_LABELS[stream["adjustment_mode"]])
-        adjustment_pct_var = tk.StringVar(value=str(stream["adjustment_pct"]))
+        adjustment_pct_var = tk.StringVar(value=self._format_float_field("adjustment_pct", stream["adjustment_pct"]))
 
         owner_combo = ttk.Combobox(
             self,
@@ -241,8 +242,10 @@ class SpecialIncomeEditFrame(ttk.Frame):
                         )
                 ),
                 "%P",
-            ),        )
+            ),        
+        )
         amount_entry.grid(row=row, column=2, padx=5, pady=2, sticky="w")
+        bind_entry_commit_on_return(amount_entry)
         Tooltip(amount_entry, "Annual dollar amount before tax treatment", font=("Arial", 11))
 
         start_age_entry = ttk.Entry(
@@ -265,6 +268,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
             ),
         )
         start_age_entry.grid(row=row, column=3, padx=5, pady=2, sticky="w")
+        bind_entry_commit_on_return(start_age_entry)
         Tooltip(start_age_entry, "Age when this income starts", font=("Arial", 11))
 
         end_age_entry = ttk.Entry(
@@ -287,6 +291,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
             ),
         )
         end_age_entry.grid(row=row, column=4, padx=5, pady=2, sticky="w")
+        bind_entry_commit_on_return(end_age_entry)
         Tooltip(end_age_entry, "Age when this income stops", font=("Arial", 11))
 
         enabled_check = ttk.Checkbutton(
@@ -317,14 +322,6 @@ class SpecialIncomeEditFrame(ttk.Frame):
         )
         adjustment_mode_combo.grid(row=row, column=7, padx=5, pady=2, sticky="w")
         adjustment_mode_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
-        Tooltip(adjustment_mode_combo, "How this income changes over time", font=("Arial", 11))
-
-        adjustment_mode_combo = ttk.Combobox(
-            self, textvariable=adjustment_mode_var, values=list(self.ADJUSTMENT_MODE_VALUES), width=12,
-            state="readonly", style="SpecialIncome.TCombobox"
-        )
-        adjustment_mode_combo.grid(row=row, column=7, padx=5, pady=2, sticky="w")
-        adjustment_mode_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
         Tooltip(
             adjustment_mode_combo,
             "Inflation adjusts by a percentage of inflation. Fixed Annual increases by a fixed percentage each year. "
@@ -343,6 +340,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
             ),
         )
         adjustment_pct_entry.grid(row=row, column=8, padx=5, pady=2, sticky="w")
+        bind_entry_commit_on_return(adjustment_pct_entry)
         Tooltip(
             adjustment_pct_entry,
             "Inflation: percent of inflation adjustment; 100 = full inflation, 0 = none. "
@@ -400,6 +398,13 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self.next_row += 1
         self._update_add_button_position()
 
+        
+    def _format_float_field(self, field_key, value):
+        if field_key == "amount":
+            return f"{float(value):,.0f}"
+
+        return str(float(value))
+
 
     def _validate_float_field(
         self,
@@ -422,12 +427,14 @@ class SpecialIncomeEditFrame(ttk.Frame):
             )
 
             stream[field_key] = parsed
-            self.after_idle(lambda: var.set(str(parsed)))
+            self.after_idle(lambda: var.set(self._format_float_field(field_key, parsed)))
             return True
+
 
         except ValueError as exc:
             current_value = stream.get(field_key, float(default_value))
-            self.after_idle(lambda: var.set(str(current_value)))
+            self.after_idle(lambda: var.set(self._format_float_field(field_key, current_value)))
+
             mark_validation_failed(self)
             messagebox.showerror(
                 "Invalid Input",

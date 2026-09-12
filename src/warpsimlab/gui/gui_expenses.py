@@ -5,6 +5,7 @@ from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
 
 
 class ExpensesEditFrame(ttk.Frame):
@@ -91,7 +92,7 @@ class ExpensesEditFrame(ttk.Frame):
 
         start_var = tk.StringVar(value=str(expense["start_year"]))
         end_var = tk.StringVar(value="" if expense["end_year"] is None else str(expense["end_year"]))
-        cost_var = tk.StringVar(value=str(expense["cost"]))
+        cost_var = tk.StringVar(value=self._format_expense_field("cost", expense["cost"]))
         comment_var = tk.StringVar(value=str(expense["comment"]))
         hsa_eligible_var = tk.BooleanVar(value=bool(expense.get("is_hsa_eligible", False)))
 
@@ -121,6 +122,7 @@ class ExpensesEditFrame(ttk.Frame):
             validatecommand=vcmd_start,
         )
         start_entry.grid(row=row, column=0, padx=5, pady=2)
+        bind_entry_commit_on_return(start_entry)
         Tooltip(start_entry, "Year this expense starts", font=("Arial", 11))
 
         vcmd_end = (
@@ -137,6 +139,7 @@ class ExpensesEditFrame(ttk.Frame):
             validatecommand=vcmd_end,
         )
         end_entry.grid(row=row, column=1, padx=5, pady=2)
+        bind_entry_commit_on_return(end_entry)
         Tooltip(end_entry, "Year this expense ends (leave blank if ongoing)", font=("Arial", 11))
 
         vcmd_cost = (
@@ -153,6 +156,7 @@ class ExpensesEditFrame(ttk.Frame):
             validatecommand=vcmd_cost,
         )
         cost_entry.grid(row=row, column=2, padx=5, pady=2)
+        bind_entry_commit_on_return(cost_entry)
         Tooltip(cost_entry, "Cost of this expense per year", font=("Arial", 11))
 
         hsa_eligible_check = ttk.Checkbutton(self, variable=hsa_eligible_var)
