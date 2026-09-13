@@ -80,8 +80,8 @@ def test_builds_expected_readonly_rows(tk_root):
     assert "Cash" in texts
 
     assert "Portfolio by Tax Bucket" in texts
-    assert "Pre-Tax" in texts
-    assert "After-Tax" in texts
+    assert "Tax-Deferred" in texts
+    assert "Taxable" in texts
     assert "Roth" in texts
     assert "HSA" in texts
     assert "Total" in texts

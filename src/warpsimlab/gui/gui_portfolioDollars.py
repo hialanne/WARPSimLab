@@ -72,14 +72,14 @@ class PortfolioDollarsEditFrame(ttk.Frame):
 
     def _portfolio_field_label(self, field_key):
         labels = {
-            "equity_pre": "Stocks Pre-Tax",
-            "equity_post": "Stocks After-Tax",
+            "equity_pre": "Stocks Tax-Deferred",
+            "equity_post": "Stocks Taxable",
             "equity_roth": "Stocks Roth",
-            "bond_pre": "Bonds Pre-Tax",
-            "bond_post": "Bonds After-Tax",
+            "bond_pre": "Bonds Tax-Deferred",
+            "bond_post": "Bonds Taxable",
             "bond_roth": "Bonds Roth",
-            "cash_pre": "Cash Pre-Tax",
-            "cash_post": "Cash After-Tax",
+            "cash_pre": "Cash Tax-Deferred",
+            "cash_post": "Cash Taxable",
             "cash_roth": "Cash Roth",
             "hsa_equity": "Stocks HSA",
             "hsa_bond": "Bonds HSA",
@@ -193,7 +193,7 @@ class PortfolioDollarsEditFrame(ttk.Frame):
 
         buckets = {
             "pre": (
-                "Pre-Tax",
+                "Tax-Deferred",
                 [
                     ("Stocks", "equity_pre", "Stock investments held in tax-deferred retirement accounts"),
                     ("Bonds", "bond_pre", "Bond investments held in tax-deferred retirement accounts"),
@@ -201,7 +201,7 @@ class PortfolioDollarsEditFrame(ttk.Frame):
                 ],
             ),
             "post": (
-                "After-Tax",
+                "Taxable",
                 [
                     ("Stocks", "equity_post", "Stock investments held in taxable accounts"),
                     ("Bonds", "bond_post", "Bond investments held in taxable accounts"),

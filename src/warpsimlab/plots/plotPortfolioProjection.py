@@ -360,7 +360,7 @@ def _plot_pre_post_tax_assets(years_list, simulation_data):
             bottom + post_tax,
             color=COLOR_POST_TAX,
             alpha=0.5,
-            label="Post-Tax Assets",
+            label="Tax-Deferred Assets",
         )
         bottom += post_tax
 

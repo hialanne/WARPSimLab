@@ -281,7 +281,7 @@ class SummaryDialog(tk.Toplevel):
             ttk.Label(
                 frame,
                 text=(
-                    f"Pre-Tax Assets:   "
+                    f"Tax-Deferred Assets: "
                     f"{fmt(r['pre_tax_assets'][year_idx])}"
                 ),
                 font=body_font
@@ -290,7 +290,7 @@ class SummaryDialog(tk.Toplevel):
             ttk.Label(
                 frame,
                 text=(
-                    f"Post-Tax Assets:  "
+                    f"Taxable Assets:      "
                     f"{fmt(r['post_tax_assets'][year_idx])}"
                 ),
                 font=body_font

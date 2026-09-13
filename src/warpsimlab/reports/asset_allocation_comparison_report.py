@@ -509,7 +509,7 @@ def _render_method_note(report_data):
     </p>
 
     <p class="section-intro">
-        Investable assets include pre-tax, post-tax, Roth, and HSA
+        Investable assets include tax-deferred, taxable, Roth, and HSA
         assets. Real estate is not included in the allocation being
         compared.
     </p>

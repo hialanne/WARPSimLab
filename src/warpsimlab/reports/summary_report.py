@@ -200,8 +200,8 @@ def _render_portfolio_summary(report_data):
                 <div class="subhead">Portfolio Value in {_safe(_fmt_value(year, key="Year"))}</div>
                 {_render_kv_table(
                     {
-                        "Pre-Tax Assets": values.get("Pre-Tax Assets"),
-                        "Post-Tax Assets": values.get("Post-Tax Assets"),
+                        "Tax-Deferred Assets": values.get("Pre-Tax Assets"),
+                        "Taxable Assets": values.get("Post-Tax Assets"),
                         "Roth Assets": values.get("Roth Assets"),
                         "HSA Assets": values.get("HSA Assets"),
                         "Total Portfolio": values.get("Total Portfolio"),

@@ -247,5 +247,5 @@ def test_method_note_describes_allocation_rules():
 
     assert "Only the modeled Stock/Bond/Cash" in html
     assert "current household bond-to-cash ratio" in html
-    assert "pre-tax, post-tax, Roth, and HSA" in html
+    assert "tax-deferred, taxable, Roth, and HSA" in html
     assert "Real estate is not included" in html

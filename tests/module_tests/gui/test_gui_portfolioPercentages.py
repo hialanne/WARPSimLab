@@ -165,8 +165,7 @@ def test_invalid_asset_total_does_not_modify_portfolio(mod, tk_root, monkeypatch
     assert portfolio.cash_post == pytest.approx(5678)
     assert frame.status_var.get() == ""
     assert len(shown_errors) == 1
-    assert "After-Tax Stocks/Bonds/Cash percentages must total 100%" in shown_errors[0][0][1]
-
+    assert "Taxable Stocks/Bonds/Cash percentages must total 100%" in shown_errors[0][0][1]
 
 def test_couple_apply_is_transactional_when_wife_is_invalid(mod, tk_root, monkeypatch):
     husband = DummyPortfolio(equity_pre=1111)

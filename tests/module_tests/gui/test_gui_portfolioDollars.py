@@ -195,8 +195,8 @@ def test_advanced_mode_builds_roth_hsa_and_total_rows(mod_no_tooltip, tk_root):
 
     texts = _all_texts(frame)
 
-    assert "Pre-Tax" in texts
-    assert "After-Tax" in texts
+    assert "Tax-Deferred" in texts
+    assert "Taxable" in texts
     assert "Roth" in texts
     assert "HSA" in texts
 

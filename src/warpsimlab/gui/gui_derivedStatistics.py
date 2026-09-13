@@ -150,8 +150,8 @@ class DerivedStatisticsFrame(ttk.Frame):
                     row=0, column=col, sticky="w", padx=8, pady=(0, 5))
 
         for row, (label, key, bold) in enumerate([
-            ("Pre-Tax", "pre", False),
-            ("After-Tax", "post", False),
+            ("Tax-Deferred", "pre", False),
+            ("Taxable", "post", False),
             ("Roth", "roth", False),
             ("HSA", "hsa", False),
             ("Total", "total", True),

@@ -78,8 +78,8 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         row = self._add_metric_row(table, row, "lifetime_taxes", "Lifetime Taxes")
 
         row = self._add_section(table, row, "Ending Assets")
-        row = self._add_metric_row(table, row, "ending_pre_tax", "Pre-Tax Assets")
-        row = self._add_metric_row(table, row, "ending_after_tax", "After-Tax Assets")
+        row = self._add_metric_row(table, row, "ending_pre_tax", "Tax-Deferred Assets")
+        row = self._add_metric_row(table, row, "ending_after_tax", "Taxable Assets")
         row = self._add_metric_row(table, row, "ending_roth", "Roth Assets")
         self._add_metric_row(table, row, "ending_hsa", "HSA Assets")
 

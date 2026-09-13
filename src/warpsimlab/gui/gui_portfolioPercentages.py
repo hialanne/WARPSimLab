@@ -18,8 +18,8 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
     ASSET_CLASSES = ("stocks", "bonds", "cash")
 
     TAX_LABELS = {
-        "pre": "Pre-Tax",
-        "post": "After-Tax",
+        "pre": "Tax-Deferred",
+        "post": "Taxable",
         "roth": "Roth",
         "hsa": "HSA",
     }

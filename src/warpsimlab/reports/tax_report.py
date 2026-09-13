@@ -369,9 +369,14 @@ def _render_yearly_tax_table(report_data):
         "Taxable HSA Withdrawals",
     ])
 
+
+    header_labels = {
+        "Emergency Pre-Tax Withdrawal": "Emergency Tax-Deferred Withdrawal",
+    }
+
     def render_table(columns):
         header_html = "".join(
-            f"<th>{_safe(column)}</th>"
+            f"<th>{_safe(header_labels.get(column, column))}</th>"
             for column in columns
         )
 

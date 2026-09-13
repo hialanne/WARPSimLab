@@ -292,7 +292,7 @@ class SimulationControlsEditFrame(ttk.Frame):
             "Fill": "fill",
             "Risk Analysis": "risk_analysis",
             "Sub Categories": "sub_categories",
-            "Pre / Post Tax Savings": "pre_post_tax",
+            "Tax-Deferred / Taxable Savings": "pre_post_tax",
         }
         subplot_mode_value_to_label = {v: k for k, v in subplot_mode_label_to_value.items()}
 
@@ -311,7 +311,7 @@ class SimulationControlsEditFrame(ttk.Frame):
             "Fill",
             "Risk Analysis",
             "Sub Categories",
-            "Pre / Post Tax Savings",
+            "Tax-Deferred / Taxable Savings",
         ]
 
         plot_style_tooltips = {
@@ -326,9 +326,9 @@ class SimulationControlsEditFrame(ttk.Frame):
             "Sub Categories": (
                 "Display simulation results separated into detailed categories."
             ),
-            "Pre / Post Tax Savings": (
-                "Display portfolio results separated into pre-tax and "
-                "after-tax savings."
+            "Tax-Deferred / Taxable Savings": (
+                "Display portfolio results separated into tax-deferred and "
+                "taxable savings."
             ),
         }
 
@@ -421,7 +421,7 @@ class SimulationControlsEditFrame(ttk.Frame):
             visible_plot_styles = {
                 "Fill",
                 "Sub Categories",
-                "Pre / Post Tax Savings",
+                "Tax-Deferred / Taxable Savings",
             }
             if subplot_mode_var.get() in visible_plot_styles:
                 include_realestate_section.grid()
