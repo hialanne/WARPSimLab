@@ -27,7 +27,7 @@ class Simulation:
             show_simulated_shortfall_rate=True,
             calculate_simulated_shortfall_rate=True,
 
-            custom_stock=0.0, custom_bonds=0.0, custom_cash=100.0,
+            custom_stock=0.0, custom_bonds=0.0, custom_cash=1.0,
             annotate_plots=False,
             constant_y_plots=False,
             rebalance_every_year=False,

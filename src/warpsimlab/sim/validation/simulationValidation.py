@@ -97,6 +97,15 @@ SEQUENCE_RISK_DEPTHS = {
     "Severe",
 }
 
+US_STATE_CODES = {
+    "",
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+}
+
 PORTFOLIO_FIELDS = (
     "equity_pre",
     "equity_post",
@@ -374,6 +383,7 @@ def _validate_sim_config(sim_config):
     _require_integer("sim_config.num_sims", getattr(sim_config, "num_sims", None), strictly_positive=True)
 
     _require_real("sim_config.inflation_rate", getattr(sim_config, "inflation_rate", None))
+    _require_real("sim_config.inflation_delta", getattr(sim_config, "inflation_delta", None))
     _require_real("sim_config.fund_expense", getattr(sim_config, "fund_expense", None), minimum=0.0)
 
     for field in ("eq_mean", "bd_mean", "cs_mean", "re_mean"):
@@ -408,12 +418,22 @@ def _validate_sim_config(sim_config):
         "second_person_enabled",
         "include_realestate",
         "calculate_income_taxes",
+        "calculate_payroll_taxes",
         "calculate_state_taxes",
         "use_fund_expenses",
         "use_correlated_returns",
         "include_rmd",
+        "rebalance_every_year",
+        "always_use_expense_mode",
+        "sequence_risk_enabled",
     ):
         _require_bool(f"sim_config.{field}", getattr(sim_config, field, None))
+
+    _require_choice(
+        "sim_config.state_of_residence",
+        getattr(sim_config, "state_of_residence", None),
+        US_STATE_CODES,
+    )
 
     if sim_config.sim_initial_allocation_mode == "custom":
         stock = getattr(sim_config, "custom_stock", None)
