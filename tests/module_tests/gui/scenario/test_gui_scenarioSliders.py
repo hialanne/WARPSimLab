@@ -1,26 +1,15 @@
-# test_gui_scenarioSliders.py
-
-from __future__ import annotations
-
 from dataclasses import dataclass
 from types import SimpleNamespace
 
-import tkinter as tk
 import pytest
-
-#pytest.skip("Skipping GUI tests for now", allow_module_level=True)
-
+import tkinter as tk
+import tkinter.font as tkfont
 
 
 @dataclass
 class DummyPerson:
-    retire_age: int
-    ss: float = 2000.0
-    pension: float = 500.0
-    annuity: float = 250.0
+    retire_age: int = 67
     ss_age: int = 67
-    pension_age: int = 67
-    annuity_age: int = 67
 
 
 @dataclass
@@ -35,7 +24,6 @@ class DummyPortfolio:
 
 @dataclass
 class DummySnapshots:
-    delta_inflation: float = 0.0
     fund_expense: float = 0.5
     historical_data_multiplier: float = 100.0
     scenario_expense_multiplier: float | None = None
@@ -44,52 +32,35 @@ class DummySnapshots:
 
 @pytest.fixture
 def tk_root():
-    """Hidden Tk root. Skip if Tk isn't available."""
     try:
         root = tk.Tk()
-    except tk.TclError as e:
-        pytest.skip(f"Tk unavailable in this environment: {e}")
+    except tk.TclError as exc:
+        pytest.skip(f"Tk unavailable in this environment: {exc}")
+
     root.withdraw()
     yield root
     root.destroy()
 
 
 @pytest.fixture
-def no_tooltip(monkeypatch):
-    """Disable Tooltip side-effects (event binds / timers)."""
+def slider_module(monkeypatch):
     from src.warpsimlab.gui.scenario import gui_scenarioSliders as mod
 
     class DummyTooltip:
         def __init__(self, *args, **kwargs):
             pass
 
-    monkeypatch.setattr(mod, "Tooltip", DummyTooltip, raising=True)
+    monkeypatch.setattr(mod, "Tooltip", DummyTooltip)
     return mod
 
 
-@pytest.fixture
-def main_gui_manual_expenses():
+def _make_main_gui(expense_mode=True, withdraw_pct=4.0):
     return SimpleNamespace(
         inflation=3.0,
         simulation_controls={
-            "always_use_expense_mode": True,
-            "retirement_withdraw_pct": 4.0,
+            "always_use_expense_mode": expense_mode,
+            "retirement_withdraw_pct": withdraw_pct,
         },
-        husband=DummyPerson(retire_age=67),
-        wife=DummyPerson(retire_age=67),
-    )
-
-
-@pytest.fixture
-def main_gui_withdraw_mode():
-    return SimpleNamespace(
-        inflation=3.0,
-        simulation_controls={
-            "always_use_expense_mode": False,
-            "retirement_withdraw_pct": 4.25,
-        },
-        husband=DummyPerson(retire_age=67),
-        wife=DummyPerson(retire_age=67),
     )
 
 
@@ -97,126 +68,264 @@ def _make_frame(
     mod,
     tk_root,
     *,
-    main_gui,
-    show_enable_overrides_checkbox: bool,
-    show_wife: bool,
-    h_person: DummyPerson | None = None,
-    w_person: DummyPerson | None = None,
-    h_port: DummyPortfolio | None = None,
-    w_port: DummyPortfolio | None = None,
-    snapshots: DummySnapshots | None = None,
-    baseline_persons: dict | None = None,
+    expense_mode=True,
+    withdraw_pct=4.0,
+    show_wife=False,
+    show_enable_overrides_checkbox=False,
+    husband=None,
+    wife=None,
+    husband_portfolio=None,
+    wife_portfolio=None,
+    snapshots=None,
 ):
-    h_person = h_person or DummyPerson(retire_age=67)
-    persons = {"husband": h_person}
+    if husband is None:
+        husband = DummyPerson()
+
+    if husband_portfolio is None:
+        husband_portfolio = DummyPortfolio(equity_pre=60, bond_pre=30, cash_pre=10)
+
+    if snapshots is None:
+        snapshots = DummySnapshots()
+
+    persons = {"husband": husband}
+    portfolio = {"husband": husband_portfolio}
+
     if show_wife:
-        persons["wife"] = (w_person or DummyPerson(retire_age=67))
+        if wife is None:
+            wife = DummyPerson(retire_age=65, ss_age=66)
+        if wife_portfolio is None:
+            wife_portfolio = DummyPortfolio()
 
-    portfolio = {"husband": (h_port or DummyPortfolio())}
-    if show_wife:
-        portfolio["wife"] = (w_port or DummyPortfolio())
+        persons["wife"] = wife
+        portfolio["wife"] = wife_portfolio
 
-    snapshots = snapshots or DummySnapshots()
-
-    if baseline_persons is None:
-        baseline_persons = {"husband": h_person}
-        if show_wife:
-            baseline_persons["wife"] = persons["wife"]
+    main_gui = _make_main_gui(expense_mode=expense_mode, withdraw_pct=withdraw_pct)
 
     frame = mod.ScenarioSlidersFrame(
-        tk_root,
-        main_gui=main_gui,
-        persons=persons,
-        portfolio=portfolio,
-        retirement_snapshots=snapshots,
-        show_enable_overrides_checkbox=show_enable_overrides_checkbox,
-        allow_main_gui_override_flag=True,
-        show_wife=show_wife,
-        baseline_persons=baseline_persons,
+        tk_root, main_gui=main_gui, persons=persons, portfolio=portfolio, retirement_snapshots=snapshots,
+        show_enable_overrides_checkbox=show_enable_overrides_checkbox, show_wife=show_wife
     )
     frame.pack()
-    return frame, persons, portfolio, snapshots
+
+    return frame
 
 
-def test_initial_portfolio_percents_zero_total_defaults_to_all_cash(tk_root, no_tooltip, main_gui_manual_expenses):
-    mod = no_tooltip
+def _font_weight(widget):
+    return tkfont.Font(font=widget.cget("font")).actual("weight")
 
-    frame, _, _, _ = _make_frame(
-        mod,
-        tk_root,
-        main_gui=main_gui_manual_expenses,
-        show_enable_overrides_checkbox=False,
-        show_wife=False,
-        h_port=DummyPortfolio(),  # all zeros
+
+def test_initializes_husband_controls_from_person(slider_module, tk_root):
+    husband = DummyPerson(retire_age=64, ss_age=68)
+    frame = _make_frame(slider_module, tk_root, husband=husband)
+
+    assert frame.tmp_ret_age_h.get() == 64
+    assert frame.tmp_ss_age_h.get() == 68
+    assert frame.husband_label_var.get() == "Husband Retirement Age: 64"
+    assert frame.husband_ss_label_var.get() == "Husband Social Security Age: 68"
+
+    frame.destroy()
+
+
+def test_omits_wife_controls_when_wife_hidden(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, show_wife=False)
+
+    assert frame.wife is None
+    assert frame.tmp_ret_age_w is None
+    assert frame.tmp_ss_age_w is None
+    assert frame.wife_slider is None
+    assert frame.wife_ss_slider is None
+
+    frame.destroy()
+
+
+def test_initializes_wife_controls_when_enabled(slider_module, tk_root):
+    wife = DummyPerson(retire_age=63, ss_age=66)
+    frame = _make_frame(slider_module, tk_root, show_wife=True, wife=wife)
+
+    assert frame.tmp_ret_age_w.get() == 63
+    assert frame.tmp_ss_age_w.get() == 66
+    assert frame.wife_label_var.get() == "Wife Retirement Age: 63"
+    assert frame.wife_ss_label_var.get() == "Wife Social Security Age: 66"
+
+    frame.destroy()
+
+
+def test_initializes_economic_controls_from_inputs(slider_module, tk_root):
+    snapshots = DummySnapshots(fund_expense=0.75, historical_data_multiplier=90.0)
+    frame = _make_frame(slider_module, tk_root, snapshots=snapshots)
+
+    assert frame.inflation_value.get() == pytest.approx(3.0)
+    assert frame.fund_expense_value.get() == pytest.approx(0.75)
+    assert frame.market_adjustment_percent.get() == pytest.approx(90.0)
+
+    frame.destroy()
+
+
+def test_initializes_portfolio_percentages_from_combined_portfolio(slider_module, tk_root):
+    husband_portfolio = DummyPortfolio(equity_pre=40, bond_pre=20, cash_pre=10)
+    wife_portfolio = DummyPortfolio(equity_pre=20, bond_pre=10)
+
+    frame = _make_frame(
+        slider_module, tk_root, show_wife=True,
+        husband_portfolio=husband_portfolio, wife_portfolio=wife_portfolio
     )
 
-    assert frame.stocks_percent.get() == 0
-    assert frame.bonds_percent.get() == 0
-    assert frame.cash_percent.get() == 100
+    assert frame.stocks_percent.get() == pytest.approx(60.0)
+    assert frame.bonds_percent.get() == pytest.approx(30.0)
+    assert frame.cash_percent.get() == pytest.approx(10.0)
+
+    frame.destroy()
 
 
-def test_update_stocks_label_reduces_bonds_when_cash_would_go_negative(tk_root, no_tooltip, main_gui_manual_expenses):
-    mod = no_tooltip
+def test_zero_portfolio_defaults_to_all_cash(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, husband_portfolio=DummyPortfolio())
 
-    frame, _, _, _ = _make_frame(
-        mod,
-        tk_root,
-        main_gui=main_gui_manual_expenses,
-        show_enable_overrides_checkbox=False,
-        show_wife=False,
-    )
+    assert frame.stocks_percent.get() == pytest.approx(0.0)
+    assert frame.bonds_percent.get() == pytest.approx(0.0)
+    assert frame.cash_percent.get() == pytest.approx(100.0)
+
+    frame.destroy()
+
+
+def test_stock_change_reduces_bonds_when_cash_would_be_negative(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root)
 
     frame.stocks_percent.set(80)
-    frame.bonds_percent.set(30)  # would imply cash = -10
+    frame.bonds_percent.set(30)
     frame._update_stocks_label()
 
-    # When cash < 0, code reduces bonds first by the negative cash amount. :contentReference[oaicite:1]{index=1}
-    assert round(frame.stocks_percent.get()) == 80
-    assert round(frame.bonds_percent.get()) == 20
-    assert frame.cash_percent.get() == 0
+    assert frame.stocks_percent.get() == pytest.approx(80.0)
+    assert frame.bonds_percent.get() == pytest.approx(20.0)
+    assert frame.cash_percent.get() == pytest.approx(0.0)
+    assert frame.stocks_label_var.get() == "Stock: 80%"
+    assert frame.bonds_label_var.get() == "Bonds: 20%"
+    assert frame.cash_label_var.get() == "Cash (calculated): 0%"
 
-    assert "Stock: 80%" in frame.stocks_label_var.get()
-    assert "Bonds: 20%" in frame.bonds_label_var.get()
-    assert "Cash" in frame.cash_label_var.get()
+    frame.destroy()
 
 
-def test_update_bonds_label_reduces_stocks_when_cash_would_go_negative(tk_root, no_tooltip, main_gui_manual_expenses):
-    mod = no_tooltip
-
-    frame, _, _, _ = _make_frame(
-        mod,
-        tk_root,
-        main_gui=main_gui_manual_expenses,
-        show_enable_overrides_checkbox=False,
-        show_wife=False,
-    )
+def test_bond_change_reduces_stocks_when_cash_would_be_negative(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root)
 
     frame.stocks_percent.set(80)
-    frame.bonds_percent.set(30)  # would imply cash = -10
+    frame.bonds_percent.set(30)
     frame._update_bonds_label()
 
-    # When cash < 0 in bonds update, code reduces stocks by the negative cash. :contentReference[oaicite:2]{index=2}
-    assert round(frame.stocks_percent.get()) == 70
-    assert round(frame.bonds_percent.get()) == 30
-    assert frame.cash_percent.get() == 0
+    assert frame.stocks_percent.get() == pytest.approx(70.0)
+    assert frame.bonds_percent.get() == pytest.approx(30.0)
+    assert frame.cash_percent.get() == pytest.approx(0.0)
+    assert frame.stocks_label_var.get() == "Stock: 70%"
+    assert frame.bonds_label_var.get() == "Bonds: 30%"
 
-    assert "Stock: 70%" in frame.stocks_label_var.get()
-    assert "Bonds: 30%" in frame.bonds_label_var.get()
+    frame.destroy()
 
 
-def test_update_slider_state_disables_and_grays_controls(tk_root, no_tooltip, main_gui_manual_expenses):
-    mod = no_tooltip
+def test_inflation_callback_rounds_value_and_updates_label(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root)
 
-    frame, _, _, _ = _make_frame(
-        mod,
-        tk_root,
-        main_gui=main_gui_manual_expenses,
-        show_enable_overrides_checkbox=True,  # starts False per init path :contentReference[oaicite:3]{index=3}
-        show_wife=False,
-    )
+    frame._update_inflation_label("4.26")
 
-    # Initial state should be disabled/gray when checkbox shown. :contentReference[oaicite:4]{index=4}
+    assert frame.inflation_value.get() == pytest.approx(4.3)
+    assert frame.inflation_label_var.get() == "Inflation Rate (%): 4.3"
+
+    frame.destroy()
+
+
+def test_fund_expense_callback_updates_label(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root)
+
+    frame._update_fund_expenses_label("0.875")
+
+    assert frame.fund_expense_label_var.get() == "Fund Expenses (%): 0.88"
+
+    frame.destroy()
+
+
+def test_market_adjustment_callback_rounds_value_and_updates_label(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root)
+
+    frame._update_market_adjustment_label("87.6")
+
+    assert frame.market_adjustment_percent.get() == pytest.approx(88.0)
+    assert frame.market_adjustment_label_var.get() == "Market Adjustment:  88%"
+
+    frame.destroy()
+
+
+def test_expense_mode_dynamic_slider_initializes_default(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, expense_mode=True)
+
+    assert float(frame.dynamic_slider.cget("from")) == pytest.approx(50.0)
+    assert float(frame.dynamic_slider.cget("to")) == pytest.approx(200.0)
+    assert frame.dynamic_value.get() == pytest.approx(100.0)
+    assert frame.dynamic_label_var.get() == "Expense Multiplier: 100%"
+
+    frame.destroy()
+
+
+def test_expense_mode_dynamic_slider_uses_snapshot_value(slider_module, tk_root):
+    snapshots = DummySnapshots(scenario_expense_multiplier=1.25)
+    frame = _make_frame(slider_module, tk_root, expense_mode=True, snapshots=snapshots)
+
+    assert frame.dynamic_value.get() == pytest.approx(125.0)
+    assert frame.dynamic_label_var.get() == "Expense Multiplier: 125%"
+
+    frame.destroy()
+
+
+def test_expense_mode_dynamic_callback_changes_ui_only(slider_module, tk_root):
+    snapshots = DummySnapshots(scenario_expense_multiplier=1.0)
+    frame = _make_frame(slider_module, tk_root, expense_mode=True, snapshots=snapshots)
+
+    frame._update_dynamic_slider_label("125.4")
+
+    assert frame.dynamic_value.get() == pytest.approx(125.0)
+    assert frame.dynamic_label_var.get() == "Expense Multiplier: 125%"
+    assert snapshots.scenario_expense_multiplier == pytest.approx(1.0)
+
+    frame.destroy()
+
+
+def test_withdrawal_mode_dynamic_slider_initializes_default(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, expense_mode=False, withdraw_pct=4.25)
+
+    assert float(frame.dynamic_slider.cget("from")) == pytest.approx(0.0)
+    assert float(frame.dynamic_slider.cget("to")) == pytest.approx(10.0)
+    assert frame.dynamic_value.get() == pytest.approx(4.25)
+    assert frame.dynamic_label_var.get() == "Withdrawal: 4.2%"
+
+    frame.destroy()
+
+
+def test_withdrawal_mode_dynamic_slider_uses_snapshot_value(slider_module, tk_root):
+    snapshots = DummySnapshots(scenario_withdraw_pct=5.5)
+    frame = _make_frame(slider_module, tk_root, expense_mode=False, snapshots=snapshots)
+
+    assert frame.dynamic_value.get() == pytest.approx(5.5)
+    assert frame.dynamic_label_var.get() == "Withdrawal: 5.5%"
+
+    frame.destroy()
+
+
+def test_withdrawal_mode_dynamic_callback_changes_ui_only(slider_module, tk_root):
+    snapshots = DummySnapshots(scenario_withdraw_pct=4.0)
+    frame = _make_frame(slider_module, tk_root, expense_mode=False, snapshots=snapshots)
+
+    frame._update_dynamic_slider_label("6.54")
+
+    assert frame.dynamic_value.get() == pytest.approx(6.5)
+    assert frame.dynamic_label_var.get() == "Withdrawal: 6.5%"
+    assert snapshots.scenario_withdraw_pct == pytest.approx(4.0)
+
+    frame.destroy()
+
+
+def test_override_checkbox_disables_controls(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, show_enable_overrides_checkbox=True)
+
+    assert frame.enable_overrides.get() is False
     assert frame.husband_slider.instate(["disabled"])
+    assert frame.husband_ss_slider.instate(["disabled"])
     assert frame.inflation_slider.instate(["disabled"])
     assert frame.fund_expense_slider.instate(["disabled"])
     assert frame.market_adjustment_slider.instate(["disabled"])
@@ -224,85 +333,98 @@ def test_update_slider_state_disables_and_grays_controls(tk_root, no_tooltip, ma
     assert frame.bonds_slider.instate(["disabled"])
     assert str(frame.husband_label.cget("foreground")) == "gray"
     assert str(frame.cash_label.cget("foreground")) == "gray"
-    # Enable and re-apply
+
+    frame.destroy()
+
+
+def test_enabling_overrides_enables_controls(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, show_enable_overrides_checkbox=True)
+
     frame.enable_overrides.set(True)
     frame._update_slider_state()
 
     assert not frame.husband_slider.instate(["disabled"])
+    assert not frame.inflation_slider.instate(["disabled"])
+    assert not frame.stocks_slider.instate(["disabled"])
     assert str(frame.husband_label.cget("foreground")) == ""
     assert str(frame.cash_label.cget("foreground")) == ""
 
-def test_adjust_retirement_benefits_year_by_year_clamps_ss_ages_and_scales_ss(tk_root, no_tooltip, main_gui_manual_expenses):
-    mod = no_tooltip
-
-    frame, persons, _, _ = _make_frame(
-        mod,
-        tk_root,
-        main_gui=main_gui_manual_expenses,
-        show_enable_overrides_checkbox=False,
-        show_wife=False,
-        h_person=DummyPerson(retire_age=55, ss=2000.0, pension=111.0, annuity=222.0, ss_age=55),
-        baseline_persons={"husband": DummyPerson(retire_age=75, ss=2480.0, pension=111.0, annuity=222.0, ss_age=75)},
-    )
-
-    snapshot = persons["husband"]
-    baseline = frame.baseline_persons["husband"]
-
-    frame.adjust_retirement_benefits_year_by_year(snapshot, baseline)
-
-    # Baseline SS age clamps to 70; snapshot SS age clamps to 62.
-    # baseline_factor(70)=1.24, new_factor(62)=0.70 => baseline_pia=2480/1.24=2000 => new_ss=2000*0.70=1400
-    assert snapshot.ss == 1400.00
-    assert snapshot.pension == baseline.pension
-    assert snapshot.annuity == baseline.annuity
-    assert snapshot.ss_age == 55
-    assert snapshot.pension_age == snapshot.retire_age
-    assert snapshot.annuity_age == snapshot.retire_age
-
-def test_dynamic_slider_manual_expenses_config_and_update_stores_multiplier(tk_root, no_tooltip, main_gui_manual_expenses):
-    mod = no_tooltip
-
-    snapshots = DummySnapshots(scenario_expense_multiplier=None)
-    frame, _, _, snaps = _make_frame(
-        mod,
-        tk_root,
-        main_gui=main_gui_manual_expenses,
-        show_enable_overrides_checkbox=False,
-        show_wife=False,
-        snapshots=snapshots,
-    )
-
-    # Manual mode config: from 50 to 200, default value 100 if None. :contentReference[oaicite:6]{index=6}
-    assert float(frame.dynamic_slider.cget("from")) == 50.0
-    assert float(frame.dynamic_slider.cget("to")) == 200.0
-    assert round(frame.dynamic_value.get()) == 100
-    assert "Expense Multiplier" in frame.dynamic_label_var.get()
-
-    # Update stores multiplier (val/100). :contentReference[oaicite:7]{index=7}
-    frame._update_dynamic_slider_label("125")
-    assert snaps.scenario_expense_multiplier == 1.25
-    assert "125%" in frame.dynamic_label_var.get()
+    frame.destroy()
 
 
-def test_dynamic_slider_withdraw_mode_config_and_update_stores_withdraw_pct(tk_root, no_tooltip, main_gui_withdraw_mode):
-    mod = no_tooltip
+def test_scenario_mode_starts_with_controls_enabled(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, show_enable_overrides_checkbox=False)
 
-    snapshots = DummySnapshots(scenario_withdraw_pct=None)
-    frame, _, _, snaps = _make_frame(
-        mod,
-        tk_root,
-        main_gui=main_gui_withdraw_mode,
-        show_enable_overrides_checkbox=False,
-        show_wife=False,
-        snapshots=snapshots,
-    )
+    assert frame.enable_overrides.get() is True
+    assert frame.enable_overrides_cb is None
+    assert not frame.husband_slider.instate(["disabled"])
+    assert not frame.stocks_slider.instate(["disabled"])
 
-    # Withdraw mode config: from 0 to 10, default value from main_gui controls. :contentReference[oaicite:8]{index=8}
-    assert float(frame.dynamic_slider.cget("from")) == 0.0
-    assert float(frame.dynamic_slider.cget("to")) == 10.0
-    assert abs(frame.dynamic_value.get() - 4.25) < 1e-9
-    assert "Withdrawal" in frame.dynamic_label_var.get()
+    frame.destroy()
 
-    frame._update_dynamic_slider_label("6.5")
-    assert snaps.scenario_withdraw_pct == 6.5
-    assert "6.5%" in frame.dynamic_label_var.get()
+
+def test_changed_control_highlighting_tracks_baseline(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root)
+
+    assert _font_weight(frame.inflation_label) == "normal"
+
+    frame.inflation_value.set(4.0)
+    tk_root.update_idletasks()
+
+    assert _font_weight(frame.inflation_label) == "bold"
+
+    frame.inflation_value.set(3.0)
+    tk_root.update_idletasks()
+
+    assert _font_weight(frame.inflation_label) == "normal"
+
+    frame.destroy()
+
+
+def test_get_values_returns_current_single_person_controls(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, expense_mode=True)
+
+    frame.tmp_ret_age_h.set(66)
+    frame.tmp_ss_age_h.set(68)
+    frame.inflation_value.set(4.0)
+    frame.fund_expense_value.set(0.75)
+    frame.market_adjustment_percent.set(90)
+    frame.stocks_percent.set(65)
+    frame.bonds_percent.set(25)
+    frame.cash_percent.set(10)
+    frame.dynamic_value.set(125)
+    frame.calculate_real_dollars.set(False)
+    frame.enable_annotations.set(False)
+
+    values = frame.get_values()
+
+    assert isinstance(values, slider_module.ScenarioControlValues)
+    assert values.husband_ret_age == 66
+    assert values.husband_ss_age == 68
+    assert values.wife_ret_age is None
+    assert values.wife_ss_age is None
+    assert values.inflation == pytest.approx(4.0)
+    assert values.fund_expense == pytest.approx(0.75)
+    assert values.market_adjustment == pytest.approx(90.0)
+    assert values.stocks == pytest.approx(65.0)
+    assert values.bonds == pytest.approx(25.0)
+    assert values.cash == pytest.approx(10.0)
+    assert values.dynamic_value == pytest.approx(125.0)
+    assert values.calculate_real_dollars is False
+    assert values.enable_annotations is False
+
+    frame.destroy()
+
+
+def test_get_values_returns_wife_controls_when_present(slider_module, tk_root):
+    frame = _make_frame(slider_module, tk_root, show_wife=True)
+
+    frame.tmp_ret_age_w.set(64)
+    frame.tmp_ss_age_w.set(67)
+
+    values = frame.get_values()
+
+    assert values.wife_ret_age == 64
+    assert values.wife_ss_age == 67
+
+    frame.destroy()

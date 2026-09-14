@@ -2,7 +2,6 @@
 
 import tkinter as tk
 from tkinter import ttk
-import matplotlib.pyplot as plt
 
 SCENARIO_MODE_SCENARIO_VIEW = "scenario_view"
 SCENARIO_MODE_INCOME_COMPARE = "income_compare"
@@ -35,7 +34,7 @@ from src.warpsimlab.gui.scenario.gui_scenarioPlots import (
 )
 
 from src.warpsimlab.gui.gui_utils import set_tk_button_soft_disabled, noop
-from src.warpsimlab.gui.scenario.gui_scenarioState import ScenarioStateManager
+from src.warpsimlab.gui.scenario.gui_scenarioState import ScenarioSessionState, ScenarioStateManager
 from src.warpsimlab.gui.scenario.gui_scenarioResults import ScenarioResultsFrame
 
 class ScenarioController:
@@ -45,30 +44,14 @@ class ScenarioController:
 
     def __init__(self, main_gui):
         self.main_gui = main_gui
-        self.plot_manager = ScenarioPlotManager(self)
-        self.state_manager = ScenarioStateManager(self)
+        self.session_state = ScenarioSessionState()
+        self.plot_manager = ScenarioPlotManager(self.main_gui, self._stop_session)
+        self.state_manager = ScenarioStateManager(self.main_gui, self.session_state)
         self.session_active = False
         self.window = None
 
-        self.income_fig = None
-        self.income_ax = None
-
-        self.portfolio_fig = None
-        self.portfolio_ax = None
-
-        self.baseline_person_snapshots = None
-        self.baseline_portfolio_snapshots = None
-        self.baseline_retirement_snapshots = None
-
-        self.person_snapshots = None          # mutable scenario persons
-        self.portfolio_snapshots = None       # mutable scenario portfolios
-        self.retirement_snapshots = None      # mutable scenario settings
-        self.sliders_frame = None             # RetirementSlidersFrame widget
+        self.sliders_frame = None              # ScenarioSlidersFrame widget
         self.results_frame = None
-
-        # Epic 2 caches
-        self.baseline_results = None          # original/truth results; recomputed on start/resync
-        self.scenario_results = None          # changed/slider results; recomputed on slider change
 
         self._pending_job_id = None
         self._debounce_ms = 150  # adjust if desired (200-400)
@@ -178,43 +161,25 @@ class ScenarioController:
             except Exception:
                 pass
 
-        # Close plot figures if they exist
-        for fig in [self.income_fig, self.portfolio_fig]:
-            if fig is not None:
-                try:
-                    plt.close(fig)
-                except Exception:
-                    pass
+        self.plot_manager.close_plots()
 
-        self.income_fig = None
-        self.income_ax = None
-        self.portfolio_fig = None
-        self.portfolio_ax = None
-        self.baseline_results = None
-        self.scenario_results = None
+        self.session_state.baseline_results = None
+        self.session_state.scenario_results = None
 
         self.window = None
         self.session_active = False
 
 
     def _create_persistent_plots(self):
-        self.plot_manager.create_persistent_plots()
-
-
-    def _get_plot_window(self, figure):
-        return self.plot_manager.get_plot_window(figure)
+        self.plot_manager.create_persistent_plots(self.window)
 
 
     def capture_current_layout(self):
-        self.plot_manager.capture_current_layout()
-
-
-    def _restore_saved_layout(self):
-        return self.plot_manager.restore_saved_layout()
+        self.plot_manager.capture_current_layout(self.window)
 
 
     def _position_windows(self):
-        self.plot_manager.position_windows()
+        self.plot_manager.position_windows(self.window)
 
 
     def _resolve_panels_for_mode(self):
@@ -253,34 +218,6 @@ class ScenarioController:
             {"plot_family": PLOT_FAMILY_CASHFLOW, "result_source": RESULT_SOURCE_SCENARIO},
             {"plot_family": PLOT_FAMILY_PORTFOLIO, "result_source": RESULT_SOURCE_SCENARIO},
         )
-
-
-    def _panel_role_label(self, panel):
-        return self.plot_manager.panel_role_label(panel)
-
-
-    def _panel_window_title(self, panel):
-        return self.plot_manager.panel_window_title(panel)
-
-
-    def _apply_panel_window_title(self, fig, panel):
-        self.plot_manager.apply_panel_window_title(fig, panel)
-
-
-    def _draw_panel_role_label(self, ax, panel):
-        self.plot_manager.draw_panel_role_label(ax, panel)
-
-
-    def _display_sim_config(self, result, panel):
-        return self.plot_manager.display_sim_config(result, panel)
-
-
-    def _sync_compare_axes(self, left_panel, right_panel):
-        self.plot_manager.sync_compare_axes(left_panel, right_panel)
-
-
-    def _draw_panel(self, ax, fig, panel):
-        self.plot_manager.draw_panel(ax, fig, panel)
 
 
     def resync(self):
@@ -324,7 +261,7 @@ class ScenarioController:
 
         try:
             # Cannot draw until plots exist
-            if self.income_ax is None or self.portfolio_ax is None:
+            if not self.plot_manager.has_plots():
                 return
 
             self._apply_slider_values_to_snapshots()
@@ -419,40 +356,6 @@ class ScenarioController:
                 v.trace_add("write", lambda *args: self.schedule_update())
             except Exception:
                 pass
-        '''
-        vars_to_trace = [
-            ("husband_retirement", self.sliders_frame.tmp_ret_age_h),
-            ("husband_ss", self.sliders_frame.tmp_ss_age_h),
-            ("inflation", self.sliders_frame.inflation_value),
-            ("fund_expense", self.sliders_frame.fund_expense_value),
-            ("market_adjustment", self.sliders_frame.market_adjustment_percent),
-            ("stocks", self.sliders_frame.stocks_percent),
-            ("bonds", self.sliders_frame.bonds_percent),
-            ("cash", self.sliders_frame.cash_percent),
-            ("annotations", self.sliders_frame.enable_annotations),
-            ("adjust_inflation", self.sliders_frame.calculate_real_dollars),
-            ("dynamic", self.sliders_frame.dynamic_value),
-        ]
-
-        if getattr(self.sliders_frame, "tmp_ret_age_w", None) is not None:
-            vars_to_trace.append(("wife_retirement", self.sliders_frame.tmp_ret_age_w))
-        if getattr(self.sliders_frame, "tmp_ss_age_w", None) is not None:
-            vars_to_trace.append(("wife_ss", self.sliders_frame.tmp_ss_age_w))
-
-        def _trace_update(name):
-            def _callback(*_args):
-                print(f"Scenario trace: {name}")
-                self.schedule_update()
-            return _callback
-
-        for name, variable in vars_to_trace:
-            if variable is None:
-                continue
-            try:
-                variable.trace_add("write", _trace_update(name))
-            except Exception:
-                pass
-    '''
 
 
     def _on_mode_dropdown_selected(self, event=None):
@@ -525,13 +428,11 @@ class ScenarioController:
         self.sliders_frame = ScenarioSlidersFrame(
             main,
             main_gui=self.main_gui,
-            persons=self.person_snapshots,
-            portfolio=self.portfolio_snapshots,
-            retirement_snapshots=self.retirement_snapshots,
+            persons=self.session_state.person_snapshots,
+            portfolio=self.session_state.portfolio_snapshots,
+            retirement_snapshots=self.session_state.retirement_snapshots,
             show_enable_overrides_checkbox=False,      # Scenario: no checkbox
-            allow_main_gui_override_flag=False,        # Scenario: never toggle main_gui flags
-            show_wife=show_wife,                       # hide wife when not enabled
-            baseline_persons=self.baseline_person_snapshots
+            show_wife=show_wife                        # hide wife when not enabled
         )
         self.sliders_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
 
@@ -577,12 +478,6 @@ class ScenarioController:
         self.plot_style_dropdown.grid(row=3, column=0, sticky="w", pady=(2, 6))
         self.plot_style_dropdown.bind("<<ComboboxSelected>>", self._on_plot_style_dropdown_selected)
 
-        # Currently does nothing.  We moved this functionality from the plots into the left sidebar Results column.
-        #self.annotate_cb = ttk.Checkbutton(
-        #    controls_frame, text="Annotate Plots", variable=self.sliders_frame.enable_annotations
-        #)
-        #self.annotate_cb.grid(row=2, column=0, sticky="w", pady=(0, 2))
-
         self.include_realestate_var = tk.BooleanVar(value=bool(controls.get("include_realestate", False)))
         self.include_realestate_cb = ttk.Checkbutton(
             controls_frame, text="Include Real Estate", variable=self.include_realestate_var,
@@ -613,48 +508,48 @@ class ScenarioController:
         self.results_frame = ScenarioResultsFrame(main)
         self.results_frame.grid(row=0, column=1, rowspan=2, sticky="nsew")
 
-        # Disable annotate checkbox when overrides are disabled (for non-scenario uses)
-        # Currently does nothing.  We moved this functionality from the plots into the left sidebar Results column.
-
-        #try:
-        #    if not bool(self.sliders_frame.enable_overrides.get()):
-        #        self.annotate_cb.state(["disabled"])
-        #except Exception:
-        #    pass
-
 
     def _apply_slider_values_to_snapshots(self):
-        self.state_manager.apply_slider_values_to_snapshots()
+        if self.sliders_frame is None:
+            return
 
-
-    def _clone_result_inputs(self, persons, portfolios, retirement_snapshots):
-        return self.state_manager.clone_result_inputs(persons, portfolios, retirement_snapshots)
-
-
-    def _compute_results_from_inputs(self, persons, portfolios, retirement_snapshots):
-        return self.state_manager.compute_results_from_inputs(persons, portfolios, retirement_snapshots)
+        values = self.sliders_frame.get_values()
+        self.state_manager.apply_control_values(values)
 
 
     def _compute_baseline_results(self):
-        self.state_manager.compute_baseline_results()
+        include_realestate = bool(self.main_gui.simulation_controls.get("include_realestate", False))
+        self.state_manager.compute_baseline_results(include_realestate, self.plot_style)
 
 
     def _compute_scenario_results(self):
-        return self.state_manager.compute_scenario_results()
+        include_realestate = self.include_realestate_var.get()
+        return self.state_manager.compute_scenario_results(include_realestate, self.plot_style)
+
 
     def _render_panels(self):
         """
         Render both panels according to the current mode.
         """
         left_panel, right_panel = self._resolve_panels_for_mode()
-        sync_axes = self.mode in (SCENARIO_MODE_INCOME_COMPARE, SCENARIO_MODE_CASHFLOW_COMPARE, SCENARIO_MODE_PORTFOLIO_COMPARE)
-        self.plot_manager.render_panels(left_panel, right_panel, sync_axes=sync_axes)
+        sync_axes = self.mode in (
+            SCENARIO_MODE_INCOME_COMPARE, SCENARIO_MODE_CASHFLOW_COMPARE, SCENARIO_MODE_PORTFOLIO_COMPARE
+        )
+
+        annotations_enabled = False
+        if self.sliders_frame is not None:
+            annotations_enabled = bool(self.sliders_frame.enable_annotations.get())
+
+        self.plot_manager.render_panels(
+            left_panel, right_panel, self.session_state.baseline_results, self.session_state.scenario_results,
+            self.mode, annotations_enabled, sync_axes=sync_axes
+        )
 
 
     def _run_scenario_simulation(self):
         self._compute_scenario_results()
         if self.results_frame is not None:
-            self.results_frame.update_results(self.baseline_results, self.scenario_results)
+            self.results_frame.update_results(self.state_manager.build_results_view_model())
         self._render_panels()
 
 

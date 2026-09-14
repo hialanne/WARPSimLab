@@ -5,8 +5,24 @@ import tkinter.font as tkfont
 from tkinter import ttk
 
 from src.warpsimlab.utils.tooltip import *
+from dataclasses import dataclass
+from src.warpsimlab.gui.scenario.gui_scenarioState import compute_portfolio_percentages
 
-
+@dataclass
+class ScenarioControlValues:
+    husband_ret_age: int
+    husband_ss_age: int
+    wife_ret_age: int | None
+    wife_ss_age: int | None
+    inflation: float
+    fund_expense: float
+    market_adjustment: float
+    stocks: float
+    bonds: float
+    cash: float
+    dynamic_value: float
+    calculate_real_dollars: bool
+    enable_annotations: bool
 
 class ScenarioSlidersFrame(ttk.LabelFrame):
     def __init__(
@@ -18,9 +34,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         retirement_snapshots=None,
         *,
         show_enable_overrides_checkbox=True,
-        allow_main_gui_override_flag=True,
         show_wife=True,
-        baseline_persons=None,
     ):
         super().__init__(
             parent,
@@ -37,12 +51,13 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.husband = persons["husband"]
 
         # Wife may be omitted when second_person_enabled is False
-        self.wife = persons.get("wife") if persons else None
-        if not show_wife:
+        if persons:
+            self.wife = persons.get("wife")
+        else:
             self.wife = None
 
-        # Baselines used for SS adjustment logic (do not mutate baselines)
-        self.baseline_persons = baseline_persons if baseline_persons is not None else {}
+        if not show_wife:
+            self.wife = None
 
         self.portfolio = portfolio
         self.retirement_snapshots = retirement_snapshots
@@ -54,7 +69,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         # --------------------
         # Enable Temporary Portfolio Overrides checkbox (optional)
         # --------------------
-        self.enable_overrides = tk.BooleanVar(value=True if not show_enable_overrides_checkbox else False)
+        self.enable_overrides = tk.BooleanVar(value=not show_enable_overrides_checkbox)
 
         if show_enable_overrides_checkbox:
             self.enable_overrides_cb = ttk.Checkbutton(
@@ -279,7 +294,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         # Portfolio allocation
         # --------------------
 
-        stocks_pct, bonds_pct, cash_pct = self._compute_initial_portfolio_percents()
+        stocks_pct, bonds_pct, cash_pct = compute_portfolio_percentages(self.portfolio)
 
         # Stocks (0,2)
         self.stocks_percent = tk.DoubleVar(value=stocks_pct)
@@ -331,9 +346,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         # --------------------
         # Initialize slider states
         # --------------------
-
-        # store flags for _update_slider_state
-        self.allow_main_gui_override_flag = allow_main_gui_override_flag
 
         if show_enable_overrides_checkbox:
             self.enable_overrides.set(False)
@@ -388,42 +400,34 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
     def _refresh_changed_highlights(self):
         for variable, label, baseline in self._highlight_controls:
             current = self._numeric_value(variable.get())
-            changed = abs(current - baseline) > 1e-9 if isinstance(current, float) and isinstance(baseline, float) else current != baseline
-            label.configure(font=self.changed_label_font if changed else self.normal_label_font)
 
+            if isinstance(current, float) and isinstance(baseline, float):
+                changed = abs(current - baseline) > 1e-9
+            else:
+                changed = current != baseline
+
+            if changed:
+                label.configure(font=self.changed_label_font)
+            else:
+                label.configure(font=self.normal_label_font)
 
     # --------------------
     # Slider update callbacks
     # --------------------
     def _update_husband_label(self, *args):
-        self.husband.retire_age = self.tmp_ret_age_h.get()
-        baseline = self.baseline_persons.get("husband")
-        if baseline is not None:
-            self.adjust_retirement_benefits_year_by_year(self.husband, baseline)
-        self.husband_label_var.set(f"Husband Retirement Age: {self.husband.retire_age}")
+        self.husband_label_var.set(f"Husband Retirement Age: {self.tmp_ret_age_h.get()}")
+
 
     def _update_husband_ss_label(self, *args):
-        self.husband.ss_age = self.tmp_ss_age_h.get()
-        baseline = self.baseline_persons.get("husband")
-        if baseline is not None:
-            self.adjust_retirement_benefits_year_by_year(self.husband, baseline)
-        self.husband_ss_label_var.set(f"Husband Social Security Age: {self.husband.ss_age}")
+        self.husband_ss_label_var.set(f"Husband Social Security Age: {self.tmp_ss_age_h.get()}")
 
 
     def _update_wife_ss_label(self, *args):
-        self.wife.ss_age = self.tmp_ss_age_w.get()
-        baseline = self.baseline_persons.get("wife")
-        if baseline is not None:
-            self.adjust_retirement_benefits_year_by_year(self.wife, baseline)
-        self.wife_ss_label_var.set(f"Wife Social Security Age: {self.wife.ss_age}")
+        self.wife_ss_label_var.set(f"Wife Social Security Age: {self.tmp_ss_age_w.get()}")
 
 
     def _update_wife_label(self, *args):
-        self.wife.retire_age = self.tmp_ret_age_w.get()
-        baseline = self.baseline_persons.get("wife")
-        if baseline is not None:
-            self.adjust_retirement_benefits_year_by_year(self.wife, baseline)
-        self.wife_label_var.set(f"Wife Retirement Age: {self.wife.retire_age}")
+        self.wife_label_var.set(f"Wife Retirement Age: {self.tmp_ret_age_w.get()}")
 
 
     def _update_inflation_label(self, val):
@@ -474,39 +478,26 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         value = round(float(val))
         self.market_adjustment_percent.set(value)
         self.market_adjustment_label_var.set(f"Market Adjustment: {value:>3}%")
-        self.retirement_snapshots.historical_data_multiplier = value
 
 
-    # --------------------
-    # Portfolio snapshot updates
-    # --------------------
-    def _compute_initial_portfolio_percents(self):
-        h_port = self.portfolio["husband"]
-        w_port = self.portfolio.get("wife") if self.portfolio else None
+    def get_values(self):
+        wife_ret_age = None
+        wife_ss_age = None
 
-        w_eq_pre  = w_port.equity_pre if w_port else 0
-        w_eq_post = w_port.equity_post if w_port else 0
-        w_bd_pre  = w_port.bond_pre if w_port else 0
-        w_bd_post = w_port.bond_post if w_port else 0
-        w_cs_pre  = w_port.cash_pre if w_port else 0
-        w_cs_post = w_port.cash_post if w_port else 0
+        if self.tmp_ret_age_w is not None:
+            wife_ret_age = self.tmp_ret_age_w.get()
 
-        total_equity = h_port.equity_pre + h_port.equity_post + w_eq_pre + w_eq_post
-        total_bonds  = h_port.bond_pre   + h_port.bond_post   + w_bd_pre + w_bd_post
-        total_cash   = h_port.cash_pre   + h_port.cash_post   + w_cs_pre + w_cs_post
+        if self.tmp_ss_age_w is not None:
+            wife_ss_age = self.tmp_ss_age_w.get()
 
-        total_portfolio = total_equity + total_bonds + total_cash
-
-        if total_portfolio > 0:
-            stocks_pct = (total_equity / total_portfolio) * 100
-            bonds_pct  = (total_bonds / total_portfolio) * 100
-            cash_pct   = 100 - stocks_pct - bonds_pct
-        else:
-            stocks_pct, bonds_pct, cash_pct = 0, 0, 100
-
-        #print("stocks: "+str(stocks_pct)+" bonds: "+str(bonds_pct)+" cash:"+str(cash_pct))
-        return round(stocks_pct), round(bonds_pct), round(cash_pct)
-
+        return ScenarioControlValues(
+            husband_ret_age=self.tmp_ret_age_h.get(), husband_ss_age=self.tmp_ss_age_h.get(),
+            wife_ret_age=wife_ret_age, wife_ss_age=wife_ss_age, inflation=self.inflation_value.get(),
+            fund_expense=self.fund_expense_value.get(), market_adjustment=self.market_adjustment_percent.get(),
+            stocks=self.stocks_percent.get(), bonds=self.bonds_percent.get(), cash=self.cash_percent.get(),
+            dynamic_value=self.dynamic_value.get(), calculate_real_dollars=self.calculate_real_dollars.get(),
+            enable_annotations=self.enable_annotations.get()
+        )
 
 
     # --------------------
@@ -514,7 +505,10 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
     # --------------------
     def _update_slider_state(self, *args):
         enabled = bool(self.enable_overrides.get())
-        state = "normal" if enabled else "disabled"
+        if enabled:
+            state = "normal"
+        else:
+            state = "disabled"
 
         # Sliders/labels that always exist
         slider_label_pairs = [
@@ -544,36 +538,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             self.cash_label.configure(foreground="")
         else:
             self.cash_label.configure(foreground="gray")
-
-        # Adjust SS benefits based on baseline persons if provided
-        baseline_h = self.baseline_persons.get("husband", self.main_gui.husband if self.main_gui else None)
-        if baseline_h is not None:
-            self.adjust_retirement_benefits_year_by_year(self.husband, baseline_h)
-
-        if self.wife is not None:
-            baseline_w = self.baseline_persons.get("wife", self.main_gui.wife if self.main_gui else None)
-            if baseline_w is not None:
-                self.adjust_retirement_benefits_year_by_year(self.wife, baseline_w)
-
-
-    # --------------------
-    # Adjust retirement benefits
-    # --------------------
-    def adjust_retirement_benefits_year_by_year(self, snapshot, baseline):
-        ss_factors = {62:0.70, 63:0.75, 64:0.80, 65:0.867, 66:0.933, 67:1.0, 68:1.08, 69:1.16, 70:1.24}
-
-        baseline_ss_age = min(max(baseline.ss_age, 62), 70)
-        new_ss_age = min(max(snapshot.ss_age, 62), 70)
-        baseline_factor = ss_factors[baseline_ss_age]
-        new_factor = ss_factors[new_ss_age]
-
-        baseline_pia = baseline.ss / baseline_factor if baseline_factor > 0 else baseline.ss
-        snapshot.ss = round(baseline_pia * new_factor, 2)
-
-        snapshot.pension = baseline.pension
-        snapshot.annuity = baseline.annuity
-        snapshot.pension_age = snapshot.retire_age
-        snapshot.annuity_age = snapshot.retire_age
 
 
     def _configure_dynamic_slider(self):
@@ -609,9 +573,7 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             value = round(value)
             self.dynamic_value.set(value)
             self.dynamic_label_var.set(f"Expense Multiplier: {value:.0f}%")
-            self.retirement_snapshots.scenario_expense_multiplier = value / 100.0
         else:
             value = round(value, 1)
             self.dynamic_value.set(value)
             self.dynamic_label_var.set(f"Withdrawal: {value:.1f}%")
-            self.retirement_snapshots.scenario_withdraw_pct = value

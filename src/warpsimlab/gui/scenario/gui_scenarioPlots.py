@@ -23,32 +23,54 @@ class ScenarioPlotManager:
     Owns Scenario Explorer Matplotlib figure creation and plot-window layout.
     """
 
-    def __init__(self, controller):
-        self.controller = controller
-        self.main_gui = controller.main_gui
+    def __init__(self, main_gui, close_callback):
+        self.main_gui = main_gui
+        self.close_callback = close_callback
+        self.income_fig = None
+        self.income_ax = None
+        self.portfolio_fig = None
+        self.portfolio_ax = None
 
-    def create_persistent_plots(self):
+
+    def create_persistent_plots(self, dashboard_window):
         """
-        Create two persistent Matplotlib figures and store references on the controller.
+        Create the two persistent Scenario Explorer Matplotlib figures.
         """
-        c = self.controller
+        self.income_fig, self.income_ax = plt.subplots(figsize=(8, 5))
+        self.income_fig.canvas.manager.set_window_title("Scenario Explorer")
 
-        c.income_fig, c.income_ax = plt.subplots(figsize=(8, 5))
-        c.income_fig.canvas.manager.set_window_title("Scenario Explorer")
+        self.portfolio_fig, self.portfolio_ax = plt.subplots(figsize=(8, 5))
+        self.portfolio_fig.canvas.manager.set_window_title("Scenario Explorer")
 
-        c.portfolio_fig, c.portfolio_ax = plt.subplots(figsize=(8, 5))
-        c.portfolio_fig.canvas.manager.set_window_title("Scenario Explorer")
+        self.income_fig.canvas.mpl_connect("close_event", lambda event: self.close_callback())
+        self.portfolio_fig.canvas.mpl_connect("close_event", lambda event: self.close_callback())
 
-        c.income_fig.canvas.mpl_connect("close_event", lambda event: c._stop_session())
-        c.portfolio_fig.canvas.mpl_connect("close_event", lambda event: c._stop_session())
-
-        if not self.restore_saved_layout():
-            self.position_windows()
+        if not self.restore_saved_layout(dashboard_window):
+            self.position_windows(dashboard_window)
 
         try:
             plt.show(block=False)
         except Exception:
             pass
+
+
+    def has_plots(self):
+        return self.income_ax is not None and self.portfolio_ax is not None
+
+
+    def close_plots(self):
+        for fig in [self.income_fig, self.portfolio_fig]:
+            if fig is not None:
+                try:
+                    plt.close(fig)
+                except Exception:
+                    pass
+
+        self.income_fig = None
+        self.income_ax = None
+        self.portfolio_fig = None
+        self.portfolio_ax = None
+
 
     def get_plot_window(self, figure):
         """
@@ -65,44 +87,44 @@ class ScenarioPlotManager:
 
         return getattr(manager, "window", None)
 
-    def capture_current_layout(self):
+
+    def capture_current_layout(self, dashboard_window):
         """
         Save the three Scenario Explorer window geometries when enabled.
         """
-        c = self.controller
         scenario_settings = self.main_gui.display_settings["scenario_explorer"]
 
         if scenario_settings.get("layout_mode") != SCENARIO_LAYOUT_REMEMBER:
             return
 
-        income_window = self.get_plot_window(c.income_fig)
-        portfolio_window = self.get_plot_window(c.portfolio_fig)
+        income_window = self.get_plot_window(self.income_fig)
+        portfolio_window = self.get_plot_window(self.portfolio_fig)
 
-        if income_window is None or portfolio_window is None or c.window is None:
+        if income_window is None or portfolio_window is None or dashboard_window is None:
             return
 
         try:
             income_window.update_idletasks()
             portfolio_window.update_idletasks()
-            c.window.update_idletasks()
+            dashboard_window.update_idletasks()
 
             scenario_settings["layout"] = {
                 "income_plot": income_window.winfo_geometry(),
                 "portfolio_plot": portfolio_window.winfo_geometry(),
-                "dashboard": c.window.winfo_geometry(),
+                "dashboard": dashboard_window.winfo_geometry(),
             }
         except tk.TclError:
             return
 
         save_display_settings(self.main_gui.display_settings)
 
-    def restore_saved_layout(self):
+
+    def restore_saved_layout(self, dashboard_window):
         """
         Restore the three saved Scenario Explorer geometries.
 
         Returns True only when all three saved windows are valid and visible.
         """
-        c = self.controller
         scenario_settings = self.main_gui.display_settings["scenario_explorer"]
 
         if scenario_settings.get("layout_mode") != SCENARIO_LAYOUT_REMEMBER:
@@ -125,27 +147,26 @@ class ScenarioPlotManager:
             save_display_settings(self.main_gui.display_settings)
             return False
 
-        income_window = self.get_plot_window(c.income_fig)
-        portfolio_window = self.get_plot_window(c.portfolio_fig)
+        income_window = self.get_plot_window(self.income_fig)
+        portfolio_window = self.get_plot_window(self.portfolio_fig)
 
-        if income_window is None or portfolio_window is None or c.window is None:
+        if income_window is None or portfolio_window is None or dashboard_window is None:
             return False
 
         try:
             income_window.geometry(income_geometry)
             portfolio_window.geometry(portfolio_geometry)
-            c.window.geometry(dashboard_geometry)
+            dashboard_window.geometry(dashboard_geometry)
         except tk.TclError:
             return False
 
         return True
 
 
-    def position_windows(self):
+    def position_windows(self, dashboard_window):
         """
         Position the Scenario Dashboard on the left, with Cash Flow above Portfolio on the right.
         """
-        c = self.controller
 
         try:
             root = self.main_gui.root
@@ -176,35 +197,36 @@ class ScenarioPlotManager:
             top_y = work_top + gap
             portfolio_y = top_y + plot_height + gap
 
-            if c.window is not None:
-                c.window.geometry(f"{dashboard_width}x{dashboard_height}+{dashboard_x}+{top_y}")
+            if dashboard_window is not None:
+                dashboard_window.geometry(f"{dashboard_width}x{dashboard_height}+{dashboard_x}+{top_y}")
 
-            c.income_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{plot_x}+{top_y}")
-            c.portfolio_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{plot_x}+{portfolio_y}")
+            self.income_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{plot_x}+{top_y}")
+            self.portfolio_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{plot_x}+{portfolio_y}")
 
         except Exception:
             pass
 
 
-    def panel_role_label(self, panel):
+    def panel_role_label(self, panel, mode):
         """
         Human-readable label for the current panel.
         """
-        c = self.controller
-
         if panel["result_source"] == RESULT_SOURCE_BASELINE:
             return "Original"
+
         if panel["result_source"] == RESULT_SOURCE_SCENARIO:
-            return "Changed" if c.mode != "scenario_view" else "Scenario"
+            if mode != "scenario_view":
+                return "Changed"
+            return "Scenario"
 
         return "Scenario"
 
 
-    def panel_window_title(self, panel):
+    def panel_window_title(self, panel, mode):
         """
         Human-readable figure window title for the current panel.
         """
-        role = self.panel_role_label(panel)
+        role = self.panel_role_label(panel, mode)
 
         if panel["plot_family"] == PLOT_FAMILY_INCOME:
             family = "Income"
@@ -216,40 +238,21 @@ class ScenarioPlotManager:
         return f"{role} {family}"
 
 
-    def apply_panel_window_title(self, fig, panel):
+    def apply_panel_window_title(self, fig, panel, mode):
         try:
             manager = getattr(fig.canvas, "manager", None)
             if manager is not None:
-                manager.set_window_title(self.panel_window_title(panel))
+                manager.set_window_title(self.panel_window_title(panel, mode))
         except Exception:
             pass
 
 
-    def draw_panel_role_label(self, ax, panel):
-        """
-        Draw a centered role label inside the plot area, just below the title.
-        """
-        label = self.panel_role_label(panel)
-
-        ax.text(0.5, 0.985, label, transform=ax.transAxes, ha="center", va="top", fontsize=10, fontweight="bold",
-                bbox=dict(boxstyle="round,pad=0.20", facecolor="white", edgecolor="none", alpha=0.75), zorder=20)
-
-
-    def display_sim_config(self, result, panel):
+    def display_sim_config(self, result, panel, annotations_enabled):
         """
         Return a display-only sim_config copy for plot rendering tweaks.
         """
-        c = self.controller
         sim_config = copy.copy(result["sim_config"])
-
-        annotate_enabled = False
-        if c.sliders_frame is not None and hasattr(c.sliders_frame, "enable_annotations"):
-            try:
-                annotate_enabled = bool(c.sliders_frame.enable_annotations.get())
-            except Exception:
-                annotate_enabled = False
-
-        sim_config.use_snapshot_annotations = annotate_enabled
+        sim_config.use_snapshot_annotations = bool(annotations_enabled)
         sim_config.scenario_explorer_annotations = []
 
         if panel["plot_family"] == PLOT_FAMILY_INCOME:
@@ -264,40 +267,40 @@ class ScenarioPlotManager:
         """
         In compare modes, keep x/y scales identical across both windows.
         """
-        c = self.controller
-
         if left_panel["plot_family"] != right_panel["plot_family"]:
             return
 
-        left_xlim = c.income_ax.get_xlim()
-        right_xlim = c.portfolio_ax.get_xlim()
-        left_ylim = c.income_ax.get_ylim()
-        right_ylim = c.portfolio_ax.get_ylim()
+        left_xlim = self.income_ax.get_xlim()
+        right_xlim = self.portfolio_ax.get_xlim()
+        left_ylim = self.income_ax.get_ylim()
+        right_ylim = self.portfolio_ax.get_ylim()
 
         shared_xlim = (min(left_xlim[0], right_xlim[0]), max(left_xlim[1], right_xlim[1]))
         shared_ylim = (min(left_ylim[0], right_ylim[0]), max(left_ylim[1], right_ylim[1]))
 
-        c.income_ax.set_xlim(shared_xlim)
-        c.portfolio_ax.set_xlim(shared_xlim)
-        c.income_ax.set_ylim(shared_ylim)
-        c.portfolio_ax.set_ylim(shared_ylim)
+        self.income_ax.set_xlim(shared_xlim)
+        self.portfolio_ax.set_xlim(shared_xlim)
+        self.income_ax.set_ylim(shared_ylim)
+        self.portfolio_ax.set_ylim(shared_ylim)
 
-        c.income_fig.canvas.draw_idle()
-        c.portfolio_fig.canvas.draw_idle()
+        self.income_fig.canvas.draw_idle()
+        self.portfolio_fig.canvas.draw_idle()
 
 
-    def draw_panel(self, ax, fig, panel):
+    def draw_panel(self, ax, fig, panel, baseline_results, scenario_results, mode, annotations_enabled):
         """
         Draw a panel based on plot family and result source.
         """
-        c = self.controller
-        result = c.baseline_results if panel["result_source"] == RESULT_SOURCE_BASELINE else c.scenario_results
+        if panel["result_source"] == RESULT_SOURCE_BASELINE:
+            result = baseline_results
+        else:
+            result = scenario_results
 
         if result is None:
             return
 
         p = result["p"]
-        sim_config = self.display_sim_config(result, panel)
+        sim_config = self.display_sim_config(result, panel, annotations_enabled)
         husband = result["husband"]
         wife = result["wife"]
 
@@ -329,22 +332,30 @@ class ScenarioPlotManager:
             draw_portfolio_projection(ax, p["years_list"], p["portfolio_plot_data"], sim_config=sim_config,
                                       annotate_plots=sim_config.annotate_plots, husband=husband, wife=wife)
 
-        role = self.panel_role_label(panel)
+        role = self.panel_role_label(panel, mode)
         current_title = ax.get_title()
-        ax.set_title(f"{role} {current_title}" if current_title else role)
+        if current_title:
+            ax.set_title(f"{role} {current_title}")
+        else:
+            ax.set_title(role)
 
-        self.apply_panel_window_title(fig, panel)
+        self.apply_panel_window_title(fig, panel, mode)
         fig.canvas.draw_idle()
 
 
-    def render_panels(self, left_panel, right_panel, sync_axes=False):
+    def render_panels(
+        self, left_panel, right_panel, baseline_results, scenario_results, mode, annotations_enabled, sync_axes=False
+    ):
         """
         Render both Scenario Explorer panels.
         """
-        c = self.controller
-
-        self.draw_panel(c.income_ax, c.income_fig, left_panel)
-        self.draw_panel(c.portfolio_ax, c.portfolio_fig, right_panel)
+        self.draw_panel(
+            self.income_ax, self.income_fig, left_panel, baseline_results, scenario_results, mode, annotations_enabled
+        )
+        self.draw_panel(
+            self.portfolio_ax, self.portfolio_fig, right_panel, baseline_results, scenario_results, mode,
+            annotations_enabled
+        )
 
         if sync_axes:
             self.sync_compare_axes(left_panel, right_panel)

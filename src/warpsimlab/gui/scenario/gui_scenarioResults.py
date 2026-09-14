@@ -30,7 +30,11 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         except tk.TclError:
             dark_background = False
 
-        changed_result_color = "#ff6b6b" if dark_background else "#c62828"
+        if dark_background:
+            changed_result_color = "#ff6b6b"
+        else:
+            changed_result_color = "#c62828"
+
         style.configure("ScenarioChangedResult.TLabel", foreground=changed_result_color, font=self.changed_label_font)
 
         results_frame = ttk.Frame(self)
@@ -105,34 +109,31 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         return row + 1
 
 
-    def update_results(self, baseline_results, scenario_results):
-        if baseline_results is None or scenario_results is None:
+    def update_results(self, view_model):
+        if view_model is None:
             return
 
-        baseline = baseline_results["p"]["summary_results"]
-        scenario = scenario_results["p"]["summary_results"]
+        original = view_model.original_metrics
+        changed = view_model.changed_metrics
 
-        self._set_currency_row("ending_portfolio", baseline["total_assets"][-1], scenario["total_assets"][-1])
-        self._set_percent_row("depletion_rate", baseline["simulated_shortfall_rate"], scenario["simulated_shortfall_rate"])
+        self._set_currency_row("ending_portfolio", original.ending_portfolio, changed.ending_portfolio)
+        self._set_percent_row("depletion_rate", original.depletion_rate, changed.depletion_rate)
 
-        self._set_currency_row("ending_cash_flow", baseline["net_cash_flow"][-1], scenario["net_cash_flow"][-1])
+        self._set_currency_row("ending_cash_flow", original.ending_cash_flow, changed.ending_cash_flow)
         self._set_currency_row(
-            "lifetime_funding_gap",
-            sum(baseline["funding_gap"]),
-            sum(scenario["funding_gap"]),
-            positive_red=True,
+            "lifetime_funding_gap", original.lifetime_funding_gap, changed.lifetime_funding_gap, positive_red=True
         )
-        self._set_currency_row("lifetime_taxes", sum(baseline["taxes"]), sum(scenario["taxes"]))
+        self._set_currency_row("lifetime_taxes", original.lifetime_taxes, changed.lifetime_taxes)
 
-        self._set_currency_row("ending_pre_tax", baseline["pre_tax_assets"][-1], scenario["pre_tax_assets"][-1])
-        self._set_currency_row("ending_after_tax", baseline["post_tax_assets"][-1], scenario["post_tax_assets"][-1])
-        self._set_currency_row("ending_roth", baseline["roth_assets"][-1], scenario["roth_assets"][-1])
-        self._set_currency_row("ending_hsa", baseline["hsa_assets"][-1], scenario["hsa_assets"][-1])
+        self._set_currency_row("ending_pre_tax", original.ending_pre_tax, changed.ending_pre_tax)
+        self._set_currency_row("ending_after_tax", original.ending_after_tax, changed.ending_after_tax)
+        self._set_currency_row("ending_roth", original.ending_roth, changed.ending_roth)
+        self._set_currency_row("ending_hsa", original.ending_hsa, changed.ending_hsa)
 
-        self._rebuild_assumptions(baseline_results, scenario_results)
+        self._rebuild_assumptions(view_model)
 
 
-    def _rebuild_assumptions(self, baseline_results, scenario_results):
+    def _rebuild_assumptions(self, view_model):
         for widget in self.assumptions_frame.winfo_children():
             widget.destroy()
 
@@ -149,48 +150,44 @@ class ScenarioResultsFrame(ttk.LabelFrame):
             row=0, column=2, sticky="e", padx=(4, 0)
         )
 
-        baseline_sim = baseline_results["sim_config"]
-        scenario_sim = scenario_results["sim_config"]
-        baseline_snap = baseline_results["retirement_snapshots"]
-        scenario_snap = scenario_results["retirement_snapshots"]
-        baseline_husband = baseline_results["husband"]
-        scenario_husband = scenario_results["husband"]
-        baseline_wife = baseline_results["wife"]
-        scenario_wife = scenario_results["wife"]
+        original = view_model.original_assumptions
+        changed = view_model.changed_assumptions
 
         row = 1
         row = self._add_assumption_section(frame, row, "Husband")
-        row = self._add_assumption_original_only_row(frame, row, "Age", baseline_husband.age)
-        row = self._add_assumption_row(frame, row, "Retirement Age", baseline_husband.retire_age, scenario_husband.retire_age, "age")
-        row = self._add_assumption_row(frame, row, "Social Security Age", baseline_husband.ss_age, scenario_husband.ss_age, "age")
+        row = self._add_assumption_original_only_row(frame, row, "Age", original.husband_age)
+        row = self._add_assumption_row(
+            frame, row, "Retirement Age", original.husband_retire_age, changed.husband_retire_age, "age"
+        )
+        row = self._add_assumption_row(
+            frame, row, "Social Security Age", original.husband_ss_age, changed.husband_ss_age, "age"
+        )
 
-        if baseline_wife is not None and scenario_wife is not None:
+        if original.wife_age is not None and changed.wife_age is not None:
             row = self._add_assumption_section(frame, row, "Wife")
-            row = self._add_assumption_original_only_row(frame, row, "Age", baseline_wife.age)
-            row = self._add_assumption_row(frame, row, "Retirement Age", baseline_wife.retire_age, scenario_wife.retire_age, "age")
-            row = self._add_assumption_row(frame, row, "Social Security Age", baseline_wife.ss_age, scenario_wife.ss_age, "age")
+            row = self._add_assumption_original_only_row(frame, row, "Age", original.wife_age)
+            row = self._add_assumption_row(
+                frame, row, "Retirement Age", original.wife_retire_age, changed.wife_retire_age, "age"
+            )
+            row = self._add_assumption_row(
+                frame, row, "Social Security Age", original.wife_ss_age, changed.wife_ss_age, "age"
+            )
 
-        row = self._add_assumption_row(frame, row, "Inflation Rate", baseline_sim.inflation_rate * 100,
-                                       scenario_sim.inflation_rate * 100, "percent", indent=0)
-        row = self._add_assumption_row(frame, row, "Fund Expenses", baseline_sim.fund_expense * 100,
-                                       scenario_sim.fund_expense * 100, "percent", indent=0)
-        row = self._add_assumption_row(frame, row, "Market Adjustment", baseline_snap.historical_data_multiplier,
-                                       scenario_snap.historical_data_multiplier, "percent", indent=0)
-
-        if baseline_sim.always_use_expense_mode:
-            row = self._add_assumption_row(frame, row, "Expense Multiplier",
-                                           baseline_sim.scenario_expense_multiplier * 100,
-                                           scenario_sim.scenario_expense_multiplier * 100, "percent", indent=0)
-        else:
-            row = self._add_assumption_row(frame, row, "Withdrawal Rate", baseline_sim.retirement_withdraw_pct,
-                                           scenario_sim.retirement_withdraw_pct, "percent", indent=0)
-
-        row = self._add_assumption_row(frame, row, "Stock", baseline_sim.custom_stock * 100,
-                                       scenario_sim.custom_stock * 100, "percent", indent=0)
-        row = self._add_assumption_row(frame, row, "Bonds", baseline_sim.custom_bonds * 100,
-                                       scenario_sim.custom_bonds * 100, "percent", indent=0)
-        self._add_assumption_row(frame, row, "Cash", baseline_sim.custom_cash * 100,
-                                 scenario_sim.custom_cash * 100, "percent", indent=0)
+        row = self._add_assumption_row(
+            frame, row, "Inflation Rate", original.inflation_rate, changed.inflation_rate, "percent", indent=0
+        )
+        row = self._add_assumption_row(
+            frame, row, "Fund Expenses", original.fund_expense, changed.fund_expense, "percent", indent=0
+        )
+        row = self._add_assumption_row(
+            frame, row, "Market Adjustment", original.market_adjustment, changed.market_adjustment, "percent", indent=0
+        )
+        row = self._add_assumption_row(
+            frame, row, original.dynamic_label, original.dynamic_value, changed.dynamic_value, "percent", indent=0
+        )
+        row = self._add_assumption_row(frame, row, "Stock", original.stock, changed.stock, "percent", indent=0)
+        row = self._add_assumption_row(frame, row, "Bonds", original.bonds, changed.bonds, "percent", indent=0)
+        self._add_assumption_row(frame, row, "Cash", original.cash, changed.cash, "percent", indent=0)
 
 
     def _add_assumption_section(self, parent, row, label):
@@ -230,9 +227,16 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         ttk.Label(parent, text=original_text, anchor="e", font=self.normal_label_font).grid(
             row=row, column=1, sticky="e", padx=4, pady=2
         )
-        ttk.Label(parent, text=changed_text, anchor="e", font=self.changed_label_font if is_changed else self.normal_label_font, style=changed_style).grid(
+
+        if is_changed:
+            changed_font = self.changed_label_font
+        else:
+            changed_font = self.normal_label_font
+
+        ttk.Label(parent, text=changed_text, anchor="e", font=changed_font, style=changed_style).grid(
             row=row, column=2, sticky="e", padx=(4, 0), pady=2
         )
+
         return row + 1
 
 
