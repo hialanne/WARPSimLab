@@ -75,9 +75,11 @@ DEFAULT_REAL_ESTATE_W      = 50000
 
 DEFAULT_EXPENSES         = 100000
 
+# ---- Simulation Constants
+LEGACY_SIMULATION_START_YEAR = 2026
+
 DEFAULT_ENABLE_SECOND_PERSON = 1
 
-# Years to simulate
 DEFAULT_INFLATION         = 2.8
 
 DEFAULT_YEARS       = 30
@@ -139,6 +141,7 @@ DEFAULT_CS_STD = CASH_STD
 
 # ---- RMD Constants ----
 RMD_START_AGE = 73
+
 
 # ===============================
 # ---- UNIFORM LIFETIME TABLE ----

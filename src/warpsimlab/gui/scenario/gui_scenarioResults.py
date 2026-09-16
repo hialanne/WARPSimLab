@@ -221,8 +221,8 @@ class ScenarioResultsFrame(ttk.LabelFrame):
             original_text = f"{original:g}"
             changed_text = f"{changed:g}"
         else:
-            original_text = f"{original:.2f}%"
-            changed_text = f"{changed:.2f}%"
+            original_text = f"{original:.1f}%"
+            changed_text = f"{changed:.1f}%"
 
         ttk.Label(parent, text=original_text, anchor="e", font=self.normal_label_font).grid(
             row=row, column=1, sticky="e", padx=4, pady=2

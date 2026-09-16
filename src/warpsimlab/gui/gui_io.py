@@ -288,11 +288,12 @@ class PortfolioSimulatorGUI_IOMixin:
                 w_port.real_estate = data.get("DEFAULT_REAL_ESTATE_W", w_port.real_estate)
 
             # --- Simulation / global settings ---
-            # --- Simulation / global settings ---
+            self.simulation_settings["start_year"] = data.get("DEFAULT_START_YEAR", LEGACY_SIMULATION_START_YEAR)
             self.simulation_settings["years_to_simulate"] = data.get("DEFAULT_YEARS", DEFAULT_YEARS)
             self.simulation_settings["num_sims"] = data.get("DEFAULT_SIMULATIONS", DEFAULT_SIMULATIONS)
             self.simulation_settings["fund_expense"] = data.get("DEFAULT_FUND_EXPENSE", DEFAULT_FUND_EXPENSE)
             self.simulation_controls["state_of_residence"] = data.get("STATE_OF_RESIDENCE", DEFAULT_STATE_OF_RESIDENCE)
+
             # --- Expenses ---
             self.expensesDict.expenses.clear()
             for exp in data.get("EXPENSES", []):
@@ -440,9 +441,11 @@ class PortfolioSimulatorGUI_IOMixin:
             updated_values["DEFAULT_ENABLE_SECOND_PERSON"] = False
 
         updated_values.update({
+            "DEFAULT_START_YEAR": int(self.simulation_settings["start_year"]),
             "DEFAULT_YEARS": int(self.simulation_settings.get("years_to_simulate", DEFAULT_YEARS)),
             "DEFAULT_SIMULATIONS": int(self.simulation_settings.get("num_sims", DEFAULT_SIMULATIONS)),
             "DEFAULT_FUND_EXPENSE": float(self.simulation_settings.get("fund_expense", DEFAULT_FUND_EXPENSE)),
+
             "SPECIAL_INCOME_STREAMS": [
                 dict(stream)
                 for stream in self.special_income_streams

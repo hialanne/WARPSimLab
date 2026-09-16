@@ -305,7 +305,7 @@ def test_changed_assumption_uses_changed_style(tk_root):
         widget
         for widget in frame.assumptions_frame.winfo_children()
         if isinstance(widget, mod.ttk.Label)
-        and widget.cget("text") == "4.00%"
+        and widget.cget("text") == "4.0%"
     ]
 
     assert len(changed_labels) == 1
@@ -328,7 +328,7 @@ def test_unchanged_assumption_uses_normal_style(tk_root):
         widget
         for widget in frame.assumptions_frame.winfo_children()
         if isinstance(widget, mod.ttk.Label)
-        and widget.cget("text") == "3.00%"
+        and widget.cget("text") == "3.0%"
     ]
 
     assert len(unchanged_labels) >= 1

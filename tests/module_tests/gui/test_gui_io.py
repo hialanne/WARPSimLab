@@ -116,7 +116,7 @@ def _make_dummy_gui(tmp_path: Path):
         "second_person_enabled": 0,
         "state_of_residence": "Colorado",
     }
-    gui.simulation_settings = {"years_to_simulate": 30, "num_sims": 500, "fund_expense": 0.0}
+    gui.simulation_settings = {"start_year": 2026, "years_to_simulate": 30, "num_sims": 500, "fund_expense": 0.0}
 
     gui.second_person_enabled = SimpleNamespace(get=lambda: False)
     gui.root = SimpleNamespace(update_idletasks=lambda: None)
@@ -332,6 +332,7 @@ def test_save_values_to_json_writes_expected_keys(monkeypatch, tmp_path):
     assert data["DEFAULT_HSA_BOND_H"] == pytest.approx(9.0)
     assert "DEFAULT_ENABLE_SECOND_PERSON" in data
     assert "DEFAULT_YEARS" in data
+    assert data["DEFAULT_START_YEAR"] == 2026
     assert "DEFAULT_SIMULATIONS" in data
     assert "DEFAULT_FUND_EXPENSE" in data
     assert "EXPENSES" in data

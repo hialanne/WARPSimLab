@@ -141,7 +141,7 @@ class PortfolioSimulatorGUI_RunMixin:
             root=self.root,
             warpsimlab_version=self.warpsimlab_version,
             loaded_data_file=self.loaded_data_file,
-            start_year=self._simulation_int("Simulation start year", sim_cfg.get("start_year", 2023)),
+            start_year=self._simulation_int("Simulation start year", sim_cfg["start_year"]),
             years_to_simulate=self._simulation_int("Years to simulate", sim_cfg.get("years_to_simulate", 30)),
             inflation_rate=self._simulation_float("Inflation rate", inflation) / 100,
             inflation_delta=inflation_delta / 100,
