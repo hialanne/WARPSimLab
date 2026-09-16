@@ -3,31 +3,10 @@
 This file collects project notes and cleanup items. Items here may later move into
 GitHub issues, documentation files, or release plans.
 
-## Documentation
+* Broader withdrawal strategies
+* Create a report on withdrawal strategies
+* Add ability to model until user(s) are 75, 80, 85, 90, etc.
+* Create a longevity report.
+* An update procedure isn't a bad idea. There is nuance, however.
+* Allow text and dialogs to be resized.  Main update for a Minor release.
 
-- Complete `BUILDING.md`.
-- Complete `TESTING.md`.
-- Add verified Python version and dependency setup.
-- Add verified PyInstaller build command.
-
-## Packaging and release
-
-- Verify Windows packaged build process.
-- Document code-signing status and Windows security warning.
-- Confirm release ZIP contents.
-
-## Website
-
-- Review website links after repository cleanup.
-- Confirm download links and report links.
-
-## Simulator
-
-- TODO: Add simulator cleanup notes here.
-- Input hardening to the simulator.
-- Roths 
-- Advanced - enhance historical window.
-
-## Tests
-
-- TODO: Add test cleanup notes here.
