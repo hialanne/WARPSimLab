@@ -20,7 +20,7 @@ class ScenarioSnapshots:
                     custom_stock_percent=0.0, 
                     custom_bonds_percent=0.0, 
                     custom_cash_percent=0.0, 
-                    rebalance_var="dont-rebalance",
+                    rebalance_every_year=False,
                     historical_data_multiplier = 1.0,
                     use_snapshot_annotations=False,
                     annotation_strings = None,  # list[list[dict]]; see class docstring
@@ -33,7 +33,7 @@ class ScenarioSnapshots:
         self.custom_stock_percent = custom_stock_percent
         self.custom_bonds_percent = custom_bonds_percent
         self.custom_cash_percent = custom_cash_percent
-        self.rebalance_var = rebalance_var
+        self.rebalance_every_year = bool(rebalance_every_year)
         self.historical_data_multiplier = historical_data_multiplier
         self.use_snapshot_annotations = use_snapshot_annotations
 

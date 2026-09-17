@@ -16,7 +16,6 @@ class ScenarioControlValues:
     wife_ss_age: int | None
     inflation: float
     fund_expense: float
-    market_adjustment: float
     stocks: float
     bonds: float
     cash: float
@@ -64,7 +63,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
         self.inflation = main_gui.inflation
         self.fund_expense = retirement_snapshots.fund_expense
-        self.historical_data_multiplier = retirement_snapshots.historical_data_multiplier
 
         # --------------------
         # Enable Temporary Portfolio Overrides checkbox (optional)
@@ -129,7 +127,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         cell01 = _make_cell(economic_group, 0)
         cell11 = _make_cell(economic_group, 1)
         cell21 = _make_cell(economic_group, 2)
-        cell31 = _make_cell(economic_group, 3)
 
         cell02 = _make_cell(portfolio_group, 0)
         cell12 = _make_cell(portfolio_group, 1)
@@ -137,11 +134,11 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
 
         self.dynamic_value = tk.DoubleVar()
         self.dynamic_label_var = tk.StringVar()
-        self.dynamic_label = ttk.Label(cell31, textvariable=self.dynamic_label_var)
+        self.dynamic_label = ttk.Label(cell21, textvariable=self.dynamic_label_var)
         self.dynamic_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
 
         self.dynamic_slider = ttk.Scale(
-            cell31, orient="horizontal", variable=self.dynamic_value, command=self._update_dynamic_slider_label
+            cell21, orient="horizontal", variable=self.dynamic_value, command=self._update_dynamic_slider_label
         )
         self.dynamic_slider.grid(row=1, column=0, sticky="ew")
 
@@ -269,25 +266,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             font=("Arial", 11)
         )
 
-        # Market Adjustment
-        self.market_adjustment_percent = tk.DoubleVar(value=self.historical_data_multiplier)
-        self.market_adjustment_label_var = tk.StringVar(
-            value=f"Market Adjustment: {int(self.market_adjustment_percent.get()):>3}%"
-        )
-        self.market_adjustment_label = ttk.Label(cell21, textvariable=self.market_adjustment_label_var, anchor="w")
-        self.market_adjustment_label.grid(row=0, column=0, sticky="w", pady=(0, 2))
-        self.market_adjustment_slider = ttk.Scale(
-            cell21, from_=50, to=200, orient="horizontal",
-            variable=self.market_adjustment_percent,
-            command=self._update_market_adjustment_label
-        )
-        self.market_adjustment_slider.grid(row=1, column=0, sticky="ew")
-        Tooltip(
-            self.market_adjustment_slider,
-            "Scale historical return assumptions to explore better/worse periods.",
-            font=("Arial", 11)
-        )
-
         self._configure_dynamic_slider()
 
         # --------------------
@@ -368,7 +346,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             (self.tmp_ss_age_h, self.husband_ss_label),
             (self.inflation_value, self.inflation_label),
             (self.fund_expense_value, self.fund_expense_label),
-            (self.market_adjustment_percent, self.market_adjustment_label),
             (self.dynamic_value, self.dynamic_label),
             (self.stocks_percent, self.stocks_label),
             (self.bonds_percent, self.bonds_label),
@@ -474,12 +451,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         self.cash_percent.set(cash)
 
 
-    def _update_market_adjustment_label(self, val):
-        value = round(float(val))
-        self.market_adjustment_percent.set(value)
-        self.market_adjustment_label_var.set(f"Market Adjustment: {value:>3}%")
-
-
     def get_values(self):
         wife_ret_age = None
         wife_ss_age = None
@@ -493,12 +464,10 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
         return ScenarioControlValues(
             husband_ret_age=self.tmp_ret_age_h.get(), husband_ss_age=self.tmp_ss_age_h.get(),
             wife_ret_age=wife_ret_age, wife_ss_age=wife_ss_age, inflation=self.inflation_value.get(),
-            fund_expense=self.fund_expense_value.get(), market_adjustment=self.market_adjustment_percent.get(),
-            stocks=self.stocks_percent.get(), bonds=self.bonds_percent.get(), cash=self.cash_percent.get(),
-            dynamic_value=self.dynamic_value.get(), calculate_real_dollars=self.calculate_real_dollars.get(),
-            enable_annotations=self.enable_annotations.get()
+            fund_expense=self.fund_expense_value.get(), stocks=self.stocks_percent.get(),
+            bonds=self.bonds_percent.get(), cash=self.cash_percent.get(), dynamic_value=self.dynamic_value.get(),
+            calculate_real_dollars=self.calculate_real_dollars.get(), enable_annotations=self.enable_annotations.get()
         )
-
 
     # --------------------
     # Enable/disable sliders
@@ -516,7 +485,6 @@ class ScenarioSlidersFrame(ttk.LabelFrame):
             (self.husband_ss_slider, self.husband_ss_label),
             (self.inflation_slider, self.inflation_label),
             (self.fund_expense_slider, self.fund_expense_label),
-            (self.market_adjustment_slider, self.market_adjustment_label),
             (self.stocks_slider, self.stocks_label),
             (self.bonds_slider, self.bonds_label),
         ]

@@ -98,6 +98,7 @@ class PortfolioSimulatorGUI_RunMixin:
             user_annotation_strings = controls.get("user_annotation_strings", [])
             scenario_withdraw_pct   = retirement_snapshots.scenario_withdraw_pct
             scenario_expense_multiplier = retirement_snapshots.scenario_expense_multiplier
+            rebalance_every_year = bool(retirement_snapshots.rebalance_every_year)
         else:
             inflation               = self.inflation
             fund_expense            = sim_cfg.get("fund_expense")
@@ -112,7 +113,8 @@ class PortfolioSimulatorGUI_RunMixin:
             use_snapshot_annotations = controls.get("annotate_plots")
             user_annotation_strings = controls.get("user_annotation_strings", [])
             scenario_explorer_annotations = build_normal_run_annotations(controls)
-   
+            rebalance_every_year = bool(controls.get("rebalance_every_year", True))
+            
 
         # --- Market data ---
         market_data = {
@@ -212,7 +214,7 @@ class PortfolioSimulatorGUI_RunMixin:
 
             annotate_plots=controls.get("annotate_plots", False),
             constant_y_plots=controls.get("constant_y_plots", False),
-            rebalance_every_year=controls.get("rebalance_every_year", True),
+            rebalance_every_year=rebalance_every_year,
             include_realestate=controls.get("include_realestate", False),
             second_person_enabled=controls.get("second_person_enabled", False),
 

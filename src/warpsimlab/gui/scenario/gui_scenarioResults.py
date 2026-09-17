@@ -180,14 +180,12 @@ class ScenarioResultsFrame(ttk.LabelFrame):
             frame, row, "Fund Expenses", original.fund_expense, changed.fund_expense, "percent", indent=0
         )
         row = self._add_assumption_row(
-            frame, row, "Market Adjustment", original.market_adjustment, changed.market_adjustment, "percent", indent=0
-        )
-        row = self._add_assumption_row(
             frame, row, original.dynamic_label, original.dynamic_value, changed.dynamic_value, "percent", indent=0
         )
         row = self._add_assumption_row(frame, row, "Stock", original.stock, changed.stock, "percent", indent=0)
         row = self._add_assumption_row(frame, row, "Bonds", original.bonds, changed.bonds, "percent", indent=0)
-        self._add_assumption_row(frame, row, "Cash", original.cash, changed.cash, "percent", indent=0)
+        row = self._add_assumption_row(frame, row, "Cash", original.cash, changed.cash, "percent", indent=0)
+        self._add_rebalancing_row(frame, row, original.rebalance_every_year, changed.rebalance_every_year)
 
 
     def _add_assumption_section(self, parent, row, label):
@@ -233,6 +231,39 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         else:
             changed_font = self.normal_label_font
 
+        ttk.Label(parent, text=changed_text, anchor="e", font=changed_font, style=changed_style).grid(
+            row=row, column=2, sticky="e", padx=(4, 0), pady=2
+        )
+
+        return row + 1
+
+
+    def _add_rebalancing_row(self, parent, row, original, changed):
+        is_changed = bool(original) != bool(changed)
+
+        if is_changed:
+            changed_style = "ScenarioChangedResult.TLabel"
+            changed_font = self.changed_label_font
+        else:
+            changed_style = "TLabel"
+            changed_font = self.normal_label_font
+
+        if original:
+            original_text = "Annual Rebalancing"
+        else:
+            original_text = "Not Rebalancing"
+
+        if changed:
+            changed_text = "Annual Rebalancing"
+        else:
+            changed_text = "Not Rebalancing"
+
+        ttk.Label(parent, text="Rebalancing", font=self.normal_label_font).grid(
+            row=row, column=0, sticky="w", padx=(0, 10), pady=2
+        )
+        ttk.Label(parent, text=original_text, anchor="e", font=self.normal_label_font).grid(
+            row=row, column=1, sticky="e", padx=4, pady=2
+        )
         ttk.Label(parent, text=changed_text, anchor="e", font=changed_font, style=changed_style).grid(
             row=row, column=2, sticky="e", padx=(4, 0), pady=2
         )

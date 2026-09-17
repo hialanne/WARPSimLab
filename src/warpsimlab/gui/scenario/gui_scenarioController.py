@@ -20,6 +20,11 @@ SCENARIO_PLOT_STYLE_OPTIONS = [
     ("Tax-Deferred / Taxable Savings", SCENARIO_PLOT_STYLE_PRE_POST_TAX),
 ]
 
+SCENARIO_REBALANCING_OPTIONS = [
+    ("Not Rebalancing", False),
+    ("Annual Rebalancing", True),
+]
+
 SCENARIO_MODE_OPTIONS = [
     ("Scenario View", SCENARIO_MODE_SCENARIO_VIEW),
     ("Compare Income", SCENARIO_MODE_INCOME_COMPARE),
@@ -63,6 +68,7 @@ class ScenarioController:
         self.mode_var = None
         self.plot_style = SCENARIO_PLOT_STYLE_FILL
         self.plot_style_var = None
+        self.rebalancing_var = None
         self.include_realestate_var = None
 
         self.mode_label_to_value = {label: value for label, value in SCENARIO_MODE_OPTIONS}
@@ -334,7 +340,6 @@ class ScenarioController:
             self.sliders_frame.tmp_ss_age_h,
             self.sliders_frame.inflation_value,
             self.sliders_frame.fund_expense_value,
-            self.sliders_frame.market_adjustment_percent,
             self.sliders_frame.stocks_percent,
             self.sliders_frame.bonds_percent,
             self.sliders_frame.cash_percent,          # changes when stocks/bonds adjust cash
@@ -381,6 +386,31 @@ class ScenarioController:
             self._cancel_pending_update()
             self._needs_redraw = False
             self._compute_baseline_results()
+            self.run_and_redraw()
+
+
+    def _on_rebalancing_dropdown_selected(self, event=None):
+        if self.rebalancing_var is None:
+            return
+
+        selected_label = self.rebalancing_var.get()
+        selected_value = None
+
+        for label, value in SCENARIO_REBALANCING_OPTIONS:
+            if label == selected_label:
+                selected_value = value
+                break
+
+        if selected_value is None:
+            return
+
+        self.session_state.retirement_snapshots.rebalance_every_year = selected_value
+        self.rebalancing_dropdown.selection_clear()
+        self.window.focus_set()
+
+        if self.session_active:
+            self._cancel_pending_update()
+            self._needs_redraw = False
             self.run_and_redraw()
 
 
@@ -478,21 +508,37 @@ class ScenarioController:
         self.plot_style_dropdown.grid(row=3, column=0, sticky="w", pady=(2, 6))
         self.plot_style_dropdown.bind("<<ComboboxSelected>>", self._on_plot_style_dropdown_selected)
 
+        ttk.Label(controls_frame, text="Rebalancing").grid(row=4, column=0, sticky="w", pady=(2, 0))
+
+        current_rebalancing = bool(self.session_state.retirement_snapshots.rebalance_every_year)
+        current_rebalancing_label = next(
+            label for label, value in SCENARIO_REBALANCING_OPTIONS if value == current_rebalancing
+        )
+        self.rebalancing_var = tk.StringVar(value=current_rebalancing_label)
+
+        self.rebalancing_dropdown = ttk.Combobox(
+            controls_frame, textvariable=self.rebalancing_var,
+            values=[label for label, _value in SCENARIO_REBALANCING_OPTIONS],
+            state="readonly", width=20, style="Scenario.TCombobox"
+        )
+        self.rebalancing_dropdown.grid(row=5, column=0, sticky="w", pady=(2, 6))
+        self.rebalancing_dropdown.bind("<<ComboboxSelected>>", self._on_rebalancing_dropdown_selected)
+
         self.include_realestate_var = tk.BooleanVar(value=bool(controls.get("include_realestate", False)))
         self.include_realestate_cb = ttk.Checkbutton(
             controls_frame, text="Include Real Estate", variable=self.include_realestate_var,
             command=self.schedule_update
         )
-        self.include_realestate_cb.grid(row=4, column=0, sticky="w")
+        self.include_realestate_cb.grid(row=6, column=0, sticky="w")
 
         self.adjust_infl_delta_cb = ttk.Checkbutton(
             controls_frame, text="Real Returns (Inflation Adjusted)",
             variable=self.sliders_frame.calculate_real_dollars
         )
-        self.adjust_infl_delta_cb.grid(row=5, column=0, sticky="w")
+        self.adjust_infl_delta_cb.grid(row=7, column=0, sticky="w")
 
         button_frame = ttk.Frame(controls_frame)
-        button_frame.grid(row=6, column=0, sticky="w", pady=(8, 0))
+        button_frame.grid(row=8, column=0, sticky="w", pady=(8, 0))
 
         ttk.Button(button_frame, text="Restore Layout", width=20, command=self._position_windows).grid(
             row=0, column=0, sticky="w", pady=(0, 4)

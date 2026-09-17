@@ -31,12 +31,12 @@ class ScenarioAssumptions:
     wife_ss_age: float | None
     inflation_rate: float
     fund_expense: float
-    market_adjustment: float
     dynamic_label: str
     dynamic_value: float
     stock: float
     bonds: float
     cash: float
+    rebalance_every_year: bool
 
 
 @dataclass
@@ -119,6 +119,7 @@ class ScenarioStateManager:
         s.baseline_retirement_snapshots = ScenarioSnapshots()
         s.baseline_retirement_snapshots.fund_expense = self.main_gui.simulation_settings.get("fund_expense")
         s.baseline_retirement_snapshots.historical_data_multiplier = 100.0
+        s.baseline_retirement_snapshots.rebalance_every_year = bool(controls.get("rebalance_every_year", True))
 
         s.person_snapshots = copy.deepcopy(s.baseline_person_snapshots)
         s.portfolio_snapshots = copy.deepcopy(s.baseline_portfolio_snapshots)
@@ -160,7 +161,6 @@ class ScenarioStateManager:
         s.retirement_snapshots.calculate_real_dollars = values.calculate_real_dollars
         s.retirement_snapshots.delta_inflation = float(values.inflation) - float(self.main_gui.inflation)
         s.retirement_snapshots.fund_expense = values.fund_expense
-        s.retirement_snapshots.historical_data_multiplier = values.market_adjustment
         s.retirement_snapshots.custom_stock_percent = values.stocks
         s.retirement_snapshots.custom_bonds_percent = values.bonds
         s.retirement_snapshots.custom_cash_percent = values.cash
@@ -191,9 +191,9 @@ class ScenarioStateManager:
         s.retirement_snapshots.annotation_strings = build_scenario_explorer_annotations(
             main_gui=self.main_gui, tmp_ret_age_h=values.husband_ret_age, tmp_ret_age_w=values.wife_ret_age,
             inflation=values.inflation, fund_expense=values.fund_expense,
-            historical_data_multiplier=values.market_adjustment, stocks=values.stocks, bonds=values.bonds,
-            cash=values.cash, baseline_stocks=baseline_stocks, baseline_bonds=baseline_bonds,
-            baseline_cash=baseline_cash, wife_snapshot=wife_snapshot,
+            historical_data_multiplier=s.retirement_snapshots.historical_data_multiplier,
+            stocks=values.stocks, bonds=values.bonds, cash=values.cash, baseline_stocks=baseline_stocks,
+            baseline_bonds=baseline_bonds, baseline_cash=baseline_cash, wife_snapshot=wife_snapshot,
             scenario_expense_multiplier=s.retirement_snapshots.scenario_expense_multiplier,
             scenario_withdraw_pct=s.retirement_snapshots.scenario_withdraw_pct
         )
@@ -306,12 +306,12 @@ class ScenarioStateManager:
             wife_ss_age=wife_ss_age,
             inflation_rate=sim.inflation_rate * 100,
             fund_expense=sim.fund_expense * 100,
-            market_adjustment=snapshot.historical_data_multiplier,
             dynamic_label=dynamic_label,
             dynamic_value=dynamic_value, 
-            stock=sim.custom_stock * 100, 
+            stock=sim.custom_stock * 100,
             bonds=sim.custom_bonds * 100,
             cash=sim.custom_cash * 100,
+            rebalance_every_year=bool(sim.rebalance_every_year),
         )
 
 
