@@ -16,7 +16,7 @@ def test_defaults_are_assigned():
     assert s.custom_stock_percent == 0.0
     assert s.custom_bonds_percent == 0.0
     assert s.custom_cash_percent == 0.0
-    assert s.rebalance_var == "dont-rebalance"
+    assert s.rebalance_every_year is False
     assert s.historical_data_multiplier == 1.0
     assert s.use_snapshot_annotations is False
 

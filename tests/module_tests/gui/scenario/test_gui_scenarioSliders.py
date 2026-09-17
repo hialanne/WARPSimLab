@@ -25,7 +25,6 @@ class DummyPortfolio:
 @dataclass
 class DummySnapshots:
     fund_expense: float = 0.5
-    historical_data_multiplier: float = 100.0
     scenario_expense_multiplier: float | None = None
     scenario_withdraw_pct: float | None = None
 
@@ -151,12 +150,11 @@ def test_initializes_wife_controls_when_enabled(slider_module, tk_root):
 
 
 def test_initializes_economic_controls_from_inputs(slider_module, tk_root):
-    snapshots = DummySnapshots(fund_expense=0.75, historical_data_multiplier=90.0)
+    snapshots = DummySnapshots(fund_expense=0.75)
     frame = _make_frame(slider_module, tk_root, snapshots=snapshots)
 
     assert frame.inflation_value.get() == pytest.approx(3.0)
     assert frame.fund_expense_value.get() == pytest.approx(0.75)
-    assert frame.market_adjustment_percent.get() == pytest.approx(90.0)
 
     frame.destroy()
 
@@ -241,17 +239,6 @@ def test_fund_expense_callback_updates_label(slider_module, tk_root):
     frame.destroy()
 
 
-def test_market_adjustment_callback_rounds_value_and_updates_label(slider_module, tk_root):
-    frame = _make_frame(slider_module, tk_root)
-
-    frame._update_market_adjustment_label("87.6")
-
-    assert frame.market_adjustment_percent.get() == pytest.approx(88.0)
-    assert frame.market_adjustment_label_var.get() == "Market Adjustment:  88%"
-
-    frame.destroy()
-
-
 def test_expense_mode_dynamic_slider_initializes_default(slider_module, tk_root):
     frame = _make_frame(slider_module, tk_root, expense_mode=True)
 
@@ -328,7 +315,6 @@ def test_override_checkbox_disables_controls(slider_module, tk_root):
     assert frame.husband_ss_slider.instate(["disabled"])
     assert frame.inflation_slider.instate(["disabled"])
     assert frame.fund_expense_slider.instate(["disabled"])
-    assert frame.market_adjustment_slider.instate(["disabled"])
     assert frame.stocks_slider.instate(["disabled"])
     assert frame.bonds_slider.instate(["disabled"])
     assert str(frame.husband_label.cget("foreground")) == "gray"
@@ -388,7 +374,6 @@ def test_get_values_returns_current_single_person_controls(slider_module, tk_roo
     frame.tmp_ss_age_h.set(68)
     frame.inflation_value.set(4.0)
     frame.fund_expense_value.set(0.75)
-    frame.market_adjustment_percent.set(90)
     frame.stocks_percent.set(65)
     frame.bonds_percent.set(25)
     frame.cash_percent.set(10)
@@ -405,7 +390,6 @@ def test_get_values_returns_current_single_person_controls(slider_module, tk_roo
     assert values.wife_ss_age is None
     assert values.inflation == pytest.approx(4.0)
     assert values.fund_expense == pytest.approx(0.75)
-    assert values.market_adjustment == pytest.approx(90.0)
     assert values.stocks == pytest.approx(65.0)
     assert values.bonds == pytest.approx(25.0)
     assert values.cash == pytest.approx(10.0)

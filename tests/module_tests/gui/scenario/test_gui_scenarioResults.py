@@ -51,12 +51,12 @@ def _make_assumptions(
     wife_ss_age=None,
     inflation_rate=3.0,
     fund_expense=0.5,
-    market_adjustment=100.0,
     dynamic_label="Expense Multiplier",
     dynamic_value=100.0,
     stock=60.0,
     bonds=30.0,
     cash=10.0,
+    rebalance_every_year=True,
 ):
     return SimpleNamespace(
         husband_age=husband_age,
@@ -67,12 +67,12 @@ def _make_assumptions(
         wife_ss_age=wife_ss_age,
         inflation_rate=inflation_rate,
         fund_expense=fund_expense,
-        market_adjustment=market_adjustment,
         dynamic_label=dynamic_label,
         dynamic_value=dynamic_value,
         stock=stock,
         bonds=bonds,
         cash=cash,
+        rebalance_every_year=rebalance_every_year,
     )
 
 
@@ -204,7 +204,6 @@ def test_rebuild_assumptions_expense_mode_shows_expected_fields(tk_root):
         husband_ss_age=67,
         inflation_rate=3.0,
         fund_expense=0.5,
-        market_adjustment=100.0,
         dynamic_label="Expense Multiplier",
         dynamic_value=100.0,
     )
@@ -213,7 +212,6 @@ def test_rebuild_assumptions_expense_mode_shows_expected_fields(tk_root):
         husband_ss_age=68,
         inflation_rate=4.0,
         fund_expense=0.75,
-        market_adjustment=90.0,
         dynamic_label="Expense Multiplier",
         dynamic_value=125.0,
     )
@@ -229,12 +227,30 @@ def test_rebuild_assumptions_expense_mode_shows_expected_fields(tk_root):
     assert "Social Security Age" in texts
     assert "Inflation Rate" in texts
     assert "Fund Expenses" in texts
-    assert "Market Adjustment" in texts
+    assert "Rebalancing" in texts
+    assert "Annual Rebalancing" in texts
     assert "Expense Multiplier" in texts
     assert "Withdrawal Rate" not in texts
     assert "Stock" in texts
     assert "Bonds" in texts
     assert "Cash" in texts
+
+    frame.destroy()
+
+
+def test_rebuild_assumptions_shows_changed_rebalancing(tk_root):
+    frame = mod.ScenarioResultsFrame(tk_root)
+
+    original = _make_assumptions(rebalance_every_year=True)
+    changed = _make_assumptions(rebalance_every_year=False)
+
+    frame._rebuild_assumptions(_make_view_model(original_assumptions=original, changed_assumptions=changed))
+
+    texts = _assumption_texts(frame)
+
+    assert "Rebalancing" in texts
+    assert "Annual Rebalancing" in texts
+    assert "Not Rebalancing" in texts
 
     frame.destroy()
 

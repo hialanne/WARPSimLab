@@ -52,7 +52,6 @@ def _make_control_values(**overrides):
         "wife_ss_age": None,
         "inflation": 4.0,
         "fund_expense": 0.75,
-        "market_adjustment": 90.0,
         "stocks": 65.0,
         "bonds": 25.0,
         "cash": 10.0,
@@ -100,7 +99,7 @@ def _make_result(summary=None, wife=None, expense_mode=True, dynamic_value=1.25)
         "sim_config": SimpleNamespace(
             always_use_expense_mode=expense_mode, scenario_expense_multiplier=scenario_expense_multiplier,
             retirement_withdraw_pct=retirement_withdraw_pct, inflation_rate=0.03, fund_expense=0.005,
-            custom_stock=0.60, custom_bonds=0.30, custom_cash=0.10
+            custom_stock=0.60, custom_bonds=0.30, custom_cash=0.10, rebalance_every_year=True
         ),
         "retirement_snapshots": SimpleNamespace(historical_data_multiplier=95.0),
         "husband": _make_person(age=60, retire_age=65, ss_age=67),
@@ -230,7 +229,7 @@ def test_apply_control_values_updates_scenario_state_expense_mode(monkeypatch):
     assert retirement.calculate_real_dollars is True
     assert retirement.delta_inflation == pytest.approx(0.75)
     assert retirement.fund_expense == pytest.approx(0.75)
-    assert retirement.historical_data_multiplier == pytest.approx(90.0)
+    assert retirement.historical_data_multiplier == pytest.approx(100.0)
     assert retirement.custom_stock_percent == pytest.approx(65.0)
     assert retirement.custom_bonds_percent == pytest.approx(25.0)
     assert retirement.custom_cash_percent == pytest.approx(10.0)
