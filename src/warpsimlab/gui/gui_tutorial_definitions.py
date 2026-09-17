@@ -52,11 +52,11 @@ def build_basic_tutorial_steps(gui):
             "screen_callback": gui.edit_portfolio_data,
         },
         {
-            "title": "Results -> Summary Dialog",
+            "title": "Results -> Simulation Summary",
             "section_title": "What to do",
             "text": (
                 "Now run the simulation yourself. From the top menu, select "
-                "Results, then select Summary Dialog. WARPSimLab will run "
+                "Results, then select Simulation Summary. WARPSimLab will run "
                 "the current financial example and open a separate "
                 "Simulation Summary window. After the window opens, return "
                 "to this tutorial and select Next."
@@ -64,16 +64,17 @@ def build_basic_tutorial_steps(gui):
             "screen_callback": gui.edit_tutorial_blank,
         },
         {
-            "title": "Summary Dialog -> Three Tabs",
+            "title": "Simulation Summary -> Four Tabs",
             "section_title": "What to review",
             "text": (
-                "The Simulation Summary window has three tabs across the "
+                "The Simulation Summary window has four tabs across the "
                 "top. Select Portfolio to review assets at the start, "
-                "retirement, and end of the simulation. Select Cash Flow "
-                "to review income, taxes, expenses, and net cash flow at "
+                "retirement, and end of the simulation. Select Income to "
+                "review wages, social security, pensions and other income."  
+                "Select Cash Flow to  review taxes, expenses, and net cash flow at "
                 "selected years. Select Summary to review overall results, "
                 "totals, and important simulation assumptions. Review all "
-                "three tabs, then close the Simulation Summary window and "
+                "four tabs, then close the Simulation Summary window and "
                 "return here."
             ),
             "screen_callback": gui.edit_tutorial_blank,
@@ -85,7 +86,7 @@ def build_basic_tutorial_steps(gui):
                 "Now change one input and compare the results. From the top "
                 "menu, select Cash Flow, then select Expenses. Change one "
                 "annual expense by a noticeable but reasonable amount. Then "
-                "select Results, followed by Summary Dialog, and run the "
+                "select Results, followed by Simulation Summary, and run the "
                 "simulation again. Review the Portfolio, Cash Flow, and "
                 "Summary tabs and compare them with the earlier results. "
                 "Changing one value at a time makes it easier to understand "
@@ -112,7 +113,7 @@ def build_basic_tutorial_steps(gui):
             "section_title": "What comes next",
             "text": (
                 "You have reviewed the primary Basic mode inputs, run the "
-                "simulation, explored the Summary Dialog, changed one input, "
+                "simulation, explored the Simulation Summary, changed one input, "
                 "compared the results, and learned how to save a scenario. "
                 "Continue exploring in Basic mode, or select Mode from the "
                 "upper-right menu and then select Advanced to reveal additional "
@@ -187,8 +188,7 @@ def build_advanced_building_tutorial_steps(gui):
             "text": (
                 "Advanced mode separates investable assets by both asset class "
                 "and tax treatment. Stocks, bonds, and cash can each be entered "
-                "as Pre-Tax, After-Tax, or Roth assets. HSA assets are entered "
-                "on a separate row. Values are also separated by person when "
+                "as Pre-Tax, After-Tax, Roth or HSA assets. Values are also separated by person when "
                 "the second person is enabled. The Total column is calculated "
                 "automatically. Real estate is entered on a different screen."
             ),
@@ -311,12 +311,12 @@ def build_advanced_building_tutorial_steps(gui):
                 "Plot Style determines how simulation results are grouped and "
                 "displayed. Fill shows the main result area, Sub Categories "
                 "separates components, and Pre / Post Tax Savings separates "
-                "assets by tax treatment. Selecting Percentile Bands reveals "
+                "assets by tax treatment. Selecting Risk Analysis reveals "
                 "Monte Carlo and Historical Windows, two methods used to present "
                 "portfolio risk across a range of possible outcomes. Monte Carlo "
                 "uses simulated return paths and can use correlated asset returns. "
                 "Historical Windows uses overlapping periods from the historical "
-                "return data. Percentile Bands can be shown as a filled band, "
+                "return data. Risk Analysis can be shown as a filled band, "
                 "summary lines, or all simulation lines."
             ),
             "screen_callback": gui.edit_simulation_controls,
@@ -380,6 +380,57 @@ def build_advanced_analysis_tutorial_steps(gui):
             ),
             "screen_callback": gui.edit_tutorial_blank,
         },
+        {
+            "title": "Results -> Scenario Explorer",
+            "section_title": "What to do",
+            "text": (
+                "From the top menu, select Results, then Scenario Explorer. "
+                "Scenario Explorer opens a Scenario Dashboard plus separate "
+                "cash flow and portfolio plot windows. The dashboard uses "
+                "temporary copies of the current financial data, so moving its "
+                "sliders does not change the saved scenario or the values in "
+                "the main WARPSimLab screens."
+            ),
+            "screen_callback": gui.edit_tutorial_blank,
+        },
+        {
+            "title": "Scenario Explorer -> Change One Assumption",
+            "section_title": "What to do",
+            "text": (
+                "Move one Scenario Dashboard slider, such as Percent Stock, "
+                "retirement age, inflation, fund expenses, "
+                "or the expense or withdrawal setting. The scenario reruns "
+                "automatically after the change, and both plot windows update. "
+                "Changing one assumption at a time makes it easier to understand "
+                "which input caused the result."
+            ),
+            "screen_callback": gui.edit_tutorial_blank,
+        },
+        {
+            "title": "Scenario Explorer -> Plot Detail",
+            "section_title": "What to review",
+            "text": (
+                "The Scenario Explorer uses Plot Style to select how to dispay your data. "
+                "Fill shows total cash flow and total "
+                "portfolio value. Sub Categories separates the underlying income "
+                "and portfolio components."
+            ),
+            "screen_callback": gui.edit_tutorial_blank,
+        },
+        {
+            "title": "Scenario Explorer -> Compare and Resync",
+            "section_title": "What to do",
+            "text": (
+                "Use the Mode list in the Scenario Dashboard to select Compare "
+                "Cashflow or Compare Portfolio. The top figure shows the Original "
+                "result and the lower figure shows the Changed result using matching "
+                "axes for direct comparison. Reset Scenario discards the temporary changes "
+                "and reloads the current main WARPSimLab values. Select Stop when "
+                "you are finished with Scenario Explorer."
+            ),
+            "screen_callback": gui.edit_tutorial_blank,
+        },
+
         {
             "title": "Results -> Income Plots",
             "section_title": "What to do",
@@ -445,57 +496,6 @@ def build_advanced_analysis_tutorial_steps(gui):
                 "not treated as operating cash flow. Positive values represent an "
                 "accumulated operating surplus. Negative values show a cumulative "
                 "deficit that must be funded from available assets."
-            ),
-            "screen_callback": gui.edit_tutorial_blank,
-        },
-        {
-            "title": "Results -> Scenario Explorer",
-            "section_title": "What to do",
-            "text": (
-                "From the top menu, select Results, then Scenario Explorer. "
-                "Scenario Explorer opens a Scenario Dashboard plus separate "
-                "cash flow and portfolio plot windows. The dashboard uses "
-                "temporary copies of the current financial data, so moving its "
-                "sliders does not change the saved scenario or the values in "
-                "the main WARPSimLab screens."
-            ),
-            "screen_callback": gui.edit_tutorial_blank,
-        },
-        {
-            "title": "Scenario Explorer -> Change One Assumption",
-            "section_title": "What to do",
-            "text": (
-                "Move one Scenario Dashboard slider, such as Percent Stock, "
-                "retirement age, inflation, fund expenses, market adjustment, "
-                "or the expense or withdrawal setting. The scenario reruns "
-                "automatically after the change, and both plot windows update. "
-                "Changing one assumption at a time makes it easier to understand "
-                "which input caused the result."
-            ),
-            "screen_callback": gui.edit_tutorial_blank,
-        },
-        {
-            "title": "Scenario Explorer -> Plot Detail",
-            "section_title": "What to review",
-            "text": (
-                "The Scenario Explorer plots follow the Plot Style selected under "
-                "Simulation -> Controls. Fill shows total cash flow and total "
-                "portfolio value. Sub Categories separates the underlying income "
-                "and portfolio components. Annotate Plots adds a summary of the "
-                "temporary assumptions directly to each figure."
-            ),
-            "screen_callback": gui.edit_tutorial_blank,
-        },
-        {
-            "title": "Scenario Explorer -> Compare and Resync",
-            "section_title": "What to do",
-            "text": (
-                "Use the Mode list in the Scenario Dashboard to select Compare "
-                "Cashflow or Compare Portfolio. The left figure shows the Original "
-                "result and the right figure shows the Changed result using matching "
-                "axes for direct comparison. Resync discards the temporary changes "
-                "and reloads the current main WARPSimLab values. Select Stop when "
-                "you are finished with Scenario Explorer."
             ),
             "screen_callback": gui.edit_tutorial_blank,
         },

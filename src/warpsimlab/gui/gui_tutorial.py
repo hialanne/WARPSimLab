@@ -103,8 +103,9 @@ class TutorialFrame(ttk.Frame):
             basic_frame,
             text=(
                 "Learn the primary income, expense, and portfolio inputs. "
-                "Run a simulation, review the Summary Dialog, change an input, "
-                "compare results, and save your work."
+                "Run a simulation, review the Simulation Summary, change an input, "
+                "compare results, and save your work.  This tutorial assums that "
+                "Mode is set to Basic."
             ),
             font=("Arial", 11),
             wraplength=850,
