@@ -12,6 +12,9 @@ from tkinter import messagebox, ttk
 
 SETTINGS_VERSION = 1
 
+MAIN_WINDOW_REFERENCE_WIDTH = 1200
+MAIN_WINDOW_REFERENCE_HEIGHT = 750
+
 MAIN_WINDOW_AUTOMATIC = "automatic"
 MAIN_WINDOW_MAXIMIZED = "maximized"
 MAIN_WINDOW_CUSTOM = "custom"
@@ -33,8 +36,8 @@ def get_default_settings():
         "version": SETTINGS_VERSION,
         "main_window": {
             "sizing_mode": MAIN_WINDOW_AUTOMATIC,
-            "custom_width": 1200,
-            "custom_height": 750,
+            "custom_width": MAIN_WINDOW_REFERENCE_WIDTH,
+            "custom_height": MAIN_WINDOW_REFERENCE_HEIGHT,
             "remember_geometry": False,
             "last_geometry": None,
             "last_maximized": False,

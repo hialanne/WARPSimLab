@@ -19,6 +19,13 @@ def bind_entry_commit_on_return(entry):
 
 
 def set_tk_button_soft_disabled(btn: tk.Button, enabled: bool, real_command, noop_command=noop):
+    def command_after_dismiss(command):
+        def wrapped_command():
+            dismiss_active_popup(btn)
+            return command()
+
+        return wrapped_command
+
     default_fg = btn.option_get("foreground", "Foreground")
     default_active_fg = btn.option_get("activeForeground", "Foreground")
 
@@ -32,7 +39,7 @@ def set_tk_button_soft_disabled(btn: tk.Button, enabled: bool, real_command, noo
             fg=btn._warpsimlab_default_fg,
             activeforeground=btn._warpsimlab_default_active_fg,
             cursor="",
-            command=real_command,
+            command=command_after_dismiss(real_command),
             relief="raised",
         )
     else:
@@ -41,16 +48,38 @@ def set_tk_button_soft_disabled(btn: tk.Button, enabled: bool, real_command, noo
             fg="gray60",
             activeforeground="gray60",
             cursor="arrow",
-            command=noop_command,
+            command=command_after_dismiss(noop_command),
             relief="flat",
         )
+
+
+def dismiss_active_popup(widget):
+    toplevel = widget.winfo_toplevel()
+    menu = getattr(toplevel, "_warpsimlab_active_popup_menu", None)
+
+    if menu is None:
+        return
+
+    try:
+        menu.unpost()
+    except tk.TclError:
+        pass
+
+    toplevel._warpsimlab_active_popup_menu = None
+
 
 def popup_menu_below_widget(widget, menu: tk.Menu):
     """
     Popup a tk.Menu directly below a widget.
     """
+    dismiss_active_popup(widget)
+
+    toplevel = widget.winfo_toplevel()
+    toplevel._warpsimlab_active_popup_menu = menu
+
     x = widget.winfo_rootx()
     y = widget.winfo_rooty() + widget.winfo_height()
+
     try:
         menu.tk_popup(x, y)
     finally:

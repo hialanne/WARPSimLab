@@ -1,14 +1,16 @@
 # gui_roth.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
 from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
 
-class RothEditFrame(ttk.Frame):
+class RothEditFrame(ScalableFrameMixin, ttk.Frame):
     """
     Advanced-mode editor for scheduled Roth flows.
 
@@ -79,25 +81,19 @@ class RothEditFrame(ttk.Frame):
         self.second_person_enabled = second_person_enabled
         self.title = title
 
-        style = ttk.Style(self)
-        combo_foreground = style.lookup("TLabel", "foreground")
-        combo_background = style.lookup("TCombobox", "fieldbackground")
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._column_header_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
+        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
 
-        style.configure(
-            "Roth.TCombobox",
-            foreground=combo_foreground,
-            fieldbackground=combo_background,
-        )
-
-        style.map(
-            "Roth.TCombobox",
-            foreground=[
-                ("readonly", combo_foreground),
-            ],
-            fieldbackground=[
-                ("readonly", combo_background),
-            ],
-        )
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._header_text_font)
+        self._register_scalable_font(self._column_header_font)
+        self._register_scalable_font(self._tooltip_font)
+        self._apply_gui_scale()
 
         self.row_vars = []
         self.next_row = 0
@@ -114,7 +110,7 @@ class RothEditFrame(ttk.Frame):
         ttk.Label(
             header_frame,
             text="Cash Flow > Roth Contributions / Conversions",
-            font=("Arial", 11, "bold"),
+            font=self._header_font,
         ).pack(side="left")
 
         ttk.Label(
@@ -123,7 +119,7 @@ class RothEditFrame(ttk.Frame):
                 " - Roth flows define scheduled Roth IRA contributions, "
                 "Roth workplace-plan contributions, and Roth conversions. "
             ),
-            font=("Arial", 11),
+            font=self._header_text_font,
         ).pack(side="left")
 
         self.next_row += 1
@@ -141,11 +137,7 @@ class RothEditFrame(ttk.Frame):
         ]
 
         for col, header in enumerate(headers):
-            ttk.Label(
-                self,
-                text=header,
-                font=("Arial", 10, "bold"),
-            ).grid(
+            ttk.Label(self, text=header, font=self._column_header_font).grid(
                 row=self.next_row,
                 column=col,
                 padx=5,
@@ -156,9 +148,7 @@ class RothEditFrame(ttk.Frame):
         self.next_row += 1
 
         self.add_button = ttk.Button(
-            self,
-            text="Add Roth Flow",
-            command=self._add_new_flow,
+            self, text="Add Roth Flow", command=self._add_new_flow, style="Roth.TButton"
         )
         self.add_button.grid(
             row=self.next_row,
@@ -172,6 +162,21 @@ class RothEditFrame(ttk.Frame):
             self._add_flow_row(flow)
 
         self._update_add_button_position()
+
+
+    def _apply_scaled_styles(self):
+        style = ttk.Style(self)
+
+        combo_foreground = style.lookup("TLabel", "foreground")
+        combo_background = style.lookup("TCombobox", "fieldbackground")
+
+        style.configure("Roth.TCombobox", foreground=combo_foreground, fieldbackground=combo_background)
+        style.map(
+            "Roth.TCombobox",
+            foreground=[("readonly", combo_foreground)],
+            fieldbackground=[("readonly", combo_background)],
+        )
+        style.configure("Roth.TButton", font=self._body_font)
 
 
     def _on_combobox_selected(self, event=None):
@@ -227,312 +232,121 @@ class RothEditFrame(ttk.Frame):
 
         row = self.next_row
 
-        owner_var = tk.StringVar(
-            value=flow["owner"]
-        )
-
-        type_var = tk.StringVar(
-            value=self.TYPE_LABELS[flow["type"]]
-        )
-
-        name_var = tk.StringVar(
-            value=str(flow["name"])
-        )
-
-        amount_var = tk.StringVar(
-            value=self._format_float_field("amount", flow["amount"])
-        )
-
-        start_age_var = tk.StringVar(
-            value=str(flow["start_age"])
-        )
-
-        end_age_var = tk.StringVar(
-            value=str(flow["end_age"])
-        )
-
-        enabled_var = tk.BooleanVar(
-            value=bool(flow["enabled"])
-        )
-
+        owner_var = tk.StringVar(value=flow["owner"])
+        type_var = tk.StringVar(value=self.TYPE_LABELS[flow["type"]])
+        name_var = tk.StringVar(value=str(flow["name"]))
+        amount_var = tk.StringVar(value=self._format_float_field("amount", flow["amount"]))
+        start_age_var = tk.StringVar(value=str(flow["start_age"]))
+        end_age_var = tk.StringVar(value=str(flow["end_age"]))
+        enabled_var = tk.BooleanVar(value=bool(flow["enabled"]))
         inflation_var = tk.StringVar(
             value=self._format_float_field("inflation_adjustment_pct", flow["inflation_adjustment_pct"])
         )
 
         owner_combo = ttk.Combobox(
-            self,
-            textvariable=owner_var,
-            values=self._owner_values(),
-            width=10,
-            state="readonly",
-            style="Roth.TCombobox",
+            self, textvariable=owner_var, values=self._owner_values(), width=10, state="readonly",
+            font=self._body_font, style="Roth.TCombobox"
         )
-
-        owner_combo.grid(
-            row=row,
-            column=0,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
-        owner_combo.bind(
-            "<<ComboboxSelected>>",
-            self._on_combobox_selected,
-        )
-        Tooltip(
-            owner_combo,
-            "Person whose age controls this Roth flow.",
-            font=("Arial", 11),
-        )
+        owner_combo.grid(row=row, column=0, padx=5, pady=2, sticky="w")
+        owner_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
+        Tooltip(owner_combo, "Person whose age controls this Roth flow.", font=self._tooltip_font)
 
         type_combo = ttk.Combobox(
-            self,
-            textvariable=type_var,
-            values=[
-                self.TYPE_LABELS[flow_type]
-                for flow_type in self.ROTH_FLOW_TYPES
-            ],
-            width=29,
-            state="readonly",
-            style="Roth.TCombobox",
+            self, textvariable=type_var,
+            values=[self.TYPE_LABELS[flow_type] for flow_type in self.ROTH_FLOW_TYPES],
+            width=29, state="readonly", font=self._body_font, style="Roth.TCombobox"
         )
-        type_combo.grid(
-            row=row,
-            column=1,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
-        type_combo.bind(
-            "<<ComboboxSelected>>",
-            self._on_combobox_selected,
-        )
+        type_combo.grid(row=row, column=1, padx=5, pady=2, sticky="w")
+        type_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
         Tooltip(
             type_combo,
-            (
-                "Choose a Roth IRA contribution, an employee Roth "
-                "workplace-plan contribution, or a Roth conversion."
-            ),
-            font=("Arial", 11),
+            "Choose a Roth IRA contribution, an employee Roth workplace-plan contribution, or a Roth conversion.",
+            font=self._tooltip_font
         )
 
-        name_entry = ttk.Entry(
-            self,
-            textvariable=name_var,
-            width=20,
-        )
-        name_entry.grid(
-            row=row,
-            column=2,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
-        Tooltip(
-            name_entry,
-            "Optional description or comment for this Roth flow.",
-            font=("Arial", 11),
-        )
+        name_entry = ttk.Entry(self, textvariable=name_var, width=20, font=self._body_font)
+        name_entry.grid(row=row, column=2, padx=5, pady=2, sticky="w")
+        Tooltip(name_entry, "Optional description or comment for this Roth flow.", font=self._tooltip_font)
 
         amount_entry = ttk.Entry(
-            self,
-            textvariable=amount_var,
-            width=12,
-            validate="focusout",
+            self, textvariable=amount_var, width=12, font=self._body_font, validate="focusout",
             validatecommand=(
                 self.register(
-                    lambda proposed_value, f=flow, v=amount_var:
-                        self._validate_float_field(
-                            proposed_value,
-                            f,
-                            "amount",
-                            v,
-                            0.0,
-                            allow_negative=False,
-                        )
+                    lambda proposed_value, f=flow, v=amount_var: self._validate_float_field(
+                        proposed_value, f, "amount", v, 0.0, allow_negative=False
+                    )
                 ),
                 "%P",
             ),
         )
-        amount_entry.grid(
-            row=row,
-            column=3,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
+        amount_entry.grid(row=row, column=3, padx=5, pady=2, sticky="w")
         bind_entry_commit_on_return(amount_entry)
-
-        Tooltip(
-            amount_entry,
-            "Annual Roth contribution or conversion amount.",
-            font=("Arial", 11),
-        )
+        Tooltip(amount_entry, "Annual Roth contribution or conversion amount.", font=self._tooltip_font)
 
         start_age_entry = ttk.Entry(
-            self,
-            textvariable=start_age_var,
-            width=10,
-            validate="focusout",
+            self, textvariable=start_age_var, width=10, font=self._body_font, validate="focusout",
             validatecommand=(
                 self.register(
-                    lambda proposed_value, f=flow, v=start_age_var:
-                        self._validate_int_field(
-                            proposed_value,
-                            f,
-                            "start_age",
-                            v,
-                            0,
-                        )
+                    lambda proposed_value, f=flow, v=start_age_var: self._validate_int_field(
+                        proposed_value, f, "start_age", v, 0
+                    )
                 ),
                 "%P",
             ),
         )
-        start_age_entry.grid(
-            row=row,
-            column=4,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
+        start_age_entry.grid(row=row, column=4, padx=5, pady=2, sticky="w")
         bind_entry_commit_on_return(start_age_entry)
-        Tooltip(
-            start_age_entry,
-            "Age when this Roth flow starts.",
-            font=("Arial", 11),
-        )
+        Tooltip(start_age_entry, "Age when this Roth flow starts.", font=self._tooltip_font)
 
         end_age_entry = ttk.Entry(
-            self,
-            textvariable=end_age_var,
-            width=10,
-            validate="focusout",
+            self, textvariable=end_age_var, width=10, font=self._body_font, validate="focusout",
             validatecommand=(
                 self.register(
-                    lambda proposed_value, f=flow, v=end_age_var:
-                        self._validate_int_field(
-                            proposed_value,
-                            f,
-                            "end_age",
-                            v,
-                            120,
-                        )
+                    lambda proposed_value, f=flow, v=end_age_var: self._validate_int_field(
+                        proposed_value, f, "end_age", v, 120
+                    )
                 ),
                 "%P",
             ),
         )
-        end_age_entry.grid(
-            row=row,
-            column=5,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
+        end_age_entry.grid(row=row, column=5, padx=5, pady=2, sticky="w")
         bind_entry_commit_on_return(end_age_entry)
-        Tooltip(
-            end_age_entry,
-            "Age when this Roth flow stops.",
-            font=("Arial", 11),
-        )
+        Tooltip(end_age_entry, "Age when this Roth flow stops.", font=self._tooltip_font)
 
-        enabled_check = ttk.Checkbutton(
-            self,
-            variable=enabled_var,
-        )
-        enabled_check.grid(
-            row=row,
-            column=6,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
+        enabled_check = ttk.Checkbutton(self, variable=enabled_var)
+        enabled_check.grid(row=row, column=6, padx=5, pady=2, sticky="w")
         Tooltip(
-            enabled_check,
-            "Temporarily enable or disable this Roth flow.",
-            font=("Arial", 11),
+            enabled_check, "Temporarily enable or disable this Roth flow.", font=self._tooltip_font
         )
 
         inflation_entry = ttk.Entry(
-            self,
-            textvariable=inflation_var,
-            width=12,
-            validate="focusout",
+            self, textvariable=inflation_var, width=12, font=self._body_font, validate="focusout",
             validatecommand=(
                 self.register(
-                    lambda proposed_value, f=flow, v=inflation_var:
-                        self._validate_float_field(
-                            proposed_value,
-                            f,
-                            "inflation_adjustment_pct",
-                            v,
-                            0.0,
-                            allow_negative=True,
-                        )
+                    lambda proposed_value, f=flow, v=inflation_var: self._validate_float_field(
+                        proposed_value, f, "inflation_adjustment_pct", v, 0.0, allow_negative=True
+                    )
                 ),
                 "%P",
             ),
         )
-        inflation_entry.grid(
-            row=row,
-            column=7,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
+        inflation_entry.grid(row=row, column=7, padx=5, pady=2, sticky="w")
         bind_entry_commit_on_return(inflation_entry)
         Tooltip(
             inflation_entry,
-            (
-                "Percent of inflation adjustment. "
-                "100 = full inflation, 0 = no adjustment."
-            ),
-            font=("Arial", 11),
+            "Percent of inflation adjustment. 100 = full inflation, 0 = no adjustment.",
+            font=self._tooltip_font
         )
 
         delete_button = ttk.Button(
-            self,
-            text="Delete",
-            command=lambda f=flow: self._delete_flow(f),
+            self, text="Delete", command=lambda f=flow: self._delete_flow(f), style="Roth.TButton"
         )
-        delete_button.grid(
-            row=row,
-            column=8,
-            padx=5,
-            pady=2,
-            sticky="w",
-        )
+        delete_button.grid(row=row, column=8, padx=5, pady=2, sticky="w")
 
-        owner_var.trace_add(
-            "write",
-            lambda *_: flow.__setitem__(
-                "owner",
-                owner_var.get(),
-            ),
-        )
-
-        type_var.trace_add(
-            "write",
-            lambda *_: self._set_flow_type(
-                flow,
-                type_var.get(),
-            ),
-        )
-
-        name_var.trace_add(
-            "write",
-            lambda *_: flow.__setitem__(
-                "name",
-                name_var.get(),
-            ),
-        )
-
-        enabled_var.trace_add(
-            "write",
-            lambda *_: flow.__setitem__(
-                "enabled",
-                bool(enabled_var.get()),
-            ),
-        )
+        owner_var.trace_add("write", lambda *_: flow.__setitem__("owner", owner_var.get()))
+        type_var.trace_add("write", lambda *_: self._set_flow_type(flow, type_var.get()))
+        name_var.trace_add("write", lambda *_: flow.__setitem__("name", name_var.get()))
+        enabled_var.trace_add("write", lambda *_: flow.__setitem__("enabled", bool(enabled_var.get())))
 
         self.row_vars.append({
             "flow": flow,

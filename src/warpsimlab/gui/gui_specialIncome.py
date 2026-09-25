@@ -1,14 +1,16 @@
 # gui_specialIncome.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
 from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
 
-class SpecialIncomeEditFrame(ttk.Frame):
+class SpecialIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
     """
     Advanced-mode editor for special income streams.
 
@@ -44,25 +46,19 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self.second_person_enabled = second_person_enabled
         self.title = title
 
-        style = ttk.Style(self)
-        combo_foreground = style.lookup("TLabel", "foreground")
-        combo_background = style.lookup("TCombobox", "fieldbackground")
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._column_header_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
+        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
 
-        style.configure(
-            "SpecialIncome.TCombobox",
-            foreground=combo_foreground,
-            fieldbackground=combo_background,
-        )
-
-        style.map(
-            "SpecialIncome.TCombobox",
-            foreground=[
-                ("readonly", combo_foreground),
-            ],
-            fieldbackground=[
-                ("readonly", combo_background),
-            ],
-        )
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._header_text_font)
+        self._register_scalable_font(self._column_header_font)
+        self._register_scalable_font(self._tooltip_font)
+        self._apply_gui_scale()
 
         self.row_vars = []
         self.next_row = 0
@@ -79,7 +75,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
         ttk.Label(
             header_frame,
             text="Cash Flow > Special Income",
-            font=("Arial", 11, "bold"),
+            font=self._header_font,
         ).pack(side="left")
 
         ttk.Label(
@@ -89,7 +85,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
                 "such as alimony, inheritance payments, consulting income, or "
                 "other non-standard income. "
             ),
-            font=("Arial", 11),
+            font=self._header_text_font,
         ).pack(side="left")
 
         self.next_row += 1
@@ -108,7 +104,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
         ]
 
         for col, header in enumerate(headers):
-            ttk.Label(self, text=header, font=("Arial", 10, "bold")).grid(
+            ttk.Label(self, text=header, font=self._column_header_font).grid(
                 row=self.next_row,
                 column=col,
                 padx=5,
@@ -119,9 +115,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self.next_row += 1
 
         self.add_button = ttk.Button(
-            self,
-            text="Add Special Income",
-            command=self._add_new_stream,
+            self, text="Add Special Income", command=self._add_new_stream, style="SpecialIncome.TButton"
         )
         self.add_button.grid(row=self.next_row, column=0, pady=(6, 2), sticky="w")
 
@@ -130,6 +124,24 @@ class SpecialIncomeEditFrame(ttk.Frame):
             self._add_stream_row(stream)
 
         self._update_add_button_position()
+
+
+    def _apply_scaled_styles(self):
+        style = ttk.Style(self)
+
+        combo_foreground = style.lookup("TLabel", "foreground")
+        combo_background = style.lookup("TCombobox", "fieldbackground")
+
+        style.configure(
+            "SpecialIncome.TCombobox",
+            foreground=combo_foreground, fieldbackground=combo_background
+        )
+        style.map(
+            "SpecialIncome.TCombobox",
+            foreground=[("readonly", combo_foreground)],
+            fieldbackground=[("readonly", combo_background)],
+        )
+        style.configure("SpecialIncome.TButton", font=self._body_font)
 
 
     def _on_combobox_selected(self, event=None):
@@ -209,25 +221,23 @@ class SpecialIncomeEditFrame(ttk.Frame):
         adjustment_pct_var = tk.StringVar(value=self._format_float_field("adjustment_pct", stream["adjustment_pct"]))
 
         owner_combo = ttk.Combobox(
-            self,
-            textvariable=owner_var,
-            values=self._owner_values(),
-            width=10,
-            state="readonly",
-            style="SpecialIncome.TCombobox",
+            self, textvariable=owner_var, values=self._owner_values(), width=10, state="readonly",
+            font=self._body_font, style="SpecialIncome.TCombobox"
         )
         owner_combo.grid(row=row, column=0, padx=5, pady=2, sticky="w")
         owner_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
-        Tooltip(owner_combo, "Person whose age controls this income stream", font=("Arial", 11))
+        Tooltip(owner_combo, "Person whose age controls this income stream", font=self._tooltip_font)
 
-        name_entry = ttk.Entry(self, textvariable=name_var, width=24)
+        name_entry = ttk.Entry(self, textvariable=name_var, width=24, font=self._body_font)
         name_entry.grid(row=row, column=1, padx=5, pady=2, sticky="w")
-        Tooltip(name_entry, "Description such as Alimony, Inheritance, Consulting, etc.", font=("Arial", 11))
+        Tooltip(name_entry, "Description such as Alimony, Inheritance, Consulting, etc.",
+                font=self._tooltip_font)
 
         amount_entry = ttk.Entry(
             self,
             textvariable=amount_var,
             width=14,
+            font=self._body_font,
             validate="focusout",
             validatecommand=(
                 self.register(
@@ -246,12 +256,13 @@ class SpecialIncomeEditFrame(ttk.Frame):
         )
         amount_entry.grid(row=row, column=2, padx=5, pady=2, sticky="w")
         bind_entry_commit_on_return(amount_entry)
-        Tooltip(amount_entry, "Annual dollar amount before tax treatment", font=("Arial", 11))
+        Tooltip(amount_entry, "Annual dollar amount before tax treatment", font=self._tooltip_font)
 
         start_age_entry = ttk.Entry(
             self,
             textvariable=start_age_var,
             width=10,
+            font=self._body_font,
             validate="focusout",
             validatecommand=(
                 self.register(
@@ -269,12 +280,13 @@ class SpecialIncomeEditFrame(ttk.Frame):
         )
         start_age_entry.grid(row=row, column=3, padx=5, pady=2, sticky="w")
         bind_entry_commit_on_return(start_age_entry)
-        Tooltip(start_age_entry, "Age when this income starts", font=("Arial", 11))
+        Tooltip(start_age_entry, "Age when this income starts", font=self._tooltip_font)
 
         end_age_entry = ttk.Entry(
             self,
             textvariable=end_age_var,
             width=10,
+            font=self._body_font,
             validate="focusout",
             validatecommand=(
                 self.register(
@@ -292,7 +304,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
         )
         end_age_entry.grid(row=row, column=4, padx=5, pady=2, sticky="w")
         bind_entry_commit_on_return(end_age_entry)
-        Tooltip(end_age_entry, "Age when this income stops", font=("Arial", 11))
+        Tooltip(end_age_entry, "Age when this income stops", font=self._tooltip_font)
 
         enabled_check = ttk.Checkbutton(
             self,
@@ -309,16 +321,19 @@ class SpecialIncomeEditFrame(ttk.Frame):
         Tooltip(
             enabled_check,
             "Temporarily enable or disable this income stream",
-            font=("Arial", 11)
+            font=self._tooltip_font
         )
 
         taxable_check = ttk.Checkbutton(self, variable=taxable_var)
         taxable_check.grid(row=row, column=6, padx=5, pady=2, sticky="w")
-        Tooltip(taxable_check, "Checked means taxable ordinary income; unchecked means non-taxable", font=("Arial", 11))
+        Tooltip(
+            taxable_check, "Checked means taxable ordinary income; unchecked means non-taxable",
+            font=self._tooltip_font
+        )
 
         adjustment_mode_combo = ttk.Combobox(
             self, textvariable=adjustment_mode_var, values=list(self.ADJUSTMENT_MODE_VALUES), width=12,
-            state="readonly", style="SpecialIncome.TCombobox"
+            state="readonly", font=self._body_font, style="SpecialIncome.TCombobox"
         )
         adjustment_mode_combo.grid(row=row, column=7, padx=5, pady=2, sticky="w")
         adjustment_mode_combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
@@ -326,11 +341,11 @@ class SpecialIncomeEditFrame(ttk.Frame):
             adjustment_mode_combo,
             "Inflation adjusts by a percentage of inflation. Fixed Annual increases by a fixed percentage each year. "
             "None applies no annual increase.",
-            font=("Arial", 11)
+            font=self._tooltip_font
         )
 
         adjustment_pct_entry = ttk.Entry(
-            self, textvariable=adjustment_pct_var, width=12, validate="focusout",
+            self, textvariable=adjustment_pct_var, width=12, font=self._body_font, validate="focusout",
             validatecommand=(
                 self.register(
                     lambda proposed_value, s=stream, v=adjustment_pct_var:
@@ -345,7 +360,7 @@ class SpecialIncomeEditFrame(ttk.Frame):
             adjustment_pct_entry,
             "Inflation: percent of inflation adjustment; 100 = full inflation, 0 = none. "
             "Fixed Annual: annual percentage increase; 5 = 5% per year.",
-            font=("Arial", 11)
+            font=self._tooltip_font
         )
 
         adjustment_mode_var.trace_add(
@@ -357,9 +372,8 @@ class SpecialIncomeEditFrame(ttk.Frame):
         self._set_adjustment_mode(stream, adjustment_mode_var, adjustment_pct_var, adjustment_pct_entry)
 
         delete_button = ttk.Button(
-            self,
-            text="Delete",
-            command=lambda s=stream: self._delete_stream(s),
+            self, text="Delete", command=lambda s=stream: self._delete_stream(s),
+            style="SpecialIncome.TButton"
         )
         delete_button.grid(row=row, column=9, padx=5, pady=2, sticky="w")
 

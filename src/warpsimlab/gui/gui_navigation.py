@@ -1,25 +1,30 @@
 # gui_navigation.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk
 from pathlib import Path
 import traceback
 
-from src.warpsimlab.gui.gui_utils import noop, set_tk_button_soft_disabled, create_dropdown_button, create_top_button
-
+from src.warpsimlab.gui.gui_utils import (
+    create_dropdown_button, create_top_button, dismiss_active_popup, noop, set_tk_button_soft_disabled
+)
+from src.warpsimlab.gui.gui_scaling import ScalableClientMixin
 
 MODE_DEBUG = False
 
 
-class PortfolioSimulatorGUI_NavigationMixin:
+class PortfolioSimulatorGUI_NavigationMixin(ScalableClientMixin):
     def _sync_tax_status_from_second_person(self):
         if self.simulation_controls["second_person_enabled"]:
             self.simulation_controls["tax_filing_status"] = "Married filing jointly"
         else:
             self.simulation_controls["tax_filing_status"] = "Single"
 
+
     def _advanced_only(self) -> bool:
         return self.mode_var.get() == "Advanced"
+
 
     def _apply_mode_to_top_buttons(self):
         is_basic = self.mode_var.get() == "Basic"
@@ -141,6 +146,7 @@ class PortfolioSimulatorGUI_NavigationMixin:
 
         self._rebuild_results_menu()
 
+
     def _load_user_mode(self):
         """
         Load the user's last selected Basic/Advanced mode.
@@ -176,6 +182,7 @@ class PortfolioSimulatorGUI_NavigationMixin:
 
         return "Basic"
 
+
     def _save_user_mode(self):
         """
         Save the user's current Basic/Advanced mode.
@@ -202,6 +209,7 @@ class PortfolioSimulatorGUI_NavigationMixin:
             # from operating normally.
             pass
 
+
     def _on_mode_changed(self):
         if MODE_DEBUG:
             print("MODE MENU CALLBACK:", self.mode_var.get())
@@ -223,6 +231,7 @@ class PortfolioSimulatorGUI_NavigationMixin:
 
         self.edit_main_home()
 
+
     def _on_second_person_changed(self):
         # one-way sync
         self._sync_tax_status_from_second_person()
@@ -238,6 +247,7 @@ class PortfolioSimulatorGUI_NavigationMixin:
             widget.destroy()
 
         self.edit_person_data()
+
 
     def _debug_mode_change(self, *args):
         if not MODE_DEBUG:
@@ -267,6 +277,16 @@ class PortfolioSimulatorGUI_NavigationMixin:
 
 
     def _build_top_fields(self, parent):
+        self._navigation_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._menu_font = tkfont.nametofont("TkMenuFont").copy()
+        self._mode_font = tkfont.Font(root=self.root, family="Arial", size=14)
+        self._run_button_font = tkfont.Font(root=self.root, family="Arial", size=14, weight="bold")
+
+        self._register_scalable_font(self._navigation_font)
+        self._register_scalable_font(self._menu_font)
+        self._register_scalable_font(self._mode_font)
+        self._register_scalable_font(self._run_button_font)
+        self._apply_gui_scale()
         # --- BUTTON FRAME ---
         self.button_frame = ttk.Frame(parent)
         self.button_frame.grid(row=0, column=0, columnspan=3, sticky="w", pady=5)
@@ -292,7 +312,9 @@ class PortfolioSimulatorGUI_NavigationMixin:
             padx=(0, 10),
             pady=2,
         )
-        self.recent_data_dirs_menu = tk.Menu(self.file_menu, tearoff=0)
+        self.file_button.configure(font=self._navigation_font)
+        self.file_menu.configure(font=self._menu_font)
+        self.recent_data_dirs_menu = tk.Menu(self.file_menu, tearoff=0, font=self._menu_font)
         self.file_menu.insert_cascade(3, label="Recent Data Directories", menu=self.recent_data_dirs_menu)
         self.file_menu.insert_command(4, label="Reset to Default Data Directory", command=self._reset_recent_data_dirs)
         self._file_exit_index = self.file_menu.index("end")
@@ -311,11 +333,15 @@ class PortfolioSimulatorGUI_NavigationMixin:
             padx=(0, 15),
             pady=2,
         )
+        self.home_button.configure(font=self._navigation_font)
+        self.home_menu.configure(font=self._menu_font)
 
         self.cashflow_button, self.cashflow_menu, self._show_cashflow_menu = create_dropdown_button(
             self.button_frame, text="Cash Flow \u25BE", menu_labels_and_commands=[],
             row=0, column=2, padx=(25, 10), pady=2
         )
+        self.cashflow_button.configure(font=self._navigation_font)
+        self.cashflow_menu.configure(font=self._menu_font)
 
         self.cashflow_menu.add_command(label="Normal Income", command=self.edit_person_data)
         self.cashflow_menu.add_command(label="Special Income", command=self.edit_special_income)
@@ -333,6 +359,8 @@ class PortfolioSimulatorGUI_NavigationMixin:
             row=0, column=3, padx=(0, 15), pady=2
         )
 
+        self.balance_sheet_button.configure(font=self._navigation_font)
+        self.balance_sheet_menu.configure(font=self._menu_font)
         self.balance_sheet_menu.add_command(label="Portfolio - Amounts", command=self.edit_portfolio_data)
 
         self.balance_sheet_menu.add_command(label="Portfolio - Percentages", command=self.edit_portfolio_percentages)
@@ -345,11 +373,10 @@ class PortfolioSimulatorGUI_NavigationMixin:
         self._balance_sheet_derived_statistics_index = self.balance_sheet_menu.index("end")
 
         self.edit_retirement_button = create_top_button(
-            self.button_frame,
-            text="Retirement",
-            command=self.edit_retirement_controls,
-            grid_kwargs={"row": 0, "column": 4, "padx": (25, 10), "pady": 2},
+            self.button_frame, text="Retirement", command=self.edit_retirement_controls,
+            grid_kwargs={"row": 0, "column": 4, "padx": (25, 10), "pady": 2}, font=self._navigation_font
         )
+
         self._cmd_edit_retirement_controls = self.edit_retirement_controls
 
         self.simulation_button, self.simulation_menu, self._show_simulation_menu = create_dropdown_button(
@@ -365,34 +392,35 @@ class PortfolioSimulatorGUI_NavigationMixin:
             padx=(0, 15),
             pady=2,
         )
+        self.simulation_button.configure(font=self._navigation_font)
+        self.simulation_menu.configure(font=self._menu_font)
 
         self.results_button, self.results_menu, self._show_results_menu = create_dropdown_button(
             self.button_frame, text="Results \u25BE", menu_labels_and_commands=[],
             row=0, column=6, padx=(25, 15), pady=2
         )
+        self.results_button.configure(font=self._navigation_font)
+        self.results_menu.configure(font=self._menu_font)
 
         self.reports_button, self.reports_menu, self._show_reports_menu = create_dropdown_button(
             self.button_frame, text="Reports \u25BE", menu_labels_and_commands=[],
             row=0, column=7, padx=(0, 15), pady=2
         )
+        self.reports_button.configure(font=self._navigation_font)
+        self.reports_menu.configure(font=self._menu_font)
 
         # --- MODE BUTTON WITH DROPDOWN (reliable tk.Menubutton wiring) ---
         self.button_frame.grid_columnconfigure(8, weight=1)
 
         # Create the menubutton (button look)
-        self.mode_button = tk.Menubutton(
-            self.button_frame,
-            text="Mode \u25BE",  # small down triangle
-            relief="raised",
-            borderwidth=2,
-            font=("Arial", 14),
-            indicatoron=True,
-            direction="below",
-        )
+        self.mode_button = tk.Menubutton(self.button_frame, text="Mode \u25BE", relief="raised", borderwidth=2,
+                                         font=self._mode_font, indicatoron=True, direction="below")
+
+        self.mode_button.bind("<Button-1>", lambda _event: dismiss_active_popup(self.mode_button), add="+")
         self.mode_button.grid(row=0, column=8, padx=(30, 10), pady=2, sticky="e")
 
         # Create the menu and attach it explicitly
-        self.mode_menu = tk.Menu(self.mode_button, tearoff=0)
+        self.mode_menu = tk.Menu(self.mode_button, tearoff=0, font=self._menu_font)
 
         self.mode_menu.add_radiobutton(
             label="Basic", variable=self.mode_var, value="Basic", command=self._on_mode_changed
@@ -410,6 +438,7 @@ class PortfolioSimulatorGUI_NavigationMixin:
         self._rebuild_results_menu()
         self._apply_mode_to_top_buttons()
 
+
     def _build_fields(self):
         top_frame = ttk.Frame(self.frame)
         top_frame.grid(row=0, column=0, sticky="nsew", padx=5)
@@ -423,8 +452,9 @@ class PortfolioSimulatorGUI_NavigationMixin:
 
         self._build_top_fields(top_frame)
 
+
     def _build_run_button(self):
         style = ttk.Style()
-        style.configure("Big.TButton", font=("Arial", 14, "bold"), padding=(10, 10))
-        style.configure("BigFaded.TButton", font=("Arial", 14, "bold"), padding=(10, 10))
+        style.configure("Big.TButton", font=self._run_button_font, padding=(10, 10))
+        style.configure("BigFaded.TButton", font=self._run_button_font, padding=(10, 10))
         style.map("BigFaded.TButton", foreground=[("disabled", "gray60"), ("!disabled", "black")])

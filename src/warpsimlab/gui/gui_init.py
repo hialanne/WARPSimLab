@@ -4,7 +4,9 @@
 # Version string is defined after imports.
 #
 
+import tkinter.font as tkfont
 from tkinter import ttk
+
 from datetime import datetime
 import os
 
@@ -35,7 +37,7 @@ from src.warpsimlab.gui.gui_taxes import TaxesEditFrame
 from src.warpsimlab.gui.gui_roth import RothEditFrame
 from src.warpsimlab.gui.gui_realEstate import RealEstateEditFrame
 from src.warpsimlab.gui.gui_derivedStatistics import DerivedStatisticsFrame
-from src.warpsimlab.gui.gui_guidedtutorial import GuidedTutorialController
+from src.warpsimlab.gui.gui_guidedTutorial import GuidedTutorialController
 from src.warpsimlab.gui.gui_tutorial_definitions import (
     build_basic_tutorial_steps,
     build_advanced_building_tutorial_steps,
@@ -70,12 +72,18 @@ class PortfolioSimulatorGUI(
 
         self.display_settings = load_display_settings()
         self._apply_main_window_startup_settings()
+        self._initialize_gui_scaling()
+        self._initialize_scaling(self.root)
+
+        self._title_font = tkfont.Font(root=self.root, family="Arial", size=16)
+        self._register_scalable_font(self._title_font)
+        self._apply_gui_scale()
 
         # Diagnostic prints for dialog and subdialog diagnostics. Comment out in production.
         if SCREEN_DEBUG:
             self._print_display_diagnostics()
 
-        ttk.Label(root, text=WARPSIMLAB_TITLE, font=("Arial", 16)).pack(pady=10)
+        ttk.Label(root, text=WARPSIMLAB_TITLE, font=self._title_font).pack(pady=10)
 
         self.frame = ttk.Frame(root)
         self.frame.pack(pady=5, padx=10, fill="both", expand=True)

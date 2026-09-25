@@ -1,14 +1,15 @@
 # gui_normalIncome.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
 from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
-
-class NormalIncomeEditFrame(ttk.Frame):
+class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
     """
     Edit personal data for Husband and optional Wife.
     This frame owns all Tkinter StringVars and writes changes
@@ -36,6 +37,18 @@ class NormalIncomeEditFrame(ttk.Frame):
         self.simulation_controls = simulation_controls
         self.refresh_callback = refresh_callback
         self.mode = mode
+
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._person_header_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
+
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._header_text_font)
+        self._register_scalable_font(self._person_header_font)
+        self._apply_gui_scale()
 
         self._enable_second_person_var = tk.BooleanVar(
             value=self.simulation_controls["second_person_enabled"]
@@ -91,7 +104,7 @@ class NormalIncomeEditFrame(ttk.Frame):
         ttk.Label(
             header_frame,
             text="Cash Flow > Normal Income",
-            font=("Arial", 11, "bold"),
+            font=self._header_font,
         ).pack(side="left")
 
         ttk.Label(
@@ -100,10 +113,14 @@ class NormalIncomeEditFrame(ttk.Frame):
                 " - Defines each person's age, income, and retirement timeline "
                 "used in the simulation."
             ),
-            font=("Arial", 11),
+        font=self._header_text_font,
         ).pack(side="left")
 
         self._build_fields()
+
+
+    def _apply_scaled_styles(self):
+        ttk.Style(self).configure("NormalIncome.TCheckbutton", font=self._body_font)
 
 
     def _on_enable_second_person_changed(self, *_):
@@ -121,21 +138,21 @@ class NormalIncomeEditFrame(ttk.Frame):
         row = 1
 
         # Left block headers
-        ttk.Label(self, text="Husband", font=("Arial", 12, "bold")).grid(
+        ttk.Label(self, text="Husband", font=self._person_header_font).grid(
             row=row, column=1, sticky="w", pady=(10, 5), padx=(30, 0)
         )
         if wife_vars:
-            ttk.Label(self, text="Wife", font=("Arial", 12, "bold")).grid(
+            ttk.Label(self, text="Wife", font=self._person_header_font).grid(
                 row=row, column=2, sticky="w", pady=(10, 5), padx=(30, 0)
             )
 
         # Right block headers (Full mode only)
         if self.mode != "Basic":
-            ttk.Label(self, text="Husband", font=("Arial", 12, "bold")).grid(
+            ttk.Label(self, text="Husband", font=self._person_header_font).grid(
                 row=row, column=4, sticky="w", pady=(10, 5), padx=(30, 0)
             )
             if wife_vars:
-                ttk.Label(self, text="Wife", font=("Arial", 12, "bold")).grid(
+                ttk.Label(self, text="Wife", font=self._person_header_font).grid(
                     row=row, column=5, sticky="w", pady=(10, 5), padx=(30, 0)
                 )
 
@@ -192,9 +209,12 @@ class NormalIncomeEditFrame(ttk.Frame):
 
 
         def _add_row(r, label_text, key, tooltip_text, col_offset):
-            label_padx = (25, 5) if col_offset == 3 else 5
+            if col_offset == 3:
+                label_padx = (25, 5)
+            else:
+                label_padx = 5
 
-            ttk.Label(self, text=label_text).grid(
+            ttk.Label(self, text=label_text, font=self._body_font).grid(
                 row=r, column=0 + col_offset, sticky="w", padx=label_padx, pady=2
             )
 
@@ -205,13 +225,9 @@ class NormalIncomeEditFrame(ttk.Frame):
                 key,
             )
 
-            entry_h = ttk.Entry(
-                self,
-                textvariable=husband_vars[key],
-                width=14,
-                validate="focusout",
-                validatecommand=vcmd_h,
-            )
+            entry_h = ttk.Entry(self, textvariable=husband_vars[key], width=14, font=self._body_font,
+                                validate="focusout", validatecommand=vcmd_h)
+
             entry_h.grid(row=r, column=1 + col_offset, sticky="w", padx=5)
             bind_entry_commit_on_return(entry_h)
             Tooltip(entry_h, tooltip_text, font=("Arial", 11))
@@ -224,13 +240,8 @@ class NormalIncomeEditFrame(ttk.Frame):
                     key,
                 )
 
-                entry_w = ttk.Entry(
-                    self,
-                    textvariable=wife_vars[key],
-                    width=14,
-                    validate="focusout",
-                    validatecommand=vcmd_w,
-                )
+                entry_w = ttk.Entry(self, textvariable=wife_vars[key], width=14, font=self._body_font,
+                                    validate="focusout", validatecommand=vcmd_w)
                 entry_w.grid(row=r, column=2 + col_offset, sticky="w", padx=5)
                 bind_entry_commit_on_return(entry_w)
                 Tooltip(entry_w, tooltip_text, font=("Arial", 11))
@@ -255,19 +266,9 @@ class NormalIncomeEditFrame(ttk.Frame):
             # Continue after whichever block is taller
             row = max(row, right_row)
 
-        ttk.Checkbutton(
-            self,
-            text="Enable Second Person",
-            variable=self._enable_second_person_var,
-        ).grid(
-            row=row,
-            column=0,
-            columnspan=6,
-            sticky="w",
-            padx=5,
-            pady=(8, 4),
-        )
-
+        ttk.Checkbutton(self, text="Enable Second Person", variable=self._enable_second_person_var,
+                        style="NormalIncome.TCheckbutton").grid(row=row, column=0, columnspan=6,
+                                                               sticky="w", padx=5, pady=(8, 4))
 
     def _parse_person_field(self, field_key, raw_value):
         int_fields = {

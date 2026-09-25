@@ -1,13 +1,16 @@
 # gui_main.py
 
-import tkinter as tk
-from tkinter import ttk
-
 import os
 import getpass
 from datetime import datetime
 from pathlib import Path
 
+import tkinter as tk
+import tkinter.font as tkfont
+from tkinter import ttk
+
+
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
 # ------------------------------------------------------------------
 # Editable home page text
@@ -71,7 +74,7 @@ LEGAL_TEXT = (
     "making decisions related to your personal finances."
 )
 
-class MainHomeFrame(ttk.Frame):
+class MainHomeFrame(ScalableFrameMixin, ttk.Frame):
     def __init__(self, parent, title=HOME_TITLE, parent_gui=None, **kwargs):
         """
         parent_gui: reference to the main GUI class, used to enable/disable run buttons
@@ -80,6 +83,18 @@ class MainHomeFrame(ttk.Frame):
         self.title = title
 
         self.parent_gui = parent_gui
+        self._title_font = tkfont.Font(root=self, family="Arial", size=16, weight="bold")
+        self._intro_font = tkfont.Font(root=self, family="Arial", size=12)
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._text_font = tkfont.nametofont("TkTextFont").copy()
+
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._title_font)
+        self._register_scalable_font(self._intro_font)
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._text_font)
+        self._apply_gui_scale()
+
         self.legal_already_accepted = self._legal_acceptance_exists()
 
         self.acceptance_timestamp = None
@@ -98,22 +113,17 @@ class MainHomeFrame(ttk.Frame):
             self._update_run_buttons(enabled=True)
             self._update_nav_buttons(enabled=True)
 
+
+    def _apply_scaled_styles(self):
+        ttk.Style(self).configure("Home.TButton", font=self._body_font)
+
+
     def _build_fields(self):
         # Title
-        ttk.Label(
-            self,
-            text=self.title,
-            font=("Arial", 16, "bold")
-        ).pack(anchor="w", pady=(0, 10))
+        ttk.Label(self, text=self.title, font=self._title_font).pack(anchor="w", pady=(0, 10))
 
         # Introduction text directly on the frame
-        self.intro_label = ttk.Label(
-            self,
-            text=INTRO_TEXT,
-            wraplength=800,
-            justify="left",
-            font=("Arial", 12)
-        )
+        self.intro_label = ttk.Label(self, text=INTRO_TEXT, wraplength=800, justify="left", font=self._intro_font)
         self.intro_label.pack(anchor="w", pady=(0, 10))
 
         if self.legal_already_accepted:
@@ -125,32 +135,20 @@ class MainHomeFrame(ttk.Frame):
             else:
                 acceptance_text = "Terms of Use previously accepted."
 
-            ttk.Label(
-                self,
-                text=acceptance_text,
-            ).pack(anchor="w", pady=(5, 5))
+            ttk.Label(self, text=acceptance_text, font=self._body_font).pack(anchor="w", pady=(5, 5))
 
-            ttk.Button(
-                self,
-                text="View Terms of Use",
-                command=self._view_terms_of_use,
-            ).pack(anchor="w", pady=(0, 10))
+            ttk.Button(self, text="View Terms of Use", command=self._view_terms_of_use,
+                       style="Home.TButton").pack(anchor="w", pady=(0, 10))
 
-            self.tutorial_button = ttk.Button(
-                self,
-                text="Start Tutorials",
-                command=self._open_tutorials,
-            )
+            self.tutorial_button = ttk.Button(self, text="Start Tutorials", command=self._open_tutorials,
+                                              style="Home.TButton")
             self.tutorial_button.pack(anchor="w", pady=(10, 0))
+
             return
 
-        first_use_label = ttk.Label(
-            self,
-            text=FIRST_USE_TEXT,
-            wraplength=800,
-            justify="left",
-            font=("Arial", 12),
-        )
+        first_use_label = ttk.Label(self, text=FIRST_USE_TEXT, wraplength=800, justify="left",
+                                    font=self._intro_font)
+
         first_use_label.pack(anchor="w", pady=(0, 10))
 
         # Scrollable legal text
@@ -160,15 +158,9 @@ class MainHomeFrame(ttk.Frame):
         scrollbar = ttk.Scrollbar(container, orient="vertical")
         scrollbar.pack(side="right", fill="y")
 
-        text_widget = tk.Text(
-            container,
-            wrap="word",
-            yscrollcommand=scrollbar.set,
-            borderwidth=0,
-            relief="flat",
-            highlightthickness=0,
-            height=12 
-        )
+        text_widget = tk.Text(container, wrap="word", yscrollcommand=scrollbar.set, borderwidth=0, relief="flat",
+                              highlightthickness=0, height=12, font=self._text_font)
+
         text_widget.pack(side="left", fill="both", expand=True)
         scrollbar.config(command=text_widget.yview)
 
@@ -176,20 +168,14 @@ class MainHomeFrame(ttk.Frame):
         text_widget.config(state="disabled")
 
         # Checkbox at bottom
-        checkbox = tk.Checkbutton(
-            self,
-            text="I have read and accept the terms above",
-            variable=self.agree_var,
-            command=self._on_agree_changed
-        )
+        checkbox = tk.Checkbutton(self, text="I have read and accept the terms above", variable=self.agree_var,
+                                  command=self._on_agree_changed, font=self._body_font)
+
         checkbox.pack(anchor="w", pady=(10, 0))
 
-        self.tutorial_button = ttk.Button(
-            self,
-            text="Start Tutorials",
-            command=self._open_tutorials,
-            state="disabled",
-        )
+        self.tutorial_button = ttk.Button(self, text="Start Tutorials", command=self._open_tutorials,
+                                          state="disabled", style="Home.TButton")
+
         self.tutorial_button.pack(anchor="w", pady=(10, 0))
 
         # Initially disable run buttons
@@ -216,31 +202,17 @@ class MainHomeFrame(ttk.Frame):
         )
         scrollbar.pack(side="right", fill="y")
 
-        text_widget = tk.Text(
-            container,
-            wrap="word",
-            yscrollcommand=scrollbar.set,
-            borderwidth=0,
-            relief="flat",
-            highlightthickness=0,
-        )
-        text_widget.pack(
-            side="left",
-            fill="both",
-            expand=True,
-        )
+        text_widget = tk.Text(container, wrap="word", yscrollcommand=scrollbar.set, borderwidth=0, relief="flat",
+                              highlightthickness=0, font=self._text_font)
+
+        text_widget.pack(side="left", fill="both", expand=True,)
 
         scrollbar.config(command=text_widget.yview)
 
         text_widget.insert("1.0", LEGAL_TEXT)
         text_widget.config(state="disabled")
 
-        ttk.Button(
-            dialog,
-            text="Close",
-            command=dialog.destroy,
-        ).pack(pady=(0, 10))
-
+        ttk.Button(dialog, text="Close", command=dialog.destroy, style="Home.TButton").pack(pady=(0, 10))
 
     def _open_tutorials(self):
         if not self.parent_gui:

@@ -1,14 +1,16 @@
 # gui_expenses.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
 from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
 
-class ExpensesEditFrame(ttk.Frame):
+class ExpensesEditFrame(ScalableFrameMixin, ttk.Frame):
     """
     Edit a dynamic list of yearly expenses stored in a DynamicExpenses object.
     Each expense has: start_year, end_year, cost, comment.
@@ -18,6 +20,18 @@ class ExpensesEditFrame(ttk.Frame):
         super().__init__(parent, padding=10)
         self.expensesDict = expensesDict
         self.start_year = start_year
+
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._header_text_font)
+        self._register_scalable_font(self._tooltip_font)
+        self._apply_gui_scale()
         
         header_frame = ttk.Frame(self)
         header_frame.grid(
@@ -29,9 +43,7 @@ class ExpensesEditFrame(ttk.Frame):
         )
 
         ttk.Label(
-            header_frame,
-            text="Cash Flow > Expenses",
-            font=("Arial", 11, "bold"),
+            header_frame, text="Cash Flow > Expenses", font=self._header_font
         ).pack(side="left")
 
         ttk.Label(
@@ -40,16 +52,13 @@ class ExpensesEditFrame(ttk.Frame):
                 " - Enter recurring or temporary household expenses. "
                 "Federal and state taxes are calculated separately."
             ),
-            font=("Arial", 11),
+            font=self._header_text_font,
         ).pack(side="left")
 
         headers = ["Start Year", "End Year", "Cost", "HSA Eligible", "Comment", "Delete"]
 
         for col, header in enumerate(headers):
-            ttk.Label(
-                self,
-                text=header,
-            ).grid(
+            ttk.Label(self, text=header, font=self._body_font).grid(
                 row=1,
                 column=col,
                 padx=5,
@@ -64,13 +73,18 @@ class ExpensesEditFrame(ttk.Frame):
             self._add_expense_row(exp)
 
         # Button to add new expense
-        self.add_button = ttk.Button(self,text="Add Expense",command=self._add_new_expense)
+        self.add_button = ttk.Button(
+            self, text="Add Expense", command=self._add_new_expense, style="Expenses.TButton"
+        )
         self.add_button.grid(row=999, column=0, pady=(10,5), sticky="w")  # temporary row; updated dynamically
-        Tooltip(self.add_button, "Click to add a new expense row",
-            font=("Arial", 11)) 
+        Tooltip(self.add_button, "Click to add a new expense row", font=self._tooltip_font)
 
         # Ensure Add Expense button is correctly positioned
         self._update_add_button_position()
+
+
+    def _apply_scaled_styles(self):
+        ttk.Style(self).configure("Expenses.TButton", font=self._body_font)
 
 
     def _add_new_expense(self):
@@ -84,6 +98,7 @@ class ExpensesEditFrame(ttk.Frame):
         self.expensesDict.expenses.append(expense)
         self._add_expense_row(expense)
 
+
     def _add_expense_row(self, expense):
         """
         Add a UI row bound directly to an existing expense dict.
@@ -96,86 +111,57 @@ class ExpensesEditFrame(ttk.Frame):
         comment_var = tk.StringVar(value=str(expense["comment"]))
         hsa_eligible_var = tk.BooleanVar(value=bool(expense.get("is_hsa_eligible", False)))
 
-        comment_var.trace_add(
-            "write",
-            lambda *_: expense.__setitem__("comment", comment_var.get())
-        )
-        
+        comment_var.trace_add("write", lambda *_: expense.__setitem__("comment", comment_var.get()))
         hsa_eligible_var.trace_add(
-            "write",
-            lambda *_: expense.__setitem__("is_hsa_eligible", bool(hsa_eligible_var.get()))
+            "write", lambda *_: expense.__setitem__("is_hsa_eligible", bool(hsa_eligible_var.get()))
         )
-
-        # --- UI widgets ---
 
         vcmd_start = (
-            self.register(self._validate_expense_field_on_focusout),
-            "%P",
-            str(id(expense)),
-            "start_year",
+            self.register(self._validate_expense_field_on_focusout), "%P", str(id(expense)), "start_year"
         )
         start_entry = ttk.Entry(
-            self,
-            textvariable=start_var,
-            width=10,
-            validate="focusout",
-            validatecommand=vcmd_start,
+            self, textvariable=start_var, width=10, font=self._body_font,
+            validate="focusout", validatecommand=vcmd_start
         )
         start_entry.grid(row=row, column=0, padx=5, pady=2)
         bind_entry_commit_on_return(start_entry)
-        Tooltip(start_entry, "Year this expense starts", font=("Arial", 11))
+        Tooltip(start_entry, "Year this expense starts", font=self._tooltip_font)
 
         vcmd_end = (
-            self.register(self._validate_expense_field_on_focusout),
-            "%P",
-            str(id(expense)),
-            "end_year",
+            self.register(self._validate_expense_field_on_focusout), "%P", str(id(expense)), "end_year"
         )
         end_entry = ttk.Entry(
-            self,
-            textvariable=end_var,
-            width=10,
-            validate="focusout",
-            validatecommand=vcmd_end,
+            self, textvariable=end_var, width=10, font=self._body_font,
+            validate="focusout", validatecommand=vcmd_end
         )
         end_entry.grid(row=row, column=1, padx=5, pady=2)
         bind_entry_commit_on_return(end_entry)
-        Tooltip(end_entry, "Year this expense ends (leave blank if ongoing)", font=("Arial", 11))
+        Tooltip(end_entry, "Year this expense ends (leave blank if ongoing)", font=self._tooltip_font)
 
         vcmd_cost = (
-            self.register(self._validate_expense_field_on_focusout),
-            "%P",
-            str(id(expense)),
-            "cost",
+            self.register(self._validate_expense_field_on_focusout), "%P", str(id(expense)), "cost"
         )
         cost_entry = ttk.Entry(
-            self,
-            textvariable=cost_var,
-            width=10,
-            validate="focusout",
-            validatecommand=vcmd_cost,
+            self, textvariable=cost_var, width=10, font=self._body_font,
+            validate="focusout", validatecommand=vcmd_cost
         )
         cost_entry.grid(row=row, column=2, padx=5, pady=2)
         bind_entry_commit_on_return(cost_entry)
-        Tooltip(cost_entry, "Cost of this expense per year", font=("Arial", 11))
+        Tooltip(cost_entry, "Cost of this expense per year", font=self._tooltip_font)
 
         hsa_eligible_check = ttk.Checkbutton(self, variable=hsa_eligible_var)
         hsa_eligible_check.grid(row=row, column=3, padx=5, pady=2)
-        Tooltip(hsa_eligible_check, "This expense may be paid from HSA funds", font=("Arial", 11))
+        Tooltip(hsa_eligible_check, "This expense may be paid from HSA funds", font=self._tooltip_font)
 
-        comment_entry = ttk.Entry(self, textvariable=comment_var, width=20)
+        comment_entry = ttk.Entry(self, textvariable=comment_var, width=20, font=self._body_font)
         comment_entry.grid(row=row, column=4, padx=5, pady=2)
-        Tooltip(comment_entry, "Optional comment or description",
-            font=("Arial", 11))
+        Tooltip(comment_entry, "Optional comment or description", font=self._tooltip_font)
 
         del_button = ttk.Button(
-            self,
-            text="Delete",
-            command=lambda e=expense, r=row: self._delete_row(e)
+            self, text="Delete", command=lambda e=expense: self._delete_row(e), style="Expenses.TButton"
         )
         del_button.grid(row=row, column=5, padx=5, pady=2)
-        Tooltip(del_button, "Delete this expense row",
-            font=("Arial", 11))
+        Tooltip(del_button, "Delete this expense row", font=self._tooltip_font)
 
         self.row_vars.append({
             "row": row,
@@ -185,7 +171,7 @@ class ExpensesEditFrame(ttk.Frame):
             "cost_var": cost_var,
             "hsa_eligible_var": hsa_eligible_var,
             "comment_var": comment_var,
-            "widgets": [start_entry, end_entry, cost_entry, hsa_eligible_check, comment_entry, del_button]
+            "widgets": [start_entry, end_entry, cost_entry, hsa_eligible_check, comment_entry, del_button],
         })
 
         self.next_row += 1

@@ -1,10 +1,12 @@
 # gui_historicalData.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float
 from src.warpsimlab.utils.tooltip import Tooltip
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
 
 def load_market_data(selection):
@@ -12,7 +14,8 @@ def load_market_data(selection):
     from src.warpsimlab.gui.gui_init import load_market_data as _load_market_data
     return _load_market_data(selection)
 
-class HistoricalEditFrame(ttk.Frame):
+
+class HistoricalEditFrame(ScalableFrameMixin, ttk.Frame):
     """
     Frame to edit historical market assumptions
     (mean returns, standard deviations, inflation, and selected dataset).
@@ -25,23 +28,32 @@ class HistoricalEditFrame(ttk.Frame):
         - Numeric assumption inputs on the left
         - Historical dataset selection on the right
     """
+
+
     def __init__(self, parent, historical_data, title="Historical Data"):
         super().__init__(parent, padding=10)
+
         self.data = historical_data
 
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._section_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
+        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._header_text_font)
+        self._register_scalable_font(self._section_font)
+        self._register_scalable_font(self._tooltip_font)
+        self._apply_gui_scale()
+
         header_frame = ttk.Frame(self)
-        header_frame.grid(
-            row=0,
-            column=0,
-            columnspan=3,
-            sticky="w",
-            pady=(0, 10),
-        )
+        header_frame.grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 10))
 
         ttk.Label(
-            header_frame,
-            text="Simulation > Assumptions",
-            font=("Arial", 11, "bold"),
+            header_frame, text="Simulation > Assumptions", font=self._header_font
         ).pack(side="left")
 
         ttk.Label(
@@ -50,21 +62,18 @@ class HistoricalEditFrame(ttk.Frame):
                 " - Configure historical return, volatility, inflation, "
                 "and market dataset assumptions used by the simulation."
             ),
-            font=("Arial", 11),
+            font=self._header_text_font,
         ).pack(side="left")
 
-        # --- Frames for side-by-side layout ---
         self.left_frame = ttk.Frame(self)
         self.left_frame.grid(row=1, column=0, sticky="nw", padx=(0, 20))
 
-        # Vertical separator
         sep = ttk.Separator(self, orient="vertical")
         sep.grid(row=1, column=1, sticky="ns", padx=5, pady=0)
 
         self.right_frame = ttk.Frame(self)
         self.right_frame.grid(row=1, column=2, sticky="nw")
 
-        # --- Initialize StringVars ---
         self._init_vars()
 
         self.entry_tooltips = {
@@ -79,12 +88,13 @@ class HistoricalEditFrame(ttk.Frame):
             "inflation_var": "Historical average yearly inflation rate over the chosen timespan",
         }
 
-        # --- Build left side: numeric inputs ---
         self._build_numeric_fields()
-
-        # --- Build right side: Historical Market Data ---
         self._build_market_data_selection()
 
+
+    def _apply_scaled_styles(self):
+        style = ttk.Style(self)
+        style.configure("HistoricalData.TRadiobutton", font=self._body_font)
 
 
     # ------------------------------------------------
@@ -92,7 +102,7 @@ class HistoricalEditFrame(ttk.Frame):
     # ------------------------------------------------
     def _init_vars(self):
         d = self.data
-        # Numeric variables
+
         self.eq_mean_var = tk.StringVar(value=str(d.eq_mean))
         self.bd_mean_var = tk.StringVar(value=str(d.bd_mean))
         self.cs_mean_var = tk.StringVar(value=str(d.cs_mean))
@@ -106,17 +116,17 @@ class HistoricalEditFrame(ttk.Frame):
         self.inflation_var = tk.StringVar(value=str(d.inflation))
         self.historical_market_var = tk.StringVar(value=d.historical_market)
 
-        # Bind historical market selection
         self.historical_market_var.trace_add(
             "write",
             lambda *_: setattr(d, "historical_market", self.historical_market_var.get())
         )
 
+
     # ------------------------------------------------
     # Build numeric input fields (left frame)
     # ------------------------------------------------
     def _build_numeric_fields(self):
-        for row, (label_text, var_name) in enumerate([
+        fields = [
             ("Stock Yearly Gains %", "eq_mean_var"),
             ("Bond Yearly Gains %", "bd_mean_var"),
             ("Cash Yearly Gains %", "cs_mean_var"),
@@ -126,9 +136,14 @@ class HistoricalEditFrame(ttk.Frame):
             ("Cash STD %", "cs_std_var"),
             ("Real Estate STD %", "re_std_var"),
             ("Inflation Rate %", "inflation_var"),
-        ]):
+        ]
+
+        for row, (label_text, var_name) in enumerate(fields):
             var = getattr(self, var_name)
-            ttk.Label(self.left_frame, text=label_text).grid(row=row, column=0, sticky="w", pady=2)
+
+            ttk.Label(
+                self.left_frame, text=label_text, font=self._body_font
+            ).grid(row=row, column=0, sticky="w", pady=2)
 
             vcmd = (
                 self.register(self._validate_historical_field_on_focusout),
@@ -137,34 +152,28 @@ class HistoricalEditFrame(ttk.Frame):
             )
 
             entry = ttk.Entry(
-                self.left_frame,
-                textvariable=var,
-                width=14,
-                validate="focusout",
-                validatecommand=vcmd,
+                self.left_frame, textvariable=var, width=14, font=self._body_font,
+                validate="focusout", validatecommand=vcmd
             )
-
             entry.grid(row=row, column=1, sticky="w", pady=2)
 
-            # Add tooltip
-            Tooltip(entry, self.entry_tooltips[var_name], 
-                    font=("Arial", 11))
+            Tooltip(entry, self.entry_tooltips[var_name], font=self._tooltip_font)
 
 
     # ------------------------------------------------
     # Build Historical Market Data selection (right frame)
     # ------------------------------------------------
     def _build_market_data_selection(self):
-        ttk.Label(self.right_frame, text="Historical Market Data", font=("Arial", 12, "bold")).grid(
-            row=0, column=0, sticky="w", pady=(0, 10)
-        )
+        ttk.Label(
+            self.right_frame, text="Historical Market Data", font=self._section_font
+        ).grid(row=0, column=0, sticky="w", pady=(0, 10))
 
         datasets = [
             ("25 Year Data", "25_year_data"),
             ("50 Year Data", "50_year_data"),
             ("100 Year Data", "100_year_data"),
             ("Depression (1929-1940)", "depression"),
-            ("Irrational Exuberance (1990-2000)", "irrational_exuberance")
+            ("Irrational Exuberance (1990-2000)", "irrational_exuberance"),
         ]
 
         for row, (text, value) in enumerate(datasets, start=1):
@@ -173,16 +182,23 @@ class HistoricalEditFrame(ttk.Frame):
                 text=text,
                 variable=self.historical_market_var,
                 value=value,
-                command=self.update_market_fields
+                command=self.update_market_fields,
+                style="HistoricalData.TRadiobutton"
             )
             rb.grid(row=row, column=0, sticky="w", pady=2)
 
-            Tooltip(rb, f"Select historical market dataset: {text}", 
-                    font=("Arial", 11))
+            Tooltip(
+                rb, f"Select historical market dataset: {text}",
+                font=self._tooltip_font
+            )
 
 
     def _parse_historical_field(self, field_name, raw_value):
-        minimum = 0 if field_name in {"eq_std", "bd_std", "cs_std", "re_std"} else None
+        minimum = None
+
+        if field_name in {"eq_std", "bd_std", "cs_std", "re_std"}:
+            minimum = 0
+
         return parse_finite_float(raw_value, minimum=minimum)
 
 
@@ -231,7 +247,6 @@ class HistoricalEditFrame(ttk.Frame):
         selection = self.historical_market_var.get()
         market_values = load_market_data(selection)
 
-        # Write to backing data model first
         self.data.eq_mean = market_values["eq_mean"]
         self.data.bd_mean = market_values["bd_mean"]
         self.data.cs_mean = market_values["cs_mean"]
@@ -244,7 +259,6 @@ class HistoricalEditFrame(ttk.Frame):
 
         self.data.inflation = market_values["inflation"]
 
-        # Then refresh visible vars
         self.eq_mean_var.set(self._format_historical_field(self.data.eq_mean))
         self.bd_mean_var.set(self._format_historical_field(self.data.bd_mean))
         self.cs_mean_var.set(self._format_historical_field(self.data.cs_mean))

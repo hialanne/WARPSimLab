@@ -10,6 +10,8 @@ from src.warpsimlab.gui.gui_settings import (
     MAIN_WINDOW_AUTOMATIC,
     MAIN_WINDOW_CUSTOM,
     MAIN_WINDOW_MAXIMIZED,
+    MAIN_WINDOW_REFERENCE_HEIGHT,
+    MAIN_WINDOW_REFERENCE_WIDTH,
     SCENARIO_LAYOUT_AUTOMATIC,
     SCENARIO_LAYOUT_REMEMBER,
     geometry_is_visible,
@@ -65,6 +67,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
         self.root.option_add("*Menu.activeForeground", "#f0f0f0")
         self.root.option_add("*Menu.selectColor", "#f0f0f0")
 
+
     def _get_monitor_work_area(self, x, y):
         """
         Return the usable monitor rectangle containing the supplied point.
@@ -103,6 +106,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
         return 0, 0, self.root.winfo_screenwidth(), self.root.winfo_screenheight()
 
+
     def _center_main_window(self, width, height):
         if sys.platform == "win32":
             import ctypes
@@ -121,6 +125,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
         y = work_top + (work_height - height) // 2
 
         self.root.geometry(f"{width}x{height}+{x}+{y}")
+
 
     def _print_display_diagnostics(self):
         """
@@ -240,6 +245,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
             for index, monitor in enumerate(monitor_data):
                 print(f"monitor {index}: {monitor}")
 
+
     def _print_content_geometry_diagnostics(self):
         """
         Print requested and actual GUI geometry after the GUI is built.
@@ -283,6 +289,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
         print("")
 
+
     def _set_main_window_normal(self):
         """
         Leave the maximized state before applying normal geometry.
@@ -296,6 +303,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
                 self.root.state("normal")
         except tk.TclError:
             pass
+
 
     def _set_main_window_maximized(self):
         """
@@ -313,6 +321,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
             screen_height = self.root.winfo_screenheight()
             self.root.geometry(f"{screen_width}x{screen_height}+0+0")
 
+
     def _main_window_is_maximized(self):
         """
         Return True when the main window is currently maximized.
@@ -325,47 +334,11 @@ class PortfolioSimulatorGUI_DisplayMixin:
         except tk.TclError:
             return False
 
-    def _apply_automatic_main_window_size(self):
-        """
-        Scale the main window from the original Windows development layout.
-        """
+
+    def _calculate_automatic_main_window_size(self):
+        """Return the platform-adjusted WARPSimLab reference window size."""
         development_screen_width = 1707
         development_screen_height = 1067
-
-        development_window_width = 1200
-        development_window_height = 750
-
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-
-        width_scale = screen_width / development_screen_width
-        height_scale = screen_height / development_screen_height
-
-        # bad scale = min(width_scale, height_scale)
-
-
-        # good development_font_linespace = 24
-
-        #reference_font = tkfont.Font(
-        #    family="Arial",
-        #    size=16,
-        #)
-        #current_font_linespace = reference_font.metrics("linespace")
-
-        #scale = current_font_linespace / development_font_linespace
-
-        # diagnostic print.  Turn off for production.
-        # print(f"automatic main-window scale: {scale}")
-
-        #window_width = int(development_window_width * scale)
-        #window_height = int(development_window_height * scale)
-
-        development_screen_width = 1707
-        development_screen_height = 1067
-
-        development_window_width = 1200
-        development_window_height = 750
-
         development_font_linespace = 24
 
         screen_width = self.root.winfo_screenwidth()
@@ -373,44 +346,32 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
         reference_font = tkfont.Font(family="Arial", size=16)
         current_font_linespace = reference_font.metrics("linespace")
-
         gui_scale = current_font_linespace / development_font_linespace
 
         effective_screen_width = screen_width / gui_scale
         effective_screen_height = screen_height / gui_scale
-
         width_scale = effective_screen_width / development_screen_width
         height_scale = effective_screen_height / development_screen_height
-
         desktop_scale = min(width_scale, height_scale)
 
         if desktop_scale > 1.0:
-            #large_display_factor = 1.0 / (desktop_scale ** 0.5)
             large_display_factor = 1.0 / (desktop_scale ** 0.5)
         else:
             large_display_factor = 1.0
 
         scale = gui_scale * large_display_factor
+        window_width = max(int(MAIN_WINDOW_REFERENCE_WIDTH * scale), MAIN_WINDOW_REFERENCE_WIDTH)
+        window_height = max(int(MAIN_WINDOW_REFERENCE_HEIGHT * scale), MAIN_WINDOW_REFERENCE_HEIGHT)
 
-        window_width = int(development_window_width * scale)
-        window_height = int(development_window_height * scale)
+        return window_width, window_height
 
-        minimum_window_width = 1200
-        minimum_window_height = 750
 
-        window_width = max(window_width, minimum_window_width)
-        window_height = max(window_height, minimum_window_height)
-
-        # Diagnostic code.  Comment out in production.
-        '''
-        print(f"automatic GUI scale: {gui_scale}")
-        print(f"effective desktop scale: {desktop_scale}")
-        print(f"large display factor: {large_display_factor}")
-        print(f"automatic main-window scale: {scale}")
-        '''
-
+    def _apply_automatic_main_window_size(self):
+        """Scale the main window from the original Windows development layout."""
+        window_width, window_height = self._calculate_automatic_main_window_size()
         self._set_main_window_normal()
         self._center_main_window(window_width, window_height)
+
 
     def _apply_main_window_startup_settings(self):
         """
@@ -434,6 +395,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
         self._apply_selected_main_window_mode()
 
+
     def _apply_selected_main_window_mode(self):
         """
         Apply the selected Automatic, Maximized, or Custom policy.
@@ -455,11 +417,13 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
         self._apply_automatic_main_window_size()
 
+
     def edit_display_settings(self):
         """
         Open the application display settings dialog.
         """
         DisplaySettingsDialog(self.root, self.display_settings, self._apply_display_settings)
+
 
     def _apply_display_settings(self, updated_settings):
         """
@@ -480,6 +444,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
                 scenario_controller.capture_current_layout()
                 save_display_settings(self.display_settings)
 
+
     def _save_main_window_geometry(self):
         """
         Save the current main-window layout when remembering is enabled.
@@ -496,3 +461,48 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
         if not maximized:
             main_settings["last_geometry"] = self.root.winfo_geometry()
+
+
+    def _initialize_gui_scaling(self):
+        """Track runtime GUI scaling relative to the platform-adjusted reference layout."""
+        self._gui_scale = 1.0
+        self._gui_scale_after_id = None
+        self._gui_reference_width, self._gui_reference_height = self._calculate_automatic_main_window_size()
+        self.root._warpsimlab_gui_scale = self._gui_scale
+        self.root.bind("<Configure>", self._on_main_window_configure, add="+")
+        self.root.after_idle(self._update_gui_scale)
+
+
+    def _on_main_window_configure(self, event):
+        """Debounce main-window resize events before recalculating GUI scale."""
+        if event.widget is not self.root:
+            return
+
+        if self._gui_scale_after_id is not None:
+            self.root.after_cancel(self._gui_scale_after_id)
+
+        self._gui_scale_after_id = self.root.after(50, self._update_gui_scale)
+
+
+    def _update_gui_scale(self):
+        """Update runtime GUI scale and notify interested widgets when it changes."""
+        self._gui_scale_after_id = None
+
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+
+        if width <= 1 or height <= 1:
+            return
+
+        scale = min(width / self._gui_reference_width, height / self._gui_reference_height)
+
+        if abs(scale - self._gui_scale) < 0.01:
+            return
+
+        self._gui_scale = scale
+        self.root._warpsimlab_gui_scale = scale
+        self.root.event_generate("<<WARPSimLabScaleChanged>>", when="tail")
+
+
+    def get_gui_scale(self):
+        return self._gui_scale

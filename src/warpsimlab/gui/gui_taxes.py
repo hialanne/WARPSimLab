@@ -1,10 +1,12 @@
 # gui_taxes.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk
 
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
-class TaxesEditFrame(ttk.Frame):
+class TaxesEditFrame(ScalableFrameMixin, ttk.Frame):
     """
     Tax-related controls.
     """
@@ -22,6 +24,20 @@ class TaxesEditFrame(ttk.Frame):
         super().__init__(parent, padding=10, **kwargs)
 
         self.controls = control_vars["_controls_dict"]
+
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._section_header_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
+        self._section_text_font = tkfont.Font(root=self, family="Arial", size=10)
+
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._header_text_font)
+        self._register_scalable_font(self._section_header_font)
+        self._register_scalable_font(self._section_text_font)
+        self._apply_gui_scale()
 
         style = ttk.Style(self)
         combo_foreground = style.lookup("TLabel", "foreground")
@@ -54,7 +70,7 @@ class TaxesEditFrame(ttk.Frame):
         ttk.Label(
             header_frame,
             text="Cash Flow > Taxes",
-            font=("Arial", 11, "bold"),
+            font=self._header_font,
         ).pack(side="left")
 
         ttk.Label(
@@ -63,10 +79,8 @@ class TaxesEditFrame(ttk.Frame):
                 " - Configure federal, state, and payroll tax assumptions "
                 "used by the simulation."
             ),
-            font=("Arial", 11),
+            font=self._header_text_font,
         ).pack(side="left")
-
-        self._row = 1
 
         self._row = 1
 
@@ -74,7 +88,6 @@ class TaxesEditFrame(ttk.Frame):
         self._add_text("Taxes are approximated.  Examples are:")
         self._add_text("  100% of social security is taxed.")
         self._add_text("  After tax interest and dividends are not taxed until spent.")
-
 
         self._add_calculate_income_taxes()
         self._add_filing_status()
@@ -95,14 +108,32 @@ class TaxesEditFrame(ttk.Frame):
     # ------------------------------------------------
     # Helpers
     # ------------------------------------------------
+
+    def _apply_scaled_styles(self):
+        style = ttk.Style(self)
+
+        combo_foreground = style.lookup("TLabel", "foreground")
+        combo_background = style.lookup("TCombobox", "fieldbackground")
+
+        style.configure("Taxes.TCombobox", foreground=combo_foreground, fieldbackground=combo_background)
+        style.map(
+            "Taxes.TCombobox",
+            foreground=[("readonly", combo_foreground)],
+            fieldbackground=[("readonly", combo_background)],
+        )
+        style.configure("Taxes.TCheckbutton", font=self._body_font)
+
+
     def _on_combobox_selected(self, event=None):
         event.widget.selection_clear()
         self.focus_set()
+
 
     def _next_row(self):
         r = self._row
         self._row += 1
         return r
+
 
     # ------------------------------------------------
     # Controls
@@ -124,16 +155,10 @@ class TaxesEditFrame(ttk.Frame):
         )
 
         ttk.Checkbutton(
-            self,
-            text="Calculate Income Taxes",
-            variable=var
+            self, text="Calculate Income Taxes", variable=var, style="Taxes.TCheckbutton"
         ).grid(
-            row=self._next_row(),
-            column=0,
-            sticky="w",
-            pady=(5, 8)
+            row=self._next_row(), column=0, sticky="w", pady=(5, 8)
         )
-
 
     def _add_calculate_payroll_taxes(self):
         key = "calculate_payroll_taxes"
@@ -149,16 +174,10 @@ class TaxesEditFrame(ttk.Frame):
         )
 
         ttk.Checkbutton(
-            self,
-            text="Calculate Payroll Taxes",
-            variable=var
+            self, text="Calculate Payroll Taxes", variable=var, style="Taxes.TCheckbutton"
         ).grid(
-            row=self._next_row(),
-            column=0,
-            sticky="w",
-            pady=(2, 8)
+            row=self._next_row(), column=0, sticky="w", pady=(2, 8)
         )
-
 
     def _add_calculate_state_taxes(self):
         key = "calculate_state_taxes"
@@ -174,16 +193,10 @@ class TaxesEditFrame(ttk.Frame):
         )
 
         cb = ttk.Checkbutton(
-            self,
-            text="Calculate State Income Taxes",
-            variable=var
+            self, text="Calculate State Income Taxes", variable=var, style="Taxes.TCheckbutton"
         )
-
         cb.grid(
-            row=self._next_row(),
-            column=0,
-            sticky="w",
-            pady=(2, 2)
+            row=self._next_row(), column=0, sticky="w",pady=(2, 2)
         )
 
 
@@ -193,25 +206,15 @@ class TaxesEditFrame(ttk.Frame):
         if key not in self.controls:
             raise KeyError(f"{key} not found in simulation_controls")
 
-        ttk.Label(
-            self,
-            text="State of Residence"
-        ).grid(
-            row=self._next_row(),
-            column=0,
-            sticky="w",
-            pady=(2, 2)
+        ttk.Label(self, text="State of Residence", font=self._body_font).grid(
+            row=self._next_row(), column=0, sticky="w", pady=(2, 2)
         )
 
         var = tk.StringVar(value=self.controls[key])
 
         combo = ttk.Combobox(
-            self,
-            textvariable=var,
-            values=self.US_STATES,
-            state="readonly",
-            width=6,
-            style="Taxes.TCombobox"
+            self, textvariable=var, values=self.US_STATES, state="readonly", width=6,
+            font=self._body_font, style="Taxes.TCombobox"
         )
 
         combo.grid(
@@ -235,6 +238,7 @@ class TaxesEditFrame(ttk.Frame):
     def _add_filing_status(self):
         self._add_text("Filing status is determined by the number of people in the simulation.")
 
+
     def _sync_state_tax_enabled(self):
         federal_on = self.controls["calculate_income_taxes"]
 
@@ -243,30 +247,14 @@ class TaxesEditFrame(ttk.Frame):
 
 
     def _add_section_header(self, text):
-        ttk.Label(
-            self,
-            text=text,
-            font=("Arial", 10, "bold")
-        ).grid(
-            row=self._next_row(),
-            column=0,
-            sticky="w",
-            pady=(6, 2)
+        ttk.Label(self, text=text, font=self._section_header_font).grid(
+            row=self._next_row(), column=0, sticky="w", pady=(6, 2)
         )
-
 
     def _add_text(self, text):
-        ttk.Label(
-            self,
-            text=text,
-            font=("Arial", 10)
-        ).grid(
-            row=self._next_row(),
-            column=0,
-            sticky="w",
-            pady=(2, 2)
+        ttk.Label(self, text=text, font=self._section_text_font).grid(
+            row=self._next_row(), column=0, sticky="w", pady=(2, 2)
         )
-
 
     def _add_separator(self, pady=(6, 6)):
         ttk.Separator(self, orient="horizontal").grid(

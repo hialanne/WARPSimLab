@@ -1,12 +1,14 @@
 # gui_portfolioPercentages.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import parse_finite_float
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
 
-class PortfolioPercentagesEditFrame(ttk.Frame):
+class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
     """
     Edit investable portfolio balances using total assets and percentage allocations.
 
@@ -31,13 +33,29 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
         "hsa": {"stocks": "hsa_equity", "bonds": "hsa_bond", "cash": "hsa_cash"},
     }
 
-    def __init__(self, parent, husband_portfolio, wife_portfolio=None, title="Portfolio Percentages", mode="Advanced",
-                 **kwargs):
+    def __init__(
+        self, parent, husband_portfolio, wife_portfolio=None, title="Portfolio Percentages",
+        mode="Advanced", **kwargs
+    ):
         super().__init__(parent, padding=10, **kwargs)
 
         self.husband_portfolio = husband_portfolio
         self.wife_portfolio = wife_portfolio
         self.mode = mode
+
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._column_header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._major_header_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
+
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._header_text_font)
+        self._register_scalable_font(self._column_header_font)
+        self._register_scalable_font(self._major_header_font)
+        self._apply_gui_scale()
 
         self.total_vars = {}
         self.tax_vars = {}
@@ -52,6 +70,11 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
         self._update_display_totals()
         self._applied_input_state = self._get_input_state()
 
+    def _apply_scaled_styles(self):
+        style = ttk.Style(self)
+        style.configure("PortfolioPercentages.TButton", font=self._body_font)
+        style.configure("PortfolioPercentages.TLabelframe.Label", font=self._body_font)
+
     def _format_money(self, value):
         return f"{float(value):,.0f}"
 
@@ -65,6 +88,7 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
         parsed = parse_finite_float(value, allow_commas=False, allow_scientific=False, minimum=0)
         if parsed > 100.0:
             raise ValueError("percentage must be between 0 and 100")
+
         return parsed
 
     def _portfolio_value(self, portfolio, field):
@@ -98,89 +122,125 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
         header_frame = ttk.Frame(self)
         header_frame.grid(row=0, column=0, columnspan=7, sticky="w", pady=(0, 8))
 
-        ttk.Label(header_frame, text="Balance Sheet > Portfolio - Percentages",
-                  font=("Arial", 11, "bold")).pack(side="left")
-        ttk.Label(header_frame,
-                  text=" - Enter total investable assets, tax-bucket percentages, and asset allocation within each bucket.",
-                  font=("Arial", 11)).pack(side="left")
+        ttk.Label(
+            header_frame, text="Balance Sheet > Portfolio - Percentages", font=self._header_font
+        ).pack(side="left")
+        ttk.Label(
+            header_frame,
+            text=" - Enter total investable assets, tax-bucket percentages, and asset allocation within each bucket.",
+            font=self._header_text_font
+        ).pack(side="left")
 
         row = 1
-        ttk.Label(self, text="Total Investable Assets", font=("Arial", 12, "bold")).grid(
+
+        ttk.Label(self, text="Total Investable Assets", font=self._major_header_font).grid(
             row=row, column=0, sticky="w", padx=5, pady=(10, 5)
         )
 
         self.total_vars["husband"] = tk.StringVar()
-        ttk.Label(self, text="Husband", font=("Arial", 12, "bold")).grid(row=row, column=1, sticky="w", padx=5)
-        ttk.Entry(self, textvariable=self.total_vars["husband"], width=14).grid(row=row + 1, column=1, sticky="w", padx=5)
+        ttk.Label(self, text="Husband", font=self._major_header_font).grid(
+            row=row, column=1, sticky="w", padx=5
+        )
+        ttk.Entry(
+            self, textvariable=self.total_vars["husband"], width=14, font=self._body_font
+        ).grid(row=row + 1, column=1, sticky="w", padx=5)
 
         if self.wife_portfolio is not None:
             self.total_vars["wife"] = tk.StringVar()
-            ttk.Label(self, text="Wife", font=("Arial", 12, "bold")).grid(row=row, column=2, sticky="w", padx=5)
-            ttk.Entry(self, textvariable=self.total_vars["wife"], width=14).grid(row=row + 1, column=2, sticky="w", padx=5)
+            ttk.Label(self, text="Wife", font=self._major_header_font).grid(
+                row=row, column=2, sticky="w", padx=5
+            )
+            ttk.Entry(
+                self, textvariable=self.total_vars["wife"], width=14, font=self._body_font
+            ).grid(row=row + 1, column=2, sticky="w", padx=5)
 
         row += 3
-        ttk.Separator(self, orient="horizontal").grid(row=row, column=0, columnspan=7, sticky="ew", pady=(5, 8))
+        ttk.Separator(self, orient="horizontal").grid(
+            row=row, column=0, columnspan=7, sticky="ew", pady=(5, 8)
+        )
         row += 1
 
-        ttk.Label(self, text="Tax Bucket Allocation", font=("Arial", 12, "bold")).grid(
+        ttk.Label(self, text="Tax Bucket Allocation", font=self._major_header_font).grid(
             row=row, column=0, sticky="w", padx=5, pady=(5, 5)
         )
         row += 1
 
-        ttk.Label(self, text="Tax Bucket").grid(row=row, column=0, sticky="w", padx=5)
-        ttk.Label(self, text="Husband", font=("Arial", 11, "bold")).grid(row=row, column=1, sticky="w", padx=5)
-        if self.wife_portfolio is not None:
-            ttk.Label(self, text="Wife", font=("Arial", 11, "bold")).grid(row=row, column=2, sticky="w", padx=5)
-        row += 1
-
-        for bucket in self.TAX_BUCKETS:
-            ttk.Label(self, text=self.TAX_LABELS[bucket]).grid(row=row, column=0, sticky="w", padx=5, pady=2)
-
-            self.tax_vars[("husband", bucket)] = tk.StringVar()
-            ttk.Entry(self, textvariable=self.tax_vars[("husband", bucket)], width=10).grid(
-                row=row, column=1, sticky="w", padx=5
-            )
-            ttk.Label(self, text="%").grid(row=row, column=1, sticky="w", padx=(88, 0))
-
-            if self.wife_portfolio is not None:
-                self.tax_vars[("wife", bucket)] = tk.StringVar()
-                ttk.Entry(self, textvariable=self.tax_vars[("wife", bucket)], width=10).grid(
-                    row=row, column=2, sticky="w", padx=5
-                )
-                ttk.Label(self, text="%").grid(row=row, column=2, sticky="w", padx=(88, 0))
-
-            row += 1
-
-        ttk.Label(self, text="TOTAL", font=("Arial", 11, "bold")).grid(row=row, column=0, sticky="w", padx=5, pady=(4, 2))
-
-        self.tax_total_vars["husband"] = tk.StringVar(value="--")
-        ttk.Label(self, textvariable=self.tax_total_vars["husband"], font=("Arial", 11, "bold")).grid(
+        ttk.Label(self, text="Tax Bucket", font=self._body_font).grid(
+            row=row, column=0, sticky="w", padx=5
+        )
+        ttk.Label(self, text="Husband", font=self._column_header_font).grid(
             row=row, column=1, sticky="w", padx=5
         )
 
         if self.wife_portfolio is not None:
-            self.tax_total_vars["wife"] = tk.StringVar(value="--")
-            ttk.Label(self, textvariable=self.tax_total_vars["wife"], font=("Arial", 11, "bold")).grid(
+            ttk.Label(self, text="Wife", font=self._column_header_font).grid(
                 row=row, column=2, sticky="w", padx=5
             )
 
-        row += 2
-        ttk.Separator(self, orient="horizontal").grid(row=row, column=0, columnspan=7, sticky="ew", pady=(5, 8))
         row += 1
 
-        ttk.Label(self, text="Asset Allocation Within Each Tax Bucket", font=("Arial", 12, "bold")).grid(
-            row=row, column=0, columnspan=7, sticky="w", padx=5, pady=(5, 5)
+        for bucket in self.TAX_BUCKETS:
+            ttk.Label(self, text=self.TAX_LABELS[bucket], font=self._body_font).grid(
+                row=row, column=0, sticky="w", padx=5, pady=2
+            )
+
+            self.tax_vars[("husband", bucket)] = tk.StringVar()
+            ttk.Entry(
+                self, textvariable=self.tax_vars[("husband", bucket)], width=10, font=self._body_font
+            ).grid(row=row, column=1, sticky="w", padx=5)
+            ttk.Label(self, text="%", font=self._body_font).grid(
+                row=row, column=1, sticky="w", padx=(88, 0)
+            )
+
+            if self.wife_portfolio is not None:
+                self.tax_vars[("wife", bucket)] = tk.StringVar()
+                ttk.Entry(
+                    self, textvariable=self.tax_vars[("wife", bucket)], width=10, font=self._body_font
+                ).grid(row=row, column=2, sticky="w", padx=5)
+                ttk.Label(self, text="%", font=self._body_font).grid(
+                    row=row, column=2, sticky="w", padx=(88, 0)
+                )
+
+            row += 1
+
+        ttk.Label(self, text="TOTAL", font=self._column_header_font).grid(
+            row=row, column=0, sticky="w", padx=5, pady=(4, 2)
         )
+
+        self.tax_total_vars["husband"] = tk.StringVar(value="--")
+        ttk.Label(
+            self, textvariable=self.tax_total_vars["husband"], font=self._column_header_font
+        ).grid(row=row, column=1, sticky="w", padx=5)
+
+        if self.wife_portfolio is not None:
+            self.tax_total_vars["wife"] = tk.StringVar(value="--")
+            ttk.Label(
+                self, textvariable=self.tax_total_vars["wife"], font=self._column_header_font
+            ).grid(row=row, column=2, sticky="w", padx=5)
+
+        row += 2
+        ttk.Separator(self, orient="horizontal").grid(
+            row=row, column=0, columnspan=7, sticky="ew", pady=(5, 8)
+        )
+        row += 1
+
+        ttk.Label(
+            self, text="Asset Allocation Within Each Tax Bucket", font=self._major_header_font
+        ).grid(row=row, column=0, columnspan=7, sticky="w", padx=5, pady=(5, 5))
         row += 1
 
         allocation_frame = ttk.Frame(self)
         allocation_frame.grid(row=row, column=0, columnspan=7, sticky="w", padx=5)
 
-        husband_frame = ttk.LabelFrame(allocation_frame, text="Husband", padding=(10, 6))
+        husband_frame = ttk.LabelFrame(
+            allocation_frame, text="Husband", padding=(10, 6), style="PortfolioPercentages.TLabelframe"
+        )
         husband_frame.grid(row=0, column=0, sticky="nw")
 
         if self.wife_portfolio is not None:
-            wife_frame = ttk.LabelFrame(allocation_frame, text="Wife", padding=(10, 6))
+            wife_frame = ttk.LabelFrame(
+                allocation_frame, text="Wife", padding=(10, 6), style="PortfolioPercentages.TLabelframe"
+            )
             wife_frame.grid(row=0, column=1, sticky="nw", padx=(40, 0))
         else:
             wife_frame = None
@@ -189,54 +249,65 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
             if frame is None:
                 continue
 
-            ttk.Label(frame, text="").grid(row=0, column=0, padx=5)
+            ttk.Label(frame, text="", font=self._body_font).grid(row=0, column=0, padx=5)
+
             for column, text in ((1, "Stocks"), (2, "Bonds"), (3, "Cash"), (4, "Total")):
-                ttk.Label(frame, text=text).grid(row=0, column=column, sticky="w", padx=5)
+                ttk.Label(frame, text=text, font=self._body_font).grid(
+                    row=0, column=column, sticky="w", padx=5
+                )
 
         for bucket_row, bucket in enumerate(self.TAX_BUCKETS, start=1):
-            ttk.Label(husband_frame, text=self.TAX_LABELS[bucket]).grid(
+            ttk.Label(husband_frame, text=self.TAX_LABELS[bucket], font=self._body_font).grid(
                 row=bucket_row, column=0, sticky="w", padx=(5, 12), pady=3
             )
 
             for column, asset in enumerate(self.ASSET_CLASSES, start=1):
                 self.asset_vars[("husband", bucket, asset)] = tk.StringVar()
-                ttk.Entry(husband_frame, textvariable=self.asset_vars[("husband", bucket, asset)], width=8).grid(
-                    row=bucket_row, column=column, sticky="w", padx=5
-                )
+                ttk.Entry(
+                    husband_frame, textvariable=self.asset_vars[("husband", bucket, asset)],
+                    width=8, font=self._body_font
+                ).grid(row=bucket_row, column=column, sticky="w", padx=5)
 
             self.asset_total_vars[("husband", bucket)] = tk.StringVar(value="--")
-            ttk.Label(husband_frame, textvariable=self.asset_total_vars[("husband", bucket)],
-                      font=("Arial", 11, "bold")).grid(row=bucket_row, column=4, sticky="w", padx=5)
+            ttk.Label(
+                husband_frame, textvariable=self.asset_total_vars[("husband", bucket)],
+                font=self._column_header_font
+            ).grid(row=bucket_row, column=4, sticky="w", padx=5)
 
             if wife_frame is not None:
-                ttk.Label(wife_frame, text=self.TAX_LABELS[bucket]).grid(
+                ttk.Label(wife_frame, text=self.TAX_LABELS[bucket], font=self._body_font).grid(
                     row=bucket_row, column=0, sticky="w", padx=(5, 12), pady=3
                 )
 
                 for column, asset in enumerate(self.ASSET_CLASSES, start=1):
                     self.asset_vars[("wife", bucket, asset)] = tk.StringVar()
-                    ttk.Entry(wife_frame, textvariable=self.asset_vars[("wife", bucket, asset)], width=8).grid(
-                        row=bucket_row, column=column, sticky="w", padx=5
-                    )
+                    ttk.Entry(
+                        wife_frame, textvariable=self.asset_vars[("wife", bucket, asset)],
+                        width=8, font=self._body_font
+                    ).grid(row=bucket_row, column=column, sticky="w", padx=5)
 
                 self.asset_total_vars[("wife", bucket)] = tk.StringVar(value="--")
-                ttk.Label(wife_frame, textvariable=self.asset_total_vars[("wife", bucket)],
-                          font=("Arial", 11, "bold")).grid(row=bucket_row, column=4, sticky="w", padx=5)
+                ttk.Label(
+                    wife_frame, textvariable=self.asset_total_vars[("wife", bucket)],
+                    font=self._column_header_font
+                ).grid(row=bucket_row, column=4, sticky="w", padx=5)
 
         row += 1
 
-        ttk.Button(self, text="Apply Percentages", command=self._apply_percentages).grid(
-            row=row, column=0, columnspan=2, sticky="w", padx=5, pady=(12, 5)
-        )
-        ttk.Label(self, textvariable=self.status_var, font=("Arial", 11, "bold")).grid(
+        ttk.Button(
+            self, text="Apply Percentages", command=self._apply_percentages,
+            style="PortfolioPercentages.TButton"
+        ).grid(row=row, column=0, columnspan=2, sticky="w", padx=5, pady=(12, 5))
+
+        ttk.Label(self, textvariable=self.status_var, font=self._column_header_font).grid(
             row=row, column=2, columnspan=5, sticky="w", padx=5
         )
 
     def _load_from_portfolios(self):
         self._load_person_from_portfolio("husband", self.husband_portfolio)
+
         if self.wife_portfolio is not None:
             self._load_person_from_portfolio("wife", self.wife_portfolio)
-
 
     def _load_person_from_portfolio(self, person_key, portfolio):
         total = self._portfolio_total(portfolio)
@@ -258,17 +329,14 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
             for asset, asset_percentage in zip(self.ASSET_CLASSES, asset_percentages):
                 self.asset_vars[(person_key, bucket, asset)].set(self._format_pct(asset_percentage))
 
-
     def _get_input_state(self):
         values = [var.get() for var in self.total_vars.values()]
         values.extend(var.get() for var in self.tax_vars.values())
         values.extend(var.get() for var in self.asset_vars.values())
         return tuple(values)
 
-
     def has_unapplied_changes(self):
         return self._get_input_state() != self._applied_input_state
-
 
     def _attach_traces(self):
         for var in self.tax_vars.values():
@@ -277,11 +345,9 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
         for var in self.asset_vars.values():
             var.trace_add("write", self._on_percentage_changed)
 
-
     def _on_percentage_changed(self, *_args):
         self.status_var.set("")
         self._update_display_totals()
-
 
     def _safe_percentage_total(self, variables):
         try:
@@ -289,21 +355,33 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
         except ValueError:
             return None
 
-
     def _update_display_totals(self):
         for person_key in self.total_vars:
-            tax_total = self._safe_percentage_total([self.tax_vars[(person_key, bucket)] for bucket in self.TAX_BUCKETS])
-            self.tax_total_vars[person_key].set("--" if tax_total is None else f"{tax_total:.1f}%")
+            tax_variables = [self.tax_vars[(person_key, bucket)] for bucket in self.TAX_BUCKETS]
+            tax_total = self._safe_percentage_total(tax_variables)
+
+            if tax_total is None:
+                self.tax_total_vars[person_key].set("--")
+            else:
+                self.tax_total_vars[person_key].set(f"{tax_total:.1f}%")
 
             for bucket in self.TAX_BUCKETS:
-                asset_total = self._safe_percentage_total(
-                    [self.asset_vars[(person_key, bucket, asset)] for asset in self.ASSET_CLASSES]
-                )
-                self.asset_total_vars[(person_key, bucket)].set("--" if asset_total is None else f"{asset_total:.1f}%")
+                asset_variables = [
+                    self.asset_vars[(person_key, bucket, asset)] for asset in self.ASSET_CLASSES
+                ]
+                asset_total = self._safe_percentage_total(asset_variables)
 
+                if asset_total is None:
+                    self.asset_total_vars[(person_key, bucket)].set("--")
+                else:
+                    self.asset_total_vars[(person_key, bucket)].set(f"{asset_total:.1f}%")
 
     def _validated_person_values(self, person_key):
-        person_label = "Husband" if person_key == "husband" else "Wife"
+        if person_key == "husband":
+            person_label = "Husband"
+        else:
+            person_label = "Wife"
+
         total = self._parse_money(self.total_vars[person_key].get())
 
         tax_percentages = {}
@@ -312,13 +390,18 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
 
         tax_total = sum(tax_percentages.values())
         if abs(tax_total - 100.0) > 0.01:
-            raise ValueError(f"{person_label} tax bucket percentages must total 100%. Current total: {tax_total:.1f}%")
+            raise ValueError(
+                f"{person_label} tax bucket percentages must total 100%. Current total: {tax_total:.1f}%"
+            )
 
         asset_percentages = {}
         for bucket in self.TAX_BUCKETS:
             asset_percentages[bucket] = {}
+
             for asset in self.ASSET_CLASSES:
-                asset_percentages[bucket][asset] = self._parse_pct(self.asset_vars[(person_key, bucket, asset)].get())
+                asset_percentages[bucket][asset] = self._parse_pct(
+                    self.asset_vars[(person_key, bucket, asset)].get()
+                )
 
             asset_total = sum(asset_percentages[bucket].values())
             if abs(asset_total - 100.0) > 0.01:
@@ -338,11 +421,14 @@ class PortfolioPercentagesEditFrame(ttk.Frame):
 
         return updates
 
-
     def _apply_percentages(self):
         try:
             husband_updates = self._validated_person_values("husband")
-            wife_updates = self._validated_person_values("wife") if self.wife_portfolio is not None else None
+
+            if self.wife_portfolio is not None:
+                wife_updates = self._validated_person_values("wife")
+            else:
+                wife_updates = None
 
         except ValueError as exc:
             self.status_var.set("")

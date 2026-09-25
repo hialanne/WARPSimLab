@@ -1,8 +1,12 @@
+#guidedTutorial.py
+
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk
 
+from src.warpsimlab.gui.gui_scaling import ScalableClientMixin
 
-class GuidedTutorialController:
+class GuidedTutorialController(ScalableClientMixin):
     """
     Controls a guided sequence of existing simulator screens.
 
@@ -20,6 +24,20 @@ class GuidedTutorialController:
     def __init__(self, parent_gui):
         self.parent_gui = parent_gui
 
+        self._control_font = tkfont.Font(root=parent_gui.root, family="Arial", size=13, weight="bold")
+        self._title_font = tkfont.Font(root=parent_gui.root, family="Arial", size=16, weight="bold")
+        self._section_font = tkfont.Font(root=parent_gui.root, family="Arial", size=12, weight="bold")
+        self._body_font = tkfont.Font(root=parent_gui.root, family="Arial", size=12)
+        self._button_font = tkfont.nametofont("TkDefaultFont").copy()
+
+        self._initialize_scaling(parent_gui.root)
+        self._register_scalable_font(self._control_font)
+        self._register_scalable_font(self._title_font)
+        self._register_scalable_font(self._section_font)
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._button_font)
+        self._apply_gui_scale()
+
         self.tutorial_title = ""
         self.steps = []
         self.current_step_index = 0
@@ -29,6 +47,11 @@ class GuidedTutorialController:
         self.instruction_panel = None
         self.instructions_visible = True
         self.validation_message = ""
+
+
+    def _apply_scaled_styles(self):
+        ttk.Style(self.parent_gui.root).configure("GuidedTutorial.TButton", font=self._button_font)
+
 
     def start(self, tutorial_title, steps):
         """
@@ -219,62 +242,24 @@ class GuidedTutorialController:
         step_number = self.current_step_index + 1
         step_count = len(self.steps)
 
-        self.control_bar = tk.Frame(
-            container,
-            background="#dbeaf5",
-            borderwidth=1,
-            relief="solid",
-        )
-
-        self.control_bar.grid(
-            row=0,
-            column=0,
-            columnspan=2,
-            sticky="ew",
-            padx=10,
-            pady=(5, 3),
-        )
+        self.control_bar = tk.Frame(container, background="#dbeaf5", borderwidth=1, relief="solid")
+        self.control_bar.grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(5, 3))
 
         self.control_bar.columnconfigure(0, weight=1)
         self.control_bar.columnconfigure(1, weight=0)
 
-        title_text = (
-            f"{self.tutorial_title} - "
-            f"Step {step_number} of {step_count}"
-        )
+        title_text = f"{self.tutorial_title} - Step {step_number} of {step_count}"
 
         tk.Label(
-            self.control_bar,
-            text=title_text,
-            font=("Arial", 13, "bold"),
-            background="#dbeaf5",
-            anchor="w",
-            justify="left",
-        ).grid(
-            row=0,
-            column=0,
-            sticky="w",
-            padx=10,
-            pady=6,
-        )
+            self.control_bar, text=title_text, font=self._control_font, background="#dbeaf5",
+            anchor="w", justify="left"
+        ).grid(row=0, column=0, sticky="w", padx=10, pady=6)
 
-        button_frame = tk.Frame(
-            self.control_bar,
-            background="#dbeaf5",
-        )
-        button_frame.grid(
-            row=0,
-            column=1,
-            sticky="e",
-            padx=8,
-            pady=4,
-        )
+        button_frame = tk.Frame(self.control_bar, background="#dbeaf5")
+        button_frame.grid(row=0, column=1, sticky="e", padx=8, pady=4)
 
-        back_button = ttk.Button(
-            button_frame,
-            text="Back",
-            command=self.previous_step,
-        )
+        back_button = ttk.Button(button_frame, text="Back", command=self.previous_step,
+                                 style="GuidedTutorial.TButton")
         back_button.pack(side="left", padx=(0, 6))
 
         if self.current_step_index == 0:
@@ -285,29 +270,19 @@ class GuidedTutorialController:
         else:
             next_button_text = "Next"
 
-        ttk.Button(
-            button_frame,
-            text=next_button_text,
-            command=self.next_step,
-        ).pack(side="left", padx=(0, 6))
+        ttk.Button(button_frame, text=next_button_text, command=self.next_step,
+                   style="GuidedTutorial.TButton").pack(side="left", padx=(0, 6))
 
         if self.instructions_visible:
             instruction_button_text = "Hide Instructions"
         else:
             instruction_button_text = "Show Instructions"
 
-        ttk.Button(
-            button_frame,
-            text=instruction_button_text,
-            command=self.toggle_instructions,
-            width=17,
-        ).pack(side="left", padx=(0, 6))
+        ttk.Button(button_frame, text=instruction_button_text, command=self.toggle_instructions, width=17,
+                   style="GuidedTutorial.TButton").pack(side="left", padx=(0, 6))
 
-        ttk.Button(
-            button_frame,
-            text="Exit Tutorial",
-            command=self.exit_tutorial,
-        ).pack(side="left")
+        ttk.Button(button_frame, text="Exit Tutorial", command=self.exit_tutorial,
+                   style="GuidedTutorial.TButton").pack(side="left")
 
 
     def _build_instruction_panel(self, container, step):
@@ -321,83 +296,34 @@ class GuidedTutorialController:
         top_offset = control_bar_height + 8
         bottom_margin = 10
 
-        self.instruction_panel = tk.Frame(
-            container,
-            background="#f4f7f9",
-            borderwidth=1,
-            relief="solid",
-        )
+        self.instruction_panel = tk.Frame(container, background="#f4f7f9", borderwidth=1, relief="solid")
 
         self.instruction_panel.place(
-            relx=1.0,
-            x=-10,
-            y=top_offset,
-            anchor="ne",
-            width=self.INSTRUCTION_PANEL_WIDTH,
-            relheight=1.0,
-            height=-(top_offset + bottom_margin),
+            relx=1.0, x=-10, y=top_offset, anchor="ne", width=self.INSTRUCTION_PANEL_WIDTH,
+            relheight=1.0, height=-(top_offset + bottom_margin)
         )
 
         tk.Label(
-            self.instruction_panel,
-            text=step["title"],
-            font=("Arial", 16, "bold"),
-            background="#f4f7f9",
-            justify="left",
-            anchor="w",
-            wraplength=self.INSTRUCTION_WRAP_LENGTH,
-        ).pack(
-            anchor="w",
-            fill="x",
-            padx=14,
-            pady=(14, 8),
-        )
+            self.instruction_panel, text=step["title"], font=self._title_font, background="#f4f7f9",
+            justify="left", anchor="w", wraplength=self.INSTRUCTION_WRAP_LENGTH
+        ).pack(anchor="w", fill="x", padx=14, pady=(14, 8))
 
         tk.Label(
-            self.instruction_panel,
-            text=step.get("section_title", "What to do"),
-            font=("Arial", 12, "bold"),
-            background="#f4f7f9",
-            justify="left",
-            anchor="w",
-        ).pack(
-            anchor="w",
-            fill="x",
-            padx=14,
-            pady=(4, 6),
-        )
+            self.instruction_panel, text=step.get("section_title", "What to do"), font=self._section_font,
+            background="#f4f7f9", justify="left", anchor="w"
+        ).pack(anchor="w", fill="x", padx=14, pady=(4, 6))
 
         tk.Label(
-            self.instruction_panel,
-            text=step["text"],
-            font=("Arial", 12),
-            background="#f4f7f9",
-            justify="left",
-            anchor="nw",
-            wraplength=self.INSTRUCTION_WRAP_LENGTH,
-        ).pack(
-            anchor="nw",
-            fill="x",
-            padx=14,
-            pady=(0, 10),
-        )
+            self.instruction_panel, text=step["text"], font=self._body_font, background="#f4f7f9",
+            justify="left", anchor="nw", wraplength=self.INSTRUCTION_WRAP_LENGTH
+        ).pack(anchor="nw", fill="x", padx=14, pady=(0, 10))
 
         if self.validation_message:
             tk.Label(
-                self.instruction_panel,
-                text=self.validation_message,
-                font=("Arial", 12, "bold"),
-                background="#f4f7f9",
-                foreground="#8b0000",
-                justify="left",
-                anchor="w",
-                wraplength=self.INSTRUCTION_WRAP_LENGTH,
-            ).pack(
-                anchor="w",
-                fill="x",
-                padx=14,
-                pady=(2, 14),
-            )
+                self.instruction_panel, text=self.validation_message, font=self._section_font,
+                background="#f4f7f9", foreground="#8b0000", justify="left", anchor="w",
+                wraplength=self.INSTRUCTION_WRAP_LENGTH
+            ).pack(anchor="w", fill="x", padx=14, pady=(2, 14))
 
         self.instruction_panel.lift()
 

@@ -1,13 +1,15 @@
 # gui_portfolioSimulation.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_finite_float, parse_integer
 from src.warpsimlab.utils.tooltip import Tooltip
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
 
-class PortfolioSimulationEditFrame(ttk.Frame):
+class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
     """
     Frame to edit portfolio simulation settings.
 
@@ -26,44 +28,64 @@ class PortfolioSimulationEditFrame(ttk.Frame):
     Custom allocation fields are shown only when "Custom" rebalance
     is selected.
     """
-    
+
+
     def __init__(self, parent, sim_vars, title="Simulation Settings"):
         super().__init__(parent, padding=10)
-        self.sim_vars = sim_vars  # sim_vars["_settings_dict"] contains the main Python dict
 
+        self.sim_vars = sim_vars
         settings = self.sim_vars["_settings_dict"]
+
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._section_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
+        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._header_text_font)
+        self._register_scalable_font(self._section_font)
+        self._register_scalable_font(self._tooltip_font)
+        self._apply_gui_scale()
 
         self.tooltips_text = {
             "start_year_var": "The calendar year at which the simulation begins.",
             "years_to_simulate_var": "Number of years to simulate. Must be a positive integer.",
-            "sims_var": "Number of simulation runs to perform for Monte Carlo analysis. Higher numbers give more accurate distributions.",
-            "use_fund_expenses_var": "If selected, the simulation deducts fund expenses annually from the portfolio.",
-            "fund_expense_var": "Average annual fund expenses as a percentage. Only active if 'Use and Show Fund Expenses' is checked.",
-            "maintain-current-allocation": "Choose to maintain the current portfolio allocation,\nor chose a pre-set rebalance strategy or use 'Custom' to define your own portfolio allocations.  \nPercentages are Stocks, Bonds and Cash",
+            "sims_var": (
+                "Number of simulation runs to perform for Monte Carlo analysis. "
+                "Higher numbers give more accurate distributions."
+            ),
+            "use_fund_expenses_var": (
+                "If selected, the simulation deducts fund expenses annually from the portfolio."
+            ),
+            "fund_expense_var": (
+                "Average annual fund expenses as a percentage. "
+                "Only active if 'Use and Show Fund Expenses' is checked."
+            ),
+            "maintain-current-allocation": (
+                "Choose to maintain the current portfolio allocation,\n"
+                "choose a pre-set rebalance strategy, or use 'Custom' to define your own "
+                "portfolio allocations.\n"
+                "Percentages are Stocks, Bonds and Cash."
+            ),
             "custom_stock_var": "Custom percentage of your portfolio allocated to stocks.",
             "custom_bonds_var": "Custom percentage of your portfolio allocated to bonds.",
-            "custom_cash_var": "Custom percentage of your portfolio allocated to cash."
+            "custom_cash_var": "Custom percentage of your portfolio allocated to cash.",
         }
 
-        self.columnconfigure(0, weight=0)  # radiobuttons
-        self.columnconfigure(1, weight=0)  # labels for custom block
-        self.columnconfigure(2, weight=1)  # entries for custom block (expand if room)
+        self.columnconfigure(0, weight=0)
+        self.columnconfigure(1, weight=0)
+        self.columnconfigure(2, weight=1)
 
         row = 0
 
         header_frame = ttk.Frame(self)
-        header_frame.grid(
-            row=row,
-            column=0,
-            columnspan=3,
-            sticky="w",
-            pady=(0, 8),
-        )
+        header_frame.grid(row=row, column=0, columnspan=3, sticky="w", pady=(0, 8))
 
         ttk.Label(
-            header_frame,
-            text="Simulation > Settings",
-            font=("Arial", 11, "bold"),
+            header_frame, text="Simulation > Settings", font=self._header_font
         ).pack(side="left")
 
         ttk.Label(
@@ -72,94 +94,134 @@ class PortfolioSimulationEditFrame(ttk.Frame):
                 " - Configure the simulation period, Monte Carlo runs, "
                 "fund expenses, and portfolio rebalancing."
             ),
-            font=("Arial", 11),
+            font=self._header_text_font,
         ).pack(side="left")
 
         row += 1
 
-        ttk.Label(self, text="Start year to simulate:").grid(row=row, column=0, sticky="w")
-        self.start_year_var = tk.StringVar(value=self._format_sim_field("start_year", settings["start_year"]))
-        vcmd = (self.register(self._validate_sim_field), "%P", "start_year")
+        ttk.Label(
+            self, text="Start year to simulate:", font=self._body_font
+        ).grid(row=row, column=0, sticky="w")
+
+        self.start_year_var = tk.StringVar(
+            value=self._format_sim_field("start_year", settings["start_year"])
+        )
+        vcmd = self.register(self._validate_sim_field), "%P", "start_year"
 
         self.start_year_entry = ttk.Entry(
-            self,
-            textvariable=self.start_year_var,
-            width=14,
-            validate="focusout",
-            validatecommand=vcmd
+            self, textvariable=self.start_year_var, width=14, font=self._body_font,
+            validate="focusout", validatecommand=vcmd
+        )
+        self.start_year_entry.grid(row=row, column=1, sticky="w")
+
+        Tooltip(
+            self.start_year_entry, self.tooltips_text["start_year_var"],
+            font=self._tooltip_font
         )
 
-        self.start_year_entry.grid(row=row, column=1, sticky="w")
-        Tooltip(self.start_year_entry, self.tooltips_text["start_year_var"], font=("Arial", 11))
         row += 1
 
-        ttk.Label(self, text="Years to Simulate:").grid(row=row, column=0, sticky="w")
-        self.years_to_simulate_var = tk.StringVar(value=self._format_sim_field("years_to_simulate", settings["years_to_simulate"]))
+        ttk.Label(
+            self, text="Years to Simulate:", font=self._body_font
+        ).grid(row=row, column=0, sticky="w")
 
-        vcmd = (self.register(self._validate_sim_field), "%P", "years_to_simulate")
+        self.years_to_simulate_var = tk.StringVar(
+            value=self._format_sim_field("years_to_simulate", settings["years_to_simulate"])
+        )
+        vcmd = self.register(self._validate_sim_field), "%P", "years_to_simulate"
 
         self.years_to_simulate_entry = ttk.Entry(
-            self,
-            textvariable=self.years_to_simulate_var,
-            width=14,
-            validate="focusout",
-            validatecommand=vcmd
+            self, textvariable=self.years_to_simulate_var, width=14, font=self._body_font,
+            validate="focusout", validatecommand=vcmd
+        )
+        self.years_to_simulate_entry.grid(row=row, column=1, sticky="w")
+
+        Tooltip(
+            self.years_to_simulate_entry, self.tooltips_text["years_to_simulate_var"],
+            font=self._tooltip_font
         )
 
-        self.years_to_simulate_entry.grid(row=row, column=1, sticky="w")
-        Tooltip(self.years_to_simulate_entry, self.tooltips_text["years_to_simulate_var"], font=("Arial", 11))
         row += 1
 
-        ttk.Label(self, text="Number of Simulations:").grid(row=row, column=0, sticky="w")
+        ttk.Label(
+            self, text="Number of Simulations:", font=self._body_font
+        ).grid(row=row, column=0, sticky="w")
 
-        self.sims_var = tk.StringVar(value=self._format_sim_field("num_sims", settings["num_sims"]))
-
-        vcmd = (self.register(self._validate_sim_field), "%P", "num_sims")
+        self.sims_var = tk.StringVar(
+            value=self._format_sim_field("num_sims", settings["num_sims"])
+        )
+        vcmd = self.register(self._validate_sim_field), "%P", "num_sims"
 
         self.sims_entry = ttk.Entry(
-            self,
-            textvariable=self.sims_var,
-            width=14,
-            validate="focusout",
-            validatecommand=vcmd
+            self, textvariable=self.sims_var, width=14, font=self._body_font,
+            validate="focusout", validatecommand=vcmd
+        )
+        self.sims_entry.grid(row=row, column=1, sticky="w")
+
+        Tooltip(
+            self.sims_entry, self.tooltips_text["sims_var"],
+            font=self._tooltip_font
         )
 
-        self.sims_entry.grid(row=row, column=1, sticky="w")
-        Tooltip(self.sims_entry, self.tooltips_text["sims_var"], font=("Arial", 11))
         row += 1
-
 
         sep1 = ttk.Separator(self, orient="horizontal")
         sep1.grid(row=row, column=0, columnspan=2, sticky="ew", pady=8)
         row += 1
 
         # --- Fund Expense Options ---
-        ttk.Label(self, text="Simulate Fund Expense Impacts", font=("Arial", 12, "bold")).grid(row=row, column=0, sticky="w", pady=(0, 2))
+        ttk.Label(
+            self, text="Simulate Fund Expense Impacts", font=self._section_font
+        ).grid(row=row, column=0, sticky="w", pady=(0, 2))
+
         row += 1
 
         self.use_fund_expenses_var = tk.BooleanVar(value=settings["use_fund_expenses"])
-        self.use_fund_expenses_cb = ttk.Checkbutton(self,text="Use and Show Fund Expenses",variable=self.use_fund_expenses_var)
-        self.use_fund_expenses_cb.grid(row=row, column=0, sticky="w")
-        Tooltip(self.use_fund_expenses_cb,self.tooltips_text["use_fund_expenses_var"],font=("Arial", 11))
-        self._bind_var(self.use_fund_expenses_var,lambda x, s=settings: s.__setitem__("use_fund_expenses", x))
-        row += 1
-
-        ttk.Label(self, text="Average fund expenses annual (%):").grid(row=row, column=0, sticky="w")
-        self.fund_expense_var = tk.StringVar(value=self._format_sim_field("fund_expense", settings["fund_expense"]))
-        vcmd = (self.register(self._validate_sim_field), "%P", "fund_expense")
-
-        self.fund_expense_entry = ttk.Entry(
+        self.use_fund_expenses_cb = ttk.Checkbutton(
             self,
-            textvariable=self.fund_expense_var,
-            width=12,
-            validate="focusout",
-            validatecommand=vcmd
+            text="Use and Show Fund Expenses",
+            variable=self.use_fund_expenses_var,
+            style="PortfolioSimulation.TCheckbutton"
+        )
+        self.use_fund_expenses_cb.grid(row=row, column=0, sticky="w")
+
+        Tooltip(
+            self.use_fund_expenses_cb, self.tooltips_text["use_fund_expenses_var"],
+            font=self._tooltip_font
         )
 
+        self._bind_var(
+            self.use_fund_expenses_var,
+            lambda x, s=settings: s.__setitem__("use_fund_expenses", x)
+        )
+
+        row += 1
+
+        ttk.Label(
+            self, text="Average fund expenses annual (%):", font=self._body_font
+        ).grid(row=row, column=0, sticky="w")
+
+        self.fund_expense_var = tk.StringVar(
+            value=self._format_sim_field("fund_expense", settings["fund_expense"])
+        )
+        vcmd = self.register(self._validate_sim_field), "%P", "fund_expense"
+
+        self.fund_expense_entry = ttk.Entry(
+            self, textvariable=self.fund_expense_var, width=12, font=self._body_font,
+            validate="focusout", validatecommand=vcmd
+        )
         self.fund_expense_entry.grid(row=row, column=1, sticky="w", padx=5)
-        Tooltip(self.fund_expense_entry,self.tooltips_text["fund_expense_var"],font=("Arial", 11))
-        self.use_fund_expenses_var.trace_add("write", lambda *args: self._toggle_fund_expense_entry())
+
+        Tooltip(
+            self.fund_expense_entry, self.tooltips_text["fund_expense_var"],
+            font=self._tooltip_font
+        )
+
+        self.use_fund_expenses_var.trace_add(
+            "write", lambda *args: self._toggle_fund_expense_entry()
+        )
         self._toggle_fund_expense_entry()
+
         row += 1
 
         sep2 = ttk.Separator(self, orient="horizontal")
@@ -167,72 +229,124 @@ class PortfolioSimulationEditFrame(ttk.Frame):
         row += 1
 
         # --- Rebalance Options ---
-        ttk.Label(self, text="Simulate Re-balanced Portfolio", font=("Arial", 12, "bold")).grid(row=row, column=0, sticky="w")
+        ttk.Label(
+            self, text="Simulate Re-balanced Portfolio", font=self._section_font
+        ).grid(row=row, column=0, sticky="w")
+
         row += 1
 
-        self.initial_allocation_mode_var = tk.StringVar(value=settings["initial_allocation_mode"])
-        self._bind_var(self.initial_allocation_mode_var, lambda x, s=settings: s.__setitem__("initial_allocation_mode", x))
+        self.initial_allocation_mode_var = tk.StringVar(
+            value=settings["initial_allocation_mode"]
+        )
+        self._bind_var(
+            self.initial_allocation_mode_var,
+            lambda x, s=settings: s.__setitem__("initial_allocation_mode", x)
+        )
 
-        # Create Radiobuttons as variables
-        rb_current = ttk.Radiobutton(self, text="Maintain Current Allocation", variable=self.initial_allocation_mode_var, value="maintain-current-allocation")
-        rb_dont = ttk.Radiobutton(self, text="Don't Rebalance", variable=self.initial_allocation_mode_var, value="dont-rebalance")
-        rb_30 = ttk.Radiobutton(self, text="Conservative (30-30-40)", variable=self.initial_allocation_mode_var, value="30-30-40")
-        rb_50 = ttk.Radiobutton(self, text="Balanced (50-30-20)", variable=self.initial_allocation_mode_var, value="50-30-20")
-        rb_70 = ttk.Radiobutton(self, text="Agressive (70-20-10)", variable=self.initial_allocation_mode_var, value="70-20-10")
-        rb_custom = ttk.Radiobutton(self, text="Custom", variable=self.initial_allocation_mode_var, value="custom")
+        rb_current = ttk.Radiobutton(
+            self, text="Maintain Current Allocation",
+            variable=self.initial_allocation_mode_var,
+            value="maintain-current-allocation",
+            style="PortfolioSimulation.TRadiobutton"
+        )
+        rb_dont = ttk.Radiobutton(
+            self, text="Don't Rebalance",
+            variable=self.initial_allocation_mode_var,
+            value="dont-rebalance",
+            style="PortfolioSimulation.TRadiobutton"
+        )
+        rb_30 = ttk.Radiobutton(
+            self, text="Conservative (30-30-40)",
+            variable=self.initial_allocation_mode_var,
+            value="30-30-40",
+            style="PortfolioSimulation.TRadiobutton"
+        )
+        rb_50 = ttk.Radiobutton(
+            self, text="Balanced (50-30-20)",
+            variable=self.initial_allocation_mode_var,
+            value="50-30-20",
+            style="PortfolioSimulation.TRadiobutton"
+        )
+        rb_70 = ttk.Radiobutton(
+            self, text="Aggressive (70-20-10)",
+            variable=self.initial_allocation_mode_var,
+            value="70-20-10",
+            style="PortfolioSimulation.TRadiobutton"
+        )
+        rb_custom = ttk.Radiobutton(
+            self, text="Custom",
+            variable=self.initial_allocation_mode_var,
+            value="custom",
+            style="PortfolioSimulation.TRadiobutton"
+        )
 
-        # Place them with grid
-        for i, rb in enumerate([rb_current, rb_dont, rb_30, rb_50, rb_70, rb_custom]):
-            rb.grid(row=row + i, column=0, columnspan=2, sticky="w", pady=0 )
+        radiobuttons = [rb_current, rb_dont, rb_30, rb_50, rb_70, rb_custom]
 
-        self.custom_anchor_row = row + 4  # rb_70 is the 5th item in the list (0-based index 4)
-        
-        # Attach tooltip to one or more of the Radiobuttons (e.g., first one)
-        Tooltip(rb_current, self.tooltips_text["maintain-current-allocation"], font=("Arial", 11))
+        for i, rb in enumerate(radiobuttons):
+            rb.grid(row=row + i, column=0, columnspan=2, sticky="w", pady=0)
+
+        self.custom_anchor_row = row + 4
+
+        Tooltip(
+            rb_current, self.tooltips_text["maintain-current-allocation"],
+            font=self._tooltip_font
+        )
 
         # --- Custom portfolio entries ---
-        self.custom_stock_var = tk.StringVar(value=self._format_sim_field("custom_stock", settings["custom_stock"]))
-        self.custom_bonds_var = tk.StringVar(value=self._format_sim_field("custom_bonds", settings["custom_bonds"]))
-        self.custom_cash_var = tk.StringVar(value=self._format_sim_field("custom_cash", settings["custom_cash"]))
+        self.custom_stock_var = tk.StringVar(
+            value=self._format_sim_field("custom_stock", settings["custom_stock"])
+        )
+        self.custom_bonds_var = tk.StringVar(
+            value=self._format_sim_field("custom_bonds", settings["custom_bonds"])
+        )
+        self.custom_cash_var = tk.StringVar(
+            value=self._format_sim_field("custom_cash", settings["custom_cash"])
+        )
         self._custom_total_check_id = None
 
-        self.custom_stock_label = ttk.Label(self, text="Percent Stock:")
+        self.custom_stock_label = ttk.Label(
+            self, text="Percent Stock:", font=self._body_font
+        )
 
-        vcmd = (self.register(self._validate_sim_field), "%P", "custom_stock")
-
+        vcmd = self.register(self._validate_sim_field), "%P", "custom_stock"
         self.custom_stock_entry = ttk.Entry(
-            self,
-            textvariable=self.custom_stock_var,
-            width=14,
-            validate="focusout",
-            validatecommand=vcmd
+            self, textvariable=self.custom_stock_var, width=14, font=self._body_font,
+            validate="focusout", validatecommand=vcmd
         )
-        self.custom_bonds_label = ttk.Label(self, text="Percent Bonds:")
 
-        vcmd = (self.register(self._validate_sim_field), "%P", "custom_bonds")
+        self.custom_bonds_label = ttk.Label(
+            self, text="Percent Bonds:", font=self._body_font
+        )
 
+        vcmd = self.register(self._validate_sim_field), "%P", "custom_bonds"
         self.custom_bonds_entry = ttk.Entry(
-            self,
-            textvariable=self.custom_bonds_var,
-            width=14,
-            validate="focusout",
-            validatecommand=vcmd
+            self, textvariable=self.custom_bonds_var, width=14, font=self._body_font,
+            validate="focusout", validatecommand=vcmd
         )
 
-        self.custom_cash_label = ttk.Label(self, text="Percent Cash:")
+        self.custom_cash_label = ttk.Label(
+            self, text="Percent Cash:", font=self._body_font
+        )
 
-        vcmd = (self.register(self._validate_sim_field), "%P", "custom_cash")
-
+        vcmd = self.register(self._validate_sim_field), "%P", "custom_cash"
         self.custom_cash_entry = ttk.Entry(
-            self,
-            textvariable=self.custom_cash_var,
-            width=14,
-            validate="focusout",
-            validatecommand=vcmd
+            self, textvariable=self.custom_cash_var, width=14, font=self._body_font,
+            validate="focusout", validatecommand=vcmd
         )
 
-        self.initial_allocation_mode_var.trace_add("write", lambda *args: self.toggle_custom_entries())
-        self.toggle_custom_entries()  # initialize visibility
+        self._custom_tooltips_created = False
+
+        self.initial_allocation_mode_var.trace_add(
+            "write", lambda *args: self.toggle_custom_entries()
+        )
+        self.toggle_custom_entries()
+
+
+    def _apply_scaled_styles(self):
+        style = ttk.Style(self)
+        style.configure("PortfolioSimulation.TCheckbutton", font=self._body_font)
+        style.configure("PortfolioSimulation.TRadiobutton", font=self._body_font)
+
 
     # ------------------------
     # Helper methods
@@ -246,24 +360,46 @@ class PortfolioSimulationEditFrame(ttk.Frame):
 
     def toggle_custom_entries(self):
         if self.initial_allocation_mode_var.get() == "custom":
-            r = self.custom_anchor_row  # align with "70-20-10"
+            r = self.custom_anchor_row
 
-            # Shift the whole custom block to the right within the existing 2-column form,
-            # so it visually sits to the right of the radiobuttons but DOES NOT add new columns.
-            label_padx = (140, 5)  # adjust this number to tuck labels into the empty space
+            label_padx = (140, 5)
             entry_padx = (0, 0)
 
-            self.custom_stock_label.grid(row=r, column=0, sticky="w", padx=label_padx, pady=0)
-            self.custom_stock_entry.grid(row=r, column=1, sticky="w", padx=entry_padx, pady=0)
-            Tooltip(self.custom_stock_entry, self.tooltips_text["custom_stock_var"], font=("Arial", 11))
+            self.custom_stock_label.grid(
+                row=r, column=0, sticky="w", padx=label_padx, pady=0
+            )
+            self.custom_stock_entry.grid(
+                row=r, column=1, sticky="w", padx=entry_padx, pady=0
+            )
 
-            self.custom_bonds_label.grid(row=r + 1, column=0, sticky="w", padx=label_padx, pady=0)
-            self.custom_bonds_entry.grid(row=r + 1, column=1, sticky="w", padx=entry_padx, pady=0)
-            Tooltip(self.custom_bonds_entry, self.tooltips_text["custom_bonds_var"], font=("Arial", 11))
+            self.custom_bonds_label.grid(
+                row=r + 1, column=0, sticky="w", padx=label_padx, pady=0
+            )
+            self.custom_bonds_entry.grid(
+                row=r + 1, column=1, sticky="w", padx=entry_padx, pady=0
+            )
 
-            self.custom_cash_label.grid(row=r + 2, column=0, sticky="w", padx=label_padx, pady=0)
-            self.custom_cash_entry.grid(row=r + 2, column=1, sticky="w", padx=entry_padx, pady=0)
-            Tooltip(self.custom_cash_entry, self.tooltips_text["custom_cash_var"], font=("Arial", 11))
+            self.custom_cash_label.grid(
+                row=r + 2, column=0, sticky="w", padx=label_padx, pady=0
+            )
+            self.custom_cash_entry.grid(
+                row=r + 2, column=1, sticky="w", padx=entry_padx, pady=0
+            )
+
+            if not self._custom_tooltips_created:
+                Tooltip(
+                    self.custom_stock_entry, self.tooltips_text["custom_stock_var"],
+                    font=self._tooltip_font
+                )
+                Tooltip(
+                    self.custom_bonds_entry, self.tooltips_text["custom_bonds_var"],
+                    font=self._tooltip_font
+                )
+                Tooltip(
+                    self.custom_cash_entry, self.tooltips_text["custom_cash_var"],
+                    font=self._tooltip_font
+                )
+                self._custom_tooltips_created = True
         else:
             self.custom_stock_label.grid_forget()
             self.custom_stock_entry.grid_forget()
@@ -300,7 +436,6 @@ class PortfolioSimulationEditFrame(ttk.Frame):
 
 
     def _format_sim_field(self, field, value):
-
         if field in {"start_year", "years_to_simulate", "num_sims"}:
             return str(int(value))
 
@@ -311,7 +446,9 @@ class PortfolioSimulationEditFrame(ttk.Frame):
         if self._custom_total_check_id is not None:
             self.after_cancel(self._custom_total_check_id)
 
-        self._custom_total_check_id = self.after_idle(self._validate_custom_allocation_total)
+        self._custom_total_check_id = self.after_idle(
+            self._validate_custom_allocation_total
+        )
 
 
     def _validate_custom_allocation_total(self):
@@ -347,7 +484,11 @@ class PortfolioSimulationEditFrame(ttk.Frame):
     def _validate_sim_field(self, proposed_value, field):
         settings = self.sim_vars["_settings_dict"]
 
-        var_name = "sims_var" if field == "num_sims" else f"{field}_var"
+        if field == "num_sims":
+            var_name = "sims_var"
+        else:
+            var_name = f"{field}_var"
+
         var = getattr(self, var_name)
         current_value = settings[field]
 
@@ -362,7 +503,9 @@ class PortfolioSimulationEditFrame(ttk.Frame):
             return True
 
         except ValueError as exc:
-            self.after_idle(lambda: var.set(self._format_sim_field(field, current_value)))
+            self.after_idle(
+                lambda: var.set(self._format_sim_field(field, current_value))
+            )
             mark_validation_failed(self)
             messagebox.showerror(
                 "Invalid Input",
@@ -376,9 +519,13 @@ class PortfolioSimulationEditFrame(ttk.Frame):
         def callback(*_):
             try:
                 value = var.get()
+
                 if cast:
                     value = cast(value)
+
                 setter(value)
+
             except (ValueError, TypeError):
-                pass  # ignore invalid intermediate input
+                pass
+
         var.trace_add("write", callback)

@@ -1,18 +1,21 @@
 # gui_tutorial.py
 
-import tkinter as tk
-from tkinter import ttk
-
 import os
 import sys
 import subprocess
+
+import tkinter as tk
+import tkinter.font as tkfont
+from tkinter import ttk
+
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
 
 # ------------------------------------------------------------------
 # Tutorialstab
 # ------------------------------------------------------------------
 
-class TutorialFrame(ttk.Frame):
+class TutorialFrame(ScalableFrameMixin, ttk.Frame):
     """
     Tutorials tab:
     - Left column: Getting Started instructions
@@ -31,6 +34,19 @@ class TutorialFrame(ttk.Frame):
         **kwargs
     ):
         super().__init__(parent, padding=10, **kwargs)
+        self._body_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
+        self._button_font = tkfont.Font(root=self, family="Arial", size=13, weight="bold")
+        self._section_title_font = tkfont.Font(root=self, family="Arial", size=13, weight="bold")
+        self._card_font = tkfont.nametofont("TkDefaultFont").copy()
+
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._header_font)
+        self._register_scalable_font(self._button_font)
+        self._register_scalable_font(self._section_title_font)
+        self._register_scalable_font(self._card_font)
+        self._apply_gui_scale()
 
         self.start_basic_tutorial_callback = (
             start_basic_tutorial_callback
@@ -46,24 +62,15 @@ class TutorialFrame(ttk.Frame):
         self._build_fields()
 
 
+    def _apply_scaled_styles(self):
+        style = ttk.Style(self)
+        style.configure("TutorialSectionTitle.TLabel", font=self._section_title_font)
+        style.configure("TutorialButton.TButton", font=self._button_font, padding=(12, 10))
+        style.configure("TutorialCard.TLabelframe", borderwidth=2, relief="solid")
+        style.configure("TutorialCard.TLabelframe.Label", font=self._card_font)
+
+
     def _build_fields(self):
-        style = ttk.Style()
-
-        style.configure(
-            "TutorialSectionTitle.TLabel",
-            font=("Arial", 13, "bold"),
-        )
-        style.configure(
-            "TutorialButton.TButton",
-            font=("Arial", 13, "bold"),
-            padding=(12, 10),
-        )
-        style.configure(
-            "TutorialCard.TLabelframe",
-            borderwidth=2,
-            relief="solid",
-        )
-
         header_frame = ttk.Frame(self)
         header_frame.pack(
             anchor="w",
@@ -71,11 +78,7 @@ class TutorialFrame(ttk.Frame):
             pady=(0, 14),
         )
 
-        ttk.Label(
-            header_frame,
-            text="Home > Tutorials",
-            font=("Arial", 11, "bold"),
-        ).pack(side="left")
+        ttk.Label(header_frame, text="Home > Tutorials", font=self._header_font).pack(side="left")
 
         ttk.Label(
             header_frame,
@@ -84,7 +87,7 @@ class TutorialFrame(ttk.Frame):
                 "Tutorials use the financial data currently loaded and do not "
                 "reset your scenario."
             ),
-            font=("Arial", 11),
+            font=self._body_font,
         ).pack(side="left")
 
         tutorials_container = ttk.Frame(self)
@@ -107,7 +110,7 @@ class TutorialFrame(ttk.Frame):
                 "compare results, and save your work.  This tutorial assums that "
                 "Mode is set to Basic."
             ),
-            font=("Arial", 11),
+            font=self._body_font,
             wraplength=850,
             justify="left",
         ).pack(anchor="w", pady=(0, 10))
@@ -137,7 +140,7 @@ class TutorialFrame(ttk.Frame):
                 "spending, market assumptions, simulation settings, and "
                 "display controls."
             ),
-            font=("Arial", 11),
+            font=self._body_font,
             wraplength=850,
             justify="left",
         ).pack(anchor="w", pady=(0, 10))
@@ -166,7 +169,7 @@ class TutorialFrame(ttk.Frame):
                 "Review result plots, experiment with Scenario Explorer, "
                 "generate reports, and examine tax and portfolio-risk results."
             ),
-            font=("Arial", 11),
+            font=self._body_font,
             wraplength=850,
             justify="left",
         ).pack(anchor="w", pady=(0, 10))
@@ -194,7 +197,7 @@ class TutorialFrame(ttk.Frame):
             text=(
                 "These PDF guides provide additional written reference material."
             ),
-            font=("Arial", 11),
+            font=self._body_font,
             wraplength=850,
             justify="left",
         ).pack(anchor="w", pady=(0, 10))
