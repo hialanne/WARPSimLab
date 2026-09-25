@@ -18,6 +18,7 @@ GitHub issues, documentation files, or release plans.
 * Create a Historical Stress Explorer.  Allow users to select retirement or simulation periods and see how it would survive 
 * Refactor the Simulation object
 * Possible Retirement Timeline Explorer
+* Maybe more complex withdrawal order?
 
 
 A short, high-value GUI feature list:
