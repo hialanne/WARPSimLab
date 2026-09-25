@@ -71,6 +71,7 @@ class PortfolioSimulatorGUI(
         # self._apply_dark_mode_diagnostic_theme()
 
         self.display_settings = load_display_settings()
+        self.root._warpsimlab_display_settings = self.display_settings
         self._apply_main_window_startup_settings()
         self._initialize_gui_scaling()
         self._initialize_scaling(self.root)

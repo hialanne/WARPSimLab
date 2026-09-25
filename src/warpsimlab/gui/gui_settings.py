@@ -10,7 +10,7 @@ from pathlib import Path
 from tkinter import messagebox, ttk
 
 
-SETTINGS_VERSION = 1
+SETTINGS_VERSION = 2
 
 MAIN_WINDOW_REFERENCE_WIDTH = 1200
 MAIN_WINDOW_REFERENCE_HEIGHT = 750
@@ -18,6 +18,9 @@ MAIN_WINDOW_REFERENCE_HEIGHT = 750
 MAIN_WINDOW_AUTOMATIC = "automatic"
 MAIN_WINDOW_MAXIMIZED = "maximized"
 MAIN_WINDOW_CUSTOM = "custom"
+
+SUMMARY_DIALOG_AUTOMATIC = "automatic"
+SUMMARY_DIALOG_MAXIMIZED = "maximized"
 
 SCENARIO_LAYOUT_AUTOMATIC = "automatic"
 SCENARIO_LAYOUT_REMEMBER = "remember"
@@ -38,6 +41,12 @@ def get_default_settings():
             "sizing_mode": MAIN_WINDOW_AUTOMATIC,
             "custom_width": MAIN_WINDOW_REFERENCE_WIDTH,
             "custom_height": MAIN_WINDOW_REFERENCE_HEIGHT,
+            "remember_geometry": False,
+            "last_geometry": None,
+            "last_maximized": False,
+        },
+        "summary_dialog": {
+            "sizing_mode": SUMMARY_DIALOG_AUTOMATIC,
             "remember_geometry": False,
             "last_geometry": None,
             "last_maximized": False,
@@ -212,6 +221,22 @@ def _validated_settings(settings):
     if parse_geometry(main_settings["last_geometry"]) is None:
         main_settings["last_geometry"] = None
 
+    summary_settings = validated["summary_dialog"]
+
+    valid_summary_modes = {
+        SUMMARY_DIALOG_AUTOMATIC,
+        SUMMARY_DIALOG_MAXIMIZED,
+    }
+
+    if summary_settings["sizing_mode"] not in valid_summary_modes:
+        summary_settings["sizing_mode"] = SUMMARY_DIALOG_AUTOMATIC
+
+    summary_settings["remember_geometry"] = bool(summary_settings["remember_geometry"])
+    summary_settings["last_maximized"] = bool(summary_settings["last_maximized"])
+
+    if parse_geometry(summary_settings["last_geometry"]) is None:
+        summary_settings["last_geometry"] = None
+
     scenario_settings = validated["scenario_explorer"]
 
     valid_scenario_modes = {
@@ -346,6 +371,12 @@ class DisplaySettingsDialog(tk.Toplevel):
         self.remember_main_geometry = tk.BooleanVar(
             value=settings["main_window"]["remember_geometry"]
         )
+        self.summary_sizing_mode = tk.StringVar(
+            value=settings["summary_dialog"]["sizing_mode"]
+        )
+        self.remember_summary_geometry = tk.BooleanVar(
+            value=settings["summary_dialog"]["remember_geometry"]
+        )
         self.scenario_layout_mode = tk.StringVar(
             value=settings["scenario_explorer"]["layout_mode"]
         )
@@ -361,45 +392,25 @@ class DisplaySettingsDialog(tk.Toplevel):
         self.grab_set()
         self.custom_width_entry.focus_set()
 
+
     def _build_fields(self):
         """
         Build the dialog controls.
         """
-        outer_frame = ttk.Frame(
-            self,
-            padding=12,
-        )
-        outer_frame.grid(
-            row=0,
-            column=0,
-            sticky="nsew",
-        )
+        outer_frame = ttk.Frame(self, padding=12)
+        outer_frame.grid(row=0, column=0, sticky="nsew")
 
-        main_frame = ttk.LabelFrame(
-            outer_frame,
-            text="Main Window",
-            padding=10,
-        )
-        main_frame.grid(
-            row=0,
-            column=0,
-            sticky="ew",
-        )
+        main_frame = ttk.LabelFrame(outer_frame, text="Main Window", padding=10)
+        main_frame.grid(row=0, column=0, sticky="ew")
         main_frame.columnconfigure(1, weight=1)
 
         ttk.Radiobutton(
             main_frame,
-            text="Automatic -  scale to WARPSimLab design size",
+            text="Automatic - scale to WARPSimLab design size",
             variable=self.main_sizing_mode,
             value=MAIN_WINDOW_AUTOMATIC,
             command=self._update_custom_field_state,
-        ).grid(
-            row=0,
-            column=0,
-            columnspan=3,
-            sticky="w",
-            pady=(0, 6),
-        )
+        ).grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 6))
 
         ttk.Radiobutton(
             main_frame,
@@ -407,13 +418,7 @@ class DisplaySettingsDialog(tk.Toplevel):
             variable=self.main_sizing_mode,
             value=MAIN_WINDOW_MAXIMIZED,
             command=self._update_custom_field_state,
-        ).grid(
-            row=1,
-            column=0,
-            columnspan=3,
-            sticky="w",
-            pady=(0, 6),
-        )
+        ).grid(row=1, column=0, columnspan=3, sticky="w", pady=(0, 6))
 
         ttk.Radiobutton(
             main_frame,
@@ -421,180 +426,92 @@ class DisplaySettingsDialog(tk.Toplevel):
             variable=self.main_sizing_mode,
             value=MAIN_WINDOW_CUSTOM,
             command=self._update_custom_field_state,
-        ).grid(
-            row=2,
-            column=0,
-            columnspan=3,
-            sticky="w",
-            pady=(0, 6),
-        )
+        ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(0, 6))
 
-        ttk.Label(
-            main_frame,
-            text="Width:",
-        ).grid(
-            row=3,
-            column=0,
-            sticky="e",
-            padx=(24, 6),
-            pady=3,
-        )
+        ttk.Label(main_frame, text="Width:").grid(row=3, column=0, sticky="e", padx=(24, 6), pady=3)
 
-        self.custom_width_entry = ttk.Entry(
-            main_frame,
-            textvariable=self.custom_width,
-            width=10,
-        )
-        self.custom_width_entry.grid(
-            row=3,
-            column=1,
-            sticky="w",
-            pady=3,
-        )
+        self.custom_width_entry = ttk.Entry(main_frame, textvariable=self.custom_width, width=10)
+        self.custom_width_entry.grid(row=3, column=1, sticky="w", pady=3)
 
-        ttk.Label(
-            main_frame,
-            text="pixels",
-        ).grid(
-            row=3,
-            column=2,
-            sticky="w",
-            padx=(6, 0),
-            pady=3,
-        )
+        ttk.Label(main_frame, text="pixels").grid(row=3, column=2, sticky="w", padx=(6, 0), pady=3)
 
-        ttk.Label(
-            main_frame,
-            text="Height:",
-        ).grid(
-            row=4,
-            column=0,
-            sticky="e",
-            padx=(24, 6),
-            pady=3,
-        )
+        ttk.Label(main_frame, text="Height:").grid(row=4, column=0, sticky="e", padx=(24, 6), pady=3)
 
-        self.custom_height_entry = ttk.Entry(
-            main_frame,
-            textvariable=self.custom_height,
-            width=10,
-        )
-        self.custom_height_entry.grid(
-            row=4,
-            column=1,
-            sticky="w",
-            pady=3,
-        )
+        self.custom_height_entry = ttk.Entry(main_frame, textvariable=self.custom_height, width=10)
+        self.custom_height_entry.grid(row=4, column=1, sticky="w", pady=3)
 
-        ttk.Label(
-            main_frame,
-            text="pixels",
-        ).grid(
-            row=4,
-            column=2,
-            sticky="w",
-            padx=(6, 0),
-            pady=3,
-        )
+        ttk.Label(main_frame, text="pixels").grid(row=4, column=2, sticky="w", padx=(6, 0), pady=3)
 
         ttk.Checkbutton(
             main_frame,
-            text=(
-                "Remember the last window size, position, "
-                "and maximized state"
-            ),
+            text="Remember the last window size, position, and maximized state",
             variable=self.remember_main_geometry,
-        ).grid(
-            row=5,
-            column=0,
-            columnspan=3,
-            sticky="w",
-            pady=(10, 0),
-        )
+        ).grid(row=5, column=0, columnspan=3, sticky="w", pady=(10, 0))
 
         ttk.Label(
             main_frame,
-            text=(
-                "When enabled, the remembered window layout takes "
-                "priority at the next startup."
-            ),
+            text="When enabled, the remembered window layout takes priority at the next startup.",
             wraplength=430,
             justify="left",
-        ).grid(
-            row=6,
-            column=0,
-            columnspan=3,
-            sticky="w",
-            padx=(24, 0),
-            pady=(3, 0),
-        )
+        ).grid(row=6, column=0, columnspan=3, sticky="w", padx=(24, 0), pady=(3, 0))
 
-        scenario_frame = ttk.LabelFrame(
-            outer_frame,
-            text="Scenario Explorer",
-            padding=10,
-        )
-        scenario_frame.grid(
-            row=1,
-            column=0,
-            sticky="ew",
-            pady=(12, 0),
-        )
+        summary_frame = ttk.LabelFrame(outer_frame, text="Summary Dialog", padding=10)
+        summary_frame.grid(row=1, column=0, sticky="ew", pady=(12, 0))
+
+        ttk.Radiobutton(
+            summary_frame,
+            text="Automatic - scale to Summary design size",
+            variable=self.summary_sizing_mode,
+            value=SUMMARY_DIALOG_AUTOMATIC,
+        ).grid(row=0, column=0, sticky="w", pady=(0, 6))
+
+        ttk.Radiobutton(
+            summary_frame,
+            text="Maximized",
+            variable=self.summary_sizing_mode,
+            value=SUMMARY_DIALOG_MAXIMIZED,
+        ).grid(row=1, column=0, sticky="w", pady=(0, 6))
+
+        ttk.Checkbutton(
+            summary_frame,
+            text="Remember the last window size, position, and maximized state",
+            variable=self.remember_summary_geometry,
+        ).grid(row=2, column=0, sticky="w", pady=(4, 0))
+
+        ttk.Label(
+            summary_frame,
+            text="When enabled, the remembered window layout takes priority the next time Summary opens.",
+            wraplength=430,
+            justify="left",
+        ).grid(row=3, column=0, sticky="w", padx=(24, 0), pady=(3, 0))
+
+        scenario_frame = ttk.LabelFrame(outer_frame, text="Scenario Explorer", padding=10)
+        scenario_frame.grid(row=2, column=0, sticky="ew", pady=(12, 0))
 
         ttk.Radiobutton(
             scenario_frame,
             text="Automatic layout",
             variable=self.scenario_layout_mode,
             value=SCENARIO_LAYOUT_AUTOMATIC,
-        ).grid(
-            row=0,
-            column=0,
-            sticky="w",
-            pady=(0, 6),
-        )
+        ).grid(row=0, column=0, sticky="w", pady=(0, 6))
 
         ttk.Radiobutton(
             scenario_frame,
             text="Remember last window sizes and positions",
             variable=self.scenario_layout_mode,
             value=SCENARIO_LAYOUT_REMEMBER,
-        ).grid(
-            row=1,
-            column=0,
-            sticky="w",
-        )
+        ).grid(row=1, column=0, sticky="w")
 
         button_frame = ttk.Frame(outer_frame)
-        button_frame.grid(
-            row=2,
-            column=0,
-            sticky="e",
-            pady=(14, 0),
+        button_frame.grid(row=3, column=0, sticky="e", pady=(14, 0))
+
+        ttk.Button(button_frame, text="Restore Defaults", command=self._restore_defaults).pack(
+            side="left", padx=(0, 20)
         )
 
-        ttk.Button(
-            button_frame,
-            text="Restore Defaults",
-            command=self._restore_defaults,
-        ).pack(
-            side="left",
-            padx=(0, 20),
-        )
+        ttk.Button(button_frame, text="OK", command=self._apply).pack(side="left", padx=(0, 6))
+        ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(side="left")
 
-        ttk.Button(
-            button_frame,
-            text="OK",
-            command=self._apply,
-        ).pack(
-            side="left",
-            padx=(0, 6),
-        )
-
-        ttk.Button(
-            button_frame,
-            text="Cancel",
-            command=self.destroy,
-        ).pack(side="left")
 
     def _update_custom_field_state(self):
         """
@@ -610,6 +527,7 @@ class DisplaySettingsDialog(tk.Toplevel):
         self.custom_width_entry.configure(state=state)
         self.custom_height_entry.configure(state=state)
 
+
     def _restore_defaults(self):
         """
         Restore the controls to the automatic defaults.
@@ -618,23 +536,18 @@ class DisplaySettingsDialog(tk.Toplevel):
         """
         defaults = get_default_settings()
 
-        self.main_sizing_mode.set(
-            defaults["main_window"]["sizing_mode"]
-        )
-        self.custom_width.set(
-            str(defaults["main_window"]["custom_width"])
-        )
-        self.custom_height.set(
-            str(defaults["main_window"]["custom_height"])
-        )
-        self.remember_main_geometry.set(
-            defaults["main_window"]["remember_geometry"]
-        )
-        self.scenario_layout_mode.set(
-            defaults["scenario_explorer"]["layout_mode"]
-        )
+        self.main_sizing_mode.set(defaults["main_window"]["sizing_mode"])
+        self.custom_width.set(str(defaults["main_window"]["custom_width"]))
+        self.custom_height.set(str(defaults["main_window"]["custom_height"]))
+        self.remember_main_geometry.set(defaults["main_window"]["remember_geometry"])
+
+        self.summary_sizing_mode.set(defaults["summary_dialog"]["sizing_mode"])
+        self.remember_summary_geometry.set(defaults["summary_dialog"]["remember_geometry"])
+
+        self.scenario_layout_mode.set(defaults["scenario_explorer"]["layout_mode"])
 
         self._update_custom_field_state()
+
 
     def _read_positive_integer(self, value, field_name):
         """
@@ -660,85 +573,55 @@ class DisplaySettingsDialog(tk.Toplevel):
 
         return parsed_value
 
+
     def _apply(self):
         """
         Validate, save, and immediately apply the selected settings.
         """
-        custom_width = self._read_positive_integer(
-            self.custom_width.get().strip(),
-            "Custom width",
-        )
+        custom_width = self._read_positive_integer(self.custom_width.get().strip(), "Custom width")
         if custom_width is None:
             return
 
-        custom_height = self._read_positive_integer(
-            self.custom_height.get().strip(),
-            "Custom height",
-        )
+        custom_height = self._read_positive_integer(self.custom_height.get().strip(), "Custom height")
         if custom_height is None:
             return
 
-        if (
-            self.main_sizing_mode.get()
-            == MAIN_WINDOW_CUSTOM
-            and (
-                custom_width < 1200
-                or custom_height < 750
-            )
-        ):
+        if self.main_sizing_mode.get() == MAIN_WINDOW_CUSTOM and (custom_width < 1200 or custom_height < 750):
             continue_with_small_size = messagebox.askyesno(
                 "Small Custom Window",
-                (
-                    "WARPSimLab is designed for a minimum useful "
-                    "window size of 1200 by 750 pixels.\n\n"
-                    "Use the smaller custom size anyway?"
-                ),
+                "WARPSimLab is designed for a minimum useful window size of 1200 by 750 pixels.\n\n"
+                "Use the smaller custom size anyway?",
                 parent=self,
             )
-
             if not continue_with_small_size:
                 return
 
-        updated_settings = copy.deepcopy(
-            self.original_settings
-        )
+        updated_settings = copy.deepcopy(self.original_settings)
 
-        updated_settings["main_window"]["sizing_mode"] = (
-            self.main_sizing_mode.get()
-        )
-        updated_settings["main_window"]["custom_width"] = (
-            custom_width
-        )
-        updated_settings["main_window"]["custom_height"] = (
-            custom_height
-        )
-        updated_settings["main_window"]["remember_geometry"] = (
-            bool(self.remember_main_geometry.get())
-        )
+        updated_settings["main_window"]["sizing_mode"] = self.main_sizing_mode.get()
+        updated_settings["main_window"]["custom_width"] = custom_width
+        updated_settings["main_window"]["custom_height"] = custom_height
+        updated_settings["main_window"]["remember_geometry"] = bool(self.remember_main_geometry.get())
 
-        updated_settings["scenario_explorer"]["layout_mode"] = (
-            self.scenario_layout_mode.get()
-        )
+        updated_settings["summary_dialog"]["sizing_mode"] = self.summary_sizing_mode.get()
+        updated_settings["summary_dialog"]["remember_geometry"] = bool(self.remember_summary_geometry.get())
 
-        if (
-            self.scenario_layout_mode.get()
-            == SCENARIO_LAYOUT_AUTOMATIC
-        ):
+        updated_settings["scenario_explorer"]["layout_mode"] = self.scenario_layout_mode.get()
+
+        if self.scenario_layout_mode.get() == SCENARIO_LAYOUT_AUTOMATIC:
             updated_settings["scenario_explorer"]["layout"] = None
 
         if not save_display_settings(updated_settings):
             messagebox.showerror(
                 "Settings Not Saved",
-                (
-                    "WARPSimLab could not save the display settings "
-                    "in the user configuration directory."
-                ),
+                "WARPSimLab could not save the display settings in the user configuration directory.",
                 parent=self,
             )
             return
 
         self.apply_callback(updated_settings)
         self.destroy()
+
 
     def _center_over_parent(self):
         """

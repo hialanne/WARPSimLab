@@ -19,6 +19,42 @@ from src.warpsimlab.gui.gui_settings import (
 )
 
 
+def set_window_normal(window):
+    try:
+        if sys.platform.startswith("win"):
+            window.state("normal")
+        elif sys.platform.startswith("linux"):
+            window.attributes("-zoomed", False)
+        else:
+            window.state("normal")
+    except tk.TclError:
+        pass
+
+
+def set_window_maximized(window):
+    try:
+        if sys.platform.startswith("win"):
+            window.state("zoomed")
+        elif sys.platform.startswith("linux"):
+            window.attributes("-zoomed", True)
+        else:
+            window.state("zoomed")
+    except tk.TclError:
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        window.geometry(f"{screen_width}x{screen_height}+0+0")
+
+
+def window_is_maximized(window):
+    try:
+        if sys.platform.startswith("linux"):
+            return bool(window.attributes("-zoomed"))
+
+        return window.state() == "zoomed"
+    except tk.TclError:
+        return False
+
+
 class PortfolioSimulatorGUI_DisplayMixin:
     def _apply_dark_mode_diagnostic_theme(self):
         """
@@ -125,6 +161,201 @@ class PortfolioSimulatorGUI_DisplayMixin:
         y = work_top + (work_height - height) // 2
 
         self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+
+    def _set_main_window_normal(self):
+        """
+        Leave the maximized state before applying normal geometry.
+        """
+        set_window_normal(self.root)
+
+
+    def _set_main_window_maximized(self):
+        """
+        Maximize the main window using the platform-supported operation.
+        """
+        set_window_maximized(self.root)
+
+
+    def _main_window_is_maximized(self):
+        """
+        Return True when the main window is currently maximized.
+        """
+        return window_is_maximized(self.root)
+
+
+    def _calculate_automatic_main_window_size(self):
+        """Return the platform-adjusted WARPSimLab reference window size."""
+        development_screen_width = 1707
+        development_screen_height = 1067
+        development_font_linespace = 24
+
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        reference_font = tkfont.Font(family="Arial", size=16)
+        current_font_linespace = reference_font.metrics("linespace")
+        gui_scale = current_font_linespace / development_font_linespace
+
+        effective_screen_width = screen_width / gui_scale
+        effective_screen_height = screen_height / gui_scale
+        width_scale = effective_screen_width / development_screen_width
+        height_scale = effective_screen_height / development_screen_height
+        desktop_scale = min(width_scale, height_scale)
+
+        if desktop_scale > 1.0:
+            large_display_factor = 1.0 / (desktop_scale ** 0.5)
+        else:
+            large_display_factor = 1.0
+
+        scale = gui_scale * large_display_factor
+        window_width = max(int(MAIN_WINDOW_REFERENCE_WIDTH * scale), MAIN_WINDOW_REFERENCE_WIDTH)
+        window_height = max(int(MAIN_WINDOW_REFERENCE_HEIGHT * scale), MAIN_WINDOW_REFERENCE_HEIGHT)
+
+        return window_width, window_height
+
+
+    def _apply_automatic_main_window_size(self):
+        """Scale the main window from the original Windows development layout."""
+        window_width, window_height = self._calculate_automatic_main_window_size()
+        self._set_main_window_normal()
+        self._center_main_window(window_width, window_height)
+
+
+    def _apply_main_window_startup_settings(self):
+        """
+        Apply remembered geometry or the selected sizing policy at startup.
+        """
+        main_settings = self.display_settings["main_window"]
+
+        if main_settings.get("remember_geometry", False):
+            if main_settings.get("last_maximized", False):
+                self._set_main_window_maximized()
+                return
+
+            saved_geometry = main_settings.get("last_geometry")
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+
+            if geometry_is_visible(saved_geometry, screen_width, screen_height):
+                self._set_main_window_normal()
+                self.root.geometry(saved_geometry)
+                return
+
+        self._apply_selected_main_window_mode()
+
+
+    def _apply_selected_main_window_mode(self):
+        """
+        Apply the selected Automatic, Maximized, or Custom policy.
+        """
+        main_settings = self.display_settings["main_window"]
+        sizing_mode = main_settings.get("sizing_mode", MAIN_WINDOW_AUTOMATIC)
+
+        if sizing_mode == MAIN_WINDOW_MAXIMIZED:
+            self._set_main_window_maximized()
+            return
+
+        if sizing_mode == MAIN_WINDOW_CUSTOM:
+            width = main_settings["custom_width"]
+            height = main_settings["custom_height"]
+
+            self._set_main_window_normal()
+            self._center_main_window(width, height)
+            return
+
+        self._apply_automatic_main_window_size()
+
+
+    def edit_display_settings(self):
+        """
+        Open the application display settings dialog.
+        """
+        DisplaySettingsDialog(self.root, self.display_settings, self._apply_display_settings)
+
+
+    def _apply_display_settings(self, updated_settings):
+        """
+        Store and immediately apply settings returned by the dialog.
+        """
+        self.display_settings = updated_settings
+        self.root._warpsimlab_display_settings = self.display_settings
+
+        self._apply_selected_main_window_mode()
+
+        scenario_controller = getattr(self, "scenario_controller", None)
+
+        if scenario_controller is not None and scenario_controller.session_active:
+            scenario_mode = self.display_settings["scenario_explorer"]["layout_mode"]
+
+            if scenario_mode == SCENARIO_LAYOUT_AUTOMATIC:
+                scenario_controller._position_windows()
+            elif scenario_mode == SCENARIO_LAYOUT_REMEMBER:
+                scenario_controller.capture_current_layout()
+                save_display_settings(self.display_settings)
+
+
+    def _save_main_window_geometry(self):
+        """
+        Save the current main-window layout when remembering is enabled.
+        """
+        main_settings = self.display_settings["main_window"]
+
+        if not main_settings.get("remember_geometry", False):
+            return
+
+        self.root.update_idletasks()
+
+        maximized = self._main_window_is_maximized()
+        main_settings["last_maximized"] = maximized
+
+        if not maximized:
+            main_settings["last_geometry"] = self.root.winfo_geometry()
+
+
+    def _initialize_gui_scaling(self):
+        """Track runtime GUI scaling relative to the platform-adjusted reference layout."""
+        self._gui_scale = 1.0
+        self._gui_scale_after_id = None
+        self._gui_reference_width, self._gui_reference_height = self._calculate_automatic_main_window_size()
+        self.root._warpsimlab_gui_scale = self._gui_scale
+        self.root.bind("<Configure>", self._on_main_window_configure, add="+")
+        self.root.after_idle(self._update_gui_scale)
+
+
+    def _on_main_window_configure(self, event):
+        """Debounce main-window resize events before recalculating GUI scale."""
+        if event.widget is not self.root:
+            return
+
+        if self._gui_scale_after_id is not None:
+            self.root.after_cancel(self._gui_scale_after_id)
+
+        self._gui_scale_after_id = self.root.after(50, self._update_gui_scale)
+
+
+    def _update_gui_scale(self):
+        """Update runtime GUI scale and notify interested widgets when it changes."""
+        self._gui_scale_after_id = None
+
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+
+        if width <= 1 or height <= 1:
+            return
+
+        scale = min(width / self._gui_reference_width, height / self._gui_reference_height)
+
+        if abs(scale - self._gui_scale) < 0.01:
+            return
+
+        self._gui_scale = scale
+        self.root._warpsimlab_gui_scale = scale
+        self.root.event_generate("<<WARPSimLabScaleChanged>>", when="tail")
+
+
+    def get_gui_scale(self):
+        return self._gui_scale
 
 
     def _print_display_diagnostics(self):
@@ -289,220 +520,3 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
         print("")
 
-
-    def _set_main_window_normal(self):
-        """
-        Leave the maximized state before applying normal geometry.
-        """
-        try:
-            if sys.platform.startswith("win"):
-                self.root.state("normal")
-            elif sys.platform.startswith("linux"):
-                self.root.attributes("-zoomed", False)
-            else:
-                self.root.state("normal")
-        except tk.TclError:
-            pass
-
-
-    def _set_main_window_maximized(self):
-        """
-        Maximize the main window using the platform-supported operation.
-        """
-        try:
-            if sys.platform.startswith("win"):
-                self.root.state("zoomed")
-            elif sys.platform.startswith("linux"):
-                self.root.attributes("-zoomed", True)
-            else:
-                self.root.state("zoomed")
-        except tk.TclError:
-            screen_width = self.root.winfo_screenwidth()
-            screen_height = self.root.winfo_screenheight()
-            self.root.geometry(f"{screen_width}x{screen_height}+0+0")
-
-
-    def _main_window_is_maximized(self):
-        """
-        Return True when the main window is currently maximized.
-        """
-        try:
-            if sys.platform.startswith("linux"):
-                return bool(self.root.attributes("-zoomed"))
-
-            return self.root.state() == "zoomed"
-        except tk.TclError:
-            return False
-
-
-    def _calculate_automatic_main_window_size(self):
-        """Return the platform-adjusted WARPSimLab reference window size."""
-        development_screen_width = 1707
-        development_screen_height = 1067
-        development_font_linespace = 24
-
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-
-        reference_font = tkfont.Font(family="Arial", size=16)
-        current_font_linespace = reference_font.metrics("linespace")
-        gui_scale = current_font_linespace / development_font_linespace
-
-        effective_screen_width = screen_width / gui_scale
-        effective_screen_height = screen_height / gui_scale
-        width_scale = effective_screen_width / development_screen_width
-        height_scale = effective_screen_height / development_screen_height
-        desktop_scale = min(width_scale, height_scale)
-
-        if desktop_scale > 1.0:
-            large_display_factor = 1.0 / (desktop_scale ** 0.5)
-        else:
-            large_display_factor = 1.0
-
-        scale = gui_scale * large_display_factor
-        window_width = max(int(MAIN_WINDOW_REFERENCE_WIDTH * scale), MAIN_WINDOW_REFERENCE_WIDTH)
-        window_height = max(int(MAIN_WINDOW_REFERENCE_HEIGHT * scale), MAIN_WINDOW_REFERENCE_HEIGHT)
-
-        return window_width, window_height
-
-
-    def _apply_automatic_main_window_size(self):
-        """Scale the main window from the original Windows development layout."""
-        window_width, window_height = self._calculate_automatic_main_window_size()
-        self._set_main_window_normal()
-        self._center_main_window(window_width, window_height)
-
-
-    def _apply_main_window_startup_settings(self):
-        """
-        Apply remembered geometry or the selected sizing policy at startup.
-        """
-        main_settings = self.display_settings["main_window"]
-
-        if main_settings.get("remember_geometry", False):
-            if main_settings.get("last_maximized", False):
-                self._set_main_window_maximized()
-                return
-
-            saved_geometry = main_settings.get("last_geometry")
-            screen_width = self.root.winfo_screenwidth()
-            screen_height = self.root.winfo_screenheight()
-
-            if geometry_is_visible(saved_geometry, screen_width, screen_height):
-                self._set_main_window_normal()
-                self.root.geometry(saved_geometry)
-                return
-
-        self._apply_selected_main_window_mode()
-
-
-    def _apply_selected_main_window_mode(self):
-        """
-        Apply the selected Automatic, Maximized, or Custom policy.
-        """
-        main_settings = self.display_settings["main_window"]
-        sizing_mode = main_settings.get("sizing_mode", MAIN_WINDOW_AUTOMATIC)
-
-        if sizing_mode == MAIN_WINDOW_MAXIMIZED:
-            self._set_main_window_maximized()
-            return
-
-        if sizing_mode == MAIN_WINDOW_CUSTOM:
-            width = main_settings["custom_width"]
-            height = main_settings["custom_height"]
-
-            self._set_main_window_normal()
-            self._center_main_window(width, height)
-            return
-
-        self._apply_automatic_main_window_size()
-
-
-    def edit_display_settings(self):
-        """
-        Open the application display settings dialog.
-        """
-        DisplaySettingsDialog(self.root, self.display_settings, self._apply_display_settings)
-
-
-    def _apply_display_settings(self, updated_settings):
-        """
-        Store and immediately apply settings returned by the dialog.
-        """
-        self.display_settings = updated_settings
-
-        self._apply_selected_main_window_mode()
-
-        scenario_controller = getattr(self, "scenario_controller", None)
-
-        if scenario_controller is not None and scenario_controller.session_active:
-            scenario_mode = self.display_settings["scenario_explorer"]["layout_mode"]
-
-            if scenario_mode == SCENARIO_LAYOUT_AUTOMATIC:
-                scenario_controller._position_windows()
-            elif scenario_mode == SCENARIO_LAYOUT_REMEMBER:
-                scenario_controller.capture_current_layout()
-                save_display_settings(self.display_settings)
-
-
-    def _save_main_window_geometry(self):
-        """
-        Save the current main-window layout when remembering is enabled.
-        """
-        main_settings = self.display_settings["main_window"]
-
-        if not main_settings.get("remember_geometry", False):
-            return
-
-        self.root.update_idletasks()
-
-        maximized = self._main_window_is_maximized()
-        main_settings["last_maximized"] = maximized
-
-        if not maximized:
-            main_settings["last_geometry"] = self.root.winfo_geometry()
-
-
-    def _initialize_gui_scaling(self):
-        """Track runtime GUI scaling relative to the platform-adjusted reference layout."""
-        self._gui_scale = 1.0
-        self._gui_scale_after_id = None
-        self._gui_reference_width, self._gui_reference_height = self._calculate_automatic_main_window_size()
-        self.root._warpsimlab_gui_scale = self._gui_scale
-        self.root.bind("<Configure>", self._on_main_window_configure, add="+")
-        self.root.after_idle(self._update_gui_scale)
-
-
-    def _on_main_window_configure(self, event):
-        """Debounce main-window resize events before recalculating GUI scale."""
-        if event.widget is not self.root:
-            return
-
-        if self._gui_scale_after_id is not None:
-            self.root.after_cancel(self._gui_scale_after_id)
-
-        self._gui_scale_after_id = self.root.after(50, self._update_gui_scale)
-
-
-    def _update_gui_scale(self):
-        """Update runtime GUI scale and notify interested widgets when it changes."""
-        self._gui_scale_after_id = None
-
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
-
-        if width <= 1 or height <= 1:
-            return
-
-        scale = min(width / self._gui_reference_width, height / self._gui_reference_height)
-
-        if abs(scale - self._gui_scale) < 0.01:
-            return
-
-        self._gui_scale = scale
-        self.root._warpsimlab_gui_scale = scale
-        self.root.event_generate("<<WARPSimLabScaleChanged>>", when="tail")
-
-
-    def get_gui_scale(self):
-        return self._gui_scale

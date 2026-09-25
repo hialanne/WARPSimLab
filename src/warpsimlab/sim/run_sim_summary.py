@@ -1,7 +1,7 @@
 # run_sim_summary.py
 
 from .simulation import run_pipeline
-from src.warpsimlab.plots.summaryDialog import SummaryDialog
+from src.warpsimlab.outputDialogs.summaryDialog import SummaryDialog
 from src.warpsimlab.plots import io  # ensure io.py is imported
 
 
