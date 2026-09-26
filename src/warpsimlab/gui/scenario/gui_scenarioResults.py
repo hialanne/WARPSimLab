@@ -4,26 +4,30 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 
+from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
 
-class ScenarioResultsFrame(ttk.LabelFrame):
+
+class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
+
     def __init__(self, parent):
-        style = ttk.Style(parent)
-        style.configure("ScenarioResults.TLabelframe.Label", font=("Arial", 10, "bold"))
-
         super().__init__(parent, text="Results", padding=10, style="ScenarioResults.TLabelframe")
 
-        self.columnconfigure(0, weight=1)
-
-        self.rowconfigure(0, weight=0)
-        self.rowconfigure(1, weight=1)
-        self.rowconfigure(2, weight=0)
-
         self.metric_rows = {}
+
         self.normal_label_font = tkfont.nametofont("TkDefaultFont").copy()
         self.changed_label_font = self.normal_label_font.copy()
         self.changed_label_font.configure(weight="bold")
+        self._section_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
 
+        self._initialize_frame_scaling()
+        self._register_scalable_font(self.normal_label_font)
+        self._register_scalable_font(self.changed_label_font)
+        self._register_scalable_font(self._section_font)
+        self._apply_gui_scale()
+
+        style = ttk.Style(self)
         label_background = style.lookup("TLabel", "background")
+
         try:
             red, green, blue = (value // 256 for value in parent.winfo_rgb(label_background))
             dark_background = 0.2126 * red + 0.7152 * green + 0.0722 * blue < 128
@@ -35,7 +39,16 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         else:
             changed_result_color = "#c62828"
 
-        style.configure("ScenarioChangedResult.TLabel", foreground=changed_result_color, font=self.changed_label_font)
+        style.configure(
+            "ScenarioChangedResult.TLabel",
+            foreground=changed_result_color,
+            font=self.changed_label_font,
+        )
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=0)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=0)
 
         results_frame = ttk.Frame(self)
         results_frame.grid(row=0, column=0, sticky="ew")
@@ -48,13 +61,25 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         assumptions_group.grid(row=1, column=0, sticky="nsew", pady=(10, 0))
         assumptions_group.columnconfigure(0, weight=1)
 
-        ttk.Separator(assumptions_group, orient="horizontal").grid(row=0, column=0, sticky="ew", pady=(0, 5))
-        ttk.Label(assumptions_group, text="Assumptions", font=("Arial", 10, "bold")).grid(row=1, column=0, sticky="w")
+        ttk.Separator(assumptions_group, orient="horizontal").grid(
+            row=0, column=0, sticky="ew", pady=(0, 5)
+        )
+        ttk.Label(assumptions_group, text="Assumptions", font=self._section_font).grid(
+            row=1, column=0, sticky="w"
+        )
 
         self.assumptions_frame = ttk.Frame(assumptions_group)
         self.assumptions_frame.grid(row=2, column=0, sticky="nsew", pady=(4, 0))
 
-        ttk.Label(self, text="Changed assumptions are shown in red.").grid(row=2, column=0, sticky="w", pady=(8, 0))
+        ttk.Label(
+            self, text="Changed assumptions are shown in red.", font=self.normal_label_font
+        ).grid(row=2, column=0, sticky="w", pady=(8, 0))
+
+
+    def _apply_scaled_styles(self):
+        style = ttk.Style(self)
+        style.configure("ScenarioResults.TLabelframe.Label", font=self._section_font)
+        style.configure("ScenarioChangedResult.TLabel", font=self.changed_label_font)
 
 
     def _build_results_table(self):
@@ -89,18 +114,23 @@ class ScenarioResultsFrame(ttk.LabelFrame):
 
 
     def _add_section(self, parent, row, label):
-        ttk.Separator(parent, orient="horizontal").grid(row=row, column=0, columnspan=3, sticky="ew", pady=(8, 5))
-        ttk.Label(parent, text=label, font=("Arial", 10, "bold")).grid(
+        ttk.Separator(parent, orient="horizontal").grid(
+            row=row, column=0, columnspan=3, sticky="ew", pady=(8, 5)
+        )
+        ttk.Label(parent, text=label, font=self._section_font).grid(
             row=row + 1, column=0, columnspan=3, sticky="w"
         )
+
         return row + 2
 
 
     def _add_metric_row(self, parent, row, key, label):
-        ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w", padx=(0, 10), pady=2)
+        ttk.Label(parent, text=label, font=self.normal_label_font).grid(
+            row=row, column=0, sticky="w", padx=(0, 10), pady=2
+        )
 
-        original = ttk.Label(parent, text="-", anchor="e")
-        changed = ttk.Label(parent, text="-", anchor="e")
+        original = ttk.Label(parent, text="-", anchor="e", font=self.normal_label_font)
+        changed = ttk.Label(parent, text="-", anchor="e", font=self.normal_label_font)
 
         original.grid(row=row, column=1, sticky="e", padx=4, pady=2)
         changed.grid(row=row, column=2, sticky="e", padx=(4, 0), pady=2)
@@ -182,16 +212,23 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         row = self._add_assumption_row(
             frame, row, original.dynamic_label, original.dynamic_value, changed.dynamic_value, "percent", indent=0
         )
-        row = self._add_assumption_row(frame, row, "Stock", original.stock, changed.stock, "percent", indent=0)
-        row = self._add_assumption_row(frame, row, "Bonds", original.bonds, changed.bonds, "percent", indent=0)
-        row = self._add_assumption_row(frame, row, "Cash", original.cash, changed.cash, "percent", indent=0)
+        row = self._add_assumption_row(
+            frame, row, "Stock", original.stock, changed.stock, "percent", indent=0
+        )
+        row = self._add_assumption_row(
+            frame, row, "Bonds", original.bonds, changed.bonds, "percent", indent=0
+        )
+        row = self._add_assumption_row(
+            frame, row, "Cash", original.cash, changed.cash, "percent", indent=0
+        )
         self._add_rebalancing_row(frame, row, original.rebalance_every_year, changed.rebalance_every_year)
 
 
     def _add_assumption_section(self, parent, row, label):
-        ttk.Label(parent, text=label, font=("Arial", 10, "bold")).grid(
+        ttk.Label(parent, text=label, font=self._section_font).grid(
             row=row, column=0, columnspan=3, sticky="w", pady=(7, 2)
         )
+
         return row + 1
 
 
@@ -199,15 +236,17 @@ class ScenarioResultsFrame(ttk.LabelFrame):
         ttk.Label(parent, text=label, font=self.normal_label_font).grid(
             row=row, column=0, sticky="w", padx=(12, 10), pady=2
         )
-        ttk.Label(parent, text=f"{value:g}", anchor="e").grid(
+        ttk.Label(parent, text=f"{value:g}", anchor="e", font=self.normal_label_font).grid(
             row=row, column=1, sticky="e", padx=4, pady=2
         )
+
         return row + 1
 
 
     def _add_assumption_row(self, parent, row, label, original, changed, value_type, indent=12):
         is_changed = abs(float(changed) - float(original)) > 1e-9
         changed_style = "ScenarioChangedResult.TLabel"
+
         if not is_changed:
             changed_style = "TLabel"
 
@@ -292,6 +331,7 @@ class ScenarioResultsFrame(ttk.LabelFrame):
 
         self.metric_rows[key]["original"].configure(text=f"${original:,.0f}", style=original_style)
         self.metric_rows[key]["changed"].configure(text=f"${changed:,.0f}", style=changed_style)
+
 
     def _set_percent_row(self, key, original, changed):
         if original is None or changed is None:

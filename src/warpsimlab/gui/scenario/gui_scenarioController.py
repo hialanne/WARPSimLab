@@ -1,6 +1,7 @@
 # gui_scenarioController.py
 
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk
 
 SCENARIO_MODE_SCENARIO_VIEW = "scenario_view"
@@ -41,8 +42,11 @@ from src.warpsimlab.gui.scenario.gui_scenarioPlots import (
 from src.warpsimlab.gui.gui_utils import set_tk_button_soft_disabled, noop
 from src.warpsimlab.gui.scenario.gui_scenarioState import ScenarioSessionState, ScenarioStateManager
 from src.warpsimlab.gui.scenario.gui_scenarioResults import ScenarioResultsFrame
+from src.warpsimlab.gui.gui_scaling import ScalableClientMixin
 
-class ScenarioController:
+
+class ScenarioController(ScalableClientMixin):
+
     """
     Controls lifecycle of the Scenario Dashboard (Scenario mode).
     """
@@ -54,6 +58,12 @@ class ScenarioController:
         self.state_manager = ScenarioStateManager(self.main_gui, self.session_state)
         self.session_active = False
         self.window = None
+        self._dashboard_scale_after_id = None
+        self._dashboard_reference_width = None
+        self._dashboard_reference_height = None
+
+        self._body_font = None
+        self._label_frame_font = None
 
         self.sliders_frame = None              # ScenarioSlidersFrame widget
         self.results_frame = None
@@ -134,8 +144,79 @@ class ScenarioController:
         # This method also restores or automatically positions them.
         self._create_persistent_plots()
 
+        self._initialize_dashboard_scaling()
+
         # Build snapshots + controls UI + run once
         self.resync()
+
+
+    def _initialize_dashboard_scaling(self):
+        self.window.update_idletasks()
+
+        self._dashboard_reference_width = max(1, self.window.winfo_width())
+        self._dashboard_reference_height = max(1, self.window.winfo_height())
+        self._dashboard_scale_after_id = None
+
+        self.window._warpsimlab_gui_scale = 1.0
+
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._label_frame_font = self._body_font.copy()
+        self._label_frame_font.configure(weight="bold")
+
+        self._initialize_scaling(self.window)
+        self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._label_frame_font)
+        self._apply_gui_scale()
+
+        self.window.bind("<Configure>", self._on_dashboard_configure, add="+")
+
+
+    def _on_dashboard_configure(self, event):
+        if event.widget is not self.window:
+            return
+
+        if self._dashboard_scale_after_id is not None:
+            self.window.after_cancel(self._dashboard_scale_after_id)
+
+        self._dashboard_scale_after_id = self.window.after(50, self._update_dashboard_scale)
+
+
+    def _update_dashboard_scale(self):
+        self._dashboard_scale_after_id = None
+
+        if self.window is None:
+            return
+
+        width = self.window.winfo_width()
+        height = self.window.winfo_height()
+
+        if width <= 1 or height <= 1:
+            return
+
+        scale = min(
+            width / self._dashboard_reference_width,
+            height / self._dashboard_reference_height,
+        )
+
+        old_scale = float(getattr(self.window, "_warpsimlab_gui_scale", 1.0))
+
+        if abs(scale - old_scale) < 0.01:
+            return
+
+        self.window._warpsimlab_gui_scale = scale
+        self.window.event_generate("<<WARPSimLabScaleChanged>>", when="tail")
+
+
+    def _apply_scaled_styles(self):
+        if self.window is None or self._body_font is None:
+            return
+
+        style = ttk.Style(self.window)
+
+        style.configure("Scenario.TCombobox", font=self._body_font)
+        style.configure("Scenario.TCheckbutton", font=self._body_font)
+        style.configure("Scenario.TButton", font=self._body_font)
+        style.configure("ScenarioControls.TLabelframe.Label", font=self._label_frame_font)
 
 
     # ----------------------------------------------------------
@@ -159,6 +240,13 @@ class ScenarioController:
             self.main_gui._apply_mode_to_results_button()
         else:
             self._set_results_menu_enabled(True)
+
+        if self._dashboard_scale_after_id is not None and self.window is not None:
+            self.window.after_cancel(self._dashboard_scale_after_id)
+            self._dashboard_scale_after_id = None
+
+        if getattr(self, "_scale_bind_id", None) is not None:
+            self._stop_scaling()
 
         # Close window if exists
         if self.window is not None:
@@ -469,7 +557,10 @@ class ScenarioController:
         self._wire_live_update_traces()
 
         # ---- Scenario controls (left, below assumptions) ----
-        controls_frame = ttk.LabelFrame(main, text="Scenario Controls", padding=8)
+        controls_frame = ttk.LabelFrame(
+            main, text="Scenario Controls", padding=8, style="ScenarioControls.TLabelframe"
+        )
+
         controls_frame.grid(row=1, column=0, sticky="ew", padx=(0, 12), pady=(10, 0))
         controls_frame.columnconfigure(0, weight=1)
 
@@ -482,13 +573,15 @@ class ScenarioController:
         combo_foreground = style.lookup("TLabel", "foreground")
         combo_background = style.lookup("TCombobox", "fieldbackground")
 
-        style.configure("Scenario.TCombobox", foreground=combo_foreground, fieldbackground=combo_background)
+        style.configure("Scenario.TCombobox", foreground=combo_foreground, fieldbackground=combo_background,
+                        font=self._body_font)
         style.map("Scenario.TCombobox", foreground=[("readonly", combo_foreground)],
                   fieldbackground=[("readonly", combo_background)])
 
         self.mode_dropdown = ttk.Combobox(
-            controls_frame, textvariable=self.mode_var, values=[label for label, _value in SCENARIO_MODE_OPTIONS],
-            state="readonly", width=20, style="Scenario.TCombobox"
+            controls_frame, textvariable=self.mode_var,
+            values=[label for label, _value in SCENARIO_MODE_OPTIONS],
+            state="readonly", width=20, font=self._body_font, style="Scenario.TCombobox"
         )
         self.mode_dropdown.grid(row=1, column=0, sticky="w", pady=(2, 6))
         self.mode_dropdown.bind("<<ComboboxSelected>>", self._on_mode_dropdown_selected)
@@ -498,17 +591,21 @@ class ScenarioController:
         )
         self.plot_style_var = tk.StringVar(value=current_plot_style_label)
 
-        ttk.Label(controls_frame, text="Plot Style").grid(row=2, column=0, sticky="w", pady=(2, 0))
+        ttk.Label(controls_frame, text="Plot Style", font=self._body_font).grid(
+            row=2, column=0, sticky="w", pady=(2, 0)
+        )
 
         self.plot_style_dropdown = ttk.Combobox(
             controls_frame, textvariable=self.plot_style_var,
             values=[label for label, _value in SCENARIO_PLOT_STYLE_OPTIONS],
-            state="readonly", width=20, style="Scenario.TCombobox"
+            state="readonly", width=20, font=self._body_font, style="Scenario.TCombobox"
         )
         self.plot_style_dropdown.grid(row=3, column=0, sticky="w", pady=(2, 6))
         self.plot_style_dropdown.bind("<<ComboboxSelected>>", self._on_plot_style_dropdown_selected)
 
-        ttk.Label(controls_frame, text="Rebalancing").grid(row=4, column=0, sticky="w", pady=(2, 0))
+        ttk.Label(controls_frame, text="Rebalancing", font=self._body_font).grid(
+            row=4, column=0, sticky="w", pady=(2, 0)
+        )
 
         current_rebalancing = bool(self.session_state.retirement_snapshots.rebalance_every_year)
         current_rebalancing_label = next(
@@ -519,7 +616,7 @@ class ScenarioController:
         self.rebalancing_dropdown = ttk.Combobox(
             controls_frame, textvariable=self.rebalancing_var,
             values=[label for label, _value in SCENARIO_REBALANCING_OPTIONS],
-            state="readonly", width=20, style="Scenario.TCombobox"
+            state="readonly", width=20, font=self._body_font, style="Scenario.TCombobox"
         )
         self.rebalancing_dropdown.grid(row=5, column=0, sticky="w", pady=(2, 6))
         self.rebalancing_dropdown.bind("<<ComboboxSelected>>", self._on_rebalancing_dropdown_selected)
@@ -527,29 +624,26 @@ class ScenarioController:
         self.include_realestate_var = tk.BooleanVar(value=bool(controls.get("include_realestate", False)))
         self.include_realestate_cb = ttk.Checkbutton(
             controls_frame, text="Include Real Estate", variable=self.include_realestate_var,
-            command=self.schedule_update
+            command=self.schedule_update, style="Scenario.TCheckbutton"
         )
         self.include_realestate_cb.grid(row=6, column=0, sticky="w")
 
         self.adjust_infl_delta_cb = ttk.Checkbutton(
             controls_frame, text="Real Returns (Inflation Adjusted)",
-            variable=self.sliders_frame.calculate_real_dollars
+            variable=self.sliders_frame.calculate_real_dollars, style="Scenario.TCheckbutton"
         )
         self.adjust_infl_delta_cb.grid(row=7, column=0, sticky="w")
 
         button_frame = ttk.Frame(controls_frame)
         button_frame.grid(row=8, column=0, sticky="w", pady=(8, 0))
 
-        ttk.Button(button_frame, text="Restore Layout", width=20, command=self._position_windows).grid(
-            row=0, column=0, sticky="w", pady=(0, 4)
-        )
-        ttk.Button(button_frame, text="Reset Scenario", width=20, command=self.resync).grid(
-            row=1, column=0, sticky="w", pady=(0, 4)
-        )
-        ttk.Button(button_frame, text="Close Explorer", width=20, command=self._stop_session).grid(
-            row=2, column=0, sticky="w"
-        )
-        
+        ttk.Button(button_frame, text="Restore Layout", width=20, command=self._position_windows,
+                   style="Scenario.TButton").grid(row=0, column=0, sticky="w", pady=(0, 4))
+        ttk.Button(button_frame, text="Reset Scenario", width=20, command=self.resync,
+                   style="Scenario.TButton").grid(row=1, column=0, sticky="w", pady=(0, 4))
+        ttk.Button(button_frame, text="Close Explorer", width=20, command=self._stop_session,
+                   style="Scenario.TButton").grid(row=2, column=0, sticky="w")
+
         # ---- Results (right) ----
         self.results_frame = ScenarioResultsFrame(main)
         self.results_frame.grid(row=0, column=1, rowspan=2, sticky="nsew")
