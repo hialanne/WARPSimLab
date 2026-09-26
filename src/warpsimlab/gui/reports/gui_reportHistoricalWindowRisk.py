@@ -4,6 +4,7 @@ from src.warpsimlab.gui.reports.gui_reportRiskBase import RiskReportBaseFrame
 
 
 class HistoricalWindowRiskReportFrame(RiskReportBaseFrame):
+
     REPORT_NAME = "Historical Window Risk Report"
     RUN_SIM_TYPE = "historical_window_risk_report"
 
@@ -35,16 +36,12 @@ class HistoricalWindowRiskReportFrame(RiskReportBaseFrame):
         },
     }
 
+
     def _build_method_specific_analysis_options(self, parent, row):
-        row = self._add_check_path_to_frame(
+        return self._add_check_path_to_frame(
             parent,
             "Include Historical Window Insights",
             ["analysis", "include_historical_window_insights"],
             row,
-            (
-                "Include observations derived from overlapping historical "
-                "market return windows."
-            )
+            "Include observations derived from overlapping historical market return windows.",
         )
-
-        return row

@@ -4,6 +4,7 @@ from src.warpsimlab.gui.reports.gui_reportRiskBase import RiskReportBaseFrame
 
 
 class MonteCarloRiskReportFrame(RiskReportBaseFrame):
+
     REPORT_NAME = "Monte Carlo Risk Report"
     RUN_SIM_TYPE = "monte_carlo_risk_report"
 
@@ -35,16 +36,12 @@ class MonteCarloRiskReportFrame(RiskReportBaseFrame):
         },
     }
 
+
     def _build_method_specific_analysis_options(self, parent, row):
-        row = self._add_check_path_to_frame(
+        return self._add_check_path_to_frame(
             parent,
             "Include Monte Carlo Insights",
             ["analysis", "include_monte_carlo_insights"],
             row,
-            (
-                "Include observations derived from simulated market return "
-                "paths across the Monte Carlo result set."
-            )
+            "Include observations derived from simulated market return paths across the Monte Carlo result set.",
         )
-
-        return row
