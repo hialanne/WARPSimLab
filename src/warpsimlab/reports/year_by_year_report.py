@@ -1,4 +1,5 @@
 # year_by_year_report.py
+
 import csv
 import os
 
@@ -125,6 +126,9 @@ AGE_KEYS = {"Age", "Age 1", "Age 2"}
 def _fmt_value(value, key=None):
     if value is None:
         return ""
+
+    if key == "Tax Bracket":
+        return f"{float(value) * 100:.0f}%"
 
     if key in YEAR_KEYS or key in AGE_KEYS:
         try:
