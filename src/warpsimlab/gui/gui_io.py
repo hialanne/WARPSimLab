@@ -300,12 +300,16 @@ class PortfolioSimulatorGUI_IOMixin:
 
             # --- Simulation / global settings ---
             longevity_mode = data.get("DEFAULT_LONGEVITY_MODE", "fixed_years")
-            if longevity_mode not in {"fixed_years", "custom_death_age"}:
+            if longevity_mode not in {"fixed_years", "average", "longer_life", "custom_death_age"}:
                 raise ValueError(f"Invalid longevity mode: {longevity_mode}")
+
+            loaded_years = data.get("DEFAULT_YEARS", DEFAULT_YEARS)
+            fixed_years = data.get("DEFAULT_FIXED_YEARS", loaded_years)
 
             self.simulation_settings["start_year"] = data.get("DEFAULT_START_YEAR", LEGACY_SIMULATION_START_YEAR)
             self.simulation_settings["longevity_mode"] = longevity_mode
-            self.simulation_settings["years_to_simulate"] = data.get("DEFAULT_YEARS", DEFAULT_YEARS)
+            self.simulation_settings["fixed_years_to_simulate"] = fixed_years
+            self.simulation_settings["years_to_simulate"] = loaded_years
             self.simulation_settings["num_sims"] = data.get("DEFAULT_SIMULATIONS", DEFAULT_SIMULATIONS)
             self.simulation_settings["fund_expense"] = data.get("DEFAULT_FUND_EXPENSE", DEFAULT_FUND_EXPENSE)
             if longevity_mode == "fixed_years":
@@ -482,6 +486,9 @@ class PortfolioSimulatorGUI_IOMixin:
         updated_values.update({
             "DEFAULT_START_YEAR": int(self.simulation_settings["start_year"]),
             "DEFAULT_LONGEVITY_MODE": self.simulation_settings.get("longevity_mode", "fixed_years"),
+            "DEFAULT_FIXED_YEARS": int(
+                self.simulation_settings.get("fixed_years_to_simulate", DEFAULT_YEARS)
+            ),
             "DEFAULT_YEARS": int(self.simulation_settings.get("years_to_simulate", DEFAULT_YEARS)),
             "DEFAULT_SIMULATIONS": int(self.simulation_settings.get("num_sims", DEFAULT_SIMULATIONS)),
             "DEFAULT_FUND_EXPENSE": float(self.simulation_settings.get("fund_expense", DEFAULT_FUND_EXPENSE)),

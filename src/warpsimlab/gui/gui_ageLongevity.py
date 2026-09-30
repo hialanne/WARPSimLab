@@ -7,11 +7,21 @@ from tkinter import ttk, messagebox
 from src.warpsimlab.gui.gui_validation import mark_validation_failed, parse_integer
 from src.warpsimlab.gui.gui_utils import bind_entry_commit_on_return
 from src.warpsimlab.gui.gui_scaling import ScalableFrameMixin
+from src.warpsimlab.utils.longevity import (
+    AVERAGE_SURVIVAL_PROBABILITY,
+    LONGER_LIFE_SURVIVAL_PROBABILITY,
+    modeled_death_age_for_survival,
+)
 from src.warpsimlab.utils.tooltip import Tooltip
 
 
 LONGEVITY_FIXED = "fixed_years"
+LONGEVITY_AVERAGE = "average"
+LONGEVITY_LONGER_LIFE = "longer_life"
 LONGEVITY_CUSTOM = "custom_death_age"
+
+AUTOMATIC_LONGEVITY_MODES = {LONGEVITY_AVERAGE, LONGEVITY_LONGER_LIFE}
+MORTALITY_LONGEVITY_MODES = AUTOMATIC_LONGEVITY_MODES | {LONGEVITY_CUSTOM}
 
 
 class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
@@ -51,10 +61,16 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
         self.longevity_mode_var = tk.StringVar(value=simulation_settings.get("longevity_mode", LONGEVITY_FIXED))
         self.years_var = tk.StringVar(value=str(simulation_settings["years_to_simulate"]))
 
-        if self.longevity_mode_var.get() == LONGEVITY_CUSTOM:
+        mode = self.longevity_mode_var.get()
+
+        if mode == LONGEVITY_CUSTOM:
             self._ensure_custom_death_ages()
             self._update_mortality_horizon()
+        elif mode in AUTOMATIC_LONGEVITY_MODES:
+            self._resolve_automatic_death_ages(mode)
+            self._update_mortality_horizon()
         else:
+            self._restore_fixed_horizon()
             self._clear_modeled_death_ages()
 
         self.second_person_var.trace_add("write", self._on_second_person_changed)
@@ -123,6 +139,18 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
 
         row += 1
         ttk.Radiobutton(
+            self, text="Average longevity", variable=self.longevity_mode_var,
+            value=LONGEVITY_AVERAGE, style="AgeLongevity.TRadiobutton"
+        ).grid(row=row, column=0, columnspan=3, sticky="w")
+
+        row += 1
+        ttk.Radiobutton(
+            self, text="Longer-life planning", variable=self.longevity_mode_var,
+            value=LONGEVITY_LONGER_LIFE, style="AgeLongevity.TRadiobutton"
+        ).grid(row=row, column=0, columnspan=3, sticky="w")
+
+        row += 1
+        ttk.Radiobutton(
             self, text="Custom modeled death age", variable=self.longevity_mode_var,
             value=LONGEVITY_CUSTOM, style="AgeLongevity.TRadiobutton"
         ).grid(row=row, column=0, columnspan=3, sticky="w")
@@ -140,7 +168,9 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
         self.years_entry.grid(row=row, column=1, sticky="w", padx=5, pady=(6, 0))
         bind_entry_commit_on_return(self.years_entry)
 
-        if self.longevity_mode_var.get() == LONGEVITY_FIXED:
+        mode = self.longevity_mode_var.get()
+
+        if mode == LONGEVITY_FIXED:
             Tooltip(self.years_entry, "Number of years to simulate.", font=self._tooltip_font)
         else:
             self.years_entry.configure(state="disabled")
@@ -149,17 +179,17 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
                 font=self._tooltip_font
             )
 
-        if self.longevity_mode_var.get() == LONGEVITY_CUSTOM:
+        if mode in MORTALITY_LONGEVITY_MODES:
             row += 1
             ttk.Label(self, text="Modeled Death Ages", font=self._section_font).grid(
                 row=row, column=0, columnspan=3, sticky="w", pady=(10, 4)
             )
 
             row += 1
-            row = self._add_death_age_row(row, "Husband", "husband")
+            row = self._add_death_age_row(row, "Husband", "husband", editable=mode == LONGEVITY_CUSTOM)
 
             if self.simulation_controls["second_person_enabled"]:
-                self._add_death_age_row(row, "Wife", "wife")
+                self._add_death_age_row(row, "Wife", "wife", editable=mode == LONGEVITY_CUSTOM)
 
 
     def _add_age_row(self, row, label, person_key):
@@ -179,19 +209,28 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
         return row + 1
 
 
-    def _add_death_age_row(self, row, label, person_key):
+    def _add_death_age_row(self, row, label, person_key, editable):
         ttk.Label(self, text=f"{label} Modeled Death Age:", font=self._body_font).grid(
             row=row, column=0, sticky="w"
         )
 
-        vcmd = self.register(self._validate_death_age), "%P", person_key
-        entry = ttk.Entry(
-            self, textvariable=self.death_age_vars[person_key], width=14, font=self._body_font,
-            validate="focusout", validatecommand=vcmd
-        )
+        if editable:
+            vcmd = self.register(self._validate_death_age), "%P", person_key
+            entry = ttk.Entry(
+                self, textvariable=self.death_age_vars[person_key], width=14, font=self._body_font,
+                validate="focusout", validatecommand=vcmd
+            )
+            bind_entry_commit_on_return(entry)
+            tooltip_text = "Age at which this person is modeled to die."
+        else:
+            entry = ttk.Entry(
+                self, textvariable=self.death_age_vars[person_key], width=14, font=self._body_font,
+                state="disabled"
+            )
+            tooltip_text = "Derived from SSA actuarial survival probabilities and current age."
+
         entry.grid(row=row, column=1, sticky="w", padx=5)
-        bind_entry_commit_on_return(entry)
-        Tooltip(entry, "Age at which this person is modeled to die.", font=self._tooltip_font)
+        Tooltip(entry, tooltip_text, font=self._tooltip_font)
 
         return row + 1
 
@@ -201,6 +240,12 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
             widget.destroy()
 
         self._build_fields()
+
+
+    def _restore_fixed_horizon(self):
+        years = self.simulation_settings["fixed_years_to_simulate"]
+        self.simulation_settings["years_to_simulate"] = years
+        self.years_var.set(str(years))
 
 
     def _clear_modeled_death_ages(self):
@@ -221,8 +266,47 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
             self.death_age_vars[key].set(str(person.modeled_death_age))
 
 
+    def _automatic_survival_probability(self, mode):
+        if mode == LONGEVITY_AVERAGE:
+            return AVERAGE_SURVIVAL_PROBABILITY
+
+        if mode == LONGEVITY_LONGER_LIFE:
+            return LONGER_LIFE_SURVIVAL_PROBABILITY
+
+        raise ValueError(f"unsupported automatic longevity mode: {mode}")
+
+
+    def _automatic_sex(self, person_key):
+        if person_key == "husband":
+            return "male"
+
+        if person_key == "wife":
+            return "female"
+
+        raise ValueError(f"unsupported person key: {person_key}")
+
+
+    def _resolve_automatic_death_age(self, person_key, current_age, mode):
+        survival_probability = self._automatic_survival_probability(mode)
+        sex = self._automatic_sex(person_key)
+
+        return modeled_death_age_for_survival(current_age, sex, survival_probability)
+
+
+    def _resolve_automatic_death_ages(self, mode):
+        resolved = {}
+
+        for key in self._active_person_keys():
+            person = self.persons[key]
+            resolved[key] = self._resolve_automatic_death_age(key, person.age, mode)
+
+        for key, death_age in resolved.items():
+            self.persons[key].modeled_death_age = death_age
+            self.death_age_vars[key].set(str(death_age))
+
+
     def _update_mortality_horizon(self):
-        if self.longevity_mode_var.get() != LONGEVITY_CUSTOM:
+        if self.longevity_mode_var.get() == LONGEVITY_FIXED:
             return
 
         years = 1
@@ -239,26 +323,57 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
         self.years_var.set(str(years))
 
 
+    def _show_automatic_longevity_error(self, exc):
+        mark_validation_failed(self)
+        messagebox.showerror(
+            "Automatic Longevity Unavailable",
+            f"Age & Longevity: {exc}",
+            parent=self.winfo_toplevel()
+        )
+
+
     def _on_second_person_changed(self, *_):
         self.simulation_controls["second_person_enabled"] = self.second_person_var.get()
+        mode = self.longevity_mode_var.get()
 
-        if self.longevity_mode_var.get() == LONGEVITY_CUSTOM:
-            self._ensure_custom_death_ages()
-            self._update_mortality_horizon()
+        try:
+            if mode == LONGEVITY_CUSTOM:
+                self._ensure_custom_death_ages()
+            elif mode in AUTOMATIC_LONGEVITY_MODES:
+                self._resolve_automatic_death_ages(mode)
+
+            if mode in MORTALITY_LONGEVITY_MODES:
+                self._update_mortality_horizon()
+        except ValueError as exc:
+            self._show_automatic_longevity_error(exc)
 
         if self.refresh_callback:
             self.refresh_callback()
 
 
     def _on_longevity_mode_changed(self, *_):
-        mode = self.longevity_mode_var.get()
-        self.simulation_settings["longevity_mode"] = mode
+        requested_mode = self.longevity_mode_var.get()
+        previous_mode = self.simulation_settings.get("longevity_mode", LONGEVITY_FIXED)
 
-        if mode == LONGEVITY_CUSTOM:
-            self._ensure_custom_death_ages()
-            self._update_mortality_horizon()
-        else:
-            self._clear_modeled_death_ages()
+        try:
+            if requested_mode == LONGEVITY_FIXED:
+                self._restore_fixed_horizon()
+                self._clear_modeled_death_ages()
+            elif requested_mode == LONGEVITY_CUSTOM:
+                self._ensure_custom_death_ages()
+            elif requested_mode in AUTOMATIC_LONGEVITY_MODES:
+                self._resolve_automatic_death_ages(requested_mode)
+            else:
+                raise ValueError(f"unsupported longevity mode: {requested_mode}")
+
+            self.simulation_settings["longevity_mode"] = requested_mode
+
+            if requested_mode in MORTALITY_LONGEVITY_MODES:
+                self._update_mortality_horizon()
+        except ValueError as exc:
+            self._show_automatic_longevity_error(exc)
+            self.after_idle(lambda: self.longevity_mode_var.set(previous_mode))
+            return
 
         self.after_idle(self._rebuild_fields)
 
@@ -270,15 +385,26 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
 
         try:
             value = parse_integer(proposed_value, allow_commas=True, minimum=0, maximum=120)
+            mode = self.longevity_mode_var.get()
 
             if (
-                self.longevity_mode_var.get() == LONGEVITY_CUSTOM
+                mode == LONGEVITY_CUSTOM
                 and person.modeled_death_age is not None
                 and value > person.modeled_death_age
             ):
                 raise ValueError(f"must not exceed modeled death age {person.modeled_death_age}.")
 
+            automatic_death_age = None
+
+            if mode in AUTOMATIC_LONGEVITY_MODES:
+                automatic_death_age = self._resolve_automatic_death_age(person_key, value, mode)
+
             person.age = value
+
+            if automatic_death_age is not None:
+                person.modeled_death_age = automatic_death_age
+                self.death_age_vars[person_key].set(str(automatic_death_age))
+
             self.after_idle(lambda: var.set(str(value)))
             self._update_mortality_horizon()
             return True
@@ -319,10 +445,11 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _validate_years(self, proposed_value):
-        current_value = self.simulation_settings["years_to_simulate"]
+        current_value = self.simulation_settings["fixed_years_to_simulate"]
 
         try:
             value = parse_integer(proposed_value, allow_commas=True, minimum=1)
+            self.simulation_settings["fixed_years_to_simulate"] = value
             self.simulation_settings["years_to_simulate"] = value
             self.after_idle(lambda: self.years_var.set(str(value)))
             return True
@@ -334,3 +461,4 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
                 parent=self.winfo_toplevel()
             )
             return True
+

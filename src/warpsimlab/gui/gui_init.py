@@ -221,6 +221,7 @@ class PortfolioSimulatorGUI(
         self.simulation_settings = {
             "start_year": datetime.now().year,
             "longevity_mode": "fixed_years",
+            "fixed_years_to_simulate": DEFAULT_YEARS,
             "years_to_simulate": DEFAULT_YEARS,
             "num_sims": DEFAULT_SIMULATIONS,
             "fund_expense": DEFAULT_FUND_EXPENSE,
