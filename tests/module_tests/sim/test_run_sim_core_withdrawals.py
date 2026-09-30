@@ -69,6 +69,16 @@ def _zero_tax_funding():
     }
 
 
+def _zero_irmaa():
+    return {
+        "husband": 0.0,
+        "wife": 0.0,
+        "total": 0.0,
+        "lookback_magi": 0.0,
+        "lookback_available": True,
+    }
+
+
 def _patch_common(monkeypatch, mod):
     monkeypatch.setattr(mod.withdrawalEngine, "calculate_rmds", lambda *a, **k: 0.0)
     monkeypatch.setattr(mod.incomeEngine, "calculate_income_breakdown", lambda *a, **k: _income())
@@ -139,7 +149,11 @@ def _patch_common(monkeypatch, mod):
         "allocate_tax_proportionally_couple",
         lambda total, h, w: (total * h / (h + w), total * w / (h + w)),
     )
-
+    monkeypatch.setattr(
+        mod.medicareEngine,
+        "calculate_household_medicare_cost",
+        lambda *a, **k: {"husband": 0.0, "wife": 0.0, "total": 0.0},
+    )
 
 @pytest.fixture
 def mod():
@@ -216,6 +230,7 @@ def test_withdrawal_year_reserves_rmd_before_roth_conversion(mod, monkeypatch):
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        _zero_irmaa(),
     )
 
     assert seen["requested"]["husband"] == pytest.approx(70.0)
@@ -293,6 +308,7 @@ def test_withdrawal_year_reports_spendable_strategy_cash_not_gross_distribution(
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        _zero_irmaa(),
     )
 
     assert result["income"]["by_class"]["rmd"] == pytest.approx(10.0)
@@ -376,6 +392,7 @@ def test_withdrawal_year_redirects_roth_contribution_cash_to_taxes_first(mod, mo
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        _zero_irmaa(),
     )
 
     assert resolve_calls == pytest.approx([0.0, 10.0])
@@ -446,6 +463,7 @@ def test_withdrawal_year_tracks_tax_funding_separately_and_by_source(mod, monkey
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        _zero_irmaa(),
     )
 
     assert tax_calls == pytest.approx([20.0, 28.0])
@@ -496,6 +514,7 @@ def test_withdrawal_year_applies_price_return_and_rebalances_both_people(mod, mo
         73,
         {"eq": 0.08, "bd": 0.03, "cs": 0.01, "re": 0.04},
         True,
+        _zero_irmaa(),
     )
 
     assert len(return_calls) == 2

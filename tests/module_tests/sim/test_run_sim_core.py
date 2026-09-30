@@ -19,6 +19,9 @@ class DummySimConfig:
     tax_filing_status: str = "Single"
     state_of_residence: str | None = None
 
+    irmaa_enabled: bool = False
+    historical_magi: dict | None = None
+
     use_fund_expenses: bool = False
     fund_expense: float = 0.0
 
@@ -70,7 +73,12 @@ class DummySimConfig:
         (0.1, 0.1, 1.0, 0.0),
         (0.3, 0.2, 0.0, 1.0),
     )
-
+    def __post_init__(self):
+        if self.historical_magi is None:
+            self.historical_magi = {
+                "two_years_prior": None,
+                "one_year_prior": None,
+            }
 
 class DummyPerson:
     def __init__(
@@ -88,6 +96,8 @@ class DummyPerson:
         annuity_age: int = 70,
         annual_401k_contribution: float = 0.0,
         annual_employer_match: float = 0.0,
+        medicare_start_age: int = 65,
+        medicare_annual_cost: float = 0.0,
     ):
         self.age = age
         self.retire_age = retire_age
@@ -101,7 +111,8 @@ class DummyPerson:
         self.annuity_age = annuity_age
         self.annual_401k_contribution = annual_401k_contribution
         self.annual_employer_match = annual_employer_match
-
+        self.medicare_start_age = medicare_start_age
+        self.medicare_annual_cost = medicare_annual_cost
 
 class DummyPortfolio:
     pass

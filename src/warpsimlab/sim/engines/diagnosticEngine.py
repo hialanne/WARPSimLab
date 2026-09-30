@@ -61,6 +61,7 @@ def _write_diagnostic_report(message, sim_config, context, call_stack):
             excluded_config_keys = {
                 "root",
                 "_expense_inflation_factors",
+                "_medicare_inflation_factors",
                 "_husband_pension_factors",
                 "_wife_pension_factors",
                 "_income_inflation_factors",

@@ -313,6 +313,8 @@ def make_dummy_people():
         annual_401k_contribution=0.0,
         annual_employer_match=0.0,
         pension_inflation_adjustment_pct=0.0,
+        medicare_start_age=65,
+        medicare_annual_cost=0.0,
     )
 
     wife = SimpleNamespace(
@@ -328,6 +330,8 @@ def make_dummy_people():
         annual_401k_contribution=0.0,
         annual_employer_match=0.0,
         pension_inflation_adjustment_pct=0.0,
+        medicare_start_age=65,
+        medicare_annual_cost=0.0,
     )
 
     return husband, wife

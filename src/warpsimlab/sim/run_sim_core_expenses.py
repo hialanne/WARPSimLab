@@ -8,6 +8,7 @@ from .engines import (
     taxEngine,
     rothEngine,
     hsaEngine,
+    medicareEngine,
     diagnosticEngine,
 )
 
@@ -54,6 +55,7 @@ def simulate_expense_year(
     curr_w_age,
     year_returns,
     second_person_enabled,
+    irmaa_result,
 ):
 
     # -------------------------------------------------------------------------
@@ -224,6 +226,10 @@ def simulate_expense_year(
         year_cache=year_cache,
         sim_config=sim_config,
     )
+    # Baseline Medicare insurance costs
+    medicare_cost = medicareEngine.calculate_household_medicare_cost(
+        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, sim_config
+    )
 
     # User expenses and qualified HSA expenses
     expense_breakdown = expenseEngine.calculate_expense_breakdown(expenses, year, sim_config)
@@ -279,14 +285,11 @@ def simulate_expense_year(
     )
 
     if taxes_enabled:
-        net_cash = (
-            income["total"]
-            - baseline_total_tax
-            - cash_expense_amt
-            - requested_roth_contribution_total
-        )
+        net_cash = (income["total"] - baseline_total_tax - cash_expense_amt - medicare_cost["total"] -
+                    irmaa_result["total"] - requested_roth_contribution_total)
     else:
-        net_cash = income["total"] - cash_expense_amt - requested_roth_contribution_total
+        net_cash = (income["total"] - cash_expense_amt - medicare_cost["total"] -
+                    irmaa_result["total"] - requested_roth_contribution_total)
 
     # Apply net cash and capture any emergency gross pre-tax draw.
     if second_person_enabled:
@@ -363,6 +366,11 @@ def simulate_expense_year(
 
     funding_gap = uncovered_expense + final_tax_delta_uncovered
 
+    # Final current-year MAGI after all taxable withdrawals and conversions.
+    magi = medicareEngine.calculate_irmaa_magi(
+        income, emergency_pre_tax_used, taxable_hsa_withdrawal, roth_conversion_total
+    )
+
     # Deposit only Roth contributions that were actually funded.
     deposited_roth_contributions = rothEngine.deposit_funded_roth_contributions(
         husband_portfolio=h_port,
@@ -433,7 +441,8 @@ def simulate_expense_year(
         + taxable_hsa_withdrawal
     )
 
-    net_profit = net_income - expense_amt - funded_roth_contributions["total"]
+    net_profit = (net_income - expense_amt - medicare_cost["total"] - irmaa_result["total"] -
+                  funded_roth_contributions["total"])
 
     # Preserve existing person-level tax allocation timing. This intentionally occurs
     # after portfolio returns and rebalancing, matching the current run_sim_core.py.
@@ -499,6 +508,15 @@ def simulate_expense_year(
         "social_security_payroll_tax": social_security_payroll_tax,
         "medicare_tax": medicare_tax,
         "additional_medicare_tax": additional_medicare_tax,
+        "medicare_cost_husband": medicare_cost["husband"],
+        "medicare_cost_wife": medicare_cost["wife"],
+        "medicare_cost": medicare_cost["total"],
+        "magi": magi,
+        "irmaa_husband": irmaa_result["husband"],
+        "irmaa_wife": irmaa_result["wife"],
+        "irmaa": irmaa_result["total"],
+        "irmaa_lookback_magi": irmaa_result["lookback_magi"],
+        "irmaa_lookback_available": irmaa_result["lookback_available"],
         "expense_amt": expense_amt,
         "uncovered_expense": uncovered_expense,
         "funding_gap": funding_gap,

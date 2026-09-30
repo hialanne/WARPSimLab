@@ -10,8 +10,10 @@ from .engines import (
     taxEngine,
     monteCarloEngine,
     rothEngine,
+    medicareEngine,
     diagnosticEngine,
 )
+
 from .run_sim_core_expenses import simulate_expense_year
 from .run_sim_core_withdrawals import simulate_withdrawal_year
 
@@ -206,6 +208,15 @@ def simulate_yearly_portfolios(
         "social_security_payroll_tax": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "medicare_tax": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "additional_medicare_tax": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "medicare_cost_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "medicare_cost_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "medicare_cost": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "magi": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "irmaa_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "irmaa_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "irmaa": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "irmaa_lookback_magi": np.full((effective_num_sims, years_to_simulate + 1), np.nan),
+        "irmaa_lookback_available": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
         "state_income_tax": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "emergency_pre_tax_used": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "final_tax_delta": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -261,6 +272,7 @@ def simulate_yearly_portfolios(
         taxEngine.initialize_tax_engine_for_simulation(sim_config)
         incomeEngine.initialize_income_engine_for_simulation(husband, wife, sim_config)
         expenseEngine.initialize_expense_engine_for_simulation(sim_config)
+        medicareEngine.initialize_medicare_engine_for_simulation(sim_config)
         rothEngine.initialize_roth_engine_for_simulation(sim_config, husband, wife)
 
         # Optional but recommended: reset per-simulation cached withdrawal base.
@@ -355,6 +367,14 @@ def simulate_yearly_portfolios(
 
             use_expenses = withdrawalEngine.use_expenses_this_year(sim_config, husband, wife, year)
 
+            lookback_magi, lookback_available = medicareEngine.get_irmaa_lookback_magi(
+                year, s, results, sim_config
+            )
+            irmaa_result = medicareEngine.calculate_household_irmaa(
+                husband, wife, curr_h_age, curr_w_age, year, second_person_enabled,
+                lookback_magi, lookback_available, sim_config
+            )
+
             year_returns = {
                 "eq": market_path["eq"][year],
                 "bd": market_path["bd"][year],
@@ -376,6 +396,7 @@ def simulate_yearly_portfolios(
                     curr_w_age,
                     year_returns,
                     second_person_enabled,
+                    irmaa_result,
                 )
             else:
                 model_result = simulate_withdrawal_year(
@@ -390,6 +411,7 @@ def simulate_yearly_portfolios(
                     curr_w_age,
                     year_returns,
                     second_person_enabled,
+                    irmaa_result,
                 )
 
             income = model_result["income"]
@@ -410,6 +432,17 @@ def simulate_yearly_portfolios(
             social_security_payroll_tax = model_result["social_security_payroll_tax"]
             medicare_tax = model_result["medicare_tax"]
             additional_medicare_tax = model_result["additional_medicare_tax"]
+
+            medicare_cost_husband = model_result["medicare_cost_husband"]
+            medicare_cost_wife = model_result["medicare_cost_wife"]
+            medicare_cost = model_result["medicare_cost"]
+            magi = model_result["magi"]
+
+            irmaa_husband = model_result["irmaa_husband"]
+            irmaa_wife = model_result["irmaa_wife"]
+            irmaa = model_result["irmaa"]
+            irmaa_lookback_magi = model_result["irmaa_lookback_magi"]
+            irmaa_lookback_available = model_result["irmaa_lookback_available"]
 
             expense_amt = model_result["expense_amt"]
             uncovered_expense = model_result["uncovered_expense"]
@@ -574,6 +607,15 @@ def simulate_yearly_portfolios(
             results["social_security_payroll_tax"][s,year] = social_security_payroll_tax
             results["medicare_tax"][s,year] = medicare_tax
             results["additional_medicare_tax"][s,year] = additional_medicare_tax
+            results["medicare_cost_husband"][s,year] = medicare_cost_husband
+            results["medicare_cost_wife"][s,year] = medicare_cost_wife
+            results["medicare_cost"][s,year] = medicare_cost
+            results["magi"][s,year] = magi
+            results["irmaa_husband"][s,year] = irmaa_husband
+            results["irmaa_wife"][s,year] = irmaa_wife
+            results["irmaa"][s,year] = irmaa
+            results["irmaa_lookback_magi"][s,year] = irmaa_lookback_magi
+            results["irmaa_lookback_available"][s,year] = irmaa_lookback_available
             results["state_income_tax"][s,year] = state_income_tax
             results["emergency_pre_tax_used"][s,year] = emergency_pre_tax_used
             results["pre_tax_withdrawals"][s, year] = pre_tax_withdrawal
@@ -681,6 +723,14 @@ def simulate_yearly_portfolios(
         results["social_security_payroll_tax"] = results["social_security_payroll_tax"] / discount_factors
         results["medicare_tax"] = results["medicare_tax"] / discount_factors
         results["additional_medicare_tax"] = results["additional_medicare_tax"] / discount_factors
+        results["medicare_cost_husband"] = results["medicare_cost_husband"] / discount_factors
+        results["medicare_cost_wife"] = results["medicare_cost_wife"] / discount_factors
+        results["medicare_cost"] = results["medicare_cost"] / discount_factors
+        results["magi"] = results["magi"] / discount_factors
+        results["irmaa_husband"] = results["irmaa_husband"] / discount_factors
+        results["irmaa_wife"] = results["irmaa_wife"] / discount_factors
+        results["irmaa"] = results["irmaa"] / discount_factors
+        results["irmaa_lookback_magi"] = results["irmaa_lookback_magi"] / discount_factors
         results["emergency_pre_tax_used"] = results["emergency_pre_tax_used"] / discount_factors
         results["pre_tax_withdrawals"] = results["pre_tax_withdrawals"] / discount_factors
         results["cash_flow_shortfall"] = (results["cash_flow_shortfall"] / discount_factors)

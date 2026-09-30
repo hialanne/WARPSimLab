@@ -255,6 +255,12 @@ def run_core(
 
 def assert_all_result_arrays_are_finite(results):
     for key, value in results.items():
+        if key == "irmaa_lookback_magi":
+            available = results["irmaa_lookback_available"]
+            assert np.all(np.isfinite(value[available]))
+            assert np.all(np.isnan(value[~available]))
+            continue
+
         if isinstance(value, np.ndarray):
             if np.issubdtype(value.dtype, np.number):
                 assert np.all(

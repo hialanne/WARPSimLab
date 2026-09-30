@@ -18,6 +18,8 @@ def make_person(
     income=50_000.0,
     annual_401k_contribution=5_000.0,
     annual_employer_match=2_500.0,
+    medicare_start_age=65,
+    medicare_annual_cost=0.0,
 ):
     return Person(
         age=age,
@@ -32,8 +34,9 @@ def make_person(
         annual_401k_contribution=annual_401k_contribution,
         annual_employer_match=annual_employer_match,
         pension_inflation_adjustment_pct=50.0,
+        medicare_start_age=medicare_start_age,
+        medicare_annual_cost=medicare_annual_cost,
     )
-
 
 def make_portfolio(
     *,

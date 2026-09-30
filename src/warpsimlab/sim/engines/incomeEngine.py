@@ -378,6 +378,8 @@ def calculate_income_breakdown(husband, wife,
 
     return {
         "total": total,
+        "taxable_special_income": special_income["taxable"],
+        "non_taxable_special_income": special_income["non_taxable"],
         "by_class": {
             "work": work,
             "pension": pension,

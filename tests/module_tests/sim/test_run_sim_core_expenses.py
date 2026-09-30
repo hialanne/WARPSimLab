@@ -48,6 +48,16 @@ def _funded(total=0.0):
     return {"total": total}
 
 
+def _zero_irmaa():
+    return {
+        "husband": 0.0,
+        "wife": 0.0,
+        "total": 0.0,
+        "lookback_magi": 0.0,
+        "lookback_available": True,
+    }
+
+
 def _patch_common(monkeypatch, mod):
     monkeypatch.setattr(mod.withdrawalEngine, "calculate_rmds", lambda *a, **k: 0.0)
     monkeypatch.setattr(mod.withdrawalEngine, "withdraw_rmds", lambda *a, **k: 0.0)
@@ -88,6 +98,11 @@ def _patch_common(monkeypatch, mod):
     monkeypatch.setattr(
         mod.taxEngine, "calculate_total_income_tax_split",
         lambda **k: (10.0, 0.0, 0.0, 10.0, 0.12),
+    )
+    monkeypatch.setattr(
+        mod.medicareEngine,
+        "calculate_household_medicare_cost",
+        lambda *a, **k: {"husband": 0.0, "wife": 0.0, "total": 0.0},
     )
 
     zero_draw = {
@@ -168,6 +183,7 @@ def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
         72,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         True,
+        _zero_irmaa(),
     )
 
     assert calls == [(h_port, 5.0), (w_port, 7.0)]
@@ -220,6 +236,7 @@ def test_expense_year_emergency_pre_tax_draw_recomputes_tax_and_is_reported(mod,
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        _zero_irmaa(),
     )
 
     assert tax_calls == pytest.approx([100.0, 125.0])
@@ -278,6 +295,7 @@ def test_expense_year_distinguishes_qualified_and_taxable_hsa_withdrawals(mod, m
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        _zero_irmaa(),
     )
 
     assert result["qualified_hsa_withdrawal"] == pytest.approx(10.0)
@@ -342,6 +360,7 @@ def test_expense_year_reduces_roth_contributions_before_reporting_uncovered(mod,
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        _zero_irmaa(),
     )
 
     assert seen["uncovered_amount"] == pytest.approx(12.0)
@@ -388,6 +407,7 @@ def test_expense_year_applies_price_return_and_rebalances_both_people(mod, monke
         60,
         {"eq": 0.08, "bd": 0.03, "cs": 0.01, "re": 0.04},
         True,
+        _zero_irmaa(),
     )
 
     assert len(return_calls) == 2

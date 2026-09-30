@@ -23,6 +23,8 @@ class PersonStub:
         annual_hsa_contribution=0.0,
         annual_hsa_employer_contribution=0.0,
         pension_inflation_adjustment_pct=0.0,
+        medicare_start_age=65,
+        medicare_annual_cost=0.0,
     ):
         self.age = age
         self.retire_age = retire_age
@@ -38,7 +40,8 @@ class PersonStub:
         self.annual_hsa_contribution = annual_hsa_contribution
         self.annual_hsa_employer_contribution = annual_hsa_employer_contribution
         self.pension_inflation_adjustment_pct = pension_inflation_adjustment_pct
-
+        self.medicare_start_age = medicare_start_age
+        self.medicare_annual_cost = medicare_annual_cost
 
 class PortfolioStub:
     def __init__(
@@ -134,6 +137,8 @@ def make_config(**overrides):
         tax_filing_status="Single",
         calculate_state_taxes=False,
         state_of_residence="TX",
+        irmaa_enabled=False,
+        historical_magi={"two_years_prior": None, "one_year_prior": None},
         second_person_enabled=False,
         eq_mean=0.0,
         bd_mean=0.0,

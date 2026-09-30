@@ -6,6 +6,7 @@ from .engines import (
     withdrawalEngine,
     taxEngine,
     rothEngine,
+    medicareEngine,
     diagnosticEngine,
 )
 
@@ -47,6 +48,7 @@ def simulate_withdrawal_year(
     curr_w_age,
     year_returns,
     second_person_enabled,
+    irmaa_result,
 ):
 
     # -------------------------------------------------------------------------
@@ -222,6 +224,14 @@ def simulate_withdrawal_year(
         sim_config=sim_config,
     )
 
+    # Baseline Medicare insurance costs
+    medicare_cost = medicareEngine.calculate_household_medicare_cost(
+        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, sim_config
+    )
+
+    mandatory_medicare_cost = medicare_cost["total"] + irmaa_result["total"]
+    additional_cash_needed = mandatory_medicare_cost + requested_roth_contribution_total
+
     wd = withdrawalEngine.calculate_retirement_withdrawal(
         h_port,
         w_port,
@@ -231,7 +241,7 @@ def simulate_withdrawal_year(
         sim_config,
         rmd_h=rmd_h,
         rmd_w=rmd_w,
-        additional_cash_needed=requested_roth_contribution_total,
+        additional_cash_needed=additional_cash_needed,
     )
 
     expense_amt = 0
@@ -250,6 +260,9 @@ def simulate_withdrawal_year(
 
     funded_roth_contributions = roth_funding_result["funded_contributions"]
     uncovered_expense = roth_funding_result["remaining_uncovered"]
+
+    mandatory_medicare_uncovered = min(mandatory_medicare_cost, uncovered_expense)
+    mandatory_medicare_funded = mandatory_medicare_cost - mandatory_medicare_uncovered
 
     # Separate withdrawal cash used for Roth contributions from household spending.
     retirement_cash = rothEngine.separate_retirement_contribution_funding(
@@ -309,7 +322,11 @@ def simulate_withdrawal_year(
         or sim_config.calculate_state_taxes
     )
 
-    initial_tax_cash_shortfall = max(0.0, total_tax - income["total"]) if taxes_enabled else 0.0
+    cash_available_after_medicare = max(0.0, income["total"] - mandatory_medicare_funded)
+
+    initial_tax_cash_shortfall = 0.0
+    if taxes_enabled:
+        initial_tax_cash_shortfall = max(0.0, total_tax - cash_available_after_medicare)
 
     # Taxes take priority over discretionary Roth contributions. Cash already withdrawn for
     # a contribution can be redirected to taxes before another portfolio withdrawal is made.
@@ -346,7 +363,11 @@ def simulate_withdrawal_year(
             wife_additional_withdrawal = retirement_cash["wife"]
 
     income["by_class"]["withdrawal"] = additional_withdrawal_cash
-    tax_funding = withdrawalEngine.fund_tax_cash_shortfall(h_port, w_port, total_tax, income["total"], sim_config)
+
+    cash_available_after_medicare = max(0.0, income["total"] - mandatory_medicare_funded)
+    tax_funding = withdrawalEngine.fund_tax_cash_shortfall(
+        h_port, w_port, total_tax, cash_available_after_medicare, sim_config
+    )
 
     if tax_funding["total"] > 0.0:
         income["total"] += tax_funding["total"]
@@ -387,9 +408,13 @@ def simulate_withdrawal_year(
 
     tax_funding_uncovered = max(0.0, float(tax_funding.get("uncovered", 0.0)))
     funding_gap = uncovered_expense + tax_funding_uncovered + final_tax_delta_uncovered
+    
+    # Final current-year MAGI after retirement and tax-funding withdrawals.
+    magi = medicareEngine.calculate_irmaa_magi(
+        income, wd_pre_tax, taxable_hsa_withdrawal, roth_conversion_total
+    )
 
     # Deposit only Roth contributions that were actually funded.
-
     deposited_roth_contributions = rothEngine.deposit_funded_roth_contributions(
         husband_portfolio=h_port,
         wife_portfolio=w_port,
@@ -457,7 +482,7 @@ def simulate_withdrawal_year(
     gross_income = income["total"] + employee_401k_total + emergency_pre_tax_used + hsa_employee_total
 
     # Retirement-mode income already excludes withdrawal cash redirected into Roth contributions.
-    net_profit = net_income
+    net_profit = net_income - medicare_cost["total"] - irmaa_result["total"]
 
     # Preserve existing person-level tax allocation timing. This intentionally occurs
     # after portfolio returns and rebalancing, matching the current run_sim_core.py.
@@ -507,6 +532,15 @@ def simulate_withdrawal_year(
         "social_security_payroll_tax": social_security_payroll_tax,
         "medicare_tax": medicare_tax,
         "additional_medicare_tax": additional_medicare_tax,
+        "medicare_cost_husband": medicare_cost["husband"],
+        "medicare_cost_wife": medicare_cost["wife"],
+        "medicare_cost": medicare_cost["total"],
+        "magi": magi,
+        "irmaa_husband": irmaa_result["husband"],
+        "irmaa_wife": irmaa_result["wife"],
+        "irmaa": irmaa_result["total"],
+        "irmaa_lookback_magi": irmaa_result["lookback_magi"],
+        "irmaa_lookback_available": irmaa_result["lookback_available"],
         "expense_amt": expense_amt,
         "uncovered_expense": uncovered_expense,
         "funding_gap": funding_gap,

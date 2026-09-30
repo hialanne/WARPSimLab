@@ -23,6 +23,8 @@ def make_person(
     pension_age=99,
     annuity=0.0,
     annuity_age=99,
+    medicare_start_age=65,
+    medicare_annual_cost=0.0,
 ):
     return SimpleNamespace(
         age=age,
@@ -39,6 +41,8 @@ def make_person(
         annual_hsa_contribution=0.0,
         annual_hsa_employer_contribution=0.0,
         pension_inflation_adjustment_pct=0.0,
+        medicare_start_age=medicare_start_age,
+        medicare_annual_cost=medicare_annual_cost,
     )
 
 
@@ -74,6 +78,11 @@ def make_sim(years):
         tax_filing_status="Single",
         calculate_state_taxes=False,
         state_of_residence="NM",
+        irmaa_enabled=False,
+        historical_magi={
+            "two_years_prior": None,
+            "one_year_prior": None,
+        },
         second_person_enabled=False,
         eq_mean=0.0,
         bd_mean=0.0,

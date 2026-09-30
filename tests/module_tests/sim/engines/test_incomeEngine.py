@@ -344,6 +344,8 @@ def test_income_breakdown_sums_by_class_and_tracks_by_person():
 
     assert set(out.keys()) == {
         "total",
+        "taxable_special_income",
+        "non_taxable_special_income",
         "by_class",
         "by_person",
         "non_taxable_income",
