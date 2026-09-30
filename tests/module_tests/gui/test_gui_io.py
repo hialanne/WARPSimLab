@@ -33,6 +33,9 @@ def _make_dummy_gui(tmp_path: Path):
         annual_employer_match="5000",
         annual_hsa_contribution="3000",
         annual_hsa_employer_contribution="1000",
+        modeled_death_age=None,
+        medicare_start_age=65,
+        medicare_annual_cost=0.0,
     )
     gui.wife = SimpleNamespace(
         age=40,
@@ -49,6 +52,9 @@ def _make_dummy_gui(tmp_path: Path):
         annual_employer_match="4000",
         annual_hsa_contribution="2500",
         annual_hsa_employer_contribution="750",
+        modeled_death_age=None,
+        medicare_start_age=65,
+        medicare_annual_cost=0.0,
     )
 
     # Minimal portfolios
@@ -111,6 +117,7 @@ def _make_dummy_gui(tmp_path: Path):
 
     gui.special_income_streams = []
     gui.roth_flows = []
+    gui.historical_magi = {}
 
     gui.simulation_controls = {
         "second_person_enabled": 0,
@@ -317,7 +324,7 @@ def test_save_values_to_json_writes_expected_keys(monkeypatch, tmp_path):
     data = captured["data"]
 
     assert data["WARPSIMLAB_METADATA"]["file_type"] == "financial_data"
-    assert data["WARPSIMLAB_METADATA"]["schema_version"] == 1
+    assert data["WARPSIMLAB_METADATA"]["schema_version"] == 2
     assert data["WARPSIMLAB_METADATA"]["warpsimlab_version"] == "4.3.0"
 
     # A few representative keys

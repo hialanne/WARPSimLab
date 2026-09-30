@@ -242,11 +242,10 @@ class PortfolioSimulatorGUI_NavigationMixin(ScalableClientMixin):
             tutorial_controller.refresh_current_step()
             return
 
-        # rebuild the person editor (existing behavior)
         for widget in self.edit_frame_container.winfo_children():
             widget.destroy()
 
-        self.edit_person_data()
+        self.edit_age_longevity()
 
 
     def _debug_mode_change(self, *args):
@@ -337,13 +336,16 @@ class PortfolioSimulatorGUI_NavigationMixin(ScalableClientMixin):
         self.home_menu.configure(font=self._menu_font)
 
         self.cashflow_button, self.cashflow_menu, self._show_cashflow_menu = create_dropdown_button(
-            self.button_frame, text="Cash Flow \u25BE", menu_labels_and_commands=[],
+            self.button_frame, text="Household \u25BE", menu_labels_and_commands=[],
             row=0, column=2, padx=(25, 10), pady=2
         )
         self.cashflow_button.configure(font=self._navigation_font)
         self.cashflow_menu.configure(font=self._menu_font)
 
+        self.cashflow_menu.add_command(label="Age & Longevity", command=self.edit_age_longevity)
+
         self.cashflow_menu.add_command(label="Normal Income", command=self.edit_person_data)
+
         self.cashflow_menu.add_command(label="Special Income", command=self.edit_special_income)
         self._cashflow_special_income_index = self.cashflow_menu.index("end")
 
@@ -351,6 +353,9 @@ class PortfolioSimulatorGUI_NavigationMixin(ScalableClientMixin):
         self._cashflow_roth_index = self.cashflow_menu.index("end")
 
         self.cashflow_menu.add_command(label="Expenses", command=self.edit_expenses)
+
+        self.cashflow_menu.add_command(label="Medicare & IRMAA", command=self.edit_medicare_irmaa)
+
         self.cashflow_menu.add_command(label="Taxes", command=self.edit_taxes)
         self._cashflow_taxes_index = self.cashflow_menu.index("end")
 

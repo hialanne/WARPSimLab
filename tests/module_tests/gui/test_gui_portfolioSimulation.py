@@ -36,7 +36,6 @@ def mod_no_tooltip(monkeypatch):
 def _base_settings():
     return {
         "start_year": 2025,
-        "years_to_simulate": 30,
         "num_sims": 500,
         "use_fund_expenses": True,
         "fund_expense": 0.75,
@@ -57,7 +56,6 @@ def test_init_sets_stringvars_from_settings(tk_root, mod_no_tooltip):
     frame.pack()
 
     assert frame.start_year_var.get() == frame._format_sim_field("start_year", settings["start_year"])
-    assert frame.years_to_simulate_var.get() == frame._format_sim_field("years_to_simulate", settings["years_to_simulate"])
     assert frame.sims_var.get() == frame._format_sim_field("num_sims", settings["num_sims"])
     assert frame.use_fund_expenses_var.get() is True
     assert frame.fund_expense_var.get() == frame._format_sim_field("fund_expense", settings["fund_expense"])
@@ -81,12 +79,6 @@ def test_bind_var_updates_settings_and_ignores_invalid(monkeypatch, tk_root, mod
     assert settings["start_year"] == 2030
     assert frame.start_year_var.get() == frame._format_sim_field("start_year", 2030)
 
-    assert frame._validate_sim_field("35", "years_to_simulate") is True
-    tk_root.update()
-    tk_root.update_idletasks()
-    assert settings["years_to_simulate"] == 35
-    assert frame.years_to_simulate_var.get() == frame._format_sim_field("years_to_simulate", 35)
-
     assert frame._validate_sim_field("1500", "num_sims") is True
     tk_root.update()
     tk_root.update_idletasks()
@@ -99,20 +91,13 @@ def test_bind_var_updates_settings_and_ignores_invalid(monkeypatch, tk_root, mod
     assert settings["fund_expense"] == pytest.approx(1.25)
     assert frame.fund_expense_var.get() == frame._format_sim_field("fund_expense", 1.25)
 
-    prev = settings["years_to_simulate"]
-    assert frame._validate_sim_field("nope", "years_to_simulate") is True
-    tk_root.update()
-    tk_root.update_idletasks()
-    assert settings["years_to_simulate"] == prev
-    assert frame.years_to_simulate_var.get() == frame._format_sim_field("years_to_simulate", prev)
-
     prev_f = settings["fund_expense"]
     assert frame._validate_sim_field("bad", "fund_expense") is True
     tk_root.update()
     tk_root.update_idletasks()
     assert settings["fund_expense"] == prev_f
     assert frame.fund_expense_var.get() == frame._format_sim_field("fund_expense", prev_f)
-    assert len(shown_errors) == 2
+    assert len(shown_errors) == 1
     assert all(args[0] == "Invalid Input" for args, _kwargs in shown_errors)
 
 def test_toggle_fund_expense_entry_enables_and_disables(tk_root, mod_no_tooltip):

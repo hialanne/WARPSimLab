@@ -72,19 +72,11 @@ def test_bind_var_updates_person_and_ignores_invalid(monkeypatch, tk_root, mod_n
     husband = DummyPerson(age=40, income=100000.0, retire_age=65)
     persons = {"husband": husband}
 
-    sim_controls = {"second_person_enabled": False}
-    frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Basic")
+    frame = mod.NormalIncomeEditFrame(tk_root, persons, mode="Basic")
     frame.pack()
 
     shown_errors = []
     monkeypatch.setattr(mod.messagebox, "showerror", lambda *args, **kwargs: shown_errors.append((args, kwargs)))
-
-    # age is int
-    assert frame._validate_person_field_on_focusout("41", "husband", "age") is True
-    tk_root.update()
-    tk_root.update_idletasks()
-    assert husband.age == 41
-    assert frame.vars["husband"]["age"].get() == "41"
 
     # income is float
     assert frame._validate_person_field_on_focusout("123456.78", "husband", "income") is True
@@ -104,48 +96,20 @@ def test_bind_var_updates_person_and_ignores_invalid(monkeypatch, tk_root, mod_n
     assert len(shown_errors) == 1
     assert shown_errors[0][0][0] == "Invalid Input"
 
-def test_enable_second_person_checkbox_updates_controls_and_calls_refresh(tk_root, mod_no_tooltip):
-    mod = mod_no_tooltip
-
-    called = {"n": 0}
-
-    def refresh():
-        called["n"] += 1
-
-    husband = DummyPerson()
-    persons = {"husband": husband}
-    sim_controls = {"second_person_enabled": False}
-
-    frame = mod.NormalIncomeEditFrame(
-        tk_root,
-        persons,
-        simulation_controls=sim_controls,
-        refresh_callback=refresh,
-        mode="Basic",
-    )
-    frame.pack()
-
-    # Toggle the BooleanVar; trace_add should call _on_enable_second_person_changed
-    frame._enable_second_person_var.set(True)
-
-    assert sim_controls["second_person_enabled"] is True
-    assert called["n"] >= 1
-
 
 def test_basic_mode_builds_basic_fields_only_single_person(tk_root, mod_no_tooltip):
     mod = mod_no_tooltip
 
     husband = DummyPerson()
     persons = {"husband": husband}
-    sim_controls = {"second_person_enabled": False}
 
-    frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Basic")
+    frame = mod.NormalIncomeEditFrame(tk_root, persons, mode="Basic")
     frame.pack()
 
-    # Basic mode uses fields_basic of length 4; for single person, entries == 4
-    assert _count_entries(frame) == 4
+    # Basic mode has 3 fields for one person.
+    assert _count_entries(frame) == 3
 
-    # Should have only the left "Husband" header (no right-block header)
+    # Should have only the left "Husband" header.
     texts = _label_texts(frame)
     assert texts.count("Husband") == 1
 
@@ -156,18 +120,16 @@ def test_basic_mode_builds_basic_fields_for_two_people(tk_root, mod_no_tooltip):
     husband = DummyPerson()
     wife = DummyPerson()
     persons = {"husband": husband, "wife": wife}
-    sim_controls = {"second_person_enabled": True}
 
-    frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Basic")
+    frame = mod.NormalIncomeEditFrame(tk_root, persons, mode="Basic")
     frame.pack()
 
-    # Basic mode fields_basic length 4; for two people, entries == 4 * 2
-    assert _count_entries(frame) == 8
+    # Basic mode has 3 fields per person.
+    assert _count_entries(frame) == 6
 
     texts = _label_texts(frame)
-    # Left headers Husband + Wife
     assert texts.count("Husband") == 1
-    assert "Wife" in texts
+    assert texts.count("Wife") == 1
 
 
 def test_advanced_mode_builds_full_left_and_right_blocks(tk_root, mod_no_tooltip):
@@ -176,16 +138,13 @@ def test_advanced_mode_builds_full_left_and_right_blocks(tk_root, mod_no_tooltip
     husband = DummyPerson()
     wife = DummyPerson()
     persons = {"husband": husband, "wife": wife}
-    sim_controls = {"second_person_enabled": True}
 
-    frame = mod.NormalIncomeEditFrame(tk_root, persons, simulation_controls=sim_controls, mode="Advanced")
+    frame = mod.NormalIncomeEditFrame(tk_root, persons, mode="Advanced")
     frame.pack()
 
-    # Full mode: left block fields_full_left len=7; right block fields_full_right len=7; total=14.
-    # Two people => entries == 14 * 2
-    assert _count_entries(frame) == 28
+    # Advanced mode has 13 fields per person: 6 left and 7 right.
+    assert _count_entries(frame) == 26
 
     texts = _label_texts(frame)
-    # In full mode, right block headers add another "Husband" (+ maybe "Wife") label.
     assert texts.count("Husband") == 2
     assert texts.count("Wife") == 2

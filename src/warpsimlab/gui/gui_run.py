@@ -217,6 +217,8 @@ class PortfolioSimulatorGUI_RunMixin:
             rebalance_every_year=rebalance_every_year,
             include_realestate=controls.get("include_realestate", False),
             second_person_enabled=controls.get("second_person_enabled", False),
+            irmaa_enabled=controls.get("irmaa_enabled", False),
+            historical_magi=dict(getattr(self, "historical_magi", {})),
 
             husband_portfolio=self._portfolio_for_sim(self.husband_portfolio),
             wife_portfolio=(
@@ -355,6 +357,17 @@ class PortfolioSimulatorGUI_RunMixin:
             ),
             pension_inflation_adjustment_pct=self._simulation_float(
                 "Pension inflation adjustment", getattr(p, "pension_inflation_adjustment_pct", 0.0)
+            ),
+            modeled_death_age=(
+                None
+                if getattr(p, "modeled_death_age", None) is None
+                else self._simulation_int("Modeled death age", p.modeled_death_age)
+            ),
+            medicare_start_age=self._simulation_int(
+                "Medicare start age", getattr(p, "medicare_start_age", 65)
+            ),
+            medicare_annual_cost=self._simulation_float(
+                "Annual Medicare cost", getattr(p, "medicare_annual_cost", 0.0)
             ),
         )
 

@@ -23,6 +23,8 @@ from src.warpsimlab.gui.gui_tutorial_definitions import (
     build_advanced_analysis_tutorial_steps,
 )
 from .gui_notes import NotesFrame
+from src.warpsimlab.gui.gui_ageLongevity import AgeLongevityEditFrame
+from src.warpsimlab.gui.gui_medicareIrmaa import MedicareIrmaaEditFrame
 
 
 class PortfolioSimulatorGUI_EditorsMixin:
@@ -123,26 +125,45 @@ class PortfolioSimulatorGUI_EditorsMixin:
         notes_frame.pack(padx=10, pady=5, fill="x")
 
 
-    def edit_person_data(self):
-        # Remove previous edit frames
+    def edit_age_longevity(self):
+        if not self._clear_editor_frame():
+            return
+
+        persons = {"husband": self.husband, "wife": self.wife}
+
+        frame = AgeLongevityEditFrame(
+            self.edit_frame_container, persons, self.simulation_controls, self.simulation_settings,
+            refresh_callback=self._on_second_person_changed
+        )
+        frame.pack(padx=10, pady=5, fill="x")
+
+
+    def edit_medicare_irmaa(self):
         if not self._clear_editor_frame():
             return
 
         persons = {"husband": self.husband}
-
         if self.simulation_controls["second_person_enabled"]:
             persons["wife"] = self.wife
 
-        person_frame = NormalIncomeEditFrame(
-            self.edit_frame_container,
-            persons,
-            simulation_controls=self.simulation_controls,
-            refresh_callback=self._on_second_person_changed,
-            title="Personal Data",
-            mode=self.mode_var.get(),
+        frame = MedicareIrmaaEditFrame(
+            self.edit_frame_container, persons, self.simulation_controls, self.historical_magi
         )
+        frame.pack(padx=10, pady=5, fill="x")
 
-        person_frame.pack(padx=10, pady=5, fill="x")
+
+    def edit_person_data(self):
+        if not self._clear_editor_frame():
+            return
+
+        persons = {"husband": self.husband}
+        if self.simulation_controls["second_person_enabled"]:
+            persons["wife"] = self.wife
+
+        frame = NormalIncomeEditFrame(
+            self.edit_frame_container, persons, title="Personal Data", mode=self.mode_var.get()
+        )
+        frame.pack(padx=10, pady=5, fill="x")
 
 
     def edit_special_income(self):

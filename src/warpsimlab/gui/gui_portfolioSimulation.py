@@ -21,9 +21,9 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
     There is no separate save step.
 
     Settings include:
-        - Simulation time horizon and number of Monte Carlo runs
+        - Simulation start year and number of Monte Carlo runs
         - Optional fund expense modeling
-        - Portfolio rebalance strategy (preset or custom allocation)
+        - Portfolio rebalance strategy
 
     Custom allocation fields are shown only when "Custom" rebalance
     is selected.
@@ -52,7 +52,6 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
 
         self.tooltips_text = {
             "start_year_var": "The calendar year at which the simulation begins.",
-            "years_to_simulate_var": "Number of years to simulate. Must be a positive integer.",
             "sims_var": (
                 "Number of simulation runs to perform for Monte Carlo analysis. "
                 "Higher numbers give more accurate distributions."
@@ -90,10 +89,7 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
 
         ttk.Label(
             header_frame,
-            text=(
-                " - Configure the simulation period, Monte Carlo runs, "
-                "fund expenses, and portfolio rebalancing."
-            ),
+            text=" - Configure the start year, Monte Carlo runs, fund expenses, and portfolio rebalancing.",
             font=self._header_text_font,
         ).pack(side="left")
 
@@ -116,28 +112,6 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
 
         Tooltip(
             self.start_year_entry, self.tooltips_text["start_year_var"],
-            font=self._tooltip_font
-        )
-
-        row += 1
-
-        ttk.Label(
-            self, text="Years to Simulate:", font=self._body_font
-        ).grid(row=row, column=0, sticky="w")
-
-        self.years_to_simulate_var = tk.StringVar(
-            value=self._format_sim_field("years_to_simulate", settings["years_to_simulate"])
-        )
-        vcmd = self.register(self._validate_sim_field), "%P", "years_to_simulate"
-
-        self.years_to_simulate_entry = ttk.Entry(
-            self, textvariable=self.years_to_simulate_var, width=14, font=self._body_font,
-            validate="focusout", validatecommand=vcmd
-        )
-        self.years_to_simulate_entry.grid(row=row, column=1, sticky="w")
-
-        Tooltip(
-            self.years_to_simulate_entry, self.tooltips_text["years_to_simulate_var"],
             font=self._tooltip_font
         )
 
@@ -410,9 +384,8 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _parse_sim_field(self, field, value):
-        if field in {"start_year", "years_to_simulate", "num_sims"}:
+        if field in {"start_year", "num_sims"}:
             return parse_integer(value, minimum=1)
-
         if field == "fund_expense":
             return parse_finite_float(value, minimum=0)
 
@@ -422,10 +395,10 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
         raise ValueError(f"Unknown field: {field}")
 
 
+
     def _sim_field_label(self, field):
         labels = {
             "start_year": "Start Year",
-            "years_to_simulate": "Years to Simulate",
             "num_sims": "Number of Simulations",
             "fund_expense": "Fund Expense",
             "custom_stock": "Custom Stock Allocation",
@@ -436,7 +409,7 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _format_sim_field(self, field, value):
-        if field in {"start_year", "years_to_simulate", "num_sims"}:
+        if field in {"start_year", "num_sims"}:
             return str(int(value))
 
         return f"{value:.2f}".rstrip("0").rstrip(".")

@@ -189,13 +189,12 @@ def test_on_second_person_changed_syncs_tax_and_rebuilds_person_editor():
 
     calls = []
     gui._sync_tax_status_from_second_person = lambda: calls.append("sync")
-    gui.edit_person_data = lambda: calls.append("person")
+    gui.edit_age_longevity = lambda: calls.append("age_longevity")
 
     gui._on_second_person_changed()
 
     assert gui.edit_frame_container.winfo_children() == []
-    assert calls == ["sync", "person"]
-
+    assert calls == ["sync", "age_longevity"]
 
 def test_on_second_person_changed_refreshes_active_tutorial():
     gui = _make_gui()
@@ -204,7 +203,7 @@ def test_on_second_person_changed_refreshes_active_tutorial():
 
     calls = []
     gui._sync_tax_status_from_second_person = lambda: calls.append("sync")
-    gui.edit_person_data = lambda: calls.append("person")
+    gui.edit_age_longevity = lambda: calls.append("age_longevity")
 
     gui._on_second_person_changed()
 

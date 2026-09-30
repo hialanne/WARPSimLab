@@ -16,7 +16,7 @@ from src.warpsimlab.utils.utilities import *
 
 WARPSIMLAB_FINANCIAL_DATA_METADATA_KEY = "WARPSIMLAB_METADATA"
 WARPSIMLAB_FINANCIAL_DATA_FILE_TYPE = "financial_data"
-WARPSIMLAB_FINANCIAL_DATA_SCHEMA_VERSION = 1
+WARPSIMLAB_FINANCIAL_DATA_SCHEMA_VERSION = 2
 
 
 class PortfolioSimulatorGUI_IOMixin:
@@ -171,6 +171,7 @@ class PortfolioSimulatorGUI_IOMixin:
 
         self._load_from_json(file_path)
 
+
     def _get_examples_directory(self):
         """
         Return path to src/dataFiles
@@ -199,16 +200,18 @@ class PortfolioSimulatorGUI_IOMixin:
             legacy_file = self._validate_financial_data_metadata(data)
 
             # --- Husband ---
-            self.husband.age           = data.get("DEFAULT_HUSBAND_AGE", self.husband.age)
-            self.husband.retire_age    = data.get("DEFAULT_HUSBAND_RETIRE", self.husband.retire_age)
-            self.husband.income        = data.get("DEFAULT_HUSBAND_INCOME", self.husband.income)
-            self.husband.ss            = data.get("DEFAULT_HUSBAND_SOC", self.husband.ss)
-            self.husband.ss_age        = data.get("DEFAULT_HUSBAND_SOC_AGE", self.husband.ss_age)
-            self.husband.pension       = data.get("DEFAULT_HUSBAND_PENSION", self.husband.pension)
-            self.husband.pension_age   = data.get("DEFAULT_HUSBAND_PENSION_AGE", self.husband.pension_age)
-            self.husband.pension_inflation_adjustment_pct = data.get("DEFAULT_HUSBAND_PENSION_INFLATION_ADJ",self.husband.pension_inflation_adjustment_pct)
-            self.husband.annuity       = data.get("DEFAULT_HUSBAND_ANNUITY", self.husband.annuity)
-            self.husband.annuity_age   = data.get("DEFAULT_HUSBAND_ANNUITY_AGE", self.husband.annuity_age)
+            self.husband.age = data.get("DEFAULT_HUSBAND_AGE", self.husband.age)
+            self.husband.retire_age = data.get("DEFAULT_HUSBAND_RETIRE", self.husband.retire_age)
+            self.husband.income = data.get("DEFAULT_HUSBAND_INCOME", self.husband.income)
+            self.husband.ss = data.get("DEFAULT_HUSBAND_SOC", self.husband.ss)
+            self.husband.ss_age = data.get("DEFAULT_HUSBAND_SOC_AGE", self.husband.ss_age)
+            self.husband.pension = data.get("DEFAULT_HUSBAND_PENSION", self.husband.pension)
+            self.husband.pension_age = data.get("DEFAULT_HUSBAND_PENSION_AGE", self.husband.pension_age)
+            self.husband.pension_inflation_adjustment_pct = data.get(
+                "DEFAULT_HUSBAND_PENSION_INFLATION_ADJ", self.husband.pension_inflation_adjustment_pct
+            )
+            self.husband.annuity = data.get("DEFAULT_HUSBAND_ANNUITY", self.husband.annuity)
+            self.husband.annuity_age = data.get("DEFAULT_HUSBAND_ANNUITY_AGE", self.husband.annuity_age)
             self.husband.annual_401k_contribution = data.get(
                 "DEFAULT_HUSBAND_401K_CONTRIB", self.husband.annual_401k_contribution
             )
@@ -221,17 +224,20 @@ class PortfolioSimulatorGUI_IOMixin:
             self.husband.annual_hsa_employer_contribution = data.get(
                 "DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB", self.husband.annual_hsa_employer_contribution
             )
+            self.husband.modeled_death_age = data.get("DEFAULT_HUSBAND_MODELED_DEATH_AGE", None)
+            self.husband.medicare_start_age = data.get("DEFAULT_HUSBAND_MEDICARE_START_AGE", 65)
+            self.husband.medicare_annual_cost = data.get("DEFAULT_HUSBAND_MEDICARE_ANNUAL_COST", 0.0)
 
             # --- Husband Portfolio ---
             h_port = self.husband_portfolio
-            h_port.equity_pre  = data.get("DEFAULT_EQUITY_PRE_H", h_port.equity_pre)
+            h_port.equity_pre = data.get("DEFAULT_EQUITY_PRE_H", h_port.equity_pre)
             h_port.equity_post = data.get("DEFAULT_EQUITY_POST_H", h_port.equity_post)
             h_port.equity_roth = data.get("DEFAULT_EQUITY_ROTH_H", getattr(h_port, "equity_roth", 0.0))
-            h_port.bond_pre    = data.get("DEFAULT_BOND_PRE_H", h_port.bond_pre)
-            h_port.bond_post   = data.get("DEFAULT_BOND_POST_H", h_port.bond_post)
+            h_port.bond_pre = data.get("DEFAULT_BOND_PRE_H", h_port.bond_pre)
+            h_port.bond_post = data.get("DEFAULT_BOND_POST_H", h_port.bond_post)
             h_port.bond_roth = data.get("DEFAULT_BOND_ROTH_H", getattr(h_port, "bond_roth", 0.0))
-            h_port.cash_pre    = data.get("DEFAULT_CASH_PRE_H", h_port.cash_pre)
-            h_port.cash_post   = data.get("DEFAULT_CASH_POST_H", h_port.cash_post)
+            h_port.cash_pre = data.get("DEFAULT_CASH_PRE_H", h_port.cash_pre)
+            h_port.cash_post = data.get("DEFAULT_CASH_POST_H", h_port.cash_post)
             h_port.cash_roth = data.get("DEFAULT_CASH_ROTH_H", getattr(h_port, "cash_roth", 0.0))
             h_port.hsa_cash = data.get("DEFAULT_HSA_CASH_H", getattr(h_port, "hsa_cash", 0.0))
             h_port.hsa_equity = data.get("DEFAULT_HSA_EQUITY_H", getattr(h_port, "hsa_equity", 0.0))
@@ -248,15 +254,17 @@ class PortfolioSimulatorGUI_IOMixin:
                 self.root.update_idletasks()
 
                 # --- Wife ---
-                self.wife.age         = data.get("DEFAULT_WIFE_AGE", self.wife.age)
-                self.wife.retire_age  = data.get("DEFAULT_WIFE_RETIRE", self.wife.retire_age)
-                self.wife.income      = data.get("DEFAULT_WIFE_INCOME", self.wife.income)
-                self.wife.ss          = data.get("DEFAULT_WIFE_SOC", self.wife.ss)
-                self.wife.ss_age      = data.get("DEFAULT_WIFE_SOC_AGE", self.wife.ss_age)
-                self.wife.pension     = data.get("DEFAULT_WIFE_PENSION", self.wife.pension)
+                self.wife.age = data.get("DEFAULT_WIFE_AGE", self.wife.age)
+                self.wife.retire_age = data.get("DEFAULT_WIFE_RETIRE", self.wife.retire_age)
+                self.wife.income = data.get("DEFAULT_WIFE_INCOME", self.wife.income)
+                self.wife.ss = data.get("DEFAULT_WIFE_SOC", self.wife.ss)
+                self.wife.ss_age = data.get("DEFAULT_WIFE_SOC_AGE", self.wife.ss_age)
+                self.wife.pension = data.get("DEFAULT_WIFE_PENSION", self.wife.pension)
                 self.wife.pension_age = data.get("DEFAULT_WIFE_PENSION_AGE", self.wife.pension_age)
-                self.wife.pension_inflation_adjustment_pct = data.get("DEFAULT_WIFE_PENSION_INFLATION_ADJ",self.wife.pension_inflation_adjustment_pct)
-                self.wife.annuity     = data.get("DEFAULT_WIFE_ANNUITY", self.wife.annuity)
+                self.wife.pension_inflation_adjustment_pct = data.get(
+                    "DEFAULT_WIFE_PENSION_INFLATION_ADJ", self.wife.pension_inflation_adjustment_pct
+                )
+                self.wife.annuity = data.get("DEFAULT_WIFE_ANNUITY", self.wife.annuity)
                 self.wife.annuity_age = data.get("DEFAULT_WIFE_ANNUITY_AGE", self.wife.annuity_age)
                 self.wife.annual_401k_contribution = data.get(
                     "DEFAULT_WIFE_401K_CONTRIB", self.wife.annual_401k_contribution
@@ -270,17 +278,20 @@ class PortfolioSimulatorGUI_IOMixin:
                 self.wife.annual_hsa_employer_contribution = data.get(
                     "DEFAULT_WIFE_HSA_EMPLOYER_CONTRIB", self.wife.annual_hsa_employer_contribution
                 )
+                self.wife.modeled_death_age = data.get("DEFAULT_WIFE_MODELED_DEATH_AGE", None)
+                self.wife.medicare_start_age = data.get("DEFAULT_WIFE_MEDICARE_START_AGE", 65)
+                self.wife.medicare_annual_cost = data.get("DEFAULT_WIFE_MEDICARE_ANNUAL_COST", 0.0)
 
                 # --- Wife Portfolio ---
                 w_port = self.wife_portfolio
-                w_port.equity_pre  = data.get("DEFAULT_EQUITY_PRE_W", w_port.equity_pre)
+                w_port.equity_pre = data.get("DEFAULT_EQUITY_PRE_W", w_port.equity_pre)
                 w_port.equity_post = data.get("DEFAULT_EQUITY_POST_W", w_port.equity_post)
                 w_port.equity_roth = data.get("DEFAULT_EQUITY_ROTH_W", getattr(w_port, "equity_roth", 0.0))
-                w_port.bond_pre    = data.get("DEFAULT_BOND_PRE_W", w_port.bond_pre)
-                w_port.bond_post   = data.get("DEFAULT_BOND_POST_W", w_port.bond_post)
+                w_port.bond_pre = data.get("DEFAULT_BOND_PRE_W", w_port.bond_pre)
+                w_port.bond_post = data.get("DEFAULT_BOND_POST_W", w_port.bond_post)
                 w_port.bond_roth = data.get("DEFAULT_BOND_ROTH_W", getattr(w_port, "bond_roth", 0.0))
-                w_port.cash_pre    = data.get("DEFAULT_CASH_PRE_W", w_port.cash_pre)
-                w_port.cash_post   = data.get("DEFAULT_CASH_POST_W", w_port.cash_post)
+                w_port.cash_pre = data.get("DEFAULT_CASH_PRE_W", w_port.cash_pre)
+                w_port.cash_post = data.get("DEFAULT_CASH_POST_W", w_port.cash_post)
                 w_port.cash_roth = data.get("DEFAULT_CASH_ROTH_W", getattr(w_port, "cash_roth", 0.0))
                 w_port.hsa_cash = data.get("DEFAULT_HSA_CASH_W", getattr(w_port, "hsa_cash", 0.0))
                 w_port.hsa_equity = data.get("DEFAULT_HSA_EQUITY_W", getattr(w_port, "hsa_equity", 0.0))
@@ -288,11 +299,33 @@ class PortfolioSimulatorGUI_IOMixin:
                 w_port.real_estate = data.get("DEFAULT_REAL_ESTATE_W", w_port.real_estate)
 
             # --- Simulation / global settings ---
+            longevity_mode = data.get("DEFAULT_LONGEVITY_MODE", "fixed_years")
+            if longevity_mode not in {"fixed_years", "custom_death_age"}:
+                raise ValueError(f"Invalid longevity mode: {longevity_mode}")
+
             self.simulation_settings["start_year"] = data.get("DEFAULT_START_YEAR", LEGACY_SIMULATION_START_YEAR)
+            self.simulation_settings["longevity_mode"] = longevity_mode
             self.simulation_settings["years_to_simulate"] = data.get("DEFAULT_YEARS", DEFAULT_YEARS)
             self.simulation_settings["num_sims"] = data.get("DEFAULT_SIMULATIONS", DEFAULT_SIMULATIONS)
             self.simulation_settings["fund_expense"] = data.get("DEFAULT_FUND_EXPENSE", DEFAULT_FUND_EXPENSE)
-            self.simulation_controls["state_of_residence"] = data.get("STATE_OF_RESIDENCE", DEFAULT_STATE_OF_RESIDENCE)
+            if longevity_mode == "fixed_years":
+                self.husband.modeled_death_age = None
+                self.wife.modeled_death_age = None
+
+            self.simulation_controls["irmaa_enabled"] = bool(data.get("IRMAA_ENABLED", False))
+            self.simulation_controls["state_of_residence"] = data.get(
+                "STATE_OF_RESIDENCE", DEFAULT_STATE_OF_RESIDENCE
+            )
+
+            historical_magi = data.get("HISTORICAL_MAGI", {})
+            if historical_magi is None:
+                historical_magi = {}
+
+            if not isinstance(historical_magi, dict):
+                raise ValueError("Historical MAGI data is invalid.")
+
+            self.historical_magi["two_years_prior"] = historical_magi.get("two_years_prior")
+            self.historical_magi["one_year_prior"] = historical_magi.get("one_year_prior")
 
             # --- Expenses ---
             self.expensesDict.expenses.clear()
@@ -302,6 +335,7 @@ class PortfolioSimulatorGUI_IOMixin:
                 cost = exp.get("cost")
                 comment = exp.get("comment", "")
                 is_hsa_eligible = bool(exp.get("is_hsa_eligible", False))
+
                 if start_year is not None and cost is not None:
                     self.expensesDict.add_expense(start_year, cost, end_year, comment, is_hsa_eligible)
 
@@ -336,7 +370,6 @@ class PortfolioSimulatorGUI_IOMixin:
             messagebox.showerror("Error", f"Failed to load file:\n{e}")
 
 
-
     def save_values_to_json(self):
         """
         Save all current GUI inputs (personal, portfolio, simulation, expenses)
@@ -352,15 +385,15 @@ class PortfolioSimulatorGUI_IOMixin:
             },
 
             # Husband Personal Information
-            "DEFAULT_HUSBAND_AGE":      self.husband.age,
-            "DEFAULT_HUSBAND_RETIRE":   self.husband.retire_age,
-            "DEFAULT_HUSBAND_INCOME":   parse_money_strict(self.husband.income,'husband.income'), 
-            "DEFAULT_HUSBAND_SOC":      parse_money_strict(self.husband.ss,'husband.ss'),  
-            "DEFAULT_HUSBAND_SOC_AGE":  self.husband.ss_age,
-            "DEFAULT_HUSBAND_PENSION":  parse_money_strict(self.husband.pension,'husband.pension'), 
+            "DEFAULT_HUSBAND_AGE": self.husband.age,
+            "DEFAULT_HUSBAND_RETIRE": self.husband.retire_age,
+            "DEFAULT_HUSBAND_INCOME": parse_money_strict(self.husband.income, "husband.income"),
+            "DEFAULT_HUSBAND_SOC": parse_money_strict(self.husband.ss, "husband.ss"),
+            "DEFAULT_HUSBAND_SOC_AGE": self.husband.ss_age,
+            "DEFAULT_HUSBAND_PENSION": parse_money_strict(self.husband.pension, "husband.pension"),
             "DEFAULT_HUSBAND_PENSION_AGE": self.husband.pension_age,
             "DEFAULT_HUSBAND_PENSION_INFLATION_ADJ": self.husband.pension_inflation_adjustment_pct,
-            "DEFAULT_HUSBAND_ANNUITY":  parse_money_strict(self.husband.annuity,'husband.annuity'), 
+            "DEFAULT_HUSBAND_ANNUITY": parse_money_strict(self.husband.annuity, "husband.annuity"),
             "DEFAULT_HUSBAND_ANNUITY_AGE": self.husband.annuity_age,
             "DEFAULT_HUSBAND_401K_CONTRIB": parse_money_strict(
                 self.husband.annual_401k_contribution, "husband.annual_401k_contribution"
@@ -374,6 +407,9 @@ class PortfolioSimulatorGUI_IOMixin:
             "DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB": parse_money_strict(
                 self.husband.annual_hsa_employer_contribution, "husband.annual_hsa_employer_contribution"
             ),
+            "DEFAULT_HUSBAND_MODELED_DEATH_AGE": self.husband.modeled_death_age,
+            "DEFAULT_HUSBAND_MEDICARE_START_AGE": self.husband.medicare_start_age,
+            "DEFAULT_HUSBAND_MEDICARE_ANNUAL_COST": self.husband.medicare_annual_cost,
 
             # Husband Portfolio
             "DEFAULT_EQUITY_PRE_H": self.husband_portfolio.equity_pre,
@@ -399,13 +435,13 @@ class PortfolioSimulatorGUI_IOMixin:
                 "DEFAULT_ENABLE_SECOND_PERSON": True,
                 "DEFAULT_WIFE_AGE": self.wife.age,
                 "DEFAULT_WIFE_RETIRE": self.wife.retire_age,
-                "DEFAULT_WIFE_INCOME": parse_money_strict(self.wife.income,'wife.income'), 
-                "DEFAULT_WIFE_SOC": parse_money_strict(self.wife.ss,'wife.ss'),
+                "DEFAULT_WIFE_INCOME": parse_money_strict(self.wife.income, "wife.income"),
+                "DEFAULT_WIFE_SOC": parse_money_strict(self.wife.ss, "wife.ss"),
                 "DEFAULT_WIFE_SOC_AGE": self.wife.ss_age,
-                "DEFAULT_WIFE_PENSION": parse_money_strict(self.wife.pension,'wife.pension'), 
+                "DEFAULT_WIFE_PENSION": parse_money_strict(self.wife.pension, "wife.pension"),
                 "DEFAULT_WIFE_PENSION_AGE": self.wife.pension_age,
                 "DEFAULT_WIFE_PENSION_INFLATION_ADJ": self.wife.pension_inflation_adjustment_pct,
-                "DEFAULT_WIFE_ANNUITY": parse_money_strict(self.wife.annuity,'wife.annuity'), 
+                "DEFAULT_WIFE_ANNUITY": parse_money_strict(self.wife.annuity, "wife.annuity"),
                 "DEFAULT_WIFE_ANNUITY_AGE": self.wife.annuity_age,
                 "DEFAULT_WIFE_401K_CONTRIB": parse_money_strict(
                     self.wife.annual_401k_contribution, "wife.annual_401k_contribution"
@@ -419,6 +455,9 @@ class PortfolioSimulatorGUI_IOMixin:
                 "DEFAULT_WIFE_HSA_EMPLOYER_CONTRIB": parse_money_strict(
                     self.wife.annual_hsa_employer_contribution, "wife.annual_hsa_employer_contribution"
                 ),
+                "DEFAULT_WIFE_MODELED_DEATH_AGE": self.wife.modeled_death_age,
+                "DEFAULT_WIFE_MEDICARE_START_AGE": self.wife.medicare_start_age,
+                "DEFAULT_WIFE_MEDICARE_ANNUAL_COST": self.wife.medicare_annual_cost,
 
                 # Wife Portfolio
                 "DEFAULT_EQUITY_PRE_W": self.wife_portfolio.equity_pre,
@@ -442,9 +481,12 @@ class PortfolioSimulatorGUI_IOMixin:
 
         updated_values.update({
             "DEFAULT_START_YEAR": int(self.simulation_settings["start_year"]),
+            "DEFAULT_LONGEVITY_MODE": self.simulation_settings.get("longevity_mode", "fixed_years"),
             "DEFAULT_YEARS": int(self.simulation_settings.get("years_to_simulate", DEFAULT_YEARS)),
             "DEFAULT_SIMULATIONS": int(self.simulation_settings.get("num_sims", DEFAULT_SIMULATIONS)),
             "DEFAULT_FUND_EXPENSE": float(self.simulation_settings.get("fund_expense", DEFAULT_FUND_EXPENSE)),
+            "IRMAA_ENABLED": bool(self.simulation_controls.get("irmaa_enabled", False)),
+            "HISTORICAL_MAGI": dict(self.historical_magi),
 
             "SPECIAL_INCOME_STREAMS": [
                 dict(stream)
@@ -489,22 +531,21 @@ class PortfolioSimulatorGUI_IOMixin:
             messagebox.showerror("Error", f"Failed to save file:\n{e}")
 
 
-
     def print_gui_state_table(self):
         """Print all current GUI values in a neat table format."""
-    
+
         def money(var):
             try:
                 return float(var.get().replace(",", ""))
             except Exception:
                 return var.get()
-    
+
         def percent(var):
             try:
                 return float(var.get())
             except Exception:
                 return var.get()
-    
+
         def bool_str(var):
             return "Yes" if var.get() else "No"
 
@@ -512,7 +553,7 @@ class PortfolioSimulatorGUI_IOMixin:
         print("\n" + "-"*60)
         print(f"{'Parameter':35} | {'Value'}")
         print("-"*60)
-    
+
         # Personal data
         h = self.husband
         print(f"{'Husband Age':35} | {h.age}")
@@ -523,9 +564,10 @@ class PortfolioSimulatorGUI_IOMixin:
         print(f"{'Husband Annuity':35} | {h.annuity} at age {h.annuity_age}")
 
         if self.second_person_enabled.get():
-            print('Second person enabled\n')
+            print("Second person enabled\n")
         else:
-            print('Second person disabled\n')
+            print("Second person disabled\n")
+
         w = self.wife
         print(f"{'Wife Age':35} | {w.age}")
         print(f"{'Wife Retirement Age':35} | {w.retire_age}")
@@ -535,7 +577,7 @@ class PortfolioSimulatorGUI_IOMixin:
         print(f"{'Wife Annuity':35} | {w.annuity} at age {w.annuity_age}")
 
         # Portfolio
-        print('Husband\n')
+        print("Husband\n")
         print(f"{'Equity Tax-Deferred':35} | {money(self.equity_pre_h_var)}")
         print(f"{'Equity Taxable':35} | {money(self.equity_post_h_var)}")
         print(f"{'Bond Tax-Deferred':35} | {money(self.bond_pre_h_var)}")
@@ -544,7 +586,7 @@ class PortfolioSimulatorGUI_IOMixin:
         print(f"{'Cash Taxable':35} | {money(self.cash_post_h_var)}")
         print(f"{'Real Estate':35} | {money(self.real_estate_h_var)}")
 
-        print('Wife\n')
+        print("Wife\n")
         print(f"{'Equity Tax-Deferred':35} | {money(self.equity_pre_w_var)}")
         print(f"{'Equity Taxable':35} | {money(self.equity_post_w_var)}")
         print(f"{'Bond Tax-Deferred':35} | {money(self.bond_pre_w_var)}")
@@ -560,7 +602,7 @@ class PortfolioSimulatorGUI_IOMixin:
         print(f"{'Include RMDs':35} | {bool_str(self.include_rmd_var)}")
         print(f"{'Show Sub Categories':35} | {bool_str(self.show_sub_categories_var)}")
         print(f"{'Show Husband/Wife Assets':35} | {bool_str(self.show_husband_wife_assets_var)}")
-        print(f"{'Show Tax-Deferred/Taxable Assets':35} | {bool_str(self.show_pre_post_tax_assets_var)}")        
+        print(f"{'Show Tax-Deferred/Taxable Assets':35} | {bool_str(self.show_pre_post_tax_assets_var)}")
         print(f"{'Annotate Plots':35} | {bool_str(self.annotate_plots_var)}")
         print(f"{'Constant Y Plots':35} | {bool_str(self.constant_y_plots_var)}")
         print(f"{'Rebalance Every Year':35} | {bool_str(self.rebalance_every_year_var)}")
@@ -592,7 +634,7 @@ class PortfolioSimulatorGUI_IOMixin:
 
         # Second person enabled
         print(f"{'Enable Second Person':35} | {bool_str(self.second_person_enabled)}")
-    
+
         # Footer
         print("-"*60 + "\n")
 
@@ -621,5 +663,5 @@ def print_simulation_members(sim_obj):
             continue
         if attr not in vars(sim_obj):
             print(attr)
-    
+
     print("="*60 + "\n")

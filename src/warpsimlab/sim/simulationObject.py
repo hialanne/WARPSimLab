@@ -1,7 +1,28 @@
 # simulationObject.py
 
+# -----------------------------------------------------------------------------
+# Architectural debt - Simulation cleanup after mortality / IRMAA
+# -----------------------------------------------------------------------------
+#
+# After mortality and IRMAA work is complete, review the Simulation object and:
+#
+# - classify fields as configuration, runtime state, or results/output state
+# - identify fields added for mortality
+# - identify IRMAA lookback/history state
+# - separate persistent user inputs from derived simulation state
+# - remove temporary dynamic/runtime attributes where practical
+# - reconsider ownership of per-person state
+#
+# Mortality and IRMAA are intentionally being implemented before this cleanup.
+# These features should expose the actual state and ownership requirements and
+# provide concrete evidence for a later refactor rather than designing a new
+# architecture prematurely.
+#
+# -----------------------------------------------------------------------------
+
 import numpy as np
 from src.warpsimlab.utils.constants import EQUITY_MEAN, BOND_MEAN, CASH_MEAN, EQUITY_STD, BOND_STD, CASH_STD
+
 
 class Simulation:
     def __init__(self, start_year, years_to_simulate, inflation_rate, num_sims, 
@@ -64,7 +85,9 @@ class Simulation:
             historical_window_stride=1,
             warpsimlab_version="Unknown",
             loaded_data_file=None,
-            inflation_delta=0.0
+            inflation_delta=0.0,
+            irmaa_enabled=False,
+            historical_magi=None
     ):
 
 
@@ -99,6 +122,16 @@ class Simulation:
         self.second_person_enabled = second_person_enabled
         self.husband_portfolio = husband_portfolio
         self.wife_portfolio = wife_portfolio
+
+        self.irmaa_enabled = bool(irmaa_enabled)
+
+        if historical_magi is None:
+            historical_magi = {}
+
+        self.historical_magi = {
+            "two_years_prior": historical_magi.get("two_years_prior"),
+            "one_year_prior": historical_magi.get("one_year_prior"),
+        }
 
         if special_income_streams is None:
             special_income_streams = []

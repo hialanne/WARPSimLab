@@ -106,6 +106,9 @@ class PortfolioSimulatorGUI(
             annual_hsa_contribution=DEFAULT_HUSBAND_HSA_CONTRIB,
             annual_hsa_employer_contribution=DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB,
             pension_inflation_adjustment_pct=DEFAULT_HUSBAND_PENSION_INFLATION_ADJ,
+            modeled_death_age=None,
+            medicare_start_age=65,
+            medicare_annual_cost=0.0,
         )
 
         self.wife = Person(
@@ -123,6 +126,9 @@ class PortfolioSimulatorGUI(
             annual_hsa_contribution=DEFAULT_WIFE_HSA_CONTRIB,
             annual_hsa_employer_contribution=DEFAULT_WIFE_HSA_EMPLOYER_CONTRIB,
             pension_inflation_adjustment_pct=DEFAULT_WIFE_PENSION_INFLATION_ADJ,
+            modeled_death_age=None,
+            medicare_start_age=65,
+            medicare_annual_cost=0.0,
         )
 
         self.husband_portfolio = Portfolio(
@@ -214,6 +220,7 @@ class PortfolioSimulatorGUI(
         # Default simulation settings
         self.simulation_settings = {
             "start_year": datetime.now().year,
+            "longevity_mode": "fixed_years",
             "years_to_simulate": DEFAULT_YEARS,
             "num_sims": DEFAULT_SIMULATIONS,
             "fund_expense": DEFAULT_FUND_EXPENSE,
@@ -228,6 +235,7 @@ class PortfolioSimulatorGUI(
 
         self.simulation_controls = {
             "second_person_enabled": bool(DEFAULT_ENABLE_SECOND_PERSON),
+            "irmaa_enabled": False,
             "include_realestate": False,
             "inflation_mode": "real",
             "results_mode": "fill",
@@ -265,6 +273,11 @@ class PortfolioSimulatorGUI(
             "always_use_expense_mode": True,
             "annotate_plots": False,
             "user_annotation_strings": [],
+        }
+        
+        self.historical_magi = {
+            "two_years_prior": None,
+            "one_year_prior": None,
         }
 
         self.report_options = {

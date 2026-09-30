@@ -21,21 +21,10 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
     }
     """
 
-    def __init__(
-        self,
-        parent,
-        persons,
-        simulation_controls=None,
-        refresh_callback=None,
-        title="Edit Person",
-        mode="Basic",
-        **kwargs
-    ):
+    def __init__(self, parent, persons, title="Edit Person", mode="Basic", **kwargs):
         super().__init__(parent, padding=10, **kwargs)
         self.persons = persons
         self.title = title
-        self.simulation_controls = simulation_controls
-        self.refresh_callback = refresh_callback
         self.mode = mode
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
@@ -50,15 +39,6 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
         self._register_scalable_font(self._person_header_font)
         self._apply_gui_scale()
 
-        self._enable_second_person_var = tk.BooleanVar(
-            value=self.simulation_controls["second_person_enabled"]
-        )
-
-        self._enable_second_person_var.trace_add(
-            "write",
-            self._on_enable_second_person_changed
-        )
-
         def fmt_money(value):
             return f"{float(value):,.0f}"
 
@@ -66,7 +46,6 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
         self.vars = {}
         for key, person in persons.items():
             self.vars[key] = {
-                "age": tk.StringVar(value=str(person.age)),
                 "income": tk.StringVar(value=fmt_money(person.income)),
                 "retire_age": tk.StringVar(value=str(person.retire_age)),
                 "ss": tk.StringVar(value=fmt_money(person.ss)),
@@ -103,32 +82,17 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
 
         ttk.Label(
             header_frame,
-            text="Cash Flow > Normal Income",
+            text="Household > Normal Income",
             font=self._header_font,
         ).pack(side="left")
 
         ttk.Label(
             header_frame,
-            text=(
-                " - Defines each person's age, income, and retirement timeline "
-                "used in the simulation."
-            ),
+            text=" - Defines each person's income and retirement timeline used in the simulation.",
         font=self._header_text_font,
         ).pack(side="left")
 
         self._build_fields()
-
-
-    def _apply_scaled_styles(self):
-        ttk.Style(self).configure("NormalIncome.TCheckbutton", font=self._body_font)
-
-
-    def _on_enable_second_person_changed(self, *_):
-        new_value = self._enable_second_person_var.get()
-        self.simulation_controls["second_person_enabled"] = new_value
-
-        if self.refresh_callback:
-            self.refresh_callback()
 
 
     def _build_fields(self):
@@ -159,7 +123,6 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
         row += 1
 
         fields_full_left = [
-            ("Age", "age", "Current age in years"),
             ("Income ($)", "income", "Annual gross earned income"),
             ("Retirement Age", "retire_age", "Age at which earned income stops"),
             (
@@ -201,7 +164,6 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
 
 
         fields_basic = [
-            ("Age", "age", "Current age in years"),
             ("Income ($)", "income", "Annual gross earned income"),
             ("Retirement Age", "retire_age", "Age at which earned income stops"),
             ("Social Security ($)", "ss", "Annual Social Security benefit"),
@@ -266,18 +228,9 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
             # Continue after whichever block is taller
             row = max(row, right_row)
 
-        ttk.Checkbutton(self, text="Enable Second Person", variable=self._enable_second_person_var,
-                        style="NormalIncome.TCheckbutton").grid(row=row, column=0, columnspan=6,
-                                                               sticky="w", padx=5, pady=(8, 4))
 
     def _parse_person_field(self, field_key, raw_value):
-        int_fields = {
-            "age",
-            "retire_age",
-            "ss_age",
-            "pension_age",
-            "annuity_age",
-        }
+        int_fields = {"retire_age", "ss_age", "pension_age", "annuity_age"}
 
         nonnegative_float_fields = {
             "income",
@@ -306,7 +259,6 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
 
     def _person_field_label(self, field_key):
         labels = {
-            "age": "Age",
             "income": "Income",
             "retire_age": "Retirement Age",
             "ss": "Social Security",
@@ -325,13 +277,7 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _format_person_field(self, field_key, value):
-        int_fields = {
-            "age",
-            "retire_age",
-            "ss_age",
-            "pension_age",
-            "annuity_age",
-        }
+        int_fields = {"retire_age", "ss_age", "pension_age", "annuity_age"}
 
         money_fields = {
             "income",

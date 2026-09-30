@@ -169,7 +169,6 @@ def test_edit_person_data(monkeypatch, second_person):
     if second_person:
         assert persons["wife"] is gui.wife
 
-    assert frame.kwargs["simulation_controls"] is gui.simulation_controls
     assert frame.kwargs["mode"] == "Advanced"
 
 
