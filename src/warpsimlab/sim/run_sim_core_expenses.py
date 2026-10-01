@@ -55,9 +55,11 @@ def simulate_expense_year(
     curr_w_age,
     year_returns,
     second_person_enabled,
+    husband_alive,
+    wife_alive,
+    survivor_expense_factor,
     irmaa_result,
 ):
-
     # -------------------------------------------------------------------------
     # Expense-mode yearly flow
     # -------------------------------------------------------------------------
@@ -107,18 +109,21 @@ def simulate_expense_year(
     # -------------------------------------------------------------------------
 
     # RMDs
-    rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
-    withdrawalEngine.withdraw_rmds(h_port, rmd_h)
+    rmd_h = 0.0
+    if husband_alive:
+        rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
+        withdrawalEngine.withdraw_rmds(h_port, rmd_h)
 
-    rmd_w = 0
-    if second_person_enabled:
+    rmd_w = 0.0
+    if second_person_enabled and wife_alive:
         rmd_w = withdrawalEngine.calculate_rmds(w_port, wife, curr_w_age, sim_config)
         withdrawalEngine.withdraw_rmds(w_port, rmd_w)
 
     # Income breakdown
     income = incomeEngine.calculate_income_breakdown(
-        husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year, sim_config
-    )
+        husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year,
+        husband_alive, wife_alive, sim_config)
+
     income["by_class"]["roth_conversion"] = 0.0
 
     (
@@ -154,8 +159,8 @@ def simulate_expense_year(
 
     # 401k contributions
     h_401k_employee, h_401k_employer = incomeEngine.calculate_pre_tax_401k_contributions(
-        husband, curr_h_age, year, sim_config
-    )
+        husband, curr_h_age, year, husband_alive, sim_config)
+
     incomeEngine.apply_employee_401k_to_income(income, h_401k_employee, "husband")
     portfolioEngine.apply_pre_tax_contribution(h_port, h_401k_employee + h_401k_employer)
 
@@ -164,15 +169,15 @@ def simulate_expense_year(
 
     if second_person_enabled:
         w_401k_employee, w_401k_employer = incomeEngine.calculate_pre_tax_401k_contributions(
-            wife, curr_w_age, year, sim_config
-        )
+            wife, curr_w_age, year, wife_alive, sim_config)
+
         incomeEngine.apply_employee_401k_to_income(income, w_401k_employee, "wife")
         portfolioEngine.apply_pre_tax_contribution(w_port, w_401k_employee + w_401k_employer)
 
     # HSA contributions
     h_hsa = hsaEngine.calculate_hsa_contributions(
-        husband, curr_h_age, year, payroll_wages_husband, h_401k_employee, sim_config
-    )
+        husband, curr_h_age, year, payroll_wages_husband, h_401k_employee, husband_alive, sim_config)
+
     hsaEngine.apply_employee_hsa_to_income(income, h_hsa["employee"], "husband")
     hsaEngine.deposit_hsa_contributions(h_port, h_hsa)
     payroll_wages_husband = max(0.0, payroll_wages_husband - h_hsa["employee"])
@@ -181,8 +186,8 @@ def simulate_expense_year(
 
     if second_person_enabled:
         w_hsa = hsaEngine.calculate_hsa_contributions(
-            wife, curr_w_age, year, payroll_wages_wife, w_401k_employee, sim_config
-        )
+            wife, curr_w_age, year, payroll_wages_wife, w_401k_employee, wife_alive, sim_config)
+
         hsaEngine.apply_employee_hsa_to_income(income, w_hsa["employee"], "wife")
         hsaEngine.deposit_hsa_contributions(w_port, w_hsa)
         payroll_wages_wife = max(0.0, payroll_wages_wife - w_hsa["employee"])
@@ -195,6 +200,8 @@ def simulate_expense_year(
         payroll_wages_husband=payroll_wages_husband,
         payroll_wages_wife=payroll_wages_wife,
         second_person_enabled=second_person_enabled,
+        husband_alive=husband_alive,
+        wife_alive=wife_alive,
         sim_config=sim_config,
     )
 
@@ -228,11 +235,15 @@ def simulate_expense_year(
     )
     # Baseline Medicare insurance costs
     medicare_cost = medicareEngine.calculate_household_medicare_cost(
-        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, sim_config
-    )
+        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config)
 
     # User expenses and qualified HSA expenses
     expense_breakdown = expenseEngine.calculate_expense_breakdown(expenses, year, sim_config)
+
+    expense_breakdown["total"] *= survivor_expense_factor
+    expense_breakdown["hsa_eligible"] *= survivor_expense_factor
+    expense_breakdown["non_hsa"] *= survivor_expense_factor
+
     expense_amt = expense_breakdown["total"]
 
     qualified_hsa_result = hsaEngine.pay_qualified_hsa_expenses(

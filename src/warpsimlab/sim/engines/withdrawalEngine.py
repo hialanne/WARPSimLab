@@ -289,34 +289,27 @@ def calculate_retirement_withdrawal(
         "rmd_by_person": {"husband": rmd_h, "wife": rmd_w},
     }
 
-def use_expenses_this_year(sim_config, husband, wife, year):
+def use_expenses_this_year(sim_config, husband, wife, year, husband_alive, wife_alive):
     """
     Determine whether manual expenses should be used for this simulation year.
-    Manual expenses are used until both husband and wife are retired.
 
-    Args:
-        sim_config: Simulation configuration object
-        husband: Person object
-        wife: Person object
-        year: int, current year of the simulation (0-based)
-
-    Returns:
-        bool: True if manual expenses should be used this year, False for retirement withdrawals
+    Expense mode remains active while any living household member has not
+    retired. A deceased household member does not affect mode selection.
     """
     if sim_config.always_use_expense_mode:
         return True
 
-    # Current ages
     curr_h_age = husband.age + year
-    curr_w_age = wife.age + year if sim_config.second_person_enabled else 0
 
-    # Check retirement status
-    if sim_config.second_person_enabled:
-        both_retired = curr_h_age >= husband.retire_age and curr_w_age >= wife.retire_age
-    else:
-        both_retired = curr_h_age >= husband.retire_age
+    if husband_alive and curr_h_age < husband.retire_age:
+        return True
 
-    return not both_retired
+    if sim_config.second_person_enabled and wife_alive:
+        curr_w_age = wife.age + year
+        if curr_w_age < wife.retire_age:
+            return True
+
+    return False
 
 
 

@@ -157,7 +157,8 @@ def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
     monkeypatch.setattr(
         mod.incomeEngine,
         "calculate_income_breakdown",
-        lambda h, w, ha, wa, rmd_h, rmd_w, year, cfg: _income(rmd_h + rmd_w, rmd_h, rmd_w),
+        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg:
+            _income(rmd_h + rmd_w, rmd_h, rmd_w),
     )
     monkeypatch.setattr(
         mod.expenseEngine,
@@ -183,6 +184,9 @@ def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
         72,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         True,
+        True,
+        True,
+        1.0,
         _zero_irmaa(),
     )
 
@@ -236,6 +240,9 @@ def test_expense_year_emergency_pre_tax_draw_recomputes_tax_and_is_reported(mod,
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        True,
+        False,
+        1.0,
         _zero_irmaa(),
     )
 
@@ -295,6 +302,9 @@ def test_expense_year_distinguishes_qualified_and_taxable_hsa_withdrawals(mod, m
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        True,
+        False,
+        1.0,
         _zero_irmaa(),
     )
 
@@ -360,6 +370,9 @@ def test_expense_year_reduces_roth_contributions_before_reporting_uncovered(mod,
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        True,
+        False,
+        1.0,
         _zero_irmaa(),
     )
 
@@ -407,6 +420,9 @@ def test_expense_year_applies_price_return_and_rebalances_both_people(mod, monke
         60,
         {"eq": 0.08, "bd": 0.03, "cs": 0.01, "re": 0.04},
         True,
+        True,
+        True,
+        1.0,
         _zero_irmaa(),
     )
 

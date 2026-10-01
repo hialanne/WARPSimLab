@@ -25,6 +25,7 @@ class PersonStub:
         pension_inflation_adjustment_pct=0.0,
         medicare_start_age=65,
         medicare_annual_cost=0.0,
+        modeled_death_age=None,
     ):
         self.age = age
         self.retire_age = retire_age
@@ -42,6 +43,7 @@ class PersonStub:
         self.pension_inflation_adjustment_pct = pension_inflation_adjustment_pct
         self.medicare_start_age = medicare_start_age
         self.medicare_annual_cost = medicare_annual_cost
+        self.modeled_death_age = modeled_death_age
 
 class PortfolioStub:
     def __init__(

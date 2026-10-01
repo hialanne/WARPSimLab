@@ -260,6 +260,7 @@ def test_couple_roth_shortfall_preserves_owner_and_flow_type_allocation():
     wife = make_person(age=40)
 
     rothEngine.initialize_roth_engine_for_simulation(config, husband, wife)
+
     requested = rothEngine.prepare_requested_roth_flows(
         curr_husband_age=41,
         curr_wife_age=41,
@@ -267,8 +268,11 @@ def test_couple_roth_shortfall_preserves_owner_and_flow_type_allocation():
         payroll_wages_husband=20_000.0,
         payroll_wages_wife=20_000.0,
         second_person_enabled=True,
+        husband_alive=True,
+        wife_alive=True,
         sim_config=config,
     )
+    
     resolved = rothEngine.resolve_contribution_shortfall(
         requested_flows=requested,
         uncovered_amount=4_000.0,

@@ -99,19 +99,26 @@ def _build_special_income_factor(sim_config, adjustment_mode, adjustment_pct, st
     return start_factor * (1.0 + annual_step) ** years_since_start
 
 
-def _calculate_special_income_for_year(curr_husband_age, curr_wife_age, year, sim_config):
+def _calculate_special_income_for_year(
+    curr_husband_age,
+    curr_wife_age,
+    year,
+    husband_alive,
+    wife_alive,
+    sim_config,
+):
     """
     Calculate special income streams for the current simulation year.
 
     Special income:
       - is age-based by owner
+      - stops when the owner is deceased
       - uses an amount entered in today's dollars
       - is inflated to nominal dollars through the year the stream begins
       - after starting, may follow inflation, a fixed annual increase, or no further increase
       - may be taxable or non-taxable
       - is not payroll wage income
     """
-
     taxable_special_income = 0.0
     non_taxable_special_income = 0.0
     husband_special_income = 0.0
@@ -125,10 +132,14 @@ def _calculate_special_income_for_year(curr_husband_age, curr_wife_age, year, si
 
         owner = stream.get("owner", "husband")
 
-        if owner == "wife" and not sim_config.second_person_enabled:
-            continue
-
-        owner_age = curr_wife_age if owner == "wife" else curr_husband_age
+        if owner == "wife":
+            if not sim_config.second_person_enabled or not wife_alive:
+                continue
+            owner_age = curr_wife_age
+        else:
+            if not husband_alive:
+                continue
+            owner_age = curr_husband_age
 
         start_age = int(stream.get("start_age", 0))
         end_age = int(stream.get("end_age", 120))
@@ -202,68 +213,58 @@ def initialize_income_engine_for_simulation(husband, wife, sim_config):
         wife._ss_start_age = wife.ss_age if wife.ss_age <= 70 else 70
 
 
-def calculate_income(husband, wife, curr_husband_age, curr_wife_age,
-                     rmd_h, rmd_w, year, sim_config):
-    """
-    Calculate total income for husband and (optionally) wife in a given year.
-    Includes work income, pension, annuity, Social Security, and RMDs.
-    """
-    _ensure_income_engine_initialized(husband, wife, sim_config)
-
-    second_person_enabled = sim_config.second_person_enabled
-
-    # Husband's income
+def _calculate_social_security_for_year(
+    husband,
+    wife,
+    curr_husband_age,
+    curr_wife_age,
+    year,
+    husband_alive,
+    wife_alive,
+    sim_config,
+):
     income_factor = sim_config._income_inflation_factors[year]
-    pension_factor = sim_config._husband_pension_factors[year]
 
-    husband_income = rmd_h
+    husband_ss = 0.0
+    wife_ss = 0.0
 
-    if curr_husband_age < husband.retire_age:
-        husband_income += husband.income * income_factor
+    if not sim_config.second_person_enabled:
+        if husband_alive and curr_husband_age >= husband._ss_start_age:
+            husband_ss = husband.ss * income_factor
+        return husband_ss, wife_ss
 
-    if curr_husband_age >= husband._ss_start_age:
-        husband_income += husband.ss * income_factor
-
-    if curr_husband_age >= husband.pension_age:
-        husband_income += husband.pension * pension_factor
-
-    if curr_husband_age >= husband.annuity_age:
-        husband_income += husband.annuity
-
-    # Wife's income (if applicable)
-    wife_income = 0.0
-    if second_person_enabled:
-        income_factor = sim_config._income_inflation_factors[year]
-        pension_factor = sim_config._wife_pension_factors[year]
-
-        wife_income = rmd_w
-
-        if curr_wife_age < wife.retire_age:
-            wife_income += wife.income * income_factor
+    if husband_alive and wife_alive:
+        if curr_husband_age >= husband._ss_start_age:
+            husband_ss = husband.ss * income_factor
 
         if curr_wife_age >= wife._ss_start_age:
-            wife_income += wife.ss * income_factor
+            wife_ss = wife.ss * income_factor
 
-        if curr_wife_age >= wife.pension_age:
-            wife_income += wife.pension * pension_factor
+        return husband_ss, wife_ss
 
-        if curr_wife_age >= wife.annuity_age:
-            wife_income += wife.annuity
+    survivor_benefit = max(husband.ss, wife.ss) * income_factor
 
-    special_income = _calculate_special_income_for_year(
-        curr_husband_age,
-        curr_wife_age,
-        year,
-        sim_config,
-    )
+    if husband_alive and curr_husband_age >= husband._ss_start_age:
+        husband_ss = survivor_benefit
 
-    return husband_income + wife_income + special_income["total"]
+    if wife_alive and curr_wife_age >= wife._ss_start_age:
+        wife_ss = survivor_benefit
+
+    return husband_ss, wife_ss
 
 
-def calculate_income_breakdown(husband, wife,
-                               curr_husband_age, curr_wife_age,
-                               rmd_h, rmd_w,
-                               year, sim_config):
+def calculate_income_breakdown(
+    husband,
+    wife,
+    curr_husband_age,
+    curr_wife_age,
+    rmd_h,
+    rmd_w,
+    year,
+    husband_alive,
+    wife_alive,
+    sim_config,
+):
     """
     Returns structured income data:
       - total household income
@@ -276,19 +277,10 @@ def calculate_income_breakdown(husband, wife,
 
     if not second_person_enabled:
         rmd_w = 0.0
+        wife_alive = False
 
     income_factor = sim_config._income_inflation_factors[year]
     h_pension_factor = sim_config._husband_pension_factors[year]
-
-    h_retire_age = husband.retire_age
-    h_income = husband.income
-    h_ss_start_age = husband._ss_start_age
-
-    h_ss = husband.ss
-    h_pension_age = husband.pension_age
-    h_pension = husband.pension
-    h_annuity_age = husband.annuity_age
-    h_annuity = husband.annuity
 
     work = 0.0
     pension = 0.0
@@ -300,71 +292,66 @@ def calculate_income_breakdown(husband, wife,
     bond_interest = 0.0
     cash_interest = 0.0
     qualified_equity_distributions = 0.0
-    special_income_amt = 0.0
-    non_taxable_income = 0.0
 
     husband_income = rmd_h
     wife_income = rmd_w
 
-    # Husband
-    if curr_husband_age < h_retire_age:
-        amt = h_income * income_factor
-        work += amt
-        husband_income += amt
+    husband_work = 0.0
+    wife_work = 0.0
 
-    if curr_husband_age >= h_ss_start_age:
-        amt = h_ss * income_factor
-        ss += amt
-        husband_income += amt
+    if husband_alive:
+        if curr_husband_age < husband.retire_age:
+            husband_work = husband.income * income_factor
+            work += husband_work
+            husband_income += husband_work
 
-    if curr_husband_age >= h_pension_age:
-        amt = h_pension * h_pension_factor
-        pension += amt
-        husband_income += amt
+        if curr_husband_age >= husband.pension_age:
+            amt = husband.pension * h_pension_factor
+            pension += amt
+            husband_income += amt
 
-    if curr_husband_age >= h_annuity_age:
-        amt = h_annuity
-        annuity += amt
-        husband_income += amt
+        if curr_husband_age >= husband.annuity_age:
+            annuity += husband.annuity
+            husband_income += husband.annuity
 
-    # Wife
-    if second_person_enabled:
+    if second_person_enabled and wife_alive:
         w_pension_factor = sim_config._wife_pension_factors[year]
 
-        w_retire_age = wife.retire_age
-        w_income = wife.income
-        w_ss_start_age = wife._ss_start_age
+        if curr_wife_age < wife.retire_age:
+            wife_work = wife.income * income_factor
+            work += wife_work
+            wife_income += wife_work
 
-        w_ss = wife.ss
-        w_pension_age = wife.pension_age
-        w_pension = wife.pension
-        w_annuity_age = wife.annuity_age
-        w_annuity = wife.annuity
-
-        if curr_wife_age < w_retire_age:
-            amt = w_income * income_factor
-            work += amt
-            wife_income += amt
-
-        if curr_wife_age >= w_ss_start_age:
-            amt = w_ss * income_factor
-            ss += amt
-            wife_income += amt
-
-        if curr_wife_age >= w_pension_age:
-            amt = w_pension * w_pension_factor
+        if curr_wife_age >= wife.pension_age:
+            amt = wife.pension * w_pension_factor
             pension += amt
             wife_income += amt
 
-        if curr_wife_age >= w_annuity_age:
-            amt = w_annuity
-            annuity += amt
-            wife_income += amt
+        if curr_wife_age >= wife.annuity_age:
+            annuity += wife.annuity
+            wife_income += wife.annuity
+
+    husband_ss, wife_ss = _calculate_social_security_for_year(
+        husband,
+        wife,
+        curr_husband_age,
+        curr_wife_age,
+        year,
+        husband_alive,
+        wife_alive,
+        sim_config,
+    )
+
+    ss = husband_ss + wife_ss
+    husband_income += husband_ss
+    wife_income += wife_ss
 
     special_income = _calculate_special_income_for_year(
         curr_husband_age,
         curr_wife_age,
         year,
+        husband_alive,
+        wife_alive,
         sim_config,
     )
 
@@ -393,26 +380,15 @@ def calculate_income_breakdown(husband, wife,
             "qualified_equity_distributions": qualified_equity_distributions,
             "special_income": special_income_amt,
         },
-        
         "non_taxable_income": non_taxable_income,
-
         "by_person": {
             "husband": husband_income,
             "wife": wife_income,
         },
-
         "work_by_person": {
-            "husband": (
-                h_income * income_factor
-                if curr_husband_age < h_retire_age
-                else 0.0
-            ),
-            "wife": (
-                w_income * income_factor
-                if second_person_enabled and curr_wife_age < w_retire_age
-                else 0.0
-            ),
-        }
+            "husband": husband_work,
+            "wife": wife_work,
+        },
     }
 
 
@@ -440,7 +416,7 @@ def calculate_social_security(husband, wife, year, sim_config):
     return husband_ss_infl, wife_ss_infl
 
 
-def calculate_pre_tax_401k_contributions(person, current_age, year, sim_config):
+def calculate_pre_tax_401k_contributions(person, current_age, year, alive, sim_config):
     """
     Returns
     -------
@@ -451,6 +427,9 @@ def calculate_pre_tax_401k_contributions(person, current_age, year, sim_config):
     if not hasattr(sim_config, "_income_inflation_factors"):
         diagnosticEngine.raise_internal_error("Income engine not initialized before 401(k) contribution calculation.", sim_config,
                                               context={"year": year, "current_age": current_age})
+
+    if not alive:
+        return 0.0, 0.0
 
     if current_age >= person.retire_age:
         return 0.0, 0.0

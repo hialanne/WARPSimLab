@@ -29,6 +29,7 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
 
         results = {
             "year": np.array([[2030.0, 2031.0, 2032.0, 2033.0]]),
+            "effective_years": years_to_simulate,
             "total_assets": baseline_total_assets.copy(),
             "pre_tax_assets": np.array([[55.0, 54.0, 53.0, 52.0]]),
             "post_tax_assets": np.array([[45.0, 45.0, 45.0, 45.0]]),

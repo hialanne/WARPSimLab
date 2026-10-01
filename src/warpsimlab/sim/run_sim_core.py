@@ -11,6 +11,7 @@ from .engines import (
     monteCarloEngine,
     rothEngine,
     medicareEngine,
+    mortalityEngine,
     diagnosticEngine,
 )
 
@@ -36,12 +37,115 @@ def _find_first_withdrawal_year(sim_config, husband, wife, years_to_simulate):
         never enters withdrawal mode within the modeled horizon.
     """
     for year in range(1, years_to_simulate + 1):
-        use_expenses = withdrawalEngine.use_expenses_this_year(
-            sim_config, husband, wife, year
+        curr_h_age = husband.age + year
+        curr_w_age = 0
+
+        if sim_config.second_person_enabled:
+            curr_w_age = wife.age + year
+
+        mortality_state = mortalityEngine.get_household_mortality_state(
+            husband, wife, curr_h_age, curr_w_age, sim_config.second_person_enabled
         )
+
+        use_expenses = withdrawalEngine.use_expenses_this_year(
+            sim_config,
+            husband,
+            wife,
+            year,
+            mortality_state["husband_alive"],
+            mortality_state["wife_alive"],
+        )
+
         if not use_expenses:
             return year
+
     return None
+
+
+def _store_terminal_portfolio_state(results, sim_index, year, h_port, w_port, second_person_enabled, sim_config):
+    total_assets = h_port.total_value
+    pre_tax = h_port.total_value_pre
+    post_tax = h_port.total_value_post
+    roth = h_port.total_value_roth
+    hsa = h_port.total_value_hsa
+
+    pre_tax_equity = h_port.eq_pre
+    pre_tax_bonds = h_port.bd_pre
+    pre_tax_cash = h_port.cs_pre
+
+    post_tax_equity = h_port.eq_post
+    post_tax_bonds = h_port.bd_post
+    post_tax_cash = h_port.cs_post
+
+    roth_equity = h_port.eq_roth
+    roth_bonds = h_port.bd_roth
+    roth_cash = h_port.cs_roth
+
+    hsa_equity = h_port.hsa_eq
+    hsa_bonds = h_port.hsa_bd
+    hsa_cash = h_port.hsa_cs
+
+    cash = h_port.total_value_cash
+    bonds = h_port.total_value_bonds
+    real_estate = h_port.re_post
+
+    if second_person_enabled:
+        total_assets += w_port.total_value
+        pre_tax += w_port.total_value_pre
+        post_tax += w_port.total_value_post
+        roth += w_port.total_value_roth
+        hsa += w_port.total_value_hsa
+
+        pre_tax_equity += w_port.eq_pre
+        pre_tax_bonds += w_port.bd_pre
+        pre_tax_cash += w_port.cs_pre
+
+        post_tax_equity += w_port.eq_post
+        post_tax_bonds += w_port.bd_post
+        post_tax_cash += w_port.cs_post
+
+        roth_equity += w_port.eq_roth
+        roth_bonds += w_port.bd_roth
+        roth_cash += w_port.cs_roth
+
+        hsa_equity += w_port.hsa_eq
+        hsa_bonds += w_port.hsa_bd
+        hsa_cash += w_port.hsa_cs
+
+        cash += w_port.total_value_cash
+        bonds += w_port.total_value_bonds
+        real_estate += w_port.re_post
+
+    if sim_config.include_realestate:
+        total_assets += real_estate
+
+    results["year"][sim_index,year] = sim_config.start_year + year
+    results["total_assets"][sim_index,year] = total_assets
+    results["pre_tax_assets"][sim_index,year] = pre_tax
+    results["post_tax_assets"][sim_index,year] = post_tax
+    results["roth_assets"][sim_index,year] = roth
+    results["hsa_assets"][sim_index,year] = hsa
+
+    results["pre_tax_equity"][sim_index,year] = pre_tax_equity
+    results["pre_tax_bonds"][sim_index,year] = pre_tax_bonds
+    results["pre_tax_cash"][sim_index,year] = pre_tax_cash
+
+    results["post_tax_equity"][sim_index,year] = post_tax_equity
+    results["post_tax_bonds"][sim_index,year] = post_tax_bonds
+    results["post_tax_cash"][sim_index,year] = post_tax_cash
+
+    results["roth_equity"][sim_index,year] = roth_equity
+    results["roth_bonds"][sim_index,year] = roth_bonds
+    results["roth_cash"][sim_index,year] = roth_cash
+
+    results["hsa_equity"][sim_index,year] = hsa_equity
+    results["hsa_bonds"][sim_index,year] = hsa_bonds
+    results["hsa_cash"][sim_index,year] = hsa_cash
+
+    results["cash"][sim_index,year] = cash
+    results["bonds"][sim_index,year] = bonds
+    results["real_estate"][sim_index,year] = real_estate
+
 
 def simulate_yearly_portfolios(
     husband_portfolio,
@@ -217,6 +321,15 @@ def simulate_yearly_portfolios(
         "irmaa": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "irmaa_lookback_magi": np.full((effective_num_sims, years_to_simulate + 1), np.nan),
         "irmaa_lookback_available": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
+        "husband_alive": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
+        "wife_alive": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
+        "husband_death_event": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
+        "wife_death_event": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
+        "survivor_state": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
+        "survivor_expense_factor": np.ones((effective_num_sims, years_to_simulate + 1)),
+        "filing_status_single": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
+        "terminal_year": np.full((effective_num_sims,), -1, dtype=int),
+        "effective_end_index": np.full((effective_num_sims,), years_to_simulate, dtype=int),
         "state_income_tax": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "emergency_pre_tax_used": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "final_tax_delta": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -354,26 +467,106 @@ def simulate_yearly_portfolios(
         results["cash"][s,0] = h_port.total_value_cash + (w_port.total_value_cash if second_person_enabled else 0)
         results["bonds"][s,0] = h_port.total_value_bonds + (w_port.total_value_bonds if second_person_enabled else 0)
         results["real_estate"][s,0] = h_port.re_post + (w_port.re_post if second_person_enabled else 0)
+        mortality_state = mortalityEngine.get_household_mortality_state(
+            husband, wife, husband.age, wife.age, second_person_enabled
+        )
+
+        results["husband_alive"][s,0] = mortality_state["husband_alive"]
+        results["wife_alive"][s,0] = mortality_state["wife_alive"]
+        results["survivor_state"][s,0] = mortality_state["survivor_state"]
+        results["survivor_expense_factor"][s,0] = mortality_state["survivor_expense_factor"]
+
+        if second_person_enabled:
+            results["filing_status_single"][s,0] = sim_config.tax_filing_status == "Single"
+        else:
+            results["filing_status_single"][s,0] = True
+
+        previous_husband_alive = mortality_state["husband_alive"]
+        previous_wife_alive = mortality_state["wife_alive"]
+
+        if mortality_state["household_members_alive"] == 0:
+            results["terminal_year"][s] = sim_config.start_year
+            results["effective_end_index"][s] = 0
+            continue
 
         sim_config._ret_withdraw_base_dollars = None
         sim_config._ret_withdraw_base_year = None
 
         # Years 1..N
         for year in range(1, years_to_simulate + 1):
-            year_cache = taxEngine.prepare_tax_year_cache(year, sim_config)
-            
             curr_h_age = husband.age + year
             curr_w_age = wife.age + year if second_person_enabled else 0
 
-            use_expenses = withdrawalEngine.use_expenses_this_year(sim_config, husband, wife, year)
+            mortality_state = mortalityEngine.get_household_mortality_state(
+                husband, wife, curr_h_age, curr_w_age, second_person_enabled
+            )
+
+            death_events = mortalityEngine.detect_death_events(
+                previous_husband_alive,
+                previous_wife_alive,
+                mortality_state,
+                second_person_enabled,
+            )
+
+            results["husband_alive"][s,year] = mortality_state["husband_alive"]
+            results["wife_alive"][s,year] = mortality_state["wife_alive"]
+            results["husband_death_event"][s,year] = death_events["husband_death_event"]
+            results["wife_death_event"][s,year] = death_events["wife_death_event"]
+            results["survivor_state"][s,year] = mortality_state["survivor_state"]
+            results["survivor_expense_factor"][s,year] = mortality_state["survivor_expense_factor"]
+
+            filing_status_single = False
+
+            if not second_person_enabled:
+                filing_status_single = True
+            elif mortality_state["household_members_alive"] == 0:
+                both_died_this_year = (
+                    death_events["husband_death_event"] and death_events["wife_death_event"]
+                )
+                if not both_died_this_year:
+                    filing_status_single = True
+            elif mortality_state["survivor_state"]:
+                first_death_this_year = (
+                    death_events["husband_death_event"] or death_events["wife_death_event"]
+                )
+                if not first_death_this_year:
+                    filing_status_single = True
+            else:
+                filing_status_single = sim_config.tax_filing_status == "Single"
+
+            results["filing_status_single"][s,year] = filing_status_single
+
+            if second_person_enabled and mortality_state["household_members_alive"] == 1:
+                if death_events["husband_death_event"]:
+                    portfolioEngine.transfer_portfolio_to_survivor(h_port, w_port)
+                elif death_events["wife_death_event"]:
+                    portfolioEngine.transfer_portfolio_to_survivor(w_port, h_port)
+
+            if mortality_state["household_members_alive"] == 0:
+                results["terminal_year"][s] = sim_config.start_year + year
+                results["effective_end_index"][s] = year
+                _store_terminal_portfolio_state(
+                    results, s, year, h_port, w_port, second_person_enabled, sim_config)
+                break
+
+            year_cache = taxEngine.prepare_tax_year_cache(year, sim_config, filing_status_single)
+
+            previous_husband_alive = mortality_state["husband_alive"]
+            previous_wife_alive = mortality_state["wife_alive"]
+
+            use_expenses = withdrawalEngine.use_expenses_this_year(
+                sim_config, husband, wife, year, mortality_state["husband_alive"], mortality_state["wife_alive"])
 
             lookback_magi, lookback_available = medicareEngine.get_irmaa_lookback_magi(
-                year, s, results, sim_config
-            )
+                year, s, results, sim_config)
+
+            lookback_filing_status_single = medicareEngine.get_irmaa_lookback_filing_status_single(
+                year, s, results, sim_config)
+
             irmaa_result = medicareEngine.calculate_household_irmaa(
                 husband, wife, curr_h_age, curr_w_age, year, second_person_enabled,
-                lookback_magi, lookback_available, sim_config
-            )
+                mortality_state["husband_alive"], mortality_state["wife_alive"],
+                lookback_magi, lookback_available, lookback_filing_status_single, sim_config)
 
             year_returns = {
                 "eq": market_path["eq"][year],
@@ -384,34 +577,14 @@ def simulate_yearly_portfolios(
 
             if use_expenses:
                 model_result = simulate_expense_year(
-                    h_port,
-                    w_port,
-                    husband,
-                    wife,
-                    expenses,
-                    sim_config,
-                    year,
-                    year_cache,
-                    curr_h_age,
-                    curr_w_age,
-                    year_returns,
-                    second_person_enabled,
-                    irmaa_result,
+                    h_port, w_port, husband, wife, expenses, sim_config, year, year_cache, curr_h_age, curr_w_age,
+                    year_returns, second_person_enabled, mortality_state["husband_alive"],
+                    mortality_state["wife_alive"], mortality_state["survivor_expense_factor"], irmaa_result
                 )
             else:
                 model_result = simulate_withdrawal_year(
-                    h_port,
-                    w_port,
-                    husband,
-                    wife,
-                    sim_config,
-                    year,
-                    year_cache,
-                    curr_h_age,
-                    curr_w_age,
-                    year_returns,
-                    second_person_enabled,
-                    irmaa_result,
+                    h_port, w_port, husband, wife, sim_config, year, year_cache, curr_h_age, curr_w_age, year_returns,
+                    second_person_enabled, mortality_state["husband_alive"], mortality_state["wife_alive"], irmaa_result
                 )
 
             income = model_result["income"]

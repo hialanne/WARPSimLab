@@ -38,6 +38,7 @@ def test_overlay_taxes_and_fund_expenses_both_off_attaches_combined_and_combined
 
         return {
             "year": np.array([[2040.0, 2041.0, 2042.0, 2043.0]]),
+            "effective_years": years_to_simulate,
             "total_assets": total_assets,
             "pre_tax_assets": np.array([[60.0, 55.0, 50.0, 45.0]]),
             "post_tax_assets": np.array([[40.0, 35.0, 30.0, 25.0]]),

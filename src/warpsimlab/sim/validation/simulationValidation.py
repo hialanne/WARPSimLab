@@ -3,6 +3,9 @@ from numbers import Integral, Real
 
 from .validationError import SimulationValidationError
 
+# STOP - Note, we need to add a validation that someone who is already dead can't be simulated.
+# Example - someone 70 years old who died at 70 years old fails validation here.
+
 
 ROTH_FLOW_TYPES = {
     "roth_ira_contribution",

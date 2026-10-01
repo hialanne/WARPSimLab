@@ -27,6 +27,7 @@ def test_overlay_taxes_off_attaches_median_without_taxes_and_exceeds_taxed_basel
 
         results = {
             "year": np.array([[2025.0, 2026.0, 2027.0, 2028.0]]),
+            "effective_years": years_to_simulate,
             "total_assets": baseline_total_assets.copy(),
             "pre_tax_assets": np.array([[60.0, 57.0, 54.0, 51.0]]),
             "post_tax_assets": np.array([[40.0, 38.0, 36.0, 34.0]]),

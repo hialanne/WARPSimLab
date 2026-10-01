@@ -336,9 +336,8 @@ def test_use_manual_expenses_true_when_manual_expenses_flag_set():
 
     cfg = make_config(second_person_enabled=True, always_use_expense_mode=True)
 
-    assert we.use_expenses_this_year(cfg, husband, wife, year=0) is True
-    assert we.use_expenses_this_year(cfg, husband, wife, year=50) is True
-
+    assert we.use_expenses_this_year(cfg, husband, wife, year=0, husband_alive=True, wife_alive=True) is True
+    assert we.use_expenses_this_year(cfg, husband, wife, year=50, husband_alive=True, wife_alive=True) is True
 
 def test_use_manual_expenses_single_person_until_retired_then_false():
     husband = make_person(age=64, retire_age=65)
@@ -346,12 +345,8 @@ def test_use_manual_expenses_single_person_until_retired_then_false():
 
     cfg = make_config(second_person_enabled=False, always_use_expense_mode=False)
 
-    # year 0 => 64 < 65 => not retired => use manual expenses => True
-    assert we.use_expenses_this_year(cfg, husband, wife, year=0) is True
-
-    # year 1 => 65 >= 65 => retired => withdrawals => False
-    assert we.use_expenses_this_year(cfg, husband, wife, year=1) is False
-
+    assert we.use_expenses_this_year(cfg, husband, wife, year=0, husband_alive=True, wife_alive=False) is True
+    assert we.use_expenses_this_year(cfg, husband, wife, year=1, husband_alive=True, wife_alive=False) is False
 
 def test_use_manual_expenses_couple_until_both_retired_then_false():
     husband = make_person(age=64, retire_age=65)
@@ -359,11 +354,6 @@ def test_use_manual_expenses_couple_until_both_retired_then_false():
 
     cfg = make_config(second_person_enabled=True, always_use_expense_mode=False)
 
-    # year 0: husband not retired => True
-    assert we.use_expenses_this_year(cfg, husband, wife, year=0) is True
-
-    # year 1: husband retired (65), wife not (61) => True
-    assert we.use_expenses_this_year(cfg, husband, wife, year=1) is True
-
-    # year 2: husband 66 retired, wife 62 retired => False
-    assert we.use_expenses_this_year(cfg, husband, wife, year=2) is False
+    assert we.use_expenses_this_year(cfg, husband, wife, year=0, husband_alive=True, wife_alive=True) is True
+    assert we.use_expenses_this_year(cfg, husband, wife, year=1, husband_alive=True, wife_alive=True) is True
+    assert we.use_expenses_this_year(cfg, husband, wife, year=2, husband_alive=True, wife_alive=True) is False

@@ -74,6 +74,9 @@ def test_all_yearly_series_share_same_time_dimension(make_case):
         "sequence_risk_end_year",
         "historical_window_start_year",
         "historical_window_end_year",
+        "terminal_year",
+        "effective_end_index",
+        "effective_years",
     }
 
     for key, value in core.items():

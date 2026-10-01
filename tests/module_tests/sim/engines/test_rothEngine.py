@@ -155,9 +155,10 @@ def test_prepare_requested_roth_flows_caps_only_workplace_contributions_by_wages
         payroll_wages_husband=5000.0,
         payroll_wages_wife=4000.0,
         second_person_enabled=True,
+        husband_alive=True,
+        wife_alive=True,
         sim_config=cfg,
     )
-
     assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["husband"] == pytest.approx(
         7000.0
     )

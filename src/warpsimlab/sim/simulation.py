@@ -17,6 +17,32 @@ def _is_historical_window_mode(sim_config):
     )
 
 
+def _trim_core_to_effective_horizon(core):
+    end_indices = np.asarray(core.get("effective_end_index", []), dtype=int)
+
+    if end_indices.size == 0:
+        return core
+
+    effective_end_index = int(end_indices[0])
+
+    if np.any(end_indices != effective_end_index):
+        raise ValueError("Mortality produced inconsistent effective horizons across simulation paths")
+
+    end = effective_end_index + 1
+    trimmed = {}
+
+    for key, value in core.items():
+        if key == "breakdown_by_class":
+            trimmed[key] = {name: series[:, :end] for name, series in value.items()}
+        elif isinstance(value, np.ndarray) and value.ndim == 2:
+            trimmed[key] = value[:, :end]
+        else:
+            trimmed[key] = value
+
+    trimmed["effective_years"] = effective_end_index
+    return trimmed
+
+
 def _extract_income_single_run(core):
     """
     Extract single-run (0th sim) income arrays for plotting.
@@ -116,10 +142,10 @@ def _build_portfolio_plot_data(core, sim_config):
     - run_sim_portfolio.py
     - gui_scenarioController.py (scenario path)
     """
-    years = sim_config.years_to_simulate
-    years_list = np.arange(0, years + 1)
 
     total_assets = core["total_assets"]
+    years = total_assets.shape[1] - 1
+    years_list = np.arange(0, years + 1)
     cash = core["cash"]
     bonds = core["bonds"]
     real_estate = core["real_estate"]
@@ -184,6 +210,8 @@ def _run_overlay_total_assets_line(husband_portfolio, wife_portfolio, husband, w
         sim_config,
         num_sims=1,
     )
+    overlay_core = _trim_core_to_effective_horizon(overlay_core)
+
     return overlay_core["total_assets"][0]
 
 
@@ -250,6 +278,8 @@ def _compute_simulated_shortfall_rate(
         sim_config.risk_analysis_mode = original_monte_carlo_mode
         sim_config.include_realestate = original_include_realestate
 
+    historical_core = _trim_core_to_effective_horizon(historical_core)
+
     total_assets = np.asarray(historical_core["total_assets"])
     if total_assets.ndim != 2:
         raise ValueError(
@@ -271,9 +301,6 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
     """
     validate_simulation_inputs(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
-    years = sim_config.years_to_simulate
-    years_list = np.arange(0, years + 1)
-
     # Centralized sim count policy (matches existing portfolio behavior)
     num_sims = sim_config.num_sims if force_num_sims is None else int(force_num_sims)
     if sim_config.results_mode != "risk_analysis":
@@ -286,14 +313,12 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
 
     # Baseline core run
     core = simulate_yearly_portfolios(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-        num_sims=num_sims,
+        husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, num_sims=num_sims
     )
+    core = _trim_core_to_effective_horizon(core)
+
+    years = core["effective_years"]
+    years_list = np.arange(0, years + 1)
 
     # Extract views
     net_income, net_profit, breakdown, taxes, expense_amt = _extract_income_single_run(core)

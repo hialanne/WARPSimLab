@@ -31,6 +31,7 @@ def make_person(
     pension_inflation_adjustment_pct=0.0,
     medicare_start_age=65,
     medicare_annual_cost=0.0,
+    modeled_death_age=None,
 ):
     return SimpleNamespace(
         age=age,
@@ -49,6 +50,7 @@ def make_person(
         pension_inflation_adjustment_pct=pension_inflation_adjustment_pct,
         medicare_start_age=medicare_start_age,
         medicare_annual_cost=medicare_annual_cost,
+        modeled_death_age=modeled_death_age,
     )
 
 

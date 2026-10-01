@@ -711,6 +711,52 @@ def create_empty_sim_portfolio(sim_config):
     )
 
 
+def _refresh_portfolio_bucket_ratios(sim_portfolio):
+    buckets = [
+        ("pre", "total_value_pre", "eq_pre", "bd_pre", "cs_pre"),
+        ("post", "total_value_post", "eq_post", "bd_post", "cs_post"),
+        ("roth", "total_value_roth", "eq_roth", "bd_roth", "cs_roth"),
+        ("hsa", "total_value_hsa", "hsa_eq", "hsa_bd", "hsa_cs"),
+    ]
+
+    for bucket_name, total_attr, eq_attr, bd_attr, cs_attr in buckets:
+        total = getattr(sim_portfolio, total_attr)
+
+        if total > 0.0:
+            setattr(sim_portfolio, f"eq_ratio_{bucket_name}", getattr(sim_portfolio, eq_attr) / total)
+            setattr(sim_portfolio, f"bd_ratio_{bucket_name}", getattr(sim_portfolio, bd_attr) / total)
+            setattr(sim_portfolio, f"cs_ratio_{bucket_name}", getattr(sim_portfolio, cs_attr) / total)
+        else:
+            setattr(sim_portfolio, f"eq_ratio_{bucket_name}", 0.0)
+            setattr(sim_portfolio, f"bd_ratio_{bucket_name}", 0.0)
+            setattr(sim_portfolio, f"cs_ratio_{bucket_name}", 0.0)
+
+
+def transfer_portfolio_to_survivor(deceased_portfolio, survivor_portfolio):
+    """
+    Transfer all modeled financial assets and real estate from one spouse to
+    the surviving spouse while preserving asset class and tax character.
+
+    The deceased portfolio is zeroed after transfer.
+    """
+    component_attrs = (
+        "eq_pre", "bd_pre", "cs_pre",
+        "eq_post", "bd_post", "cs_post",
+        "eq_roth", "bd_roth", "cs_roth",
+        "hsa_eq", "hsa_bd", "hsa_cs",
+    )
+
+    for attr in component_attrs:
+        setattr(survivor_portfolio, attr, getattr(survivor_portfolio, attr) + getattr(deceased_portfolio, attr))
+        setattr(deceased_portfolio, attr, 0.0)
+
+    survivor_portfolio.re_post += deceased_portfolio.re_post
+    deceased_portfolio.re_post = 0.0
+
+    _refresh_portfolio_bucket_ratios(survivor_portfolio)
+    _refresh_portfolio_bucket_ratios(deceased_portfolio)
+
+
 def get_pre_tax_ratios(sim_portfolio):
     """
     Returns current pre-tax allocation ratios.

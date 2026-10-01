@@ -98,6 +98,7 @@ class DummyPerson:
         annual_employer_match: float = 0.0,
         medicare_start_age: int = 65,
         medicare_annual_cost: float = 0.0,
+        modeled_death_age: int | None = None,
     ):
         self.age = age
         self.retire_age = retire_age
@@ -113,6 +114,8 @@ class DummyPerson:
         self.annual_employer_match = annual_employer_match
         self.medicare_start_age = medicare_start_age
         self.medicare_annual_cost = medicare_annual_cost
+        self.modeled_death_age = modeled_death_age
+
 
 class DummyPortfolio:
     pass
@@ -229,7 +232,7 @@ def _patch_baseline(monkeypatch, mod, sim_config: DummySimConfig):
     monkeypatch.setattr(
         mod.taxEngine,
         "prepare_tax_year_cache",
-        lambda year, cfg: {
+        lambda year, cfg, filing_status_single: {
             "year": year,
             "social_security_wage_base": 200000.0,
             "additional_medicare_threshold": 200000.0,

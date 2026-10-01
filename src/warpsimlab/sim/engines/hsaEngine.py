@@ -2,7 +2,7 @@
 
 from . import portfolioEngine, diagnosticEngine
 
-def calculate_hsa_contributions(person, current_age, year, gross_wages, employee_401k_contribution, sim_config):
+def calculate_hsa_contributions(person, current_age, year, gross_wages, employee_401k_contribution, alive, sim_config):
     """
     Calculate employee and employer HSA contributions for one person.
 
@@ -20,7 +20,7 @@ def calculate_hsa_contributions(person, current_age, year, gross_wages, employee
     """
     gross_wages = max(0.0, float(gross_wages))
 
-    if current_age >= person.retire_age or gross_wages <= 0.0:
+    if not alive or current_age >= person.retire_age or gross_wages <= 0.0:
         return {"employee": 0.0, "employer": 0.0, "total": 0.0}
 
     if not hasattr(sim_config, "_income_inflation_factors"):

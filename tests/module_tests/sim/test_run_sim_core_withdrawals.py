@@ -175,7 +175,8 @@ def test_withdrawal_year_reserves_rmd_before_roth_conversion(mod, monkeypatch):
     monkeypatch.setattr(
         mod.incomeEngine,
         "calculate_income_breakdown",
-        lambda h, w, ha, wa, rmd_h, rmd_w, year, cfg: _income(rmd_h, rmd_h, 0.0, rmd_h),
+        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg:
+            _income(rmd_h, rmd_h, 0.0, rmd_h),
     )
     monkeypatch.setattr(
         mod.rothEngine,
@@ -230,6 +231,8 @@ def test_withdrawal_year_reserves_rmd_before_roth_conversion(mod, monkeypatch):
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        True,
+        False,
         _zero_irmaa(),
     )
 
@@ -251,7 +254,8 @@ def test_withdrawal_year_reports_spendable_strategy_cash_not_gross_distribution(
     monkeypatch.setattr(
         mod.incomeEngine,
         "calculate_income_breakdown",
-        lambda h, w, ha, wa, rmd_h, rmd_w, year, cfg: _income(10.0, 10.0, 0.0, 10.0),
+        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg:
+            _income(10.0, 10.0, 0.0, 10.0),
     )
     monkeypatch.setattr(
         mod.rothEngine,
@@ -307,6 +311,8 @@ def test_withdrawal_year_reports_spendable_strategy_cash_not_gross_distribution(
         75,
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
+        False,
+        True,
         False,
         _zero_irmaa(),
     )
@@ -392,6 +398,8 @@ def test_withdrawal_year_redirects_roth_contribution_cash_to_taxes_first(mod, mo
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        True,
+        False,
         _zero_irmaa(),
     )
 
@@ -463,6 +471,8 @@ def test_withdrawal_year_tracks_tax_funding_separately_and_by_source(mod, monkey
         0,
         {"eq": 0.0, "bd": 0.0, "cs": 0.0, "re": 0.0},
         False,
+        True,
+        False,
         _zero_irmaa(),
     )
 
@@ -514,7 +524,9 @@ def test_withdrawal_year_applies_price_return_and_rebalances_both_people(mod, mo
         73,
         {"eq": 0.08, "bd": 0.03, "cs": 0.01, "re": 0.04},
         True,
-        _zero_irmaa(),
+        True,
+        True,
+        _zero_irmaa(),    
     )
 
     assert len(return_calls) == 2

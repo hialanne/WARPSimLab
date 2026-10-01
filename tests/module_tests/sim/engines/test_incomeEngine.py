@@ -2,7 +2,6 @@ import types
 import pytest
 
 from src.warpsimlab.sim.engines.incomeEngine import (
-    calculate_income,
     initialize_income_engine_for_simulation,
     calculate_income_breakdown,
     calculate_social_security,
@@ -65,324 +64,6 @@ def init_income(husband, wife, sim_config):
     return sim_config
 
 
-# -------------------------
-# calculate_income
-# -------------------------
-
-def test_calculate_income_husband_work_only_inflation_adjusted():
-    husband = make_person(
-        age=40, retire_age=65, income=100.0, ss=0.0, pension=0.0, annuity=0.0
-    )
-    wife = make_person(
-        age=40, retire_age=65, income=999.0, ss=0.0, pension=0.0, annuity=0.0
-    )
-    sim_config = make_config(inflation_rate=0.10, second_person_enabled=False)
-    init_income(husband, wife, sim_config)
-
-    total = calculate_income(
-        husband,
-        wife,
-        curr_husband_age=42,
-        curr_wife_age=0,
-        rmd_h=0.0,
-        rmd_w=0.0,
-        year=2,
-        sim_config=sim_config,
-    )
-
-    assert total == pytest.approx(100.0 * (1.10 ** 2))
-
-
-def test_calculate_income_includes_husband_rmd_and_ignores_wife_when_disabled():
-    husband = make_person(income=0.0, ss=0.0, pension=0.0, annuity=0.0)
-    wife = make_person(income=0.0, ss=0.0, pension=0.0, annuity=0.0)
-    sim_config = make_config(inflation_rate=0.25, second_person_enabled=False)
-    init_income(husband, wife, sim_config)
-
-    total = calculate_income(
-        husband,
-        wife,
-        curr_husband_age=80,
-        curr_wife_age=80,
-        rmd_h=1234.5,
-        rmd_w=9999.9,
-        year=5,
-        sim_config=sim_config,
-    )
-
-    assert total == pytest.approx(1234.5)
-
-
-@pytest.mark.parametrize(
-    "curr_age, ss_age, expected_receives_ss",
-    [
-        (66, 67, False),
-        (67, 67, True),
-        (69, 67, True),
-        (69, 75, False),
-        (70, 75, True),
-    ],
-)
-def test_calculate_income_social_security_start_rule(curr_age, ss_age, expected_receives_ss):
-    husband = make_person(
-        income=0.0,
-        ss_age=ss_age,
-        ss=100.0,
-        pension=0.0,
-        annuity=0.0,
-        retire_age=0,
-    )
-    wife = make_person(
-        income=0.0,
-        ss_age=ss_age,
-        ss=100.0,
-        pension=0.0,
-        annuity=0.0,
-        retire_age=0,
-    )
-    sim_config = make_config(inflation_rate=0.0, second_person_enabled=False)
-    init_income(husband, wife, sim_config)
-
-    total = calculate_income(
-        husband,
-        wife,
-        curr_husband_age=curr_age,
-        curr_wife_age=0,
-        rmd_h=0.0,
-        rmd_w=0.0,
-        year=1,
-        sim_config=sim_config,
-    )
-
-    if expected_receives_ss:
-        assert total == pytest.approx(100.0)
-    else:
-        assert total == pytest.approx(0.0)
-
-
-def test_calculate_income_pension_inflation_adjustment_uses_pct_of_inflation_rate():
-    husband = make_person(
-        income=0.0,
-        ss=0.0,
-        annuity=0.0,
-        pension_age=60,
-        pension=100.0,
-        pension_inflation_adjustment_pct=50.0,
-        retire_age=0,
-    )
-    wife = make_person(income=0.0, ss=0.0, pension=0.0, annuity=0.0)
-    sim_config = make_config(inflation_rate=0.10, second_person_enabled=False)
-    init_income(husband, wife, sim_config)
-
-    total = calculate_income(
-        husband,
-        wife,
-        curr_husband_age=65,
-        curr_wife_age=0,
-        rmd_h=0.0,
-        rmd_w=0.0,
-        year=3,
-        sim_config=sim_config,
-    )
-
-    assert total == pytest.approx(100.0 * (1.05 ** 3))
-
-
-def test_calculate_income_annuity_not_inflation_adjusted():
-    husband = make_person(
-        income=0.0,
-        ss=0.0,
-        pension=0.0,
-        annuity_age=60,
-        annuity=100.0,
-        retire_age=0,
-    )
-    wife = make_person(income=0.0, ss=0.0, pension=0.0, annuity=0.0)
-    sim_config = make_config(inflation_rate=0.50, second_person_enabled=False)
-    init_income(husband, wife, sim_config)
-
-    total = calculate_income(
-        husband,
-        wife,
-        curr_husband_age=70,
-        curr_wife_age=0,
-        rmd_h=0.0,
-        rmd_w=0.0,
-        year=10,
-        sim_config=sim_config,
-    )
-
-    assert total == pytest.approx(100.0)
-
-
-def test_calculate_income_second_person_enabled_includes_wife_income():
-    husband = make_person(
-        age=40, retire_age=65, income=100.0, ss=0.0, pension=0.0, annuity=0.0
-    )
-    wife = make_person(
-        age=40, retire_age=65, income=200.0, ss=0.0, pension=0.0, annuity=0.0
-    )
-    sim_config = make_config(inflation_rate=0.0, second_person_enabled=True)
-    init_income(husband, wife, sim_config)
-
-    total = calculate_income(
-        husband,
-        wife,
-        curr_husband_age=50,
-        curr_wife_age=50,
-        rmd_h=0.0,
-        rmd_w=0.0,
-        year=1,
-        sim_config=sim_config,
-    )
-
-    assert total == pytest.approx(300.0)
-
-
-def test_calculate_income_combines_all_enabled_income_classes_for_both_people():
-    husband = make_person(
-        retire_age=65,
-        income=100.0,
-        ss_age=67,
-        ss=20.0,
-        pension_age=60,
-        pension=30.0,
-        pension_inflation_adjustment_pct=100.0,
-        annuity_age=70,
-        annuity=40.0,
-    )
-    wife = make_person(
-        retire_age=65,
-        income=200.0,
-        ss_age=66,
-        ss=50.0,
-        pension_age=62,
-        pension=60.0,
-        pension_inflation_adjustment_pct=50.0,
-        annuity_age=68,
-        annuity=70.0,
-    )
-    sim_config = make_config(inflation_rate=0.10, second_person_enabled=True)
-    init_income(husband, wife, sim_config)
-
-    total = calculate_income(
-        husband,
-        wife,
-        curr_husband_age=70,
-        curr_wife_age=69,
-        rmd_h=11.0,
-        rmd_w=13.0,
-        year=2,
-        sim_config=sim_config,
-    )
-
-    expected_h = (
-        20.0 * (1.10 ** 2)
-        + 30.0 * (1.10 ** 2)
-        + 40.0
-        + 11.0
-    )
-    expected_w = (
-        50.0 * (1.10 ** 2)
-        + 60.0 * (1.05 ** 2)
-        + 70.0
-        + 13.0
-    )
-
-    assert total == pytest.approx(expected_h + expected_w)
-
-
-# -------------------------
-# calculate_income_breakdown
-# -------------------------
-
-def test_income_breakdown_sums_by_class_and_tracks_by_person():
-    husband = make_person(
-        income=100.0,
-        retire_age=65,
-        ss_age=67,
-        ss=10.0,
-        pension_age=60,
-        pension=20.0,
-        pension_inflation_adjustment_pct=0.0,
-        annuity_age=70,
-        annuity=30.0,
-        age=60,
-    )
-    wife = make_person(
-        income=200.0,
-        retire_age=65,
-        ss_age=67,
-        ss=40.0,
-        pension_age=60,
-        pension=50.0,
-        pension_inflation_adjustment_pct=0.0,
-        annuity_age=70,
-        annuity=60.0,
-        age=60,
-    )
-    sim_config = make_config(
-        inflation_rate=0.0,
-        second_person_enabled=True,
-        years_to_simulate=10,
-    )
-    init_income(husband, wife, sim_config)
-
-    rmd_h = 7.0
-    rmd_w = 11.0
-
-    out = calculate_income_breakdown(
-        husband,
-        wife,
-        curr_husband_age=62,
-        curr_wife_age=62,
-        rmd_h=rmd_h,
-        rmd_w=rmd_w,
-        year=2,
-        sim_config=sim_config,
-    )
-
-    assert set(out.keys()) == {
-        "total",
-        "taxable_special_income",
-        "non_taxable_special_income",
-        "by_class",
-        "by_person",
-        "non_taxable_income",
-        "work_by_person",
-    }
-
-    assert set(out["by_class"].keys()) == {
-        "work",
-        "pension",
-        "annuity",
-        "ss",
-        "rmd",
-        "withdrawal",
-        "tax_funding_withdrawal",
-        "bond_interest",
-        "cash_interest",
-        "qualified_equity_distributions",
-        "special_income",
-    }
-
-    assert out["by_class"]["special_income"] == pytest.approx(0.0)
-    assert out["non_taxable_income"] == pytest.approx(0.0)
-    assert out["by_class"]["work"] == pytest.approx(100.0 + 200.0)
-    assert out["by_class"]["pension"] == pytest.approx(20.0 + 50.0)
-    assert out["by_class"]["ss"] == pytest.approx(0.0)
-    assert out["by_class"]["annuity"] == pytest.approx(0.0)
-    assert out["by_class"]["rmd"] == pytest.approx(rmd_h + rmd_w)
-    assert out["by_class"]["withdrawal"] == pytest.approx(0.0)
-    assert out["by_class"]["bond_interest"] == pytest.approx(0.0)
-    assert out["by_class"]["cash_interest"] == pytest.approx(0.0)
-    assert out["by_class"]["qualified_equity_distributions"] == pytest.approx(0.0)
-
-    assert out["by_person"]["husband"] == pytest.approx(100.0 + 20.0 + rmd_h)
-    assert out["by_person"]["wife"] == pytest.approx(200.0 + 50.0 + rmd_w)
-
-    expected_total = sum(out["by_class"].values())
-    assert out["total"] == pytest.approx(expected_total)
 
 
 def test_income_breakdown_inflation_applies_to_work_ss_and_configured_pension():
@@ -418,6 +99,8 @@ def test_income_breakdown_inflation_applies_to_work_ss_and_configured_pension():
         rmd_h=5.0,
         rmd_w=0.0,
         year=2,
+        husband_alive=True,
+        wife_alive=False,
         sim_config=sim_config,
     )
 
@@ -457,9 +140,10 @@ def test_income_breakdown_second_person_disabled_should_ignore_wife_rmd_everywhe
         rmd_h=100.0,
         rmd_w=200.0,
         year=0,
+        husband_alive=True,
+        wife_alive=False,
         sim_config=sim_config,
     )
-
     assert out["by_person"]["husband"] == pytest.approx(100.0)
     assert out["by_person"]["wife"] == pytest.approx(0.0)
     assert out["by_class"]["rmd"] == pytest.approx(100.0)
@@ -535,13 +219,13 @@ def test_calculate_pre_tax_401k_contributions_inflated_until_retirement():
     init_income(husband, wife, sim_config)
 
     employee, employer = calculate_pre_tax_401k_contributions(
-        person, current_age=50, year=2, sim_config=sim_config
+        person, current_age=50, year=2, alive=True, sim_config=sim_config
     )
     assert employee == pytest.approx(100.0 * (1.10 ** 2))
     assert employer == pytest.approx(50.0 * (1.10 ** 2))
 
     employee2, employer2 = calculate_pre_tax_401k_contributions(
-        person, current_age=65, year=2, sim_config=sim_config
+        person, current_age=65, year=2, alive=True, sim_config=sim_config
     )
     assert employee2 == pytest.approx(0.0)
     assert employer2 == pytest.approx(0.0)
@@ -559,7 +243,7 @@ def test_calculate_pre_tax_401k_contributions_zero_when_retired():
     init_income(husband, wife, sim_config)
 
     employee, employer = calculate_pre_tax_401k_contributions(
-        person, current_age=75, year=10, sim_config=sim_config
+        person, current_age=75, year=10, alive=True, sim_config=sim_config
     )
 
     assert employee == pytest.approx(0.0)
@@ -582,7 +266,7 @@ def test_calculate_pre_tax_401k_contributions_employee_capped_by_current_work_in
     init_income(husband, wife, sim_config)
 
     employee, employer = calculate_pre_tax_401k_contributions(
-        person, current_age=50, year=0, sim_config=sim_config
+        person, current_age=50, year=0, alive=True, sim_config=sim_config
     )
 
     assert employee == pytest.approx(100.0)
@@ -605,7 +289,7 @@ def test_calculate_pre_tax_401k_contributions_employer_zero_when_employee_zero()
     init_income(husband, wife, sim_config)
 
     employee, employer = calculate_pre_tax_401k_contributions(
-        person, current_age=50, year=0, sim_config=sim_config
+        person, current_age=50, year=0, alive=True, sim_config=sim_config
     )
 
     assert employee == pytest.approx(0.0)

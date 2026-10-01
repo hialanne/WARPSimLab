@@ -64,6 +64,7 @@ def _disable_simulation_validation(monkeypatch, mod):
 
 def _core_for_extracts() -> dict:
     return {
+        "effective_years": 3,
         "net_income": np.array([[100.0, 101.0, 102.0, 103.0]]),
         "net_profit": np.array([[1.0, 2.0, 3.0, 4.0]]),
         "breakdown_by_class": {

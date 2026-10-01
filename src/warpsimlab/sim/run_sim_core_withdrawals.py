@@ -48,6 +48,8 @@ def simulate_withdrawal_year(
     curr_w_age,
     year_returns,
     second_person_enabled,
+    husband_alive,
+    wife_alive,
     irmaa_result,
 ):
 
@@ -108,16 +110,19 @@ def simulate_withdrawal_year(
 
     # RMD amounts are needed for income reporting. Actual RMD withdrawal
     # occurs inside calculate_retirement_withdrawal() in Withdrawal mode.
-    rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
+    rmd_h = 0.0
+    if husband_alive:
+        rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
 
-    rmd_w = 0
-    if second_person_enabled:
+    rmd_w = 0.0
+    if second_person_enabled and wife_alive:
         rmd_w = withdrawalEngine.calculate_rmds(w_port, wife, curr_w_age, sim_config)
 
     # Income breakdown
     income = incomeEngine.calculate_income_breakdown(
-        husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year, sim_config
-    )
+        husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year,
+        husband_alive, wife_alive, sim_config)
+
     income["by_class"]["roth_conversion"] = 0.0
 
     (
@@ -177,7 +182,8 @@ def simulate_withdrawal_year(
         payroll_wages_wife=payroll_wages_wife,
         second_person_enabled=second_person_enabled,
         sim_config=sim_config,
-    )
+        husband_alive=husband_alive,
+        wife_alive=wife_alive,)
 
     # Preserve the already-determined RMD in pre-tax assets until it is physically withdrawn.
     roth_conversion = requested_roth_flows[rothEngine.ROTH_CONVERSION]
@@ -226,8 +232,7 @@ def simulate_withdrawal_year(
 
     # Baseline Medicare insurance costs
     medicare_cost = medicareEngine.calculate_household_medicare_cost(
-        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, sim_config
-    )
+        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config)
 
     mandatory_medicare_cost = medicare_cost["total"] + irmaa_result["total"]
     additional_cash_needed = mandatory_medicare_cost + requested_roth_contribution_total

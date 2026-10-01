@@ -232,6 +232,7 @@ def build_synthetic_core(total_assets):
 
     return {
         "year": np.tile(np.arange(width, dtype=float), (num_sims, 1)),
+        "effective_years": width - 1,
         "total_assets": total_assets,
         "pre_tax_assets": zeros.copy(),
         "post_tax_assets": zeros.copy(),
@@ -315,6 +316,7 @@ def make_dummy_people():
         pension_inflation_adjustment_pct=0.0,
         medicare_start_age=65,
         medicare_annual_cost=0.0,
+        modeled_death_age=None,
     )
 
     wife = SimpleNamespace(
@@ -332,6 +334,7 @@ def make_dummy_people():
         pension_inflation_adjustment_pct=0.0,
         medicare_start_age=65,
         medicare_annual_cost=0.0,
+        modeled_death_age=None,
     )
 
     return husband, wife
@@ -564,7 +567,6 @@ def install_minimal_core_engine_mocks(run_sim_core_module, monkeypatch):
             0.0,  # federal_marginal_rate
         )
     )
-    monkeypatch.setattr(run_sim_core_module.taxEngine, "get_us_federal_marginal_tax_rate", lambda *args, **kwargs: 0.0)
     monkeypatch.setattr(
         run_sim_core_module.taxEngine,
         "allocate_tax_proportionally",

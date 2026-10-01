@@ -271,6 +271,8 @@ def prepare_requested_roth_flows(
     payroll_wages_husband,
     payroll_wages_wife,
     second_person_enabled,
+    husband_alive,
+    wife_alive,
     sim_config,
 ):
     """
@@ -285,41 +287,29 @@ def prepare_requested_roth_flows(
 
     scheduled_flows = sim_config._roth_scheduled_flows[year]
 
-    requested_husband_roth_ira = scheduled_flows[
-        ROTH_IRA_CONTRIBUTION
-    ]["husband"]
+    requested_husband_roth_ira = 0.0
+    requested_husband_roth_workplace = 0.0
+    requested_husband_conversion = 0.0
+
+    if husband_alive:
+        requested_husband_roth_ira = scheduled_flows[ROTH_IRA_CONTRIBUTION]["husband"]
+        requested_husband_roth_workplace = min(
+            scheduled_flows[ROTH_WORKPLACE_CONTRIBUTION]["husband"],
+            max(0.0, float(payroll_wages_husband)),
+        )
+        requested_husband_conversion = scheduled_flows[ROTH_CONVERSION]["husband"]
 
     requested_wife_roth_ira = 0.0
-    if second_person_enabled:
-        requested_wife_roth_ira = scheduled_flows[
-            ROTH_IRA_CONTRIBUTION
-        ]["wife"]
-
-    requested_husband_roth_workplace = min(
-        scheduled_flows[
-            ROTH_WORKPLACE_CONTRIBUTION
-        ]["husband"],
-        max(0.0, float(payroll_wages_husband)),
-    )
-
     requested_wife_roth_workplace = 0.0
-    if second_person_enabled:
+    requested_wife_conversion = 0.0
+
+    if second_person_enabled and wife_alive:
+        requested_wife_roth_ira = scheduled_flows[ROTH_IRA_CONTRIBUTION]["wife"]
         requested_wife_roth_workplace = min(
-            scheduled_flows[
-                ROTH_WORKPLACE_CONTRIBUTION
-            ]["wife"],
+            scheduled_flows[ROTH_WORKPLACE_CONTRIBUTION]["wife"],
             max(0.0, float(payroll_wages_wife)),
         )
-
-    requested_husband_conversion = scheduled_flows[
-        ROTH_CONVERSION
-    ]["husband"]
-
-    requested_wife_conversion = 0.0
-    if second_person_enabled:
-        requested_wife_conversion = scheduled_flows[
-            ROTH_CONVERSION
-        ]["wife"]
+        requested_wife_conversion = scheduled_flows[ROTH_CONVERSION]["wife"]
 
     requested_roth_contribution_total = (
         requested_husband_roth_ira

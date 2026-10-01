@@ -41,11 +41,16 @@ def calculate_medicare_cost(person, current_age, year, sim_config):
     return annual_cost * sim_config._medicare_inflation_factors[year]
 
 
-def calculate_household_medicare_cost(husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, sim_config):
-    medicare_husband = calculate_medicare_cost(husband, curr_h_age, year, sim_config)
+def calculate_household_medicare_cost(
+    husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config
+):
+    medicare_husband = 0.0
     medicare_wife = 0.0
 
-    if second_person_enabled:
+    if husband_alive:
+        medicare_husband = calculate_medicare_cost(husband, curr_h_age, year, sim_config)
+
+    if second_person_enabled and wife_alive:
         medicare_wife = calculate_medicare_cost(wife, curr_w_age, year, sim_config)
 
     return {
@@ -112,13 +117,20 @@ def get_irmaa_lookback_magi(year, sim_index, results, sim_config):
     return max(0.0, value), True
 
 
+def get_irmaa_lookback_filing_status_single(year, sim_index, results, sim_config):
+    if year <= 2:
+        return sim_config.tax_filing_status == "Single"
+
+    return bool(results["filing_status_single"][sim_index, year - 2])
+
+
 def _round_irmaa_threshold(value):
     return round(value / 1000.0) * 1000.0
 
 
-def _get_irmaa_thresholds(year, sim_config):
+def _get_irmaa_thresholds(year, filing_status_single, sim_config):
     filing_key = "Other"
-    if sim_config.tax_filing_status == "Single":
+    if filing_status_single:
         filing_key = "Single"
 
     inflation_factor = sim_config._medicare_inflation_factors[year]
@@ -144,8 +156,8 @@ def _get_irmaa_thresholds(year, sim_config):
     return thresholds
 
 
-def get_irmaa_level(magi, year, sim_config):
-    thresholds = _get_irmaa_thresholds(year, sim_config)
+def get_irmaa_level(magi, year, filing_status_single, sim_config):
+    thresholds = _get_irmaa_thresholds(year, filing_status_single, sim_config)
 
     for level, upper_limit in enumerate(thresholds):
         if magi <= upper_limit:
@@ -166,8 +178,10 @@ def calculate_person_irmaa(person, current_age, level, year, sim_config):
     return 12.0 * (part_b_irmaa + part_d_irmaa)
 
 
-def calculate_household_irmaa(husband, wife, curr_h_age, curr_w_age, year, second_person_enabled,
-                              lookback_magi, lookback_available, sim_config):
+def calculate_household_irmaa(
+    husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive,
+    lookback_magi, lookback_available, lookback_filing_status_single, sim_config
+):
     irmaa_husband = 0.0
     irmaa_wife = 0.0
 
@@ -180,10 +194,12 @@ def calculate_household_irmaa(husband, wife, curr_h_age, curr_w_age, year, secon
             "lookback_available": lookback_available,
         }
 
-    level = get_irmaa_level(lookback_magi, year, sim_config)
-    irmaa_husband = calculate_person_irmaa(husband, curr_h_age, level, year, sim_config)
+    level = get_irmaa_level(lookback_magi, year, lookback_filing_status_single, sim_config)
 
-    if second_person_enabled:
+    if husband_alive:
+        irmaa_husband = calculate_person_irmaa(husband, curr_h_age, level, year, sim_config)
+
+    if second_person_enabled and wife_alive:
         irmaa_wife = calculate_person_irmaa(wife, curr_w_age, level, year, sim_config)
 
     return {
@@ -193,3 +209,4 @@ def calculate_household_irmaa(husband, wife, curr_h_age, curr_w_age, year, secon
         "lookback_magi": lookback_magi,
         "lookback_available": lookback_available,
     }
+

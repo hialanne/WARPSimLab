@@ -62,7 +62,7 @@ def calculate_employee_payroll_tax_split(
         husband_wages + wife_wages
     ) * MEDICARE_EMPLOYEE_RATE
 
-    if sim_config.tax_filing_status == "Single":
+    if year_cache["filing_status_single"]:
         additional_medicare_threshold = ADDITIONAL_MEDICARE_SINGLE_THRESHOLD
     else:
         additional_medicare_threshold = ADDITIONAL_MEDICARE_MFJ_THRESHOLD
@@ -262,38 +262,41 @@ def initialize_tax_engine_for_simulation(sim_config):
             inflation_factors[year] = inflation_factors[year - 1] * multiplier
 
     sim_config._inflation_factors = inflation_factors
-    sim_config._tax_year_cache = [None] * years
+
+    sim_config._tax_year_cache = []
+    for _ in range(years):
+        sim_config._tax_year_cache.append({})
 
 
-def prepare_tax_year_cache(year, sim_config):
-    year_cache = sim_config._tax_year_cache[year]
+def prepare_tax_year_cache(year, sim_config, filing_status_single=None):
+    if filing_status_single is None:
+        filing_status_single = sim_config.tax_filing_status == "Single"
+
+    filing_key = "Other"
+    if filing_status_single:
+        filing_key = "Single"
+
+    year_cache = sim_config._tax_year_cache[year].get(filing_key)
     if year_cache is not None:
         return year_cache
 
     inflation_factor = sim_config._inflation_factors[year]
 
-    ordinary_standard_deduction = (
-        sim_config._federal_standard_deduction_base * inflation_factor
-    )
+    ordinary_standard_deduction_base, ordinary_brackets_base = FEDERAL_ORDINARY_TAX_TABLES_2026[filing_key]
+    _, qd_brackets_base = FEDERAL_QUALIFIED_DIVIDEND_TAX_TABLES_2026[filing_key]
 
-    ordinary_brackets = _inflate_brackets(
-        sim_config._federal_ordinary_brackets_base,
-        inflation_factor,
-    )
-
-    qd_brackets = _inflate_brackets(
-        sim_config._federal_qd_brackets_base,
-        inflation_factor,
-    )
+    ordinary_standard_deduction = ordinary_standard_deduction_base * inflation_factor
+    ordinary_brackets = _inflate_brackets(ordinary_brackets_base, inflation_factor)
+    qd_brackets = _inflate_brackets(qd_brackets_base, inflation_factor)
 
     state_brackets = None
     if sim_config._state_tax_type == "progressive":
-        state_brackets = _inflate_brackets(
-            sim_config._state_tax_brackets_base,
-            inflation_factor,
-        )
+        state = getattr(sim_config, "state_of_residence", None)
+        rules = STATE_TAX_RULES.get(state)
+        state_brackets = _inflate_brackets(rules["brackets"][filing_key], inflation_factor)
 
     year_cache = {
+        "filing_status_single": filing_status_single,
         "ordinary_standard_deduction": ordinary_standard_deduction,
         "ordinary_brackets": ordinary_brackets,
         "qd_brackets": qd_brackets,
@@ -301,7 +304,7 @@ def prepare_tax_year_cache(year, sim_config):
         "social_security_wage_base": SOCIAL_SECURITY_WAGE_BASE_2026 * inflation_factor,
     }
 
-    sim_config._tax_year_cache[year] = year_cache
+    sim_config._tax_year_cache[year][filing_key] = year_cache
     return year_cache
 
 
@@ -737,22 +740,3 @@ def calculate_state_income_tax(total_income, year_cache, sim_config):
     return tax
 
 
-def get_us_federal_marginal_tax_rate(total_income, year, sim_config):
-    """
-    Returns the marginal U.S. federal income tax rate (top bracket reached)
-    as a decimal (e.g., 0.22).
-    """
-    if not getattr(sim_config, "calculate_income_taxes", False):
-        return None
-
-    year_cache = prepare_tax_year_cache(year, sim_config)
-
-    taxable_income = total_income - year_cache["ordinary_standard_deduction"]
-    if taxable_income <= 0.0:
-        return year_cache["ordinary_brackets"][0][1]
-
-    for upper, rate in year_cache["ordinary_brackets"]:
-        if taxable_income <= upper:
-            return rate
-
-    return None
