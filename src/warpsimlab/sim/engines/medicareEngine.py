@@ -11,12 +11,17 @@ PART_B_STANDARD_MONTHLY_2026 = 202.90
 PART_B_IRMAA_MULTIPLIERS = (0.0, 0.4, 1.0, 1.6, 2.2, 2.4)
 PART_D_IRMAA_MONTHLY_2026 = (0.0, 14.50, 37.50, 60.40, 83.30, 91.00)
 
+IRMAA_BASE_YEAR = 2026
+IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR = 2027
+
 def initialize_medicare_engine_for_simulation(sim_config):
     """
     Initialize Medicare inflation factors for the active simulation path.
 
     Medicare annual costs are year-0-dollar inputs and follow the same
     inflation path as ordinary household expenses.
+
+    Published Medicare and IRMAA constants are anchored to calendar year 2026.
     """
     if not hasattr(sim_config, "_expense_inflation_factors"):
         diagnosticEngine.raise_internal_error(
@@ -25,6 +30,10 @@ def initialize_medicare_engine_for_simulation(sim_config):
         )
 
     sim_config._medicare_inflation_factors = list(sim_config._expense_inflation_factors)
+
+    base_multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
+    years_from_base = sim_config.start_year - IRMAA_BASE_YEAR
+    sim_config._medicare_2026_anchor_factor = base_multiplier ** years_from_base
 
 
 def calculate_medicare_cost(person, current_age, year, sim_config):
@@ -58,6 +67,42 @@ def calculate_household_medicare_cost(
         "wife": medicare_wife,
         "total": medicare_husband + medicare_wife,
     }
+
+
+def _get_2026_constant_factor(year, sim_config):
+    return sim_config._medicare_2026_anchor_factor * sim_config._medicare_inflation_factors[year]
+
+
+def _get_top_threshold_factor(year, sim_config):
+    calendar_year = sim_config.start_year + year
+
+    if calendar_year <= IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR:
+        return 1.0
+
+    start_year = sim_config.start_year
+
+    if start_year >= IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR:
+        base_multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
+        years_from_freeze = start_year - IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR
+        start_factor = base_multiplier ** years_from_freeze
+        return start_factor * sim_config._medicare_inflation_factors[year]
+
+    freeze_index = IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR - start_year
+    frozen_factor = sim_config._medicare_inflation_factors[freeze_index]
+
+    if frozen_factor <= 0.0:
+        diagnosticEngine.raise_internal_error(
+            "Invalid Medicare inflation factor at IRMAA threshold freeze year.",
+            sim_config,
+            context={
+                "year": year,
+                "start_year": start_year,
+                "freeze_index": freeze_index,
+                "frozen_factor": frozen_factor,
+            },
+        )
+
+    return sim_config._medicare_inflation_factors[year] / frozen_factor
 
 
 def calculate_modeled_agi(income, traditional_withdrawal, taxable_hsa_withdrawal, roth_conversion):
@@ -133,25 +178,17 @@ def _get_irmaa_thresholds(year, filing_status_single, sim_config):
     if filing_status_single:
         filing_key = "Single"
 
-    inflation_factor = sim_config._medicare_inflation_factors[year]
+    threshold_factor = _get_2026_constant_factor(year, sim_config)
     base_thresholds = IRMAA_THRESHOLDS_2026[filing_key]
     thresholds = []
 
     for index, base_threshold in enumerate(base_thresholds):
-        threshold_factor = inflation_factor
+        factor = threshold_factor
 
         if index == 4:
-            calendar_year = sim_config.start_year + year
-            if calendar_year <= 2027:
-                threshold_factor = 1.0
-            else:
-                freeze_index = 2027 - sim_config.start_year
-                if freeze_index >= 0 and freeze_index < len(sim_config._medicare_inflation_factors):
-                    frozen_factor = sim_config._medicare_inflation_factors[freeze_index]
-                    if frozen_factor > 0.0:
-                        threshold_factor = inflation_factor / frozen_factor
+            factor = _get_top_threshold_factor(year, sim_config)
 
-        thresholds.append(_round_irmaa_threshold(base_threshold * threshold_factor))
+        thresholds.append(_round_irmaa_threshold(base_threshold * factor))
 
     return thresholds
 
@@ -170,7 +207,7 @@ def calculate_person_irmaa(person, current_age, level, year, sim_config):
     if current_age < person.medicare_start_age:
         return 0.0
 
-    inflation_factor = sim_config._medicare_inflation_factors[year]
+    inflation_factor = _get_2026_constant_factor(year, sim_config)
     part_b_standard = PART_B_STANDARD_MONTHLY_2026 * inflation_factor
     part_b_irmaa = part_b_standard * PART_B_IRMAA_MULTIPLIERS[level]
     part_d_irmaa = PART_D_IRMAA_MONTHLY_2026[level] * inflation_factor
