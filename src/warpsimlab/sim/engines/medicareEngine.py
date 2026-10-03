@@ -221,6 +221,9 @@ def calculate_household_irmaa(
 ):
     irmaa_husband = 0.0
     irmaa_wife = 0.0
+    level = None
+    lower_threshold = None
+    upper_threshold = None
 
     if not sim_config.irmaa_enabled or not lookback_available:
         return {
@@ -229,9 +232,22 @@ def calculate_household_irmaa(
             "total": 0.0,
             "lookback_magi": lookback_magi,
             "lookback_available": lookback_available,
+            "level": level,
+            "lower_threshold": lower_threshold,
+            "upper_threshold": upper_threshold,
+            "filing_status_single": lookback_filing_status_single,
         }
 
+    thresholds = _get_irmaa_thresholds(year, lookback_filing_status_single, sim_config)
     level = get_irmaa_level(lookback_magi, year, lookback_filing_status_single, sim_config)
+
+    if level == 0:
+        upper_threshold = thresholds[0]
+    elif level == 5:
+        lower_threshold = thresholds[4]
+    else:
+        lower_threshold = thresholds[level - 1]
+        upper_threshold = thresholds[level]
 
     if husband_alive:
         irmaa_husband = calculate_person_irmaa(husband, curr_h_age, level, year, sim_config)
@@ -245,5 +261,8 @@ def calculate_household_irmaa(
         "total": irmaa_husband + irmaa_wife,
         "lookback_magi": lookback_magi,
         "lookback_available": lookback_available,
+        "level": level,
+        "lower_threshold": lower_threshold,
+        "upper_threshold": upper_threshold,
+        "filing_status_single": lookback_filing_status_single,
     }
-

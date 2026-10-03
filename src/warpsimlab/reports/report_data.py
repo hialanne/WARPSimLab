@@ -56,6 +56,9 @@ class TaxReportData:
     rmd_summary: dict[str, Any]
     medicare_summary: dict[str, Any]
     yearly_tax_rows: list[dict[str, Any]]
+    irmaa_milestones: dict[str, Any] = field(default_factory=dict)
+    irmaa_yearly_rows: list[dict[str, Any]] = field(default_factory=list)
+    irmaa_reference_rows: list[dict[str, Any]] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
 

@@ -321,6 +321,10 @@ def simulate_yearly_portfolios(
         "irmaa": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "irmaa_lookback_magi": np.full((effective_num_sims, years_to_simulate + 1), np.nan),
         "irmaa_lookback_available": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
+        "irmaa_level": np.full((effective_num_sims, years_to_simulate + 1), -1, dtype=int),
+        "irmaa_lower_threshold": np.full((effective_num_sims, years_to_simulate + 1), np.nan),
+        "irmaa_upper_threshold": np.full((effective_num_sims, years_to_simulate + 1), np.nan),
+        "irmaa_filing_status_single": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
         "husband_alive": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
         "wife_alive": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
         "husband_death_event": np.zeros((effective_num_sims, years_to_simulate + 1), dtype=bool),
@@ -789,6 +793,16 @@ def simulate_yearly_portfolios(
             results["irmaa"][s,year] = irmaa
             results["irmaa_lookback_magi"][s,year] = irmaa_lookback_magi
             results["irmaa_lookback_available"][s,year] = irmaa_lookback_available
+            if irmaa_result["level"] is not None:
+                results["irmaa_level"][s,year] = irmaa_result["level"]
+
+            if irmaa_result["lower_threshold"] is not None:
+                results["irmaa_lower_threshold"][s,year] = irmaa_result["lower_threshold"]
+
+            if irmaa_result["upper_threshold"] is not None:
+                results["irmaa_upper_threshold"][s,year] = irmaa_result["upper_threshold"]
+
+            results["irmaa_filing_status_single"][s,year] = irmaa_result["filing_status_single"]
             results["state_income_tax"][s,year] = state_income_tax
             results["emergency_pre_tax_used"][s,year] = emergency_pre_tax_used
             results["pre_tax_withdrawals"][s, year] = pre_tax_withdrawal
@@ -904,6 +918,8 @@ def simulate_yearly_portfolios(
         results["irmaa_wife"] = results["irmaa_wife"] / discount_factors
         results["irmaa"] = results["irmaa"] / discount_factors
         results["irmaa_lookback_magi"] = results["irmaa_lookback_magi"] / discount_factors
+        results["irmaa_lower_threshold"] = results["irmaa_lower_threshold"] / discount_factors
+        results["irmaa_upper_threshold"] = results["irmaa_upper_threshold"] / discount_factors
         results["emergency_pre_tax_used"] = results["emergency_pre_tax_used"] / discount_factors
         results["pre_tax_withdrawals"] = results["pre_tax_withdrawals"] / discount_factors
         results["cash_flow_shortfall"] = (results["cash_flow_shortfall"] / discount_factors)

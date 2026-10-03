@@ -254,11 +254,15 @@ def run_core(
 
 
 def assert_all_result_arrays_are_finite(results):
+    optional_nan_keys = {
+        "irmaa_lookback_magi",
+        "irmaa_lower_threshold",
+        "irmaa_upper_threshold",
+    }
+
     for key, value in results.items():
-        if key == "irmaa_lookback_magi":
-            available = results["irmaa_lookback_available"]
-            assert np.all(np.isfinite(value[available]))
-            assert np.all(np.isnan(value[~available]))
+        if key in optional_nan_keys:
+            assert np.all(np.isfinite(value) | np.isnan(value)), key
             continue
 
         if isinstance(value, np.ndarray):

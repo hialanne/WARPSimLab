@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from .simulation import run_pipeline
-
+from .engines import medicareEngine
 
 def _as_float(value, default=0.0):
     if value is None:
@@ -33,7 +33,182 @@ def _min(results, key):
     values = [_as_float(v) for v in _safe_array(results, key)]
     return float(min(values)) if values else 0.0
 
+def _optional_float(value):
+    if value is None:
+        return None
 
+    value = float(value)
+
+    if value != value:
+        return None
+
+    return value
+
+
+def _irmaa_tier_label(level, medicare_active, lookback_available):
+    if not medicare_active:
+        return "Not on Medicare"
+
+    if not lookback_available or level is None:
+        return "Unavailable"
+
+    if level == 0:
+        return "No IRMAA"
+
+    return f"Tier {level}"
+
+
+def _build_irmaa_yearly_rows(core, husband, wife, sim_config):
+    years = list(core["year"][0])
+    rows = []
+    terminal_year = int(core["terminal_year"][0])
+    second_person_enabled = getattr(sim_config, "second_person_enabled", False) and wife is not None
+
+    for i, year in enumerate(years):
+        if i == 0:
+            continue
+
+        if terminal_year >= 0 and int(year) == terminal_year:
+            continue
+
+        husband_alive = bool(core["husband_alive"][0, i])
+        wife_alive = bool(core["wife_alive"][0, i])
+        husband_age = getattr(husband, "age", 0) + i
+        husband_medicare = husband_alive and husband_age >= getattr(husband, "medicare_start_age", 65)
+
+        wife_medicare = False
+        if second_person_enabled:
+            wife_age = getattr(wife, "age", 0) + i
+            wife_medicare = wife_alive and wife_age >= getattr(wife, "medicare_start_age", 65)
+
+        medicare_active = husband_medicare or wife_medicare
+        lookback_available = bool(core["irmaa_lookback_available"][0, i])
+        level = int(core["irmaa_level"][0, i])
+
+        if level < 0:
+            level = None
+
+        filing_status = "Married Filing Jointly"
+        if bool(core["irmaa_filing_status_single"][0, i]):
+            filing_status = "Single"
+
+        lookback_magi = None
+        if lookback_available:
+            lookback_magi = _optional_float(core["irmaa_lookback_magi"][0, i])
+
+        lower_threshold = None
+        upper_threshold = None
+
+        if medicare_active and lookback_available:
+            lower_threshold = _optional_float(core["irmaa_lower_threshold"][0, i])
+            upper_threshold = _optional_float(core["irmaa_upper_threshold"][0, i])
+
+        rows.append({
+            "IRMAA Year": int(year),
+            "MAGI Year": int(year) - 2,
+            "Medicare Active": medicare_active,
+            "IRMAA MAGI Basis": lookback_magi,
+            "Filing Status": filing_status,
+            "IRMAA Tier": _irmaa_tier_label(level, medicare_active, lookback_available),
+            "Lower Threshold": lower_threshold,
+            "Upper Threshold": upper_threshold,
+            "Annual IRMAA": _as_float(core["irmaa"][0, i]),
+            "Medicare Cost": _as_float(core["medicare_cost"][0, i]),
+        })
+
+    return rows
+
+
+def _build_irmaa_milestones(rows):
+    first_medicare = None
+    first_irmaa = None
+
+    for row in rows:
+        if first_medicare is None and row["Medicare Active"]:
+            first_medicare = row
+
+        if first_irmaa is None and row["Annual IRMAA"] > 0.0:
+            first_irmaa = row
+
+    milestones = {}
+
+    if first_medicare is None:
+        milestones["First Medicare Year"] = {
+            "Status": "No Medicare enrollment during the modeled period.",
+        }
+    else:
+        milestones["First Medicare Year"] = {
+            "Year": first_medicare["IRMAA Year"],
+            "MAGI Year": first_medicare["MAGI Year"],
+            "IRMAA MAGI Basis": first_medicare["IRMAA MAGI Basis"],
+            "Filing Status": first_medicare["Filing Status"],
+            "IRMAA Tier": first_medicare["IRMAA Tier"],
+            "Lower Threshold": first_medicare["Lower Threshold"],
+            "Upper Threshold": first_medicare["Upper Threshold"],
+            "Medicare Cost": first_medicare["Medicare Cost"],
+            "Annual IRMAA": first_medicare["Annual IRMAA"],
+        }
+
+    if first_irmaa is None:
+        milestones["First IRMAA Year"] = {
+            "Status": "No IRMAA surcharge projected during the modeled period.",
+        }
+    else:
+        milestones["First IRMAA Year"] = {
+            "Year": first_irmaa["IRMAA Year"],
+            "MAGI Year": first_irmaa["MAGI Year"],
+            "IRMAA MAGI Basis": first_irmaa["IRMAA MAGI Basis"],
+            "Filing Status": first_irmaa["Filing Status"],
+            "IRMAA Tier": first_irmaa["IRMAA Tier"],
+            "Lower Threshold": first_irmaa["Lower Threshold"],
+            "Upper Threshold": first_irmaa["Upper Threshold"],
+            "Annual IRMAA": first_irmaa["Annual IRMAA"],
+        }
+
+    return milestones
+
+
+def _format_irmaa_range(thresholds, level):
+    if level == 0:
+        return f"Up to ${thresholds[0]:,.0f}"
+
+    if level == 5:
+        return f"Over ${thresholds[4]:,.0f}"
+
+    return f"Over ${thresholds[level - 1]:,.0f} to ${thresholds[level]:,.0f}"
+
+
+def _build_irmaa_reference_rows():
+    single = medicareEngine.IRMAA_THRESHOLDS_2026["Single"]
+    married = medicareEngine.IRMAA_THRESHOLDS_2026["Other"]
+    rows = []
+    previous_annual_irmaa = 0.0
+
+    for level in range(6):
+        tier = "No IRMAA"
+        if level > 0:
+            tier = f"Tier {level}"
+
+        part_b_monthly = (
+            medicareEngine.PART_B_STANDARD_MONTHLY_2026
+            * medicareEngine.PART_B_IRMAA_MULTIPLIERS[level]
+        )
+        part_d_monthly = medicareEngine.PART_D_IRMAA_MONTHLY_2026[level]
+        annual_irmaa = 12.0 * (part_b_monthly + part_d_monthly)
+        increase_from_prior = annual_irmaa - previous_annual_irmaa
+
+        rows.append({
+            "Tier": tier,
+            "Single MAGI Range": _format_irmaa_range(single, level),
+            "Married Filing Jointly MAGI Range": _format_irmaa_range(married, level),
+            "Annual IRMAA / Person": annual_irmaa,
+            "Annual IRMAA / Two People": annual_irmaa * 2.0,
+            "Increase / Person": increase_from_prior,
+        })
+
+        previous_annual_irmaa = annual_irmaa
+
+    return rows
 def _build_yearly_tax_rows(results, husband, wife, sim_config):
     years = _safe_array(results, "year")
     rows = []
@@ -92,7 +267,7 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             "Medicare Cost": _as_float(results.get("medicare_cost", [])[i]),
             "IRMAA": _as_float(results.get("irmaa", [])[i]),
             "Traditional Withdrawals": _as_float(results.get("pre_tax_withdrawals", [])[i]),
-            "Emergency Pre-Tax Withdrawal": _as_float(results.get("emergency_pre_tax_used", [])[i]),
+            "Emergency Tax-Deferred Withdrawal": _as_float(results.get("emergency_pre_tax_used", [])[i]),
             "Roth Conversions": _as_float(results.get("roth_conversions", [])[i]),
             "Roth Withdrawals": _as_float(results.get("roth_withdrawals", [])[i]),
             "Qualified HSA Withdrawals": _as_float(results.get("hsa_qualified_withdrawals", [])[i]),
@@ -153,7 +328,7 @@ def _build_tax_source_summary(results):
         "Pensions": _sum(results, "pensions"),
         "Annuities": _sum(results, "annuities"),
         "Traditional Withdrawals": _sum(results, "pre_tax_withdrawals"),
-        "Emergency Pre-Tax Withdrawals": _sum(results, "emergency_pre_tax_used"),
+        "Emergency Tax-Deferred Withdrawals": _sum(results, "emergency_pre_tax_used"),
         "RMDs": _sum(results, "rmd"),
         "Roth Conversions": _sum(results, "roth_conversions"),
         "Taxable HSA Withdrawals": _sum(results, "hsa_taxable_withdrawals"),
@@ -257,6 +432,7 @@ def build_tax_report_data_from_pipeline(
         sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
     results = p["summary_results"]
+    irmaa_yearly_rows = _build_irmaa_yearly_rows(p["core"], husband, wife, sim_config)
     report_options = dict(getattr(sim_config, "report_options", {}) or {})
 
     generated_timestamp = datetime.now()
@@ -265,8 +441,13 @@ def build_tax_report_data_from_pipeline(
 
     years = _safe_array(results, "year")
 
+    years = _safe_array(results, "year")
+    terminal_year = int(results.get("terminal_year", -1))
+
     if years:
         projection_period = f"{int(years[0])}-{int(years[-1])} ({len(years) - 1} Years)"
+        if terminal_year >= 0 and int(years[-1]) == terminal_year:
+            projection_period += f"; {terminal_year} is the terminal death year"
     else:
         projection_period = "N/A"
 
@@ -291,6 +472,7 @@ def build_tax_report_data_from_pipeline(
             "Initial Tax Filing Status": getattr(sim_config, "tax_filing_status", None),
             "State of Residence": getattr(sim_config, "state_of_residence", None),
             "Include RMDs": getattr(sim_config, "include_rmd", None),
+            "IRMAA Enabled": getattr(sim_config, "irmaa_enabled", False),
         },
         "lifetime_tax_summary": _build_lifetime_tax_summary(results),
         "tax_source_summary": _build_tax_source_summary(results),
@@ -299,6 +481,9 @@ def build_tax_report_data_from_pipeline(
         "rmd_summary": _build_rmd_summary(results, second_person_enabled),
         "medicare_summary": _build_medicare_summary(results),
         "yearly_tax_rows": _build_yearly_tax_rows(results, husband, wife, sim_config),
+        "irmaa_milestones": _build_irmaa_milestones(irmaa_yearly_rows),
+        "irmaa_yearly_rows": irmaa_yearly_rows,
+        "irmaa_reference_rows": _build_irmaa_reference_rows(),
         "warnings": [],
     }
 

@@ -30,6 +30,8 @@ PERCENT_KEY_HINTS = {
 
 YEAR_KEYS = {
     "Year",
+    "IRMAA Year",
+    "MAGI Year",
     "First RMD Year",
     "Husband First RMD Year",
     "Wife First RMD Year",
@@ -180,7 +182,7 @@ def _render_tax_model_limitations(report_data):
             taxable-equity portfolio bucket rather than individual securities.
         </li>
         <li>
-            Emergency pre-tax withdrawals use a one-pass tax adjustment rather than repeatedly
+            Emergency Tax-Deferred withdrawals use a one-pass tax adjustment rather than repeatedly
             recalculating taxes and withdrawals until they converge.
         </li>
         <li>
@@ -258,6 +260,142 @@ def _render_medicare_summary(report_data):
 """
 
 
+def _render_irmaa_analysis(report_data):
+    milestones = report_data.irmaa_milestones or {}
+    rows = report_data.irmaa_yearly_rows or []
+    reference_rows = report_data.irmaa_reference_rows or []
+    cards = []
+
+    for title in ["First Medicare Year", "First IRMAA Year"]:
+        card_data = milestones.get(title, {})
+
+        cards.append(f"""
+        <div class="summary-card">
+            <h3>{_safe(title)}</h3>
+            {_render_kv_table(card_data)}
+        </div>
+        """)
+
+    projection_columns = [
+        "IRMAA Year",
+        "MAGI Year",
+        "IRMAA MAGI Basis",
+        "Filing Status",
+        "IRMAA Tier",
+        "Lower Threshold",
+        "Upper Threshold",
+        "Annual IRMAA",
+    ]
+
+    projection_headers = "".join(
+        f"<th>{_safe(column)}</th>"
+        for column in projection_columns
+    )
+
+    projection_body = []
+
+    for row in rows:
+        cells = []
+
+        for column in projection_columns:
+            cells.append(
+                f"<td>{_safe(_fmt_value(row.get(column), key=column))}</td>"
+            )
+
+        projection_body.append("<tr>" + "".join(cells) + "</tr>")
+
+    reference_columns = [
+        "Tier",
+        "Single MAGI Range",
+        "Married Filing Jointly MAGI Range",
+        "Annual IRMAA / Person",
+        "Annual IRMAA / Two People",
+        "Increase / Person",
+    ]
+
+    reference_headers = "".join(
+        f"<th>{_safe(column)}</th>"
+        for column in reference_columns
+    )
+
+    reference_body = []
+
+    for row in reference_rows:
+        cells = []
+
+        for column in reference_columns:
+            cells.append(
+                f"<td>{_safe(_fmt_value(row.get(column), key=column))}</td>"
+            )
+
+        reference_body.append("<tr>" + "".join(cells) + "</tr>")
+
+    projection_table = ""
+
+    if projection_body:
+        projection_table = f"""
+        <table class="wide-table">
+            <thead>
+                <tr>{projection_headers}</tr>
+            </thead>
+            <tbody>
+                {''.join(projection_body)}
+            </tbody>
+        </table>
+        """
+
+    reference_table = ""
+
+    if reference_body:
+        reference_table = f"""
+        <table class="wide-table">
+            <thead>
+                <tr>{reference_headers}</tr>
+            </thead>
+            <tbody>
+                {''.join(reference_body)}
+            </tbody>
+        </table>
+        """
+
+    return f"""
+<section>
+    <h2>IRMAA Analysis</h2>
+    <p class="section-intro">
+        IRMAA uses Modified Adjusted Gross Income from two years earlier. The cards below
+        identify the first modeled Medicare year and the first year in which the simulation
+        produces an IRMAA surcharge.
+    </p>
+
+    <div class="card-grid two-col">
+        {''.join(cards)}
+    </div>
+
+    <h3>IRMAA Projection by Year</h3>
+    <p class="section-intro">
+        IRMAA Year is the year in which the surcharge applies. MAGI Year identifies the
+        two-year lookback year whose MAGI is used for that determination. Lower and upper
+        thresholds are the boundaries of the applicable modeled IRMAA tier.
+    </p>
+    {projection_table}
+
+    <br>
+    <br>
+
+    <h3>2026 IRMAA Threshold and Cost Reference</h3>
+    <p class="section-intro">
+        These are the 2026 base MAGI ranges and annual IRMAA surcharges used by WARPSimLab.
+        Annual IRMAA / Person shows the additional annual Part B and Part D surcharge for one
+        Medicare-covered person. Increase / Person shows the additional annual cost of moving
+        from the preceding tier into that tier. The simulator adjusts applicable thresholds and
+        surcharge amounts for future modeled years; the projection table above shows the actual
+        tier boundaries used for each year.
+    </p>
+    {reference_table}
+</section>
+"""
+
+
 def _render_tax_source_summary(report_data):
     return f"""
 <section>
@@ -281,9 +419,9 @@ def _render_roth_analysis(report_data):
     <h2>Roth Analysis</h2>
     <p class="section-intro">
         WARPSimLab treats Roth accounts as tax-free retirement buckets. When additional
-        portfolio funding is needed for expenses, the simulator uses post-tax assets first,
-        then pre-tax assets, and then Roth assets. Roth withdrawals do not increase ordinary
-        taxable income. Roth conversions move assets from pre-tax accounts to Roth accounts
+        portfolio funding is needed for expenses, the simulator uses Taxable assets first,
+        then Tax-Deferred assets, and then Roth assets. Roth withdrawals do not increase ordinary
+        taxable income. Roth conversions move assets from Tax-Deferred accounts to Roth accounts
         and increase ordinary taxable income, but the converted amount is not treated as
         spendable household cash.
     </p>
@@ -304,7 +442,7 @@ def _render_hsa_analysis(report_data):
         WARPSimLab distinguishes qualified HSA withdrawals from HSA withdrawals used for
         general household funding. Qualified withdrawals used for modeled HSA-eligible medical
         expenses are tax-free. When additional general portfolio funding is needed, the simulator
-        uses post-tax assets first, then pre-tax assets, then Roth assets, and finally HSA assets.
+        uses Taxable assets first, then Tax-Deferred assets, then Roth assets, and finally HSA assets.
         General-purpose HSA withdrawals are treated as ordinary taxable income.
     </p>
     <div class="card-grid two-col">
@@ -366,7 +504,7 @@ def _render_yearly_tax_table(report_data):
         "Marginal Tax Bracket",
     ])
 
-    flow_columns = [
+    distribution_columns = [
         "Year",
         "Medicare Cost",
         "IRMAA",
@@ -374,27 +512,26 @@ def _render_yearly_tax_table(report_data):
     ]
 
     if "Husband RMD" in first_row:
-        flow_columns.extend([
+        distribution_columns.extend([
             "Husband RMD",
             "Wife RMD",
             "Total RMD",
         ])
     else:
-        flow_columns.append("RMD")
+        distribution_columns.append("RMD")
 
-    flow_columns.extend([
+    account_flow_columns = [
+        "Year",
         "Traditional Withdrawals",
-        "Emergency Pre-Tax Withdrawal",
+        "Emergency Tax-Deferred Withdrawal",
         "Roth Conversions",
         "Roth Withdrawals",
         "Qualified HSA Withdrawals",
         "Taxable HSA Withdrawals",
-    ])
-
+    ]
 
     header_labels = {
         "IRMAA Lookback MAGI": "2-Year Lookback MAGI",
-        "Emergency Pre-Tax Withdrawal": "Emergency Tax-Deferred Withdrawal",
     }
 
     def render_table(columns):
@@ -411,19 +548,15 @@ def _render_yearly_tax_table(report_data):
             for column in columns:
                 value = row.get(column)
 
-                css_class = (
-                    " class='negative'"
-                    if isinstance(value, (int, float)) and value < 0
-                    else ""
-                )
+                css_class = ""
+                if isinstance(value, (int, float)) and value < 0:
+                    css_class = " class='negative'"
 
                 cells.append(
                     f"<td{css_class}>{_safe(_fmt_value(value, key=column))}</td>"
                 )
 
-            body_rows.append(
-                "<tr>" + "".join(cells) + "</tr>"
-            )
+            body_rows.append("<tr>" + "".join(cells) + "</tr>")
 
         return f"""
         <table class="wide-table">
@@ -451,8 +584,14 @@ def _render_yearly_tax_table(report_data):
     <br>
     <br>
 
-    <h3>Annual Taxable and Retirement Flows</h3>
-    {render_table(flow_columns)}
+    <h3>Annual Medicare and Required Distributions</h3>
+    {render_table(distribution_columns)}
+
+    <br>
+    <br>
+
+    <h3>Annual Retirement Account Flows</h3>
+    {render_table(account_flow_columns)}
 </section>
 """
 
@@ -866,6 +1005,8 @@ def generate_tax_report(report_data) -> ReportResult:
         {_render_lifetime_tax_summary(report_data)}
 
         {_render_medicare_summary(report_data)}
+
+        {_render_irmaa_analysis(report_data)}
 
         {insights_html}
 

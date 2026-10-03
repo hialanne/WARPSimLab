@@ -453,7 +453,7 @@ def save_taxable_income_source_report_plot(
         for row in yearly_tax_rows
     ]
     traditional = [row["Traditional Withdrawals"] for row in yearly_tax_rows]
-    emergency = [row["Emergency Pre-Tax Withdrawal"] for row in yearly_tax_rows]
+    emergency = [row["Emergency Tax-Deferred Withdrawal"] for row in yearly_tax_rows]
     roth_conversions = [row["Roth Conversions"] for row in yearly_tax_rows]
     taxable_hsa = [row["Taxable HSA Withdrawals"] for row in yearly_tax_rows]
 
@@ -462,7 +462,7 @@ def save_taxable_income_source_report_plot(
     try:
         ax.plot(years, rmd, label="RMD")
         ax.plot(years, traditional, label="Traditional Withdrawals")
-        ax.plot(years, emergency, label="Emergency Pre-Tax Withdrawals")
+        ax.plot(years, emergency, label="Emergency Tax-Deferred Withdrawals")
         ax.plot(years, roth_conversions, label="Roth Conversions")
         ax.plot(years, taxable_hsa, label="Taxable HSA Withdrawals")
 
