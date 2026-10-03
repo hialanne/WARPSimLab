@@ -9,6 +9,7 @@ from . import diagnosticEngine
 
 SOCIAL_SECURITY_EMPLOYEE_RATE = 0.062
 SOCIAL_SECURITY_WAGE_BASE_2026 = 184_500.0
+TAX_BASE_YEAR = 2026
 
 MEDICARE_EMPLOYEE_RATE = 0.0145
 ADDITIONAL_MEDICARE_RATE = 0.009
@@ -263,6 +264,10 @@ def initialize_tax_engine_for_simulation(sim_config):
 
     sim_config._inflation_factors = inflation_factors
 
+    base_multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
+    years_from_base = sim_config.start_year - TAX_BASE_YEAR
+    sim_config._tax_2026_anchor_factor = base_multiplier ** years_from_base
+
     sim_config._tax_year_cache = []
     for _ in range(years):
         sim_config._tax_year_cache.append({})
@@ -280,20 +285,21 @@ def prepare_tax_year_cache(year, sim_config, filing_status_single=None):
     if year_cache is not None:
         return year_cache
 
-    inflation_factor = sim_config._inflation_factors[year]
+    simulation_inflation_factor = sim_config._inflation_factors[year]
+    federal_inflation_factor = sim_config._tax_2026_anchor_factor * simulation_inflation_factor
 
     ordinary_standard_deduction_base, ordinary_brackets_base = FEDERAL_ORDINARY_TAX_TABLES_2026[filing_key]
     _, qd_brackets_base = FEDERAL_QUALIFIED_DIVIDEND_TAX_TABLES_2026[filing_key]
 
-    ordinary_standard_deduction = ordinary_standard_deduction_base * inflation_factor
-    ordinary_brackets = _inflate_brackets(ordinary_brackets_base, inflation_factor)
-    qd_brackets = _inflate_brackets(qd_brackets_base, inflation_factor)
+    ordinary_standard_deduction = ordinary_standard_deduction_base * federal_inflation_factor
+    ordinary_brackets = _inflate_brackets(ordinary_brackets_base, federal_inflation_factor)
+    qd_brackets = _inflate_brackets(qd_brackets_base, federal_inflation_factor)
 
     state_brackets = None
     if sim_config._state_tax_type == "progressive":
         state = getattr(sim_config, "state_of_residence", None)
         rules = STATE_TAX_RULES.get(state)
-        state_brackets = _inflate_brackets(rules["brackets"][filing_key], inflation_factor)
+        state_brackets = _inflate_brackets(rules["brackets"][filing_key], simulation_inflation_factor)
 
     year_cache = {
         "filing_status_single": filing_status_single,
@@ -301,7 +307,7 @@ def prepare_tax_year_cache(year, sim_config, filing_status_single=None):
         "ordinary_brackets": ordinary_brackets,
         "qd_brackets": qd_brackets,
         "state_brackets": state_brackets,
-        "social_security_wage_base": SOCIAL_SECURITY_WAGE_BASE_2026 * inflation_factor,
+        "social_security_wage_base": SOCIAL_SECURITY_WAGE_BASE_2026 * federal_inflation_factor,
     }
 
     sim_config._tax_year_cache[year][filing_key] = year_cache

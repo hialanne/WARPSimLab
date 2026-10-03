@@ -7,6 +7,7 @@ from src.warpsimlab.sim.engines import taxEngine
 def make_config(
     *,
     years_to_simulate=5,
+    start_year=2026,
     inflation_rate=0.0,
     inflation_delta=0.0,
     calculate_income_taxes=True,
@@ -16,6 +17,7 @@ def make_config(
 ):
     return types.SimpleNamespace(
         years_to_simulate=years_to_simulate,
+        start_year=start_year,
         inflation_rate=inflation_rate,
         inflation_delta=inflation_delta,
         calculate_income_taxes=calculate_income_taxes,
@@ -27,7 +29,6 @@ def make_config(
         sim_type="cashflow_sim",
         monte_carlo_mode="pathBasedAnnualSampling",
     )
-
 
 def init_year(cfg, year):
     taxEngine.initialize_tax_engine_for_simulation(cfg)

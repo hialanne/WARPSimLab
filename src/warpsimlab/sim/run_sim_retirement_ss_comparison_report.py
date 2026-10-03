@@ -205,8 +205,13 @@ def _deterministic_final_monthly_retirement_income(core):
     annuity = np.asarray(core["breakdown_by_class"]["annuity"], dtype=float)
 
     retirement_income = social_security + pension + annuity
+    end_index = retirement_income.shape[1] - 1
 
-    return float(retirement_income[0, -1] / 12.0)
+    terminal_year = np.asarray(core.get("terminal_year", []))
+    if terminal_year.size > 0 and int(terminal_year[0]) >= 0 and end_index > 0:
+        end_index -= 1
+
+    return float(retirement_income[0, end_index] / 12.0)
 
 
 def _deterministic_lifetime_total(values):
@@ -354,6 +359,7 @@ def run_sim_retirement_ss_comparison_report(
     original_historical_window_stride = sim_config.historical_window_stride
 
     cases = []
+    effective_years = None
 
     try:
         # This report compares the investment portfolio.
@@ -399,6 +405,8 @@ def run_sim_retirement_ss_comparison_report(
                     sim_config,
                     force_num_sims=1,
                 )
+                if effective_years is None:
+                    effective_years = deterministic_pipeline_result["years"]
 
                 # ---------------------------------------------
                 # Historical Window case
@@ -466,6 +474,11 @@ def run_sim_retirement_ss_comparison_report(
 
     generated_timestamp = datetime.now()
     visible_report_id = generated_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+    
+    if effective_years is None:
+        effective_years = int(sim_config.years_to_simulate)
+
+    projection_end_year = int(sim_config.start_year) + int(effective_years)
 
     report_data = RetirementSSComparisonReportData(
         report_options=report_options,
@@ -476,8 +489,8 @@ def run_sim_retirement_ss_comparison_report(
             "Report Type": "retirement_ss_comparison_report",
             "Output Format": "HTML",
             "Projection Period": (
-                f"{int(sim_config.start_year)}-{int(sim_config.start_year) + int(sim_config.years_to_simulate)} "
-                f"({int(sim_config.years_to_simulate)} Years)"
+                f"{int(sim_config.start_year)}-{projection_end_year} "
+                f"({int(effective_years)} Years)"
             ),
             "Report Basis": (
                 "Real Dollars (Inflation Adjusted)"

@@ -123,15 +123,17 @@ class Simulation:
         self.husband_portfolio = husband_portfolio
         self.wife_portfolio = wife_portfolio
 
-        self.irmaa_enabled = bool(irmaa_enabled)
+        self.irmaa_enabled = irmaa_enabled
 
         if historical_magi is None:
-            historical_magi = {}
-
-        self.historical_magi = {
-            "two_years_prior": historical_magi.get("two_years_prior"),
-            "one_year_prior": historical_magi.get("one_year_prior"),
-        }
+            self.historical_magi = {
+                "two_years_prior": None,
+                "one_year_prior": None,
+            }
+        elif isinstance(historical_magi, dict):
+            self.historical_magi = dict(historical_magi)
+        else:
+            self.historical_magi = historical_magi
 
         if special_income_streams is None:
             special_income_streams = []

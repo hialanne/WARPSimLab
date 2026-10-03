@@ -43,7 +43,23 @@ def test_write_summary_results_csv_creates_file(tmp_path):
         "fund_expenses": [1, 1, 1],
         "taxes": [2, 4, 6],
         "expenses": [3, 6, 9],
-        "net_cash_flow": [5, 10, 15]
+        "net_cash_flow": [5, 10, 15],
+        "medicare_cost_husband": [0, 100, 110],
+        "medicare_cost_wife": [0, 120, 130],
+        "medicare_cost": [0, 220, 240],
+        "magi": [0, 50000, 52000],
+        "irmaa_husband": [0, 10, 20],
+        "irmaa_wife": [0, 15, 25],
+        "irmaa": [0, 25, 45],
+        "irmaa_lookback_magi": [0, 48000, 50000],
+        "irmaa_lookback_available": [False, True, True],
+        "husband_alive": [True, True, True],
+        "wife_alive": [True, True, True],
+        "husband_death_event": [False, False, False],
+        "wife_death_event": [False, False, False],
+        "survivor_state": [False, False, False],
+        "survivor_expense_factor": [1.0, 1.0, 1.0],
+        "filing_status_single": [False, False, False],
     }
 
     path = write_summary_results_csv(results, cfg)
@@ -60,6 +76,11 @@ def test_write_summary_results_csv_creates_file(tmp_path):
     assert header[0] == "year"
     assert "total_assets" in header
     assert "taxes" in header
+
+    assert "medicare_cost" in header
+    assert "irmaa" in header
+    assert "husband_alive" in header
+    assert "filing_status_single" in header
 
     # check first data row
     first_row = reader[1]

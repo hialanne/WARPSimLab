@@ -38,9 +38,13 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
     years = _safe_array(results, "year")
     rows = []
     second_person_enabled = getattr(sim_config, "second_person_enabled", False) and wife is not None
+    terminal_year = int(results.get("terminal_year", -1))
 
     for i, year in enumerate(years):
         if i == 0:
+            continue
+
+        if terminal_year >= 0 and int(year) == terminal_year:
             continue
 
         gross_income = _as_float(results.get("gross_income", [])[i])
@@ -53,6 +57,14 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             + _as_float(results.get("federal_qualified_dividend_tax", [])[i])
         )
 
+        filing_status = "Single"
+        if not bool(results.get("filing_status_single", [])[i]):
+            filing_status = "Married Filing Jointly"
+
+        lookback_magi = None
+        if bool(results.get("irmaa_lookback_available", [])[i]):
+            lookback_magi = _as_float(results.get("irmaa_lookback_magi", [])[i])
+
         row = {"Year": int(year)}
 
         if second_person_enabled:
@@ -62,18 +74,23 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             row["Age"] = husband_age
 
         row.update({
+            "Filing Status": filing_status,
             "Gross Income": gross_income,
+            "MAGI": _as_float(results.get("magi", [])[i]),
+            "IRMAA Lookback MAGI": lookback_magi,
             "Federal Income Tax": federal_income_tax,
             "Federal Ordinary Tax": _as_float(results.get("federal_ordinary_tax", [])[i]),
             "Federal Qualified Dividend Tax": _as_float(results.get("federal_qualified_dividend_tax", [])[i]),
             "State Income Tax": _as_float(results.get("state_income_tax", [])[i]),
             "Payroll Tax": _as_float(results.get("payroll_tax", [])[i]),
             "Social Security Payroll Tax": _as_float(results.get("social_security_payroll_tax", [])[i]),
-            "Medicare Tax": _as_float(results.get("medicare_tax", [])[i]),
-            "Additional Medicare Tax": _as_float(results.get("additional_medicare_tax", [])[i]),
+            "Medicare Payroll Tax": _as_float(results.get("medicare_tax", [])[i]),
+            "Additional Medicare Payroll Tax": _as_float(results.get("additional_medicare_tax", [])[i]),
             "Total Taxes": total_taxes,
             "Effective Tax Rate": effective_tax_rate,
             "Marginal Tax Bracket": _as_float(results.get("tax_bracket", [])[i]),
+            "Medicare Cost": _as_float(results.get("medicare_cost", [])[i]),
+            "IRMAA": _as_float(results.get("irmaa", [])[i]),
             "Traditional Withdrawals": _as_float(results.get("pre_tax_withdrawals", [])[i]),
             "Emergency Pre-Tax Withdrawal": _as_float(results.get("emergency_pre_tax_used", [])[i]),
             "Roth Conversions": _as_float(results.get("roth_conversions", [])[i]),
@@ -118,8 +135,8 @@ def _build_lifetime_tax_summary(results):
         "Lifetime State Income Tax": lifetime_state,
         "Lifetime Payroll Tax": lifetime_payroll,
         "Lifetime Social Security Payroll Tax": lifetime_social_security_payroll,
-        "Lifetime Medicare Tax": lifetime_medicare,
-        "Lifetime Additional Medicare Tax": lifetime_additional_medicare,
+        "Lifetime Medicare Payroll Tax": lifetime_medicare,
+        "Lifetime Additional Medicare Payroll Tax": lifetime_additional_medicare,
         "Lifetime Total Tax": lifetime_total,
         "Lifetime Gross Income": lifetime_gross_income,
         "Average Effective Tax Rate": average_effective_rate,
@@ -202,6 +219,17 @@ def _build_rmd_summary(results, second_person_enabled):
     }
 
 
+def _build_medicare_summary(results):
+    lifetime_medicare_cost = _sum(results, "medicare_cost")
+    lifetime_irmaa = _sum(results, "irmaa")
+
+    return {
+        "Lifetime Medicare Cost": lifetime_medicare_cost,
+        "Lifetime IRMAA": lifetime_irmaa,
+        "Lifetime Medicare and IRMAA Outlays": lifetime_medicare_cost + lifetime_irmaa,
+    }
+
+
 def build_tax_report_data_from_pipeline(
     husband_portfolio,
     wife_portfolio,
@@ -235,6 +263,13 @@ def build_tax_report_data_from_pipeline(
     visible_report_id = generated_timestamp.strftime("%Y-%m-%d %H:%M:%S")
     second_person_enabled = getattr(sim_config, "second_person_enabled", False) and wife is not None
 
+    years = _safe_array(results, "year")
+
+    if years:
+        projection_period = f"{int(years[0])}-{int(years[-1])} ({len(years) - 1} Years)"
+    else:
+        projection_period = "N/A"
+
     return {
         "report_options": report_options,
         "report_metadata": {
@@ -242,10 +277,7 @@ def build_tax_report_data_from_pipeline(
             "Generated Timestamp": visible_report_id,
             "Report ID": visible_report_id,
             "Report Type": "tax_report",
-            "Projection Period": (
-                f"{getattr(sim_config, 'start_year', '')}-"
-                f"{getattr(sim_config, 'start_year', 0) + getattr(sim_config, 'years_to_simulate', 0)}"
-            ),
+            "Projection Period": projection_period,
             "Report Basis": (
                 "Real Dollars (Inflation Adjusted)"
                 if getattr(sim_config, "inflation_mode", None) == "real"
@@ -256,7 +288,7 @@ def build_tax_report_data_from_pipeline(
             "Calculate Income Taxes": getattr(sim_config, "calculate_income_taxes", None),
             "Calculate Payroll Taxes": getattr(sim_config, "calculate_payroll_taxes", None),
             "Calculate State Taxes": getattr(sim_config, "calculate_state_taxes", None),
-            "Tax Filing Status": getattr(sim_config, "tax_filing_status", None),
+            "Initial Tax Filing Status": getattr(sim_config, "tax_filing_status", None),
             "State of Residence": getattr(sim_config, "state_of_residence", None),
             "Include RMDs": getattr(sim_config, "include_rmd", None),
         },
@@ -265,6 +297,7 @@ def build_tax_report_data_from_pipeline(
         "roth_summary": _build_roth_summary(results),
         "hsa_summary": _build_hsa_summary(results),
         "rmd_summary": _build_rmd_summary(results, second_person_enabled),
+        "medicare_summary": _build_medicare_summary(results),
         "yearly_tax_rows": _build_yearly_tax_rows(results, husband, wife, sim_config),
         "warnings": [],
     }

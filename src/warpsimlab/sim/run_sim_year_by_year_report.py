@@ -29,20 +29,18 @@ def _array_value(results, key, index, default=0.0):
         return default
 
 
-def _build_projection_period_label(sim_config):
-    start_year = getattr(sim_config, "start_year", None)
-    years = getattr(sim_config, "years_to_simulate", None)
+def _build_projection_period_label(results):
+    years = results.get("year", [])
 
-    if start_year is None or years is None:
+    if len(years) == 0:
         return "N/A"
 
     try:
-        start_year = int(start_year)
-        years = int(years)
-        return f"{start_year}-{start_year + years} ({years} Years)"
+        start_year = int(years[0])
+        end_year = int(years[-1])
+        return f"{start_year}-{end_year} ({len(years) - 1} Years)"
     except (TypeError, ValueError):
         return "N/A"
-
 
 def _build_report_basis_label(sim_config):
     inflation_mode = getattr(sim_config, "inflation_mode", None)
@@ -66,6 +64,29 @@ def _build_age_value(person, index):
         return None
 
 
+def _build_life_event(results, index):
+    husband_death = bool(_array_value(results, "husband_death_event", index))
+    wife_death = bool(_array_value(results, "wife_death_event", index))
+
+    if husband_death and wife_death:
+        return "Both Died"
+
+    if husband_death:
+        return "Husband Died"
+
+    if wife_death:
+        return "Wife Died"
+
+    return ""
+
+
+def _build_filing_status(results, index):
+    if bool(_array_value(results, "filing_status_single", index)):
+        return "Single"
+
+    return "Married Filing Jointly"
+
+
 def _build_year_row(results, index, husband, wife, sim_config):
     pre_tax_assets = _array_value(results, "pre_tax_assets", index)
     post_tax_assets = _array_value(results, "post_tax_assets", index)
@@ -85,6 +106,9 @@ def _build_year_row(results, index, husband, wife, sim_config):
     row = {
         "Year": _array_value(results, "year", index),
         "Age": _build_age_value(husband, index),
+        "Life Event": _build_life_event(results, index),
+        "Filing Status": _build_filing_status(results, index),
+        "MAGI": _array_value(results, "magi", index),
 
         "Gross Wages": gross_wages,
         "RMD": _array_value(results, "rmd", index),
@@ -113,6 +137,8 @@ def _build_year_row(results, index, husband, wife, sim_config):
         "Workplace Roth Contributions": _array_value(results, "roth_workplace_contributions", index),
         "Qualified HSA Withdrawal": _array_value(results, "hsa_qualified_withdrawals", index),
         "Taxable HSA Withdrawal": _array_value(results, "hsa_taxable_withdrawals", index),
+        "Medicare Cost": _array_value(results, "medicare_cost", index),
+        "IRMAA": _array_value(results, "irmaa", index),
         "Household Expenses": _array_value(results, "expenses", index),
         "Net Cash Flow": _array_value(results, "net_cash_flow", index),
 
@@ -197,7 +223,7 @@ def build_year_by_year_report_data_from_pipeline(
             "Generated Timestamp": visible_report_id,
             "Report ID": visible_report_id,
             "Report Type": "year_by_year_report",
-            "Projection Period": _build_projection_period_label(sim_config),
+            "Projection Period": _build_projection_period_label(results),
             "Report Basis": _build_report_basis_label(sim_config),
         },
         year_rows=_build_year_rows(results, husband, wife, sim_config),

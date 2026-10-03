@@ -99,6 +99,9 @@ def build_cash_flow_tab(dialog, notebook):
     add_row("Workplace Roth Contributions", "roth_workplace_contributions")
     add_row("Qualified HSA Withdrawal", "hsa_qualified_withdrawals")
     add_row("Taxable HSA Withdrawal", "hsa_taxable_withdrawals")
+    add_separator()
+    add_row("Medicare Cost", "medicare_cost")
+    add_row("IRMAA", "irmaa")
 
     if dialog.sim_config.always_use_expense_mode:
         add_row("Household Expenses", "expenses")
@@ -111,17 +114,16 @@ def build_cash_flow_tab(dialog, notebook):
         note_text = (
             "Net Income is Gross Income after modeled taxes and employee traditional 401k and HSA contributions.\n"
             "Net Cash Flow also reflects household expenses, Roth contributions, and HSA funding flows.\n"
+            "Medicare costs and IRMAA are cash outflows included in Net Cash Flow, not Taxes.\n"
             "Fund expenses are removed directly from the portfolio and are shown for reference."
         )
     else:
         note_text = (
-            "Gross Income and Net Income include modeled retirement withdrawal cash and taxable HSA withdrawals "
-            "where applicable.\n"
-            "Roth contributions are after-tax cash uses; qualified HSA withdrawals are tax-free funding for "
-            "modeled eligible expenses.\n"
+            "Gross Income and Net Income include modeled retirement withdrawal cash and taxable HSA withdrawals.\n"
+            "Medicare costs and IRMAA are modeled cash outflows and are not included in Taxes.\n"
+            "Roth contributions are after-tax cash uses; qualified HSA withdrawals are tax-free\n"
             "Fund expenses are removed directly from the portfolio and are shown for reference."
         )
-
     ttk.Label(cash_flow_tab, text=note_text, font=body_font, justify="left").grid(
         row=row_idx, column=0, columnspan=5, sticky="w", pady=(15, 10)
     )

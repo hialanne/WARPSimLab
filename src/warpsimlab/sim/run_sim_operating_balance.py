@@ -30,8 +30,13 @@ def run_sim_operating_balance(husband_portfolio, wife_portfolio, husband, wife, 
         force_num_sims=1
     )
 
-    net_profit = np.array(p["net_profit"])  # shape: (years+1,)
     years = p["years"]
+
+    if p["summary_results"].get("terminal_year", -1) >= 0 and years > 0:
+        years -= 1
+
+    end = years + 1
+    net_profit = np.array(p["net_profit"][:end])
 
     # Cumulative operating balance:
     # year 0 is 0; accumulate starting from year 1
@@ -43,7 +48,7 @@ def run_sim_operating_balance(husband_portfolio, wife_portfolio, husband, wife, 
     # Portfolio value series for coverage test
     # --------------------------
     portfolio_plot_data = p["portfolio_plot_data"]
-    portfolio_value = np.array(portfolio_plot_data.percentiles["median"], dtype=float)
+    portfolio_value = np.array(portfolio_plot_data.percentiles["median"][:end], dtype=float)
 
     # Plot
     plot_operating_balance(

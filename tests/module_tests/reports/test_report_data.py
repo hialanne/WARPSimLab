@@ -199,6 +199,11 @@ def test_tax_report_data_preserves_required_fields_and_defaults():
         report_metadata={"Report ID": "tax-1"},
         tax_settings={"Calculate Income Taxes": True},
         lifetime_tax_summary={"Lifetime Total Tax": 10000.0},
+        medicare_summary={
+            "Lifetime Medicare Cost": 12000.0,
+            "Lifetime IRMAA": 3000.0,
+            "Lifetime Medicare and IRMAA Outlays": 15000.0,
+        },
         tax_source_summary={"Wages": 50000.0},
         roth_summary={"Total Roth Withdrawals": 1000.0},
         hsa_summary={"Total HSA Withdrawals": 500.0},
@@ -225,6 +230,11 @@ def test_tax_report_data_preserves_required_fields_and_defaults():
             "Total Taxes": 100.0,
         }
     ]
+    assert data.medicare_summary == {
+        "Lifetime Medicare Cost": 12000.0,
+        "Lifetime IRMAA": 3000.0,
+        "Lifetime Medicare and IRMAA Outlays": 15000.0,
+    }
     assert data.warnings == []
 
 
@@ -234,6 +244,7 @@ def test_tax_report_data_default_warnings_are_independent():
         report_metadata={},
         tax_settings={},
         lifetime_tax_summary={},
+        medicare_summary={},
         tax_source_summary={},
         roth_summary={},
         hsa_summary={},
@@ -245,6 +256,7 @@ def test_tax_report_data_default_warnings_are_independent():
         report_metadata={},
         tax_settings={},
         lifetime_tax_summary={},
+        medicare_summary={},
         tax_source_summary={},
         roth_summary={},
         hsa_summary={},

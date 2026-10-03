@@ -12,6 +12,9 @@ def test_run_sim_operating_balance_computes_cumulative_balance_exactly(monkeypat
         "net_profit": net_profit,
         "years": 4,
         "years_list": np.arange(0, 5),
+        "summary_results": {
+            "terminal_year": -1,
+        },
         "portfolio_plot_data": type(
             "PortfolioPlotDataStub",
             (),

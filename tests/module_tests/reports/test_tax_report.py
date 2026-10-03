@@ -32,7 +32,7 @@ def make_report_data(**overrides):
             "Calculate Income Taxes": True,
             "Calculate Payroll Taxes": True,
             "Calculate State Taxes": False,
-            "Tax Filing Status": "Married Filing Jointly",
+            "Initial Tax Filing Status": "Married Filing Jointly",
             "State of Residence": "None",
         },
         lifetime_tax_summary={
@@ -42,6 +42,11 @@ def make_report_data(**overrides):
             "Lifetime Payroll Tax": 2000.0,
             "Average Effective Tax Rate": 0.125,
             "Highest Marginal Tax Bracket": 0.24,
+        },
+        medicare_summary={
+            "Lifetime Medicare Cost": 12000.0,
+            "Lifetime IRMAA": 3000.0,
+            "Lifetime Medicare and IRMAA Outlays": 15000.0,
         },
         tax_source_summary={
             "Wages": 50000.0,
@@ -198,10 +203,24 @@ def test_render_tax_model_limitations_mentions_roth_hsa_and_state_taxes():
     assert "State income taxes" in html
 
 
+def test_render_medicare_summary_contains_outlays():
+    report_data = make_report_data()
+
+    html = mod._render_medicare_summary(report_data)
+
+    assert "Medicare and IRMAA" in html
+    assert "Lifetime Medicare Cost" in html
+    assert "$12,000" in html
+    assert "Lifetime IRMAA" in html
+    assert "$3,000" in html
+    assert "Lifetime Medicare and IRMAA Outlays" in html
+    assert "$15,000" in html
+
+
 def test_render_tax_settings_escapes_values():
     report_data = make_report_data(
         tax_settings={
-            "Tax Filing Status": "<bad>",
+            "Initial Tax Filing Status": "<bad>",
             "Calculate Income Taxes": True,
         }
     )

@@ -14,18 +14,21 @@ def test_run_sim_income_calls_expected_csv_writer(monkeypatch):
         "net_profit": np.array([0.0, 1.0, 2.0]),
         "taxes": np.array([0.0, 3.0, 4.0]),
         "expense_amt": np.array([0.0, 9.0, 18.0]),
-            "breakdown_by_class": {
-                "work": np.array([0.0, 10.0, 20.0]),
-                "pension": np.array([0.0, 0.0, 0.0]),
-                "annuity": np.array([0.0, 0.0, 0.0]),
-                "ss": np.array([0.0, 0.0, 0.0]),
-                "special_income": np.array([0.0, 0.0, 0.0]),
-                "rmd": np.array([0.0, 0.0, 0.0]),
-                "withdrawal": np.array([0.0, 0.0, 0.0]),
-                "bond_interest": np.array([0.0, 0.0, 0.0]),
-                "cash_interest": np.array([0.0, 0.0, 0.0]),
-                "qualified_dividends": np.array([0.0, 0.0, 0.0]),
-            },
+        "summary_results": {
+            "terminal_year": -1,
+        },
+        "breakdown_by_class": {
+            "work": np.array([0.0, 10.0, 20.0]),
+            "pension": np.array([0.0, 0.0, 0.0]),
+            "annuity": np.array([0.0, 0.0, 0.0]),
+            "ss": np.array([0.0, 0.0, 0.0]),
+            "special_income": np.array([0.0, 0.0, 0.0]),
+            "rmd": np.array([0.0, 0.0, 0.0]),
+            "withdrawal": np.array([0.0, 0.0, 0.0]),
+            "bond_interest": np.array([0.0, 0.0, 0.0]),
+            "cash_interest": np.array([0.0, 0.0, 0.0]),
+            "qualified_dividends": np.array([0.0, 0.0, 0.0]),
+        },
     }
     captured = {}
 
@@ -64,12 +67,16 @@ def test_run_sim_operating_balance_calls_expected_csv_writer_when_available(monk
         "net_profit": np.array([0.0, 5.0, -2.0]),
         "years": 2,
         "years_list": np.array([0, 1, 2]),
+        "summary_results": {
+            "terminal_year": -1,
+        },
         "portfolio_plot_data": type(
             "PortfolioPlotDataStub",
             (),
             {"percentiles": {"median": np.array([100.0, 101.0, 102.0])}},
         )(),
     }
+
     captured = {}
 
     monkeypatch.setattr(run_sim_operating_balance, "run_pipeline", lambda *args, **kwargs: pipeline_payload)

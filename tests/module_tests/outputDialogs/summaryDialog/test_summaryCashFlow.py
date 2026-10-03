@@ -39,6 +39,8 @@ def _make_results():
         "hsa_qualified_withdrawals": values(0, 0, 1000, 1000),
         "hsa_taxable_withdrawals": values(0, 0, 0, 0),
         "expenses": values(50000, 50000, 50000, 50000),
+        "medicare_cost": values(0, 0, 2400, 2500),
+        "irmaa": values(0, 0, 300, 350),
         "net_cash_flow": values(14000, 6200, 3000, -6000),
         "fund_expenses": values(1000, 950, 900, 850),
     }
@@ -112,6 +114,9 @@ def test_expense_mode_includes_expense_and_net_cash_flow_rows(tk_root):
 
     assert "Household Expenses" in texts
     assert "Net Cash Flow" in texts
+
+    assert "Medicare Cost" in texts
+    assert "IRMAA" in texts
 
 
 def test_withdrawal_mode_omits_expense_and_net_cash_flow_rows(tk_root):

@@ -64,18 +64,16 @@ def _build_report_warnings(report_options):
     return []
 
 
-def _build_projection_period_label(sim_config):
-    start_year = getattr(sim_config, "start_year", None)
-    years = getattr(sim_config, "years_to_simulate", None)
+def _build_projection_period_label(results):
+    years = results.get("year", [])
 
-    if start_year is None or years is None:
+    if len(years) == 0:
         return "N/A"
 
     try:
-        start_year = int(start_year)
-        years = int(years)
-        end_year = start_year + years
-        return f"{start_year}-{end_year} ({years} Years)"
+        start_year = int(years[0])
+        end_year = int(years[-1])
+        return f"{start_year}-{end_year} ({len(years) - 1} Years)"
     except (TypeError, ValueError):
         return "N/A"
 
@@ -141,6 +139,8 @@ def _build_income_milestone(results, index):
         "Tax Bracket": _array_value(results, "tax_bracket", index),
         "Net Income": _array_value(results, "net_income", index),
 
+        "Medicare Cost": _array_value(results, "medicare_cost", index),
+        "IRMAA": _array_value(results, "irmaa", index),
         "Household Expenses": _array_value(results, "expenses", index),
         "Net Cash Flow": _array_value(results, "net_cash_flow", index),
         "Cash Flow Shortfall": _array_value(results, "cash_flow_shortfall", index),
@@ -185,11 +185,19 @@ def _build_income_milestones(results, husband, wife, sim_config):
     after_retirement_index = _clamp_index(retirement_index + 1, length)
     end_index = _clamp_index(length - 1, length)
 
+    if results.get("terminal_year", -1) >= 0 and end_index > 0:
+        end_index -= 1
+
+    end_label = "End Simulation"
+
+    if results.get("terminal_year", -1) >= 0:
+        end_label = "Last Operating Year"
+
     return {
         "First Income Year": _build_income_milestone(results, start_index),
         "Year Before Retirement": _build_income_milestone(results, before_retirement_index),
         "Year After Retirement": _build_income_milestone(results, after_retirement_index),
-        "End Simulation": _build_income_milestone(results, end_index),
+        end_label: _build_income_milestone(results, end_index),
     }
 
 
@@ -236,6 +244,8 @@ def _build_simulation_totals(results, simulated_shortfall_rate=None):
         "Minimum Portfolio": minimum_portfolio,
         "Total Income": float(sum(results.get("gross_income", []))),
         "Taxes Paid": float(sum(results.get("taxes", []))),
+        "Lifetime Medicare Cost": float(sum(results.get("medicare_cost", []))),
+        "Lifetime IRMAA": float(sum(results.get("irmaa", []))),
         "Household Expenses": float(sum(results.get("expenses", []))),
         "Lifetime Funding Gap": float(sum(results.get("funding_gap", []))),
         "Total Cash Flow Shortfall": float(sum(results.get("cash_flow_shortfall", []))),
@@ -244,15 +254,19 @@ def _build_simulation_totals(results, simulated_shortfall_rate=None):
     }
 
 
-def _build_simulation_snapshot(sim_config):
-    projection_end_year = (
-        int(getattr(sim_config, "start_year", 0))
-        + int(getattr(sim_config, "years_to_simulate", 0))
-    )
+def _build_simulation_snapshot(sim_config, results):
+    years = results.get("year", [])
+    effective_years = len(years) - 1 if len(years) > 0 else 0
+
+    if len(years) > 0:
+        projection_end_year = int(years[-1])
+    else:
+        projection_end_year = getattr(sim_config, "start_year", None)
 
     return {
         "Start Year": getattr(sim_config, "start_year", None),
-        "Years Simulated": getattr(sim_config, "years_to_simulate", None),
+        "Years Simulated": effective_years,
+        "Configured Years": getattr(sim_config, "years_to_simulate", None),
         "Projection End Year": projection_end_year,
         "Inflation Rate": _rate_fraction_to_percent(getattr(sim_config, "inflation_rate", None)),
         "Plot Mode": getattr(sim_config, "inflation_mode", None),
@@ -398,6 +412,9 @@ def _build_household_retirement_table(husband, wife, sim_config):
     fields = [
         ("Current Age", "age", _fmt_assumption_number, False),
         ("Retirement Age", "retire_age", _fmt_assumption_number, False),
+        ("Modeled Death Age", "modeled_death_age", _fmt_assumption_number, False),
+        ("Medicare Start Age", "medicare_start_age", _fmt_assumption_number, False),
+        ("Annual Medicare Cost", "medicare_annual_cost", _fmt_assumption_currency, True),
         ("Salary / Wages", "income", _fmt_assumption_currency, True),
         ("Social Security Amount", "ss", _fmt_assumption_currency, True),
         ("Social Security Start Age", "ss_age", _fmt_assumption_number, False),
@@ -594,12 +611,16 @@ def _build_assumptions_summary(
         },
 
         "Tax Assumptions": {
-            "Tax Filing Status": getattr(sim_config, "tax_filing_status", None),
+            "Initial Tax Filing Status": getattr(sim_config, "tax_filing_status", None),
             "Calculate Income Taxes": getattr(sim_config, "calculate_income_taxes", None),
             "Calculate Payroll Taxes": getattr(sim_config, "calculate_payroll_taxes", None),
             "Calculate State Taxes": getattr(sim_config, "calculate_state_taxes", None),
             "State of Residence": getattr(sim_config, "state_of_residence", None),
             "Include RMDs": getattr(sim_config, "include_rmd", None),
+        },
+        "Medicare & IRMAA Assumptions": {
+            "IRMAA Enabled": getattr(sim_config, "irmaa_enabled", None),
+            "Historical MAGI Provided": bool(getattr(sim_config, "historical_magi", None)),
         },
     }
 
@@ -731,7 +752,17 @@ def _save_income_plot_with_temporary_modes(
             force_num_sims=force_num_sims,
         )
 
-        breakdown = p["breakdown_by_class"]
+        flow_years = p["years"]
+
+        if p["summary_results"].get("terminal_year", -1) >= 0 and flow_years > 0:
+            flow_years -= 1
+
+        flow_end = flow_years + 1
+
+        breakdown = {
+            key: values[:flow_end]
+            for key, values in p["breakdown_by_class"].items()
+        }
 
         income_keys = ["work", "pension", "annuity", "ss", "special_income"]
 
@@ -761,12 +792,12 @@ def _save_income_plot_with_temporary_modes(
         return save_income_projection_report_plot(
             output_folder=output_folder,
             filename=filename,
-            years_to_simulate=p["years"],
-            net_profit=p["net_profit"],
+            years_to_simulate=flow_years,
+            net_profit=p["net_profit"][:flow_end],
             net_income=plot_total,
             breakdown=plot_breakdown,
-            taxes=p["taxes"],
-            expenses=p["expense_amt"],
+            taxes=p["taxes"][:flow_end],
+            expenses=p["expense_amt"][:flow_end],
             husband=husband,
             wife=wife,
             sim_config=sim_config,
@@ -992,6 +1023,13 @@ def _build_report_plot_assets(
         except Exception as exc:
             warnings.append(f"Cash Flow subcategory plot could not be generated: {exc}")
 
+    flow_years = p["years"]
+
+    if p["summary_results"].get("terminal_year", -1) >= 0 and flow_years > 0:
+        flow_years -= 1
+
+    flow_end = flow_years + 1
+
     if _get_report_option(
         report_options, ["operating_balance_visuals", "include_cumulative_operating_balance"], True
     ):
@@ -999,8 +1037,8 @@ def _build_report_plot_assets(
             image_path = save_cumulative_operating_balance_report_plot(
                 output_folder=assets_folder,
                 filename="cumulative_operating_balance.png",
-                years_to_simulate=p["years"],
-                net_profit=p["net_profit"],
+                years_to_simulate=flow_years,
+                net_profit=p["net_profit"][:flow_end],
                 portfolio_plot_data=p["portfolio_plot_data"],
                 husband=husband,
                 wife=wife,
@@ -1132,10 +1170,10 @@ def build_summary_report_data_from_pipeline(
             "Report ID": visible_report_id,
             "Report Type": "summary_report",
             "Output Format": report_options.get("output_format", "HTML"),
-            "Projection Period": _build_projection_period_label(sim_config),
+            "Projection Period": _build_projection_period_label(results),
             "Report Basis": _build_report_basis_label(sim_config),
         },
-        simulation_snapshot=_build_simulation_snapshot(sim_config),
+        simulation_snapshot=_build_simulation_snapshot(sim_config, results),
         results_summary={
             "portfolio_milestones": _build_portfolio_milestones(results, husband, wife, sim_config),
             "income_milestones": _build_income_milestones(results, husband, wife, sim_config),

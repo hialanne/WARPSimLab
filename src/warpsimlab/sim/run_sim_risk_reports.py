@@ -99,9 +99,9 @@ def _safe_report_method(risk_analysis_mode):
     return str(risk_analysis_mode)
 
 
-def _build_report_metadata(sim_config, method):
+def _build_report_metadata(sim_config, method, years):
     start_year = int(getattr(sim_config, "start_year", 0))
-    years = int(getattr(sim_config, "years_to_simulate", 0))
+    years = int(years)
     end_year = start_year + years
 
     now = datetime.now()
@@ -121,12 +121,13 @@ def _build_report_metadata(sim_config, method):
     }
 
 
-def _build_simulation_snapshot(sim_config, method, scenario_count):
+def _build_simulation_snapshot(sim_config, method, scenario_count, years):
     snapshot = {
         "Analysis Method": method,
         "Scenario Count": scenario_count,
         "Start Year": getattr(sim_config, "start_year", None),
-        "Years Simulated": getattr(sim_config, "years_to_simulate", None),
+        "Years Simulated": int(years),
+        "Configured Years": getattr(sim_config, "years_to_simulate", None),
         "Plot Mode": getattr(sim_config, "inflation_mode", None),
         "Monte Carlo Mode": getattr(sim_config, "risk_analysis_mode", None),
         "Historical Asset Returns File": getattr(sim_config, "historical_asset_returns_file", None),
@@ -422,6 +423,7 @@ def _build_and_generate_risk_report(
 
     total_assets = np.asarray(core["total_assets"], dtype=float)
     years = np.asarray(core["year"][0])
+    effective_years = len(years) - 1
 
     method = _safe_report_method(risk_analysis_mode)
     scenario_count = int(total_assets.shape[0])
@@ -432,7 +434,7 @@ def _build_and_generate_risk_report(
     analysis_summary = {
         "Analysis Method": method,
         "Scenario Count": scenario_count,
-        "Years Simulated": getattr(sim_config, "years_to_simulate", None),
+        "Years Simulated": effective_years,
         "Simulated Shortfall Rate": failure_statistics.get("Simulated Shortfall Rate"),
         "Worst Ending Portfolio": float(np.min(ending_values)),
         "10th Percentile Ending Portfolio": float(np.percentile(ending_values, 10)),
@@ -473,7 +475,7 @@ def _build_and_generate_risk_report(
         report_options = report_options.get("monte_carlo_risk", report_options)
 
     warnings = []
-    report_metadata = _build_report_metadata(sim_config, method)
+    report_metadata = _build_report_metadata(sim_config, method, effective_years)
 
     plot_assets = _build_risk_plot_assets(
         pipeline_result=pipeline_result,
@@ -488,7 +490,7 @@ def _build_and_generate_risk_report(
     report_data = RiskReportData(
         report_options=report_options,
         report_metadata=report_metadata,
-        simulation_snapshot=_build_simulation_snapshot(sim_config, method, scenario_count),
+        simulation_snapshot=_build_simulation_snapshot(sim_config, method, scenario_count, effective_years),
         analysis_summary=analysis_summary,
         historical_insights=historical_insights,
         percentile_table=_build_percentile_table(total_assets, years),

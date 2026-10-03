@@ -24,6 +24,7 @@ def tk_root():
 
 def _make_results(funding_gap=0.0, shortfall_rate=0.0):
     return {
+        "year": np.array([2025, 2026, 2027]),
         "pre_tax_assets": np.array([100000, 90000, 80000], dtype=float),
         "post_tax_assets": np.array([50000, 45000, 40000], dtype=float),
         "roth_assets": np.array([10000, 12000, 14000], dtype=float),
@@ -39,8 +40,8 @@ def _make_results(funding_gap=0.0, shortfall_rate=0.0):
 def _make_dialog(second_person_enabled=True, funding_gap=0.0, shortfall_rate=0.0):
     return SimpleNamespace(
         results=_make_results(funding_gap, shortfall_rate),
-        husband=SimpleNamespace(age=60, retire_age=65),
-        wife=SimpleNamespace(age=58, retire_age=66),
+        husband=SimpleNamespace(age=60, retire_age=65, modeled_death_age=88),
+        wife=SimpleNamespace(age=58, retire_age=66, modeled_death_age=90),
         sim_config=SimpleNamespace(
             second_person_enabled=second_person_enabled,
             eq_mean=0.07,
@@ -53,6 +54,19 @@ def _make_dialog(second_person_enabled=True, funding_gap=0.0, shortfall_rate=0.0
         _report_body_font=("Courier New", 12),
         _report_body_bold_font=("Courier New", 12, "bold"),
     )
+
+
+def test_summary_displays_effective_horizon_and_modeled_death_ages(tk_root):
+    notebook = ttk.Notebook(tk_root)
+    dialog = _make_dialog()
+
+    tab = build_summary_tab(dialog, notebook)
+    texts = _widget_texts(tab)
+
+    assert any("Effective Modeled Years:" in text and "2" in text for text in texts)
+    assert any("Effective End Year:" in text and "2027" in text for text in texts)
+    assert any("Husband Modeled Death:" in text and "88" in text for text in texts)
+    assert any("Wife Modeled Death:" in text and "90" in text for text in texts)
 
 
 def _all_labels(widget):

@@ -54,6 +54,7 @@ class TaxReportData:
     roth_summary: dict[str, Any]
     hsa_summary: dict[str, Any]
     rmd_summary: dict[str, Any]
+    medicare_summary: dict[str, Any]
     yearly_tax_rows: list[dict[str, Any]]
     warnings: list[str] = field(default_factory=list)
 

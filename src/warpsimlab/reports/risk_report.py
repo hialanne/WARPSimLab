@@ -390,13 +390,13 @@ def _render_sustainability_interpretation(report_data):
         heading = "Historical Outcome Summary"
         message = (
             f"{shortfall_rate:.1f}% of the evaluated historical windows depleted "
-            "the portfolio before the end of the projection period."
+            "the portfolio before the end of the modeled period."
         )
     elif "monte" in method:
         heading = "Monte Carlo Outcome Summary"
         message = (
             f"{shortfall_rate:.1f}% of the analyzed Monte Carlo paths depleted "
-            "the portfolio before the end of the projection period."
+            "the portfolio before the end of the modeled period."
         )
     else:
         return ""
@@ -429,14 +429,16 @@ def _render_failure_statistics(report_data):
         intro = """
         <p class="section-intro">
             This section summarizes how often the modeled portfolio was depleted
-            before the end of the projection period across the historical windows.
+            before the end of the modeled period across the historical windows.
+            When mortality is modeled, that period ends with the modeled household lifetime.
         </p>
         """
     elif "monte" in method:
         intro = """
         <p class="section-intro">
             This section summarizes how often the modeled portfolio was depleted
-            before the end of the projection period across the Monte Carlo paths.
+            before the end of the modeled period across the Monte Carlo paths.
+            When mortality is modeled, that period ends with the modeled household lifetime.
         </p>
         """
     else:

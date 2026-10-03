@@ -112,14 +112,32 @@ def build_summary_tab(dialog, notebook):
         ttk.Label(inputs_frame, text=label, font=body_font).pack(anchor="w", pady=2)
 
 
-    add_input_label("Husband Age:            ", dialog.husband.age)
-    add_input_label("Husband Retirement Age: ", dialog.husband.retire_age)
+    def death_age_text(person):
+        death_age = getattr(person, "modeled_death_age", None)
+        if death_age is None:
+            return "Not Modeled"
+        return str(death_age)
+
+
+    effective_years = len(r["year"]) - 1
+    effective_end_year = int(r["year"][-1])
+
+    add_input_label("Effective Modeled Years: ", effective_years)
+    add_input_label("Effective End Year:      ", effective_end_year)
+
+    ttk.Separator(inputs_frame, orient="horizontal").pack(fill="x", pady=4)
+
+    add_input_label("Husband Age:             ", dialog.husband.age)
+    add_input_label("Husband Retirement Age:  ", dialog.husband.retire_age)
+    add_input_label("Husband Modeled Death:   ", death_age_text(dialog.husband))
 
     if dialog.sim_config.second_person_enabled:
-        add_input_label("Wife Age:               ", dialog.wife.age)
-        add_input_label("Wife Retirement Age:    ", dialog.wife.retire_age)
+        add_input_label("Wife Age:                ", dialog.wife.age)
+        add_input_label("Wife Retirement Age:     ", dialog.wife.retire_age)
+        add_input_label("Wife Modeled Death:      ", death_age_text(dialog.wife))
     else:
         add_empty_space("                ")
+        add_empty_space("    ")
         add_empty_space("    ")
 
     ttk.Separator(inputs_frame, orient="horizontal").pack(fill="x", pady=4)

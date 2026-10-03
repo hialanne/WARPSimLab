@@ -146,9 +146,9 @@ def _render_tax_overview(report_data):
 <section>
     <h2>Tax Overview</h2>
     <p class="section-intro">
-        This report summarizes the taxes estimated by WARPSimLab over the simulation period.
-        It is intended to explain how federal income taxes, state income taxes, payroll taxes,
-        Roth assets, HSA assets, and required minimum distributions affect the simulated plan.
+        This report summarizes the taxes estimated by WARPSimLab over the simulation period
+        and shows Medicare and IRMAA information relevant to the modeled tax path.
+        Medicare costs and IRMAA are modeled cash outflows and are not included in Total Taxes.
     </p>
     <p class="section-intro">
         This report is not a tax return, does not replace tax software, and should not be
@@ -235,6 +235,23 @@ def _render_lifetime_tax_summary(report_data):
                     "Highest Marginal Tax Bracket",
                 },
             )}
+        </div>
+    </div>
+</section>
+"""
+
+
+def _render_medicare_summary(report_data):
+    return f"""
+<section>
+    <h2>Medicare and IRMAA Summary</h2>
+    <p class="section-intro">
+        Medicare costs and IRMAA are modeled household cash outflows. They are shown here
+        for tax-planning context but are not included in Lifetime Total Tax.
+    </p>
+    <div class="card-grid two-col">
+        <div class="summary-card">
+            {_render_kv_table(report_data.medicare_summary)}
         </div>
     </div>
 </section>
@@ -337,7 +354,10 @@ def _render_yearly_tax_table(report_data):
         tax_columns.append("Age")
 
     tax_columns.extend([
+        "Filing Status",
         "Gross Income",
+        "MAGI",
+        "IRMAA Lookback MAGI",
         "Federal Income Tax",
         "State Income Tax",
         "Payroll Tax",
@@ -348,6 +368,8 @@ def _render_yearly_tax_table(report_data):
 
     flow_columns = [
         "Year",
+        "Medicare Cost",
+        "IRMAA",
         "Qualified Equity Distributions",
     ]
 
@@ -371,6 +393,7 @@ def _render_yearly_tax_table(report_data):
 
 
     header_labels = {
+        "IRMAA Lookback MAGI": "2-Year Lookback MAGI",
         "Emergency Pre-Tax Withdrawal": "Emergency Tax-Deferred Withdrawal",
     }
 
@@ -417,8 +440,9 @@ def _render_yearly_tax_table(report_data):
 <section>
     <h2>Year-by-Year Tax Details</h2>
     <p class="section-intro">
-        These tables show annual taxes and the taxable or retirement flows that
-        affect the simulation.
+        These tables show annual taxes, filing status, MAGI, IRMAA lookback values,
+        Medicare and IRMAA outlays, and taxable or retirement flows that affect the simulation.
+        Medicare costs and IRMAA are not included in Total Taxes.
     </p>
 
     <h3>Annual Tax Summary</h3>
@@ -707,6 +731,12 @@ def _write_summary_csv(report_data, output_folder, safe_id):
         for key, value in report_data.lifetime_tax_summary.items():
             writer.writerow([key, value])
 
+        writer.writerow([])
+        writer.writerow(["Medicare / IRMAA", "Value"])
+
+        for key, value in report_data.medicare_summary.items():
+            writer.writerow([key, value])
+
 
 def _write_tax_source_csv(report_data, output_folder, safe_id):
     filename = os.path.join(
@@ -834,6 +864,8 @@ def generate_tax_report(report_data) -> ReportResult:
         {_render_tax_settings(report_data)}
 
         {_render_lifetime_tax_summary(report_data)}
+
+        {_render_medicare_summary(report_data)}
 
         {insights_html}
 

@@ -3,9 +3,6 @@ from numbers import Integral, Real
 
 from .validationError import SimulationValidationError
 
-# STOP - Note, we need to add a validation that someone who is already dead can't be simulated.
-# Example - someone 70 years old who died at 70 years old fails validation here.
-
 
 ROTH_FLOW_TYPES = {
     "roth_ira_contribution",
@@ -98,6 +95,11 @@ SEQUENCE_RISK_DEPTHS = {
     "Mild",
     "Moderate",
     "Severe",
+}
+
+TAX_FILING_STATUSES = {
+    "Single",
+    "Married filing jointly",
 }
 
 US_STATE_CODES = {
@@ -220,6 +222,39 @@ def _validate_person(label, person):
         getattr(person, "pension_inflation_adjustment_pct", None),
     )
 
+    _require(
+        hasattr(person, "modeled_death_age"),
+        f"{label}.modeled_death_age is required.",
+    )
+    modeled_death_age = person.modeled_death_age
+
+    if modeled_death_age is not None:
+        _require_integer(f"{label}.modeled_death_age", modeled_death_age, minimum=0)
+        _require(
+            modeled_death_age > person.age,
+            f"{label}.modeled_death_age must be greater than {label}.age.",
+        )
+
+    _require(
+        hasattr(person, "medicare_start_age"),
+        f"{label}.medicare_start_age is required.",
+    )
+    _require_integer(
+        f"{label}.medicare_start_age",
+        person.medicare_start_age,
+        minimum=0,
+    )
+
+    _require(
+        hasattr(person, "medicare_annual_cost"),
+        f"{label}.medicare_annual_cost is required.",
+    )
+    _require_real(
+        f"{label}.medicare_annual_cost",
+        person.medicare_annual_cost,
+        minimum=0.0,
+    )
+
 
 def _validate_portfolio(label, portfolio):
     _require(portfolio is not None, f"{label} portfolio is required.")
@@ -324,6 +359,23 @@ def _validate_roth_flows(sim_config):
         _require_real(f"{name}.inflation_adjustment_pct", flow["inflation_adjustment_pct"])
 
 
+def _validate_historical_magi(sim_config):
+    historical_magi = getattr(sim_config, "historical_magi", None)
+    _require(isinstance(historical_magi, dict), "sim_config.historical_magi must be a dictionary.")
+
+    required_keys = {"two_years_prior", "one_year_prior"}
+    _require_dict_keys("sim_config.historical_magi", historical_magi, required_keys)
+    _require(
+        set(historical_magi) == required_keys,
+        "sim_config.historical_magi must contain exactly two_years_prior and one_year_prior.",
+    )
+
+    for key in required_keys:
+        value = historical_magi[key]
+        if value is not None:
+            _require_real(f"sim_config.historical_magi.{key}", value, minimum=0.0)
+
+
 def _validate_sim_config(sim_config):
     _require(sim_config is not None, "Simulation configuration is required.")
 
@@ -355,7 +407,6 @@ def _validate_sim_config(sim_config):
         getattr(sim_config, "retirement_withdraw_mode", None),
         RETIREMENT_WITHDRAW_MODES,
     )
-
     _require_choice(
         "sim_config.sequence_risk_timing",
         getattr(sim_config, "sequence_risk_timing", None),
@@ -419,6 +470,7 @@ def _validate_sim_config(sim_config):
 
     for field in (
         "second_person_enabled",
+        "irmaa_enabled",
         "include_realestate",
         "calculate_income_taxes",
         "calculate_payroll_taxes",
@@ -432,6 +484,11 @@ def _validate_sim_config(sim_config):
     ):
         _require_bool(f"sim_config.{field}", getattr(sim_config, field, None))
 
+    _require_choice(
+        "sim_config.tax_filing_status",
+        getattr(sim_config, "tax_filing_status", None),
+        TAX_FILING_STATUSES,
+    )
     _require_choice(
         "sim_config.state_of_residence",
         getattr(sim_config, "state_of_residence", None),
@@ -459,7 +516,7 @@ def _validate_sim_config(sim_config):
 
     _validate_special_income_streams(sim_config)
     _validate_roth_flows(sim_config)
-
+    _validate_historical_magi(sim_config)
 
 def _validate_household(husband_portfolio, wife_portfolio, husband, wife, sim_config):
     _validate_person("husband", husband)

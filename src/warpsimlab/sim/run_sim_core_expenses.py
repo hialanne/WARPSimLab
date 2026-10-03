@@ -357,7 +357,7 @@ def simulate_expense_year(
     final_tax_delta_uncovered = 0.0
 
     # Deduct the extra tax created by taxable emergency withdrawals.
-    if sim_config.calculate_income_taxes and final_tax_delta > 0:
+    if (sim_config.calculate_income_taxes or sim_config.calculate_state_taxes) and final_tax_delta > 0:
         final_tax_delta_deducted = portfolioEngine.deduct_post_tax_amount(
             h_port, w_port, final_tax_delta, sim_config
         )

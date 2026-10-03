@@ -262,11 +262,15 @@ class ScenarioStateManager:
 
     def _build_result_metrics(self, result):
         summary = result["p"]["summary_results"]
+        flow_end_index = len(summary["net_cash_flow"]) - 1
+
+        if summary.get("terminal_year", -1) >= 0 and flow_end_index > 0:
+            flow_end_index -= 1
 
         return ScenarioResultMetrics(
             ending_portfolio=summary["total_assets"][-1],
             depletion_rate=summary["simulated_shortfall_rate"],
-            ending_cash_flow=summary["net_cash_flow"][-1],
+            ending_cash_flow=summary["net_cash_flow"][flow_end_index],
             lifetime_funding_gap=sum(summary["funding_gap"]),
             lifetime_taxes=sum(summary["taxes"]),
             ending_pre_tax=summary["pre_tax_assets"][-1],
@@ -274,6 +278,7 @@ class ScenarioStateManager:
             ending_roth=summary["roth_assets"][-1],
             ending_hsa=summary["hsa_assets"][-1]
         )
+
 
     def _build_result_assumptions(self, result):
         sim = result["sim_config"]

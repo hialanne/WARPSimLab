@@ -23,6 +23,14 @@ def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, s
 
     breakdown = p["breakdown_by_class"]
 
+    flow_years = p["years"]
+
+    if p["summary_results"].get("terminal_year", -1) >= 0 and flow_years > 0:
+        flow_years -= 1
+
+    flow_end = flow_years + 1
+    breakdown = {key: values[:flow_end] for key, values in breakdown.items()}
+
     income_keys = [
         "work",
         "pension",
@@ -98,12 +106,12 @@ def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, s
 
     # Plot
     plot_yearly_income(
-        p["years"],
-        net_profit=p["net_profit"],
+        flow_years,
+        net_profit=p["net_profit"][:flow_end],
         net_income=plot_total,
         breakdown=plot_breakdown,
-        taxes=p["taxes"],
-        expenses=p["expense_amt"],
+        taxes=p["taxes"][:flow_end],
+        expenses=p["expense_amt"][:flow_end],
         husband=husband,
         wife=wife,
         sim_config=sim_config

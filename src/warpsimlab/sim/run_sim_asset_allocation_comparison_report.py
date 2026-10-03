@@ -14,9 +14,9 @@ from src.warpsimlab.reports.report_common import get_report_output_folder, safe_
 from src.warpsimlab.reports.report_plot_helpers import save_portfolio_projection_report_plot
 
 
-def _build_report_metadata(sim_config):
+def _build_report_metadata(sim_config, years):
     start_year = int(getattr(sim_config, "start_year", 0))
-    years = int(getattr(sim_config, "years_to_simulate", 0))
+    years = int(years)
     end_year = start_year + years
     now = datetime.now()
 
@@ -536,7 +536,7 @@ def run_sim_asset_allocation_comparison_report(
             )
         )
 
-        report_metadata = _build_report_metadata(sim_config)
+        report_metadata = _build_report_metadata(sim_config, deterministic_pipeline_result["years"])
 
         historical_plot_assets = _generate_historical_allocation_plots(
             cases=cases,

@@ -9,6 +9,9 @@ import numpy as np
 # Yearly Summary CSV
 # ----------------------------
 
+# WARNING - I'm pretty sure this is actually dead code.  It was a preliminary attempt at "reports" before reports existed.
+#   Check before deleting.
+
 def write_summary_results_csv(results, sim_config, prefix="summary"):
     """
     Writes all yearly summary simulation results to CSV.
@@ -34,7 +37,23 @@ def write_summary_results_csv(results, sim_config, prefix="summary"):
         "fund_expenses",
         "taxes",
         "expenses",
-        "net_cash_flow"
+        "net_cash_flow",
+        "medicare_cost_husband",
+        "medicare_cost_wife",
+        "medicare_cost",
+        "magi",
+        "irmaa_husband",
+        "irmaa_wife",
+        "irmaa",
+        "irmaa_lookback_magi",
+        "irmaa_lookback_available",
+        "husband_alive",
+        "wife_alive",
+        "husband_death_event",
+        "wife_death_event",
+        "survivor_state",
+        "survivor_expense_factor",
+        "filing_status_single",
     ]
     columns = ["year"] + keys
 

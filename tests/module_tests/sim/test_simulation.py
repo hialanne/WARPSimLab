@@ -84,6 +84,15 @@ def _core_for_extracts() -> dict:
         "social_security_payroll_tax": np.array([[1.0, 1.0, 1.0, 1.0]]),
         "medicare_tax": np.array([[0.8, 0.8, 0.8, 0.8]]),
         "additional_medicare_tax": np.array([[0.2, 0.2, 0.2, 0.2]]),
+        "medicare_cost_husband": np.array([[0.0, 10.0, 11.0, 12.0]]),
+        "medicare_cost_wife": np.array([[0.0, 20.0, 21.0, 22.0]]),
+        "medicare_cost": np.array([[0.0, 30.0, 32.0, 34.0]]),
+        "magi": np.array([[0.0, 100.0, 110.0, 120.0]]),
+        "irmaa_husband": np.array([[0.0, 1.0, 2.0, 3.0]]),
+        "irmaa_wife": np.array([[0.0, 4.0, 5.0, 6.0]]),
+        "irmaa": np.array([[0.0, 5.0, 7.0, 9.0]]),
+        "irmaa_lookback_magi": np.array([[0.0, 80.0, 90.0, 100.0]]),
+        "irmaa_lookback_available": np.array([[False, True, True, True]]),
         "expense_amt": np.array([[50.0, 51.0, 52.0, 53.0]]),
         "cash_flow_shortfall": np.array([[0.0, 0.0, 0.0, 0.0]]),
         "funding_gap": np.array([[0.0, 1.0, 2.0, 3.0]]),
@@ -148,6 +157,16 @@ def _core_for_extracts() -> dict:
         ),
 
         "fund_expenses": np.array([[0.0, 1.0, 1.0, 2.0]]),
+
+        "husband_alive": np.array([[True, True, True, True]]),
+        "wife_alive": np.array([[True, True, True, True]]),
+        "husband_death_event": np.array([[False, False, False, False]]),
+        "wife_death_event": np.array([[False, False, False, False]]),
+        "survivor_state": np.array([[False, False, False, False]]),
+        "survivor_expense_factor": np.array([[1.0, 1.0, 1.0, 1.0]]),
+        "filing_status_single": np.array([[False, False, False, False]]),
+        "terminal_year": np.array([-1]),
+        "effective_end_index": np.array([3]),
 
         "cash": np.array([[100.0, 110.0, 120.0, 130.0]]),
         "bonds": np.array([[200.0, 210.0, 220.0, 230.0]]),
@@ -229,6 +248,15 @@ def test_extract_summary_single_run_builds_expected_keys():
     np.testing.assert_allclose(summary["social_security_payroll_tax"],core["social_security_payroll_tax"][0])
     np.testing.assert_allclose(summary["medicare_tax"],core["medicare_tax"][0])
     np.testing.assert_allclose(summary["additional_medicare_tax"],core["additional_medicare_tax"][0])
+    np.testing.assert_allclose(summary["medicare_cost_husband"], core["medicare_cost_husband"][0])
+    np.testing.assert_allclose(summary["medicare_cost_wife"], core["medicare_cost_wife"][0])
+    np.testing.assert_allclose(summary["medicare_cost"], core["medicare_cost"][0])
+    np.testing.assert_allclose(summary["magi"], core["magi"][0])
+    np.testing.assert_allclose(summary["irmaa_husband"], core["irmaa_husband"][0])
+    np.testing.assert_allclose(summary["irmaa_wife"], core["irmaa_wife"][0])
+    np.testing.assert_allclose(summary["irmaa"], core["irmaa"][0])
+    np.testing.assert_allclose(summary["irmaa_lookback_magi"], core["irmaa_lookback_magi"][0])
+    np.testing.assert_array_equal(summary["irmaa_lookback_available"], core["irmaa_lookback_available"][0])
     np.testing.assert_allclose(summary["roth_assets"], core["roth_assets"][0])
     np.testing.assert_allclose(summary["hsa_assets"], core["hsa_assets"][0])
     np.testing.assert_allclose(summary["hsa_equity"], core["hsa_equity"][0])
@@ -255,6 +283,16 @@ def test_extract_summary_single_run_builds_expected_keys():
     np.testing.assert_allclose(summary["hsa_employee_contributions"], core["hsa_employee_contributions"][0])
     np.testing.assert_allclose(summary["hsa_employer_contributions"], core["hsa_employer_contributions"][0])
     np.testing.assert_allclose(summary["hsa_total_contributions"], core["hsa_total_contributions"][0])
+
+    np.testing.assert_array_equal(summary["husband_alive"], core["husband_alive"][0])
+    np.testing.assert_array_equal(summary["wife_alive"], core["wife_alive"][0])
+    np.testing.assert_array_equal(summary["husband_death_event"], core["husband_death_event"][0])
+    np.testing.assert_array_equal(summary["wife_death_event"], core["wife_death_event"][0])
+    np.testing.assert_array_equal(summary["survivor_state"], core["survivor_state"][0])
+    np.testing.assert_allclose(summary["survivor_expense_factor"], core["survivor_expense_factor"][0])
+    np.testing.assert_array_equal(summary["filing_status_single"], core["filing_status_single"][0])
+    assert summary["terminal_year"] == -1
+    assert summary["effective_end_index"] == 3
 
     assert summary["simulated_shortfall_rate"] == 12.5
 

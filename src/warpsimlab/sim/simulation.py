@@ -92,6 +92,16 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "social_security_payroll_tax": r["social_security_payroll_tax"][0],
         "medicare_tax": r["medicare_tax"][0],
         "additional_medicare_tax": r["additional_medicare_tax"][0],
+        "medicare_cost_husband": r["medicare_cost_husband"][0],
+        "medicare_cost_wife": r["medicare_cost_wife"][0],
+        "medicare_cost": r["medicare_cost"][0],
+        "magi": r["magi"][0],
+        "irmaa_husband": r["irmaa_husband"][0],
+        "irmaa_wife": r["irmaa_wife"][0],
+        "irmaa": r["irmaa"][0],
+        "irmaa_lookback_magi": r["irmaa_lookback_magi"][0],
+        "irmaa_lookback_available": r["irmaa_lookback_available"][0],
+
         "tax_bracket": r["tax_bracket"][0],
         "federal_ordinary_tax": r["federal_ordinary_tax"][0],
         "federal_qualified_dividend_tax": r["federal_qualified_dividend_tax"][0],
@@ -133,6 +143,15 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "cash_interest": r["breakdown_by_class"]["cash_interest"][0],
         "qualified_equity_distributions": r["breakdown_by_class"]["qualified_equity_distributions"][0],
         "simulated_shortfall_rate": simulated_shortfall_rate,
+        "husband_alive": r["husband_alive"][0],
+        "wife_alive": r["wife_alive"][0],
+        "husband_death_event": r["husband_death_event"][0],
+        "wife_death_event": r["wife_death_event"][0],
+        "survivor_state": r["survivor_state"][0],
+        "survivor_expense_factor": r["survivor_expense_factor"][0],
+        "filing_status_single": r["filing_status_single"][0],
+        "terminal_year": int(r["terminal_year"][0]),
+        "effective_end_index": int(r["effective_end_index"][0]),
     }
 
 

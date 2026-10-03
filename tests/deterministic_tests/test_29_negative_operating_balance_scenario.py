@@ -52,12 +52,15 @@ def test_negative_operating_balance_scenario(monkeypatch):
             self.percentiles = {"median": median}
 
     pipeline_payload = {
-        "years": np.array([2026.0, 2027.0, 2028.0, 2029.0], dtype=float),
+        "years": 3,
         "years_list": [2026, 2027, 2028, 2029],
         "net_profit": np.array([0.0, -15_000.0, -15_000.0, -15_000.0], dtype=float),
         "portfolio_plot_data": FakePortfolioPlotData(
             median=np.array([100_000.0, 85_000.0, 70_000.0, 55_000.0], dtype=float)
         ),
+        "summary_results": {
+            "terminal_year": -1,
+        },
     }
 
     def fake_run_pipeline(
@@ -127,14 +130,13 @@ def test_negative_operating_balance_scenario(monkeypatch):
 
     assert captured["force_num_sims"] == 1
 
-    expected_years = np.array([2026.0, 2027.0, 2028.0, 2029.0], dtype=float)
     expected_net_profit = np.array([0.0, -15_000.0, -15_000.0, -15_000.0], dtype=float)
     expected_operating_balance = np.array([0.0, -15_000.0, -30_000.0, -45_000.0], dtype=float)
     expected_portfolio_value = np.array([100_000.0, 85_000.0, 70_000.0, 55_000.0], dtype=float)
 
     plot_call = captured["plot_call"]
 
-    assert plot_call["years_to_simulate"] == pytest.approx(expected_years)
+    assert plot_call["years_to_simulate"] == pytest.approx(3.0)
     assert plot_call["net_profit"] == pytest.approx(expected_net_profit)
     assert plot_call["operating_balance"] == pytest.approx(expected_operating_balance)
     assert plot_call["portfolio_value"] == pytest.approx(expected_portfolio_value)

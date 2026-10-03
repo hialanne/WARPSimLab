@@ -9,9 +9,14 @@ from src.warpsimlab.reports.report_data import SpendingComparisonReportData
 from src.warpsimlab.reports.spending_comparison_report import generate_spending_comparison_report
 
 
-def _build_report_metadata(sim_config):
+def _build_report_metadata(sim_config, years):
     start_year = int(getattr(sim_config, "start_year", 0))
-    years = int(getattr(sim_config, "years_to_simulate", 0))
+
+    if years is None:
+        years = int(getattr(sim_config, "years_to_simulate", 0))
+    else:
+        years = int(years)
+
     end_year = start_year + years
     now = datetime.now()
 
@@ -167,6 +172,7 @@ def run_sim_spending_comparison_report(
     original_historical_window_stride = sim_config.historical_window_stride
 
     cases = []
+    effective_years = None
 
     try:
         # Spending Comparison evaluates the investment portfolio.
@@ -200,6 +206,8 @@ def run_sim_spending_comparison_report(
                 sim_config,
                 force_num_sims=1,
             )
+            if effective_years is None:
+                effective_years = deterministic_pipeline_result["years"]
 
             # -------------------------------------------------
             # Historical Window risk analysis
@@ -248,7 +256,7 @@ def run_sim_spending_comparison_report(
 
     report_data = SpendingComparisonReportData(
         report_options=report_options,
-        report_metadata=_build_report_metadata(sim_config),
+        report_metadata=_build_report_metadata(sim_config, effective_years),
         comparison_cases=cases,
         baseline_percentage=100.0,
         warnings=[],

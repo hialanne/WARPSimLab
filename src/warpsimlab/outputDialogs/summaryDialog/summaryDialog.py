@@ -212,6 +212,9 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
         year_start_index = 1
         year_end_index = len(r["year"]) - 1
 
+        if r.get("terminal_year", -1) >= 0 and year_end_index > 1:
+            year_end_index -= 1
+
         if self.sim_config.second_person_enabled:
             last_retirement_index = max(
                 self.husband.retire_age - self.husband.age,
@@ -234,13 +237,16 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
         before_year = int(r["year"][column_indices[1]])
         after_year = int(r["year"][column_indices[2]])
         end_year = int(r["year"][column_indices[3]])
+        end_label = "End\nSimulation"
+        if r.get("terminal_year", -1) >= 0:
+            end_label = "Last\nOperating Year"
 
         column_headers = [
             "",
             f"Start\nSimulation\n({start_year})",
             f"Year Before\nRetirement\n({before_year})",
             f"Year After\nRetirement\n({after_year})",
-            f"End\nSimulation\n({end_year})"
+            f"{end_label}\n({end_year})"
         ]
 
         for col, header in enumerate(column_headers):

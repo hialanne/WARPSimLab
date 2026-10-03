@@ -304,18 +304,33 @@ class ScenarioPlotManager:
         husband = result["husband"]
         wife = result["wife"]
 
+        flow_years = p["years"]
+
+        if p["summary_results"].get("terminal_year", -1) >= 0 and flow_years > 0:
+            flow_years -= 1
+
+        flow_end = flow_years + 1
+
         ax.clear()
 
         if panel["plot_family"] == PLOT_FAMILY_INCOME:
-            breakdown = dict(p["breakdown_by_class"])
+            breakdown = {
+                key: values[:flow_end]
+                for key, values in p["breakdown_by_class"].items()
+            }
             income_keys = ["work", "pension", "annuity", "ss", "special_income"]
             income_total = sum(breakdown[key] for key in income_keys)
 
-            draw_yearly_income(ax, p["years"], p["net_profit"], income_total, breakdown, p["taxes"], p["expense_amt"],
-                               husband, wife, sim_config)
+            draw_yearly_income(
+                ax, flow_years, p["net_profit"][:flow_end], income_total, breakdown,
+                p["taxes"][:flow_end], p["expense_amt"][:flow_end], husband, wife, sim_config
+            )
 
         elif panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
-            breakdown = dict(p["breakdown_by_class"])
+            breakdown = {
+                key: values[:flow_end]
+                for key, values in p["breakdown_by_class"].items()
+            }
 
             income_keys = ["work", "pension", "annuity", "ss", "special_income"]
             breakdown["income"] = sum(breakdown[key] for key in income_keys)
@@ -325,8 +340,10 @@ class ScenarioPlotManager:
             ]
             cashflow_total = sum(breakdown[key] for key in cashflow_keys)
 
-            draw_yearly_income(ax, p["years"], p["net_profit"], cashflow_total, breakdown, p["taxes"], p["expense_amt"],
-                               husband, wife, sim_config)
+            draw_yearly_income(
+                ax, flow_years, p["net_profit"][:flow_end], cashflow_total, breakdown,
+                p["taxes"][:flow_end], p["expense_amt"][:flow_end], husband, wife, sim_config
+            )
 
         elif panel["plot_family"] == PLOT_FAMILY_PORTFOLIO:
             draw_portfolio_projection(ax, p["years_list"], p["portfolio_plot_data"], sim_config=sim_config,

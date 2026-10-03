@@ -34,13 +34,50 @@ def _fake_portfolio_plot_data(median_series):
     return SimpleNamespace(percentiles={"median": list(median_series)})
 
 
-def _fake_pipeline_result(net_profit, years, median_series) -> Dict[str, Any]:
+def _fake_pipeline_result(net_profit, years, median_series, terminal_year=-1) -> Dict[str, Any]:
     return {
         "years": years,
         "years_list": list(range(0, years + 1)),
         "net_profit": list(net_profit),
         "portfolio_plot_data": _fake_portfolio_plot_data(median_series),
+        "summary_results": {
+            "terminal_year": terminal_year,
+        },
     }
+
+
+def test_run_sim_operating_balance_omits_terminal_death_row(monkeypatch):
+    from src.warpsimlab.sim import run_sim_operating_balance as mod
+
+    captured = {"plot_kwargs": None}
+
+    net_profit = np.array([0, 10, 20, 0], dtype=float)
+    years = 3
+    median_series = [100, 110, 120, 130]
+
+    def fake_run_pipeline(*args, **kwargs):
+        return _fake_pipeline_result(net_profit, years, median_series, terminal_year=2028)
+
+    def fake_plot_operating_balance(**kwargs):
+        captured["plot_kwargs"] = kwargs
+
+    monkeypatch.setattr(mod, "run_pipeline", fake_run_pipeline, raising=True)
+    monkeypatch.setattr(mod, "plot_operating_balance", fake_plot_operating_balance, raising=True)
+
+    sim_config = DummySimConfig(output_csv="None")
+    mod.run_sim_operating_balance(
+        DummyPortfolio(),
+        DummyPortfolio(),
+        DummyPerson(),
+        DummyPerson(),
+        DummyExpenses(),
+        sim_config,
+    )
+
+    assert captured["plot_kwargs"]["years_to_simulate"] == 2
+    np.testing.assert_allclose(captured["plot_kwargs"]["net_profit"], [0, 10, 20])
+    np.testing.assert_allclose(captured["plot_kwargs"]["operating_balance"], [0, 10, 30])
+    np.testing.assert_allclose(captured["plot_kwargs"]["portfolio_value"], [100, 110, 120])
 
 
 def test_run_sim_operating_balance_calls_pipeline_and_plot_and_computes_cumsum(monkeypatch):

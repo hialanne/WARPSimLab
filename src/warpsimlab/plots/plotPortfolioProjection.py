@@ -198,17 +198,9 @@ def draw_portfolio_projection(
 
         if sim_config.constant_y_plots:
             if sim_config.results_mode == "risk_analysis":
-                yMax = (
-                    simulation_data.percentiles["median"][0]
-                    * sim_config.years_to_simulate
-                    / 3
-                )
+                yMax = simulation_data.percentiles["median"][0] * years_to_simulate / 3
             else:
-                yMax = (
-                    simulation_data.percentiles["median"][0]
-                    * sim_config.years_to_simulate
-                    / 4.5
-                )
+                yMax = simulation_data.percentiles["median"][0] * years_to_simulate / 4.5
 
             plt.ylim(yMin,yMax,)
         else:

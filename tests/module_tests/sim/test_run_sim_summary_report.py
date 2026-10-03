@@ -73,21 +73,26 @@ def test_rate_fraction_to_percent():
 
 
 def test_build_projection_period_label():
-    cfg = SimpleNamespace(start_year=2025, years_to_simulate=30)
+    results = {"year": [2025, 2026, 2027, 2028]}
 
-    assert mod._build_projection_period_label(cfg) == "2025-2055 (30 Years)"
+    assert mod._build_projection_period_label(results) == "2025-2028 (3 Years)"
 
 
 def test_build_projection_period_label_returns_na_for_invalid_values():
-    cfg = SimpleNamespace(start_year="bad", years_to_simulate=30)
+    results = {"year": ["bad", 2026]}
 
-    assert mod._build_projection_period_label(cfg) == "N/A"
+    assert mod._build_projection_period_label(results) == "N/A"
 
 
 def test_build_report_basis_label():
     assert mod._build_report_basis_label(SimpleNamespace(inflation_mode="real")) == "Real Dollars (Inflation Adjusted)"
     assert mod._build_report_basis_label(SimpleNamespace(inflation_mode="nominal")) == "Raw Dollars (Future Nominal Values)"
     assert mod._build_report_basis_label(SimpleNamespace(inflation_mode="invalid")) == "N/A"
+
+
+def test_build_projection_period_label_returns_na_for_empty_results():
+    assert mod._build_projection_period_label({"year": []}) == "N/A"
+
 
 def test_friendly_label_maps_known_values_and_preserves_unknowns():
     assert mod._friendly_label("monte_carlo") == "Monte Carlo"
@@ -217,11 +222,13 @@ def test_build_simulation_snapshot_includes_payroll_tax_setting():
         use_fund_expenses=False,
     )
 
-    snapshot = mod._build_simulation_snapshot(cfg)
+    results = {"year": list(range(2025, 2046))}
+    snapshot = mod._build_simulation_snapshot(cfg, results)
 
     assert snapshot["Start Year"] == 2025
-    assert snapshot["Years Simulated"] == 30
-    assert snapshot["Projection End Year"] == 2055
+    assert snapshot["Years Simulated"] == 20
+    assert snapshot["Configured Years"] == 30
+    assert snapshot["Projection End Year"] == 2045
     assert snapshot["Inflation Rate"] == pytest.approx(3.0)
     assert snapshot["Taxes Enabled"] is True
     assert snapshot["Payroll Taxes Enabled"] is False
@@ -427,11 +434,12 @@ def test_build_assumptions_summary_includes_tax_assumptions_and_payroll_flag():
     )
 
     tax_assumptions = assumptions["Tax Assumptions"]
-    assert tax_assumptions["Tax Filing Status"] == "Single"
+    assert tax_assumptions["Initial Tax Filing Status"] == "Single"
     assert tax_assumptions["Calculate Income Taxes"] is True
     assert tax_assumptions["Calculate Payroll Taxes"] is False
     assert tax_assumptions["Calculate State Taxes"] is True
     assert tax_assumptions["State of Residence"] == "NM"
+    assert "Medicare & IRMAA Assumptions" in assumptions
 
     assert "Household & Retirement" in assumptions
     assert "Portfolio Inputs" in assumptions

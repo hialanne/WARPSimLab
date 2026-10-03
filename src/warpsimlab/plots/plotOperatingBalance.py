@@ -110,7 +110,7 @@ def draw_operating_balance(
 
     ax.set_title(f"Cumulative Operating Balance  ({spending_mode} - {value_type})", pad=20)
 
-    subtitle_text = "Running total of household income - expenses - taxes.\nExcludes investment returns."
+    subtitle_text = "Running total of modeled household net cash flow.\nExcludes investment returns."
 
     ax.text(
         0.5,

@@ -53,6 +53,8 @@ def _make_results():
         "hsa_assets": values(5000, 5500, 6000, 6500),
         "real_estate": values(200000, 205000, 210000, 215000),
         "total_assets": values(365000, 360500, 356000, 351500),
+        "medicare_cost": values(0, 0, 2400, 2500),
+        "irmaa": values(0, 0, 300, 350),
 
         "wages": values(80000, 80000, 0, 0),
         "employee_401k_contributions": values(10000, 10000, 0, 0),

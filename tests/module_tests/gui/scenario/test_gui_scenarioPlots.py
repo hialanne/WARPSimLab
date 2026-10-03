@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 from src.warpsimlab.gui.scenario import gui_scenarioPlots as mod
@@ -66,24 +67,27 @@ def _make_manager():
 def _make_result():
     return {
         "p": {
-            "years": [2026, 2027],
+            "years": 1,
             "years_list": [2026, 2027],
-            "net_profit": [1, 2],
-            "taxes": [3, 4],
-            "expense_amt": [5, 6],
+            "net_profit": np.array([1, 2]),
+            "taxes": np.array([3, 4]),
+            "expense_amt": np.array([5, 6]),
             "portfolio_plot_data": {"total": [100, 110]},
-            "breakdown_by_class": {
-                "work": 1,
-                "pension": 2,
-                "annuity": 3,
-                "ss": 4,
-                "special_income": 5,
-                "rmd": 6,
-                "withdrawal": 7,
-                "cash_interest": 8,
-                "bond_interest": 9,
-                "qualified_equity_distributions": 10,
+            "summary_results": {
+                "terminal_year": -1,
             },
+            "breakdown_by_class": {
+                "work": np.array([1, 1]),
+                "pension": np.array([2, 2]),
+                "annuity": np.array([3, 3]),
+                "ss": np.array([4, 4]),
+                "special_income": np.array([5, 5]),
+                "rmd": np.array([6, 6]),
+                "withdrawal": np.array([7, 7]),
+                "cash_interest": np.array([8, 8]),
+                "bond_interest": np.array([9, 9]),
+                "qualified_equity_distributions": np.array([10, 10]),
+            }, 
         },
         "sim_config": SimpleNamespace(
             sim_type="portfolio_sim",
@@ -305,10 +309,16 @@ def test_draw_panel_income_calls_income_plot(monkeypatch):
 
     assert ax.clear_count == 1
     assert received["ax"] is ax
-    assert received["years"] == [2026, 2027]
-    assert received["net_profit"] == [1, 2]
-    assert received["income_total"] == 15
-    assert received["breakdown"] == result["p"]["breakdown_by_class"]
+    assert received["years"] == 1
+    np.testing.assert_allclose(received["net_profit"], [1, 2])
+    np.testing.assert_allclose(received["income_total"], [15, 15])
+    assert received["breakdown"].keys() == result["p"]["breakdown_by_class"].keys()
+
+    for key in received["breakdown"]:
+        np.testing.assert_allclose(
+            received["breakdown"][key],
+            result["p"]["breakdown_by_class"][key],
+        )
     assert received["sim_config"].sim_type == "income_sim"
     assert received["sim_config"].use_snapshot_annotations is True
     assert ax.get_title() == "Changed Income"
@@ -343,10 +353,10 @@ def test_draw_panel_cashflow_calls_income_plot(monkeypatch):
 
     assert ax.clear_count == 1
     assert received["ax"] is ax
-    assert received["years"] == [2026, 2027]
-    assert received["net_profit"] == [1, 2]
-    assert received["breakdown"]["income"] == 15
-    assert received["cashflow_total"] == 55
+    assert received["years"] == 1
+    np.testing.assert_allclose(received["net_profit"], [1, 2])
+    np.testing.assert_allclose(received["breakdown"]["income"], [15, 15])
+    np.testing.assert_allclose(received["cashflow_total"], [55, 55])
     assert received["sim_config"].sim_type == "cashflow_sim"
     assert received["sim_config"].use_snapshot_annotations is False
     assert ax.get_title() == "Changed Cash Flow"

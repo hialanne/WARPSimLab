@@ -29,7 +29,7 @@ class DummyExpenses:
     pass
 
 
-def _fake_pipeline_result() -> Dict[str, Any]:
+def _fake_pipeline_result(terminal_year=-1) -> Dict[str, Any]:
     return {
         "years": 5,
         "years_list": np.array([0, 1, 2, 3, 4, 5]),
@@ -41,7 +41,6 @@ def _fake_pipeline_result() -> Dict[str, Any]:
             "annuity": np.array([0, 0, 0, 0, 0, 0]),
             "ss": np.array([0, 20, 20, 20, 20, 20]),
             "special_income": np.array([0, 0, 0, 0, 0, 0]),
-
             "rmd": np.array([0, 0, 0, 0, 0, 0]),
             "withdrawal": np.array([0, 0, 0, 0, 0, 0]),
             "bond_interest": np.array([0, 0, 0, 0, 0, 0]),
@@ -50,7 +49,41 @@ def _fake_pipeline_result() -> Dict[str, Any]:
         },
         "taxes": np.array([0, 5, 5, 5, 5, 5]),
         "expense_amt": np.array([0, 50, 50, 50, 50, 50]),
+        "summary_results": {
+            "terminal_year": terminal_year,
+        },
     }
+
+
+def test_run_sim_income_omits_terminal_death_row(monkeypatch):
+    from src.warpsimlab.sim import run_sim_income as mod
+
+    captured = {"plot_kwargs": None}
+
+    def fake_run_pipeline(*args, **kwargs):
+        return _fake_pipeline_result(terminal_year=2030)
+
+    def fake_plot_yearly_income(years, **kwargs):
+        captured["plot_kwargs"] = {"years": years, **kwargs}
+
+    monkeypatch.setattr(mod, "run_pipeline", fake_run_pipeline, raising=True)
+    monkeypatch.setattr(mod, "plot_yearly_income", fake_plot_yearly_income, raising=True)
+
+    sim_config = DummySimConfig(output_csv="None")
+    mod.run_sim_income(
+        DummyPortfolio(),
+        DummyPortfolio(),
+        DummyPerson(),
+        DummyPerson(),
+        DummyExpenses(),
+        sim_config,
+    )
+
+    assert captured["plot_kwargs"]["years"] == 4
+    np.testing.assert_allclose(captured["plot_kwargs"]["net_profit"], [0, 10, 20, 30, 40])
+    np.testing.assert_allclose(captured["plot_kwargs"]["taxes"], [0, 5, 5, 5, 5])
+    np.testing.assert_allclose(captured["plot_kwargs"]["expenses"], [0, 50, 50, 50, 50])
+
 
 def test_run_sim_income_calls_pipeline_and_plot(monkeypatch):
     """

@@ -33,6 +33,9 @@ def test_run_sim_income_plots_pipeline_outputs_exactly(monkeypatch):
         "breakdown_by_class": breakdown,
         "taxes": taxes,
         "expense_amt": expense_amt,
+        "summary_results": {
+            "terminal_year": -1,
+        },
     }
 
     captured = {}

@@ -36,7 +36,7 @@ def make_case(tmp_path):
         calculate_payroll_taxes=True,
         calculate_state_taxes=False,
         state_of_residence="CA",
-        tax_filing_status="married_filing_jointly",
+        tax_filing_status="Married filing jointly",
         second_person_enabled=False,
         include_realestate=False,
         use_fund_expenses=True,
