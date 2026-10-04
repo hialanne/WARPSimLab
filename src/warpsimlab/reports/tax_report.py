@@ -50,6 +50,9 @@ def _get_report_option(report_options, path, default=False):
 
 
 def _is_percent_key(key):
+    if key in {"Lower Bracket Limit", "Upper Bracket Limit"}:
+        return False
+
     return any(hint in str(key) for hint in PERCENT_KEY_HINTS)
 
 
@@ -483,6 +486,15 @@ def _render_yearly_tax_table(report_data):
         "Year",
     ]
 
+    bracket_columns = [
+        "Year",
+        "Filing Status",
+        "Taxable Ordinary Income",
+        "Marginal Tax Bracket",
+        "Lower Bracket Limit",
+        "Upper Bracket Limit",
+    ]
+
     if "Husband Age" in first_row:
         tax_columns.extend([
             "Husband Age",
@@ -580,6 +592,18 @@ def _render_yearly_tax_table(report_data):
 
     <h3>Annual Tax Summary</h3>
     {render_table(tax_columns)}
+
+    <br>
+    <br>
+
+    <h3>Federal Ordinary Income Tax Bracket Context</h3>
+    <p class="section-intro">
+        This table shows the taxable ordinary income used for the federal ordinary income-tax
+        calculation, the resulting marginal tax rate, and the lower and upper limits of that
+        year's applicable bracket. Bracket limits reflect the filing status and inflation-adjusted
+        tax assumptions used by the simulation.
+    </p>
+    {render_table(bracket_columns)}
 
     <br>
     <br>

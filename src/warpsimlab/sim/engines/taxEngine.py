@@ -351,6 +351,37 @@ def calculate_us_federal_income_tax(total_income, year_cache):
     return tax, marginal_rate
 
 
+def get_federal_ordinary_bracket_context(ordinary_income, year_cache, sim_config):
+    if not sim_config.calculate_income_taxes:
+        return {
+            "taxable_ordinary_income": 0.0,
+            "lower_threshold": -1.0,
+            "upper_threshold": -1.0,
+        }
+
+    taxable_income = max(0.0, ordinary_income - year_cache["ordinary_standard_deduction"])
+    lower_threshold = 0.0
+
+    for upper_threshold, rate in year_cache["ordinary_brackets"]:
+        if taxable_income <= upper_threshold:
+            if upper_threshold == inf:
+                upper_threshold = -1.0
+
+            return {
+                "taxable_ordinary_income": taxable_income,
+                "lower_threshold": lower_threshold,
+                "upper_threshold": upper_threshold,
+            }
+
+        lower_threshold = upper_threshold
+
+    return {
+        "taxable_ordinary_income": taxable_income,
+        "lower_threshold": lower_threshold,
+        "upper_threshold": -1.0,
+    }
+
+
 def calculate_us_federal_qualified_dividend_tax(ordinary_income, qualified_equity_distributions, year_cache):
     """
     Calculates federal tax on qualified dividends using cached,

@@ -209,6 +209,8 @@ def _build_irmaa_reference_rows():
         previous_annual_irmaa = annual_irmaa
 
     return rows
+
+
 def _build_yearly_tax_rows(results, husband, wife, sim_config):
     years = _safe_array(results, "year")
     rows = []
@@ -248,6 +250,15 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
         else:
             row["Age"] = husband_age
 
+        bracket_lower = _as_float(results.get("federal_bracket_lower_threshold", [])[i])
+        bracket_upper = _as_float(results.get("federal_bracket_upper_threshold", [])[i])
+
+        if bracket_lower < 0.0:
+            bracket_lower = None
+
+        if bracket_upper < 0.0:
+            bracket_upper = None
+
         row.update({
             "Filing Status": filing_status,
             "Gross Income": gross_income,
@@ -264,6 +275,9 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             "Total Taxes": total_taxes,
             "Effective Tax Rate": effective_tax_rate,
             "Marginal Tax Bracket": _as_float(results.get("tax_bracket", [])[i]),
+            "Taxable Ordinary Income": _as_float(results.get("taxable_ordinary_income", [])[i]),
+            "Lower Bracket Limit": bracket_lower,
+            "Upper Bracket Limit": bracket_upper,
             "Medicare Cost": _as_float(results.get("medicare_cost", [])[i]),
             "IRMAA": _as_float(results.get("irmaa", [])[i]),
             "Traditional Withdrawals": _as_float(results.get("pre_tax_withdrawals", [])[i]),

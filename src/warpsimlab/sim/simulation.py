@@ -103,6 +103,9 @@ def _extract_summary_single_run(core, simulated_shortfall_rate=None):
         "irmaa_lookback_available": r["irmaa_lookback_available"][0],
 
         "tax_bracket": r["tax_bracket"][0],
+        "taxable_ordinary_income": r["taxable_ordinary_income"][0],
+        "federal_bracket_lower_threshold": r["federal_bracket_lower_threshold"][0],
+        "federal_bracket_upper_threshold": r["federal_bracket_upper_threshold"][0],
         "federal_ordinary_tax": r["federal_ordinary_tax"][0],
         "federal_qualified_dividend_tax": r["federal_qualified_dividend_tax"][0],
         "state_income_tax": r["state_income_tax"][0],

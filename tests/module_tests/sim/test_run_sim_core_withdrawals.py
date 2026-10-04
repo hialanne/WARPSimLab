@@ -133,6 +133,15 @@ def _patch_common(monkeypatch, mod):
         lambda **k: (0.0, 0.0, 0.0, 0.0, 0.0),
     )
     monkeypatch.setattr(
+        mod.taxEngine,
+        "get_federal_ordinary_bracket_context",
+        lambda *a, **k: {
+            "taxable_ordinary_income": 0.0,
+            "lower_threshold": 0.0,
+            "upper_threshold": 0.0,
+        },
+    )
+    monkeypatch.setattr(
         mod.withdrawalEngine,
         "fund_tax_cash_shortfall",
         lambda *a, **k: _zero_tax_funding(),

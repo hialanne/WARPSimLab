@@ -260,6 +260,9 @@ def simulate_yearly_portfolios(
         "net_profit": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "taxes": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "tax_bracket": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "taxable_ordinary_income": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "federal_bracket_lower_threshold": np.full((effective_num_sims, years_to_simulate + 1), -1.0),
+        "federal_bracket_upper_threshold": np.full((effective_num_sims, years_to_simulate + 1), -1.0),
         "pre_tax_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "roth_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_qualified_withdrawals": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -601,6 +604,9 @@ def simulate_yearly_portfolios(
 
             total_tax = model_result["total_tax"]
             federal_marginal_rate = model_result["federal_marginal_rate"]
+            taxable_ordinary_income = model_result["taxable_ordinary_income"]
+            federal_bracket_lower_threshold = model_result["federal_bracket_lower_threshold"]
+            federal_bracket_upper_threshold = model_result["federal_bracket_upper_threshold"]
             federal_ordinary_tax = model_result["federal_ordinary_tax"]
             federal_qualified_dividend_tax = model_result["federal_qualified_dividend_tax"]
             state_income_tax = model_result["state_income_tax"]
@@ -741,6 +747,9 @@ def simulate_yearly_portfolios(
             results["net_profit"][s,year] = net_profit
             results["taxes"][s,year] = total_tax
             results["tax_bracket"][s,year] = federal_marginal_rate
+            results["taxable_ordinary_income"][s,year] = taxable_ordinary_income
+            results["federal_bracket_lower_threshold"][s,year] = federal_bracket_lower_threshold
+            results["federal_bracket_upper_threshold"][s,year] = federal_bracket_upper_threshold
             results["expense_amt"][s,year] = expense_amt
             results["uncovered_expense"][s, year] = uncovered_expense
             results["funding_gap"][s, year] = funding_gap
@@ -867,6 +876,11 @@ def simulate_yearly_portfolios(
         results["gross_income"]         = results["gross_income"]       / discount_factors
         results["net_profit"]           = results["net_profit"]         / discount_factors
         results["taxes"]                = results["taxes"]              / discount_factors
+        results["taxable_ordinary_income"] = results["taxable_ordinary_income"] / discount_factors
+        valid_lower = results["federal_bracket_lower_threshold"] >= 0.0
+        valid_upper = results["federal_bracket_upper_threshold"] >= 0.0
+        results["federal_bracket_lower_threshold"][valid_lower] /= discount_factors[valid_lower]
+        results["federal_bracket_upper_threshold"][valid_upper] /= discount_factors[valid_upper]
         results["expense_amt"]          = results["expense_amt"]        / discount_factors
         results["uncovered_expense"]    = results["uncovered_expense"]  / discount_factors
         results["funding_gap"]          = results["funding_gap"]        / discount_factors

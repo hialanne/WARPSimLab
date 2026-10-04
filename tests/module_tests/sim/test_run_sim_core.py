@@ -367,6 +367,15 @@ def _patch_baseline(monkeypatch, mod, sim_config: DummySimConfig):
     )
     monkeypatch.setattr(
         mod.taxEngine,
+        "get_federal_ordinary_bracket_context",
+        lambda *a, **k: {
+            "taxable_ordinary_income": 0.0,
+            "lower_threshold": 0.0,
+            "upper_threshold": 0.0,
+        },
+    )
+    monkeypatch.setattr(
+        mod.taxEngine,
         "allocate_tax_proportionally_couple",
         lambda total_tax, h_inc, w_inc: (6.0, 4.0),
     )
@@ -410,6 +419,9 @@ def test_simulate_yearly_portfolios_exposes_expected_shapes(mod, monkeypatch):
     assert results["total_assets"].shape == (2, years)
     assert results["net_income"].shape == (2, years)
     assert results["taxes"].shape == (2, years)
+    assert results["taxable_ordinary_income"].shape == (2, years)
+    assert results["federal_bracket_lower_threshold"].shape == (2, years)
+    assert results["federal_bracket_upper_threshold"].shape == (2, years)
     assert results["gross_income"].shape == (2, years)
     assert results["federal_ordinary_tax"].shape == (2, years)
     assert results["federal_qualified_dividend_tax"].shape == (2, years)

@@ -364,6 +364,17 @@ def _build_portfolio_only_plot_data(portfolio_plot_data, summary_results):
     )
 
 
+def _series_has_values(values):
+    return any(abs(value) > 1e-9 for value in values)
+
+
+def _polish_tax_report_axis(ax):
+    ax.title.set_fontsize(14)
+    ax.xaxis.label.set_fontsize(12)
+    ax.yaxis.label.set_fontsize(12)
+    ax.tick_params(axis="both", labelsize=11)
+
+
 def save_tax_by_year_report_plot(
     output_folder,
     filename,
@@ -381,21 +392,30 @@ def save_tax_by_year_report_plot(
     fig, ax = plt.subplots(figsize=(16, 9))
 
     try:
-        ax.plot(years, federal, label="Federal Income Tax")
-        ax.plot(years, state, label="State Income Tax")
-        ax.plot(years, payroll, label="Payroll Tax")
+        series = [
+            ("Federal Income Tax", federal),
+            ("State Income Tax", state),
+            ("Payroll Tax", payroll),
+        ]
+
+        for label, values in series:
+            if _series_has_values(values):
+                ax.plot(years, values, label=label)
+
         ax.plot(years, total, label="Total Taxes", linewidth=2)
 
         ax.set_title("Taxes by Year")
         ax.set_xlabel("Year")
         ax.set_ylabel("Taxes")
         ax.grid(True, axis="y", linestyle="--", alpha=0.5)
-        ax.legend(loc="upper left")
+        ax.legend(loc="upper left", fontsize=11)
 
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda value, _: f"${value:,.0f}")
         )
 
+        _polish_tax_report_axis(ax)
+        fig.tight_layout()
         fig.savefig(image_path, dpi=200, bbox_inches="tight")
         return image_path
 
@@ -431,6 +451,8 @@ def save_effective_tax_rate_report_plot(
             plt.FuncFormatter(lambda value, _: f"{value:.0f}%")
         )
 
+        _polish_tax_report_axis(ax)
+        fig.tight_layout()
         fig.savefig(image_path, dpi=200, bbox_inches="tight")
         return image_path
 
@@ -460,24 +482,35 @@ def save_taxable_income_source_report_plot(
     fig, ax = plt.subplots(figsize=(16, 9))
 
     try:
-        ax.plot(years, rmd, label="RMD")
-        ax.plot(years, traditional, label="Traditional Withdrawals")
-        ax.plot(years, emergency, label="Emergency Tax-Deferred Withdrawals")
-        ax.plot(years, roth_conversions, label="Roth Conversions")
-        ax.plot(years, taxable_hsa, label="Taxable HSA Withdrawals")
+        series = [
+            ("RMD", rmd),
+            ("Traditional Withdrawals", traditional),
+            ("Emergency Tax-Deferred Withdrawals", emergency),
+            ("Roth Conversions", roth_conversions),
+            ("Taxable HSA Withdrawals", taxable_hsa),
+        ]
+
+        for label, values in series:
+            if _series_has_values(values):
+                ax.plot(years, values, label=label)
 
         ax.set_title("Taxable Retirement Income Sources by Year")
         ax.set_xlabel("Year")
         ax.set_ylabel("Amount")
         ax.grid(True, axis="y", linestyle="--", alpha=0.5)
-        ax.legend(loc="upper left")
+
+        if ax.lines:
+            ax.legend(loc="upper left", fontsize=11)
 
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda value, _: f"${value:,.0f}")
         )
 
+        _polish_tax_report_axis(ax)
+        fig.tight_layout()
         fig.savefig(image_path, dpi=200, bbox_inches="tight")
         return image_path
 
     finally:
         plt.close(fig)
+

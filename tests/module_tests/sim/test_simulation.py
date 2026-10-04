@@ -137,6 +137,9 @@ def _core_for_extracts() -> dict:
         "real_estate": np.array([[0.0, 10.0, 20.0, 30.0]]),
         "gross_income": np.array([[120.0, 121.0, 122.0, 123.0]]),
         "tax_bracket": np.array([[0.10, 0.10, 0.12, 0.12]]),
+        "taxable_ordinary_income": np.array([[0.0, 80.0, 90.0, 100.0]]),
+        "federal_bracket_lower_threshold": np.array([[0.0, 0.0, 0.0, 0.0]]),
+        "federal_bracket_upper_threshold": np.array([[12400.0, 12400.0, 50400.0, 50400.0]]),
         "ira_401k": np.array([[0.0, 0.0, 0.0, 0.0]]),
         "employee_401k_contributions": np.array([[0.0, 10.0, 20.0, 30.0]]),
         "hsa_employee_contributions": np.array([[0.0, 2.0, 3.0, 4.0]]),
@@ -206,6 +209,9 @@ def test_extract_summary_single_run_builds_expected_keys():
     np.testing.assert_allclose(summary["net_income"], core["net_income"][0])
     np.testing.assert_allclose(summary["taxes"], core["taxes"][0])
     np.testing.assert_allclose(summary["tax_bracket"], core["tax_bracket"][0])
+    np.testing.assert_allclose(summary["taxable_ordinary_income"], core["taxable_ordinary_income"][0])
+    np.testing.assert_allclose(summary["federal_bracket_lower_threshold"], core["federal_bracket_lower_threshold"][0])
+    np.testing.assert_allclose(summary["federal_bracket_upper_threshold"], core["federal_bracket_upper_threshold"][0])
     np.testing.assert_allclose(summary["expenses"], core["expense_amt"][0])
     np.testing.assert_allclose(summary["net_cash_flow"], core["net_profit"][0])
     np.testing.assert_allclose(summary["funding_gap"], core["funding_gap"][0])

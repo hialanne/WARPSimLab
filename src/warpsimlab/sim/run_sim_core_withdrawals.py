@@ -407,6 +407,10 @@ def simulate_withdrawal_year(
 
             total_tax += payroll_tax
 
+    federal_bracket_context = taxEngine.get_federal_ordinary_bracket_context(
+        ordinary_income, year_cache, sim_config
+    )
+
     final_tax_delta = max(0.0, total_tax - baseline_total_tax)
     final_tax_delta_deducted = 0.0
     final_tax_delta_uncovered = final_tax_delta
@@ -530,6 +534,9 @@ def simulate_withdrawal_year(
         "net_income_wife": net_income_wife,
         "total_tax": total_tax,
         "federal_marginal_rate": federal_marginal_rate,
+        "taxable_ordinary_income": federal_bracket_context["taxable_ordinary_income"],
+        "federal_bracket_lower_threshold": federal_bracket_context["lower_threshold"],
+        "federal_bracket_upper_threshold": federal_bracket_context["upper_threshold"],
         "federal_ordinary_tax": federal_ordinary_tax,
         "federal_qualified_dividend_tax": federal_qualified_dividend_tax,
         "state_income_tax": state_income_tax,

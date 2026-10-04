@@ -328,6 +328,8 @@ def simulate_expense_year(
     funded_roth_contributions = roth_funding_result["funded_contributions"]
     uncovered_expense = roth_funding_result["remaining_uncovered"]
 
+    ordinary_income = baseline_ordinary_income
+
     # Recompute final taxes if taxable portfolio withdrawals changed income.
     if emergency_pre_tax_used > 0.0 or taxable_hsa_withdrawal > 0.0:
         ordinary_income = baseline_ordinary_income + emergency_pre_tax_used + taxable_hsa_withdrawal
@@ -352,6 +354,9 @@ def simulate_expense_year(
         total_tax = baseline_total_tax
         federal_marginal_rate = baseline_federal_marginal_rate
 
+    federal_bracket_context = taxEngine.get_federal_ordinary_bracket_context(
+        ordinary_income, year_cache, sim_config
+    )
     final_tax_delta = max(0.0, total_tax - baseline_total_tax)
     final_tax_delta_deducted = 0.0
     final_tax_delta_uncovered = 0.0
@@ -512,6 +517,9 @@ def simulate_expense_year(
         "net_income_wife": net_income_wife,
         "total_tax": total_tax,
         "federal_marginal_rate": federal_marginal_rate,
+        "taxable_ordinary_income": federal_bracket_context["taxable_ordinary_income"],
+        "federal_bracket_lower_threshold": federal_bracket_context["lower_threshold"],
+        "federal_bracket_upper_threshold": federal_bracket_context["upper_threshold"],
         "federal_ordinary_tax": federal_ordinary_tax,
         "federal_qualified_dividend_tax": federal_qualified_dividend_tax,
         "state_income_tax": state_income_tax,
