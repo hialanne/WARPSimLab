@@ -230,10 +230,10 @@ def test_constructor_builds_labels_and_checkbuttons(tk_root):
     labels = _label_texts(frame)
     checkbuttons = _checkbutton_texts(frame)
 
-    assert "Tax Report" in labels
+    assert "Tax and Medicare Report" in labels
     assert (
-        "Select the outputs and optional sections to include in the Tax Report. "
-        "The report explains how taxes evolve over the simulation lifetime."
+        "Select the outputs and optional sections to include in the Tax and Medicare Report. "
+        "The report explains how taxes, Medicare, and IRMAA evolve over the simulation lifetime."
     ) in labels
     assert (
         "Tax calculation settings (Federal, State, Payroll, Filing Status, etc.) "
@@ -266,8 +266,7 @@ def test_constructor_uses_explicit_title(tk_root):
     labels = _label_texts(frame)
 
     assert "Explicit Tax Title" in labels
-    assert "Tax Report" not in labels
-
+    assert "Tax and Medicare Report" not in labels
 
 def test_constructor_normalizes_report_options_and_creates_vars(tk_root):
     parent_gui = DummyParentGUI()

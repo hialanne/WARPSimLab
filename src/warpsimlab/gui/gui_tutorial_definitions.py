@@ -550,15 +550,15 @@ def build_advanced_analysis_tutorial_steps(gui):
             "screen_callback": gui.edit_report_year_by_year_details,
         },
         {
-            "title": "Reports -> Tax Report",
+            "title": "Reports -> Tax and Medicare Report",
             "section_title": "What to review",
             "text": (
-                "From the top menu, select Reports, then Tax Report. This report "
-                "explains how estimated federal, state, and payroll taxes evolve "
-                "throughout the simulation. Optional sections analyze Roth assets, "
-                "HSA assets, required minimum distributions, and educational tax "
-                "commentary. The report can be generated as HTML, CSV, or both. "
-                "The underlying tax calculation settings remain under "
+                "From the top menu, select Reports, then Tax and Medicare Report. "
+                "This report explains how estimated federal, state, and payroll taxes, "
+                "Medicare, and IRMAA evolve throughout the simulation. Optional sections "
+                "analyze Roth assets, HSA assets, required minimum distributions, and "
+                "educational tax commentary. The report can be generated as HTML, CSV, "
+                "or both. The underlying tax calculation settings remain under "
                 "Cash Flow -> Taxes."
             ),
             "screen_callback": gui.edit_report_taxes,

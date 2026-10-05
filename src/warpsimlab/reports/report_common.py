@@ -289,8 +289,8 @@ table {
 }
 
 .plot-card img {
-    width: 70%;
-    max-width: 700px;
+    width: 90%;
+    max-width: none;
     height: auto;
     display: block;
     margin: 10px auto 0 auto;

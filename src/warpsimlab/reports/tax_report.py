@@ -974,7 +974,7 @@ def generate_tax_report(report_data) -> ReportResult:
 <html>
 <head>
     <meta charset="utf-8">
-    <title>WARPSimLab Tax Report</title>
+    <title>WARPSimLab Tax and Medicare Report</title>
 
     <style>
     {render_base_css()}
@@ -1014,7 +1014,7 @@ def generate_tax_report(report_data) -> ReportResult:
 
         {render_report_header(
             report_data,
-            title="Tax Report",
+            title="Tax and Medicare Report",
             market_wording="simulated market conditions",
         )}
 

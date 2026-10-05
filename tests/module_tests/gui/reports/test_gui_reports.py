@@ -90,7 +90,7 @@ def test_rebuild_reports_menu_expense_mode():
     assert labels == [
         "Executive Summary",
         "Year-by-Year Details",
-        "Tax Report",
+        "Tax and Medicare Report",
         "Historical Window Risk Report",
         "Monte Carlo Risk Report",
         "Spending Comparison Report",
@@ -129,7 +129,7 @@ def test_rebuild_reports_menu_without_menu_returns():
             "year_by_year_details",
             "Year-by-Year Details",
         ),
-        ("edit_report_taxes", "TaxReportFrame", "tax_report", "Tax Report"),
+        ("edit_report_taxes", "TaxReportFrame", "tax_report", "Tax and Medicare Report"),
         (
             "edit_report_historical_window_risk",
             "HistoricalWindowRiskReportFrame",

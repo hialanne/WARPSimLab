@@ -468,7 +468,7 @@ def build_tax_report_data_from_pipeline(
     return {
         "report_options": report_options,
         "report_metadata": {
-            "Report Title": "WARPSimLab Tax Report",
+            "Report Title": "WARPSimLab Tax and Medicare Report",
             "Generated Timestamp": visible_report_id,
             "Report ID": visible_report_id,
             "Report Type": "tax_report",

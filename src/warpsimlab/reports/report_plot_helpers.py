@@ -369,10 +369,10 @@ def _series_has_values(values):
 
 
 def _polish_tax_report_axis(ax):
-    ax.title.set_fontsize(14)
-    ax.xaxis.label.set_fontsize(12)
-    ax.yaxis.label.set_fontsize(12)
-    ax.tick_params(axis="both", labelsize=11)
+    ax.title.set_fontsize(16)
+    ax.xaxis.label.set_fontsize(13)
+    ax.yaxis.label.set_fontsize(13)
+    ax.tick_params(axis="both", labelsize=12)
 
 
 def save_tax_by_year_report_plot(
@@ -404,11 +404,10 @@ def save_tax_by_year_report_plot(
 
         ax.plot(years, total, label="Total Taxes", linewidth=2)
 
-        ax.set_title("Taxes by Year")
         ax.set_xlabel("Year")
         ax.set_ylabel("Taxes")
         ax.grid(True, axis="y", linestyle="--", alpha=0.5)
-        ax.legend(loc="upper left", fontsize=11)
+        ax.legend(loc="upper left", fontsize=12)
 
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda value, _: f"${value:,.0f}")
@@ -442,7 +441,6 @@ def save_effective_tax_rate_report_plot(
     try:
         ax.plot(years, effective_rates, linewidth=2)
 
-        ax.set_title("Effective Tax Rate by Year")
         ax.set_xlabel("Year")
         ax.set_ylabel("Effective Tax Rate")
         ax.grid(True, axis="y", linestyle="--", alpha=0.5)
@@ -494,13 +492,12 @@ def save_taxable_income_source_report_plot(
             if _series_has_values(values):
                 ax.plot(years, values, label=label)
 
-        ax.set_title("Taxable Retirement Income Sources by Year")
         ax.set_xlabel("Year")
         ax.set_ylabel("Amount")
         ax.grid(True, axis="y", linestyle="--", alpha=0.5)
 
         if ax.lines:
-            ax.legend(loc="upper left", fontsize=11)
+            ax.legend(loc="upper left", fontsize=12)
 
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda value, _: f"${value:,.0f}")

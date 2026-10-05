@@ -24,7 +24,7 @@ class PortfolioSimulatorGUI_ReportsMixin:
         self.reports_menu.add_command(
             label="Year-by-Year Details", command=self.edit_report_year_by_year_details
         )
-        self.reports_menu.add_command(label="Tax Report", command=self.edit_report_taxes)
+        self.reports_menu.add_command(label="Tax and Medicare Report", command=self.edit_report_taxes)
 
         self.reports_menu.add_separator()
 
@@ -96,7 +96,7 @@ class PortfolioSimulatorGUI_ReportsMixin:
             self.edit_frame_container,
             report_options=self.report_options["tax_report"],
             parent_gui=self,
-            title="Tax Report",
+            title="Tax and Medicare Report",
         )
         frame.pack(padx=10, pady=5, fill="x")
 

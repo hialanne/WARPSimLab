@@ -26,7 +26,7 @@ class TaxReportFrame(ScalableFrameMixin, ttk.Frame):
     }
 
 
-    def __init__(self, parent, report_options, parent_gui, title="Tax Report"):
+    def __init__(self, parent, report_options, parent_gui, title="Tax and Medicare Report"):
         super().__init__(parent, padding=10)
 
         self.options = report_options
@@ -73,8 +73,8 @@ class TaxReportFrame(ScalableFrameMixin, ttk.Frame):
         ttk.Label(
             self,
             text=(
-                "Select the outputs and optional sections to include in the Tax Report. "
-                "The report explains how taxes evolve over the simulation lifetime."
+                "Select the outputs and optional sections to include in the Tax and Medicare Report. "
+                "The report explains how taxes, Medicare, and IRMAA evolve over the simulation lifetime."
             ),
             font=self._text_font,
             wraplength=900,
@@ -97,7 +97,7 @@ class TaxReportFrame(ScalableFrameMixin, ttk.Frame):
 
         ttk.Label(
             note_frame,
-            text="NOTE: Tax Reports are written to: ",
+            text="NOTE: Tax and Medicare Reports are written to: ",
             font=self._text_italic_font,
         ).pack(side="left")
 
@@ -131,7 +131,7 @@ class TaxReportFrame(ScalableFrameMixin, ttk.Frame):
             "HTML Report",
             ["output", "generate_html"],
             row,
-            "Generate the Tax Report as a formatted HTML file.",
+            "Generate the Tax and Medicare Report as a formatted HTML file."
         )
         row = self._add_check_path_to_frame(
             parent,

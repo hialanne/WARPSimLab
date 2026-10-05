@@ -546,7 +546,7 @@ def test_generate_tax_report_writes_html_and_csvs(tmp_path, monkeypatch):
     assert (tmp_path / "tax_source_breakdown_safe-id.csv").exists()
 
     html = (tmp_path / "tax_report_safe-id.html").read_text(encoding="utf-8")
-    assert "WARPSimLab Tax Report" in html
+    assert "WARPSimLab Tax and Medicare Report" in html
     assert "Tax Highlights" in html
     assert "Tax Overview" in html
     assert "Tax Model Limitations" in html
