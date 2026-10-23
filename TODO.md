@@ -1,17 +1,20 @@
-# TODO
+# TODO 7850
 
 This file collects project notes and cleanup items. Items here may later move into
 GitHub issues, documentation files, or release plans.
+
+* Add another mode.  Basic/ Standard/ Advanced.
+
+* In Tax Report, elaborate on IRMAA, what bucket of IRMAA you are in, All of the buckets as a table, 
+*   what the thresnold to upper and lower buckets are.
 
 * Broader withdrawal strategies.  Not too many.  Keep them 
      user friendly.  Constant Dollar, Percent of Portfolio, VPW, Dynamic SWR, 
      Guyton-Klinger, CAPE-based spending, Vanguard Dynamic Spending,
 * Create a report on withdrawal strategies
-* Add ability to model until user(s) are 75, 80, 85, 90, etc.
 * Create a longevity report.
 * Create an inheritance report.
 * An update procedure isn't a bad idea. There is nuance, however.
-* Allow text and dialogs to be resized.  Main update for a Minor release.
 * Replicate, and document, where the tables and means and standard deviations come from.
 * More details on historical window
 * Mac .dmg
@@ -19,6 +22,18 @@ GitHub issues, documentation files, or release plans.
 * Refactor the Simulation object
 * Possible Retirement Timeline Explorer
 * Maybe more complex withdrawal order?
+
+ACA + IRMAA integration. These are natural extensions of a detailed retirement cash-flow simulator. 
+  They don't require WARPSimLab to become an optimizer. A year-by-year report showing MAGI, IRMAA tier/cost and 
+  ACA subsidy effects would fit WARPSimLab very naturally.
+Roth-conversion comparison/ensemble analysis rather than optimization. Instead of saying "the correct 
+  conversion is $78,430," WARPSimLab could eventually evaluate a matrix such as 
+  conversion strategy × retirement age × claiming age or conversion bracket × years. That stays consistent 
+  with WARPSimLab's philosophy.
+After-tax legacy value. Optimizer explicitly considers the different tax character of the assets left at the end. 
+  That is much more meaningful than treating "$1M remaining" as equivalent regardless of whether it's 
+  taxable, Tax-Deferred, Roth or HSA. Its new after-tax legacy constraint is conceptually quite good.
+
 
 
 A short, high-value GUI feature list:
