@@ -6,9 +6,11 @@ import os
 import re
 import sys
 import tkinter as tk
+import tkinter.font as tkfont
 from pathlib import Path
 from tkinter import messagebox, ttk
 
+from src.warpsimlab.gui.gui_scaling import ScalableClientMixin
 
 SETTINGS_VERSION = 2
 
@@ -334,7 +336,7 @@ def save_display_settings(settings):
     return True
 
 
-class DisplaySettingsDialog(tk.Toplevel):
+class DisplaySettingsDialog(ScalableClientMixin, tk.Toplevel):
     """
     Edit WARPSimLab display preferences.
     """
@@ -350,6 +352,12 @@ class DisplaySettingsDialog(tk.Toplevel):
         self.parent = parent
         self.apply_callback = apply_callback
         self.original_settings = copy.deepcopy(settings)
+
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._initialize_scaling(parent.winfo_toplevel())
+        self._register_scalable_font(self._body_font)
+        self._wrapped_labels = []
+        self.bind("<Destroy>", self._on_scaling_destroy, add="+")
 
         self.title("Settings")
         self.resizable(False, False)
@@ -382,12 +390,12 @@ class DisplaySettingsDialog(tk.Toplevel):
         )
 
         self._build_fields()
+        self._apply_gui_scale()
         self._update_custom_field_state()
 
         self.protocol("WM_DELETE_WINDOW", self.destroy)
 
-        self.update_idletasks()
-        self._center_over_parent()
+        self._resize_and_center()
 
         self.grab_set()
         self.custom_width_entry.focus_set()
@@ -400,13 +408,14 @@ class DisplaySettingsDialog(tk.Toplevel):
         outer_frame = ttk.Frame(self, padding=12)
         outer_frame.grid(row=0, column=0, sticky="nsew")
 
-        main_frame = ttk.LabelFrame(outer_frame, text="Main Window", padding=10)
+        main_frame = ttk.LabelFrame(outer_frame, style="Settings.TLabelframe", text="Main Window", padding=10)
         main_frame.grid(row=0, column=0, sticky="ew")
         main_frame.columnconfigure(1, weight=1)
 
         ttk.Radiobutton(
             main_frame,
             text="Automatic - scale to WARPSimLab design size",
+            style="Settings.TRadiobutton",
             variable=self.main_sizing_mode,
             value=MAIN_WINDOW_AUTOMATIC,
             command=self._update_custom_field_state,
@@ -415,6 +424,7 @@ class DisplaySettingsDialog(tk.Toplevel):
         ttk.Radiobutton(
             main_frame,
             text="Maximized",
+            style="Settings.TRadiobutton",
             variable=self.main_sizing_mode,
             value=MAIN_WINDOW_MAXIMIZED,
             command=self._update_custom_field_state,
@@ -423,44 +433,50 @@ class DisplaySettingsDialog(tk.Toplevel):
         ttk.Radiobutton(
             main_frame,
             text="Custom size",
+            style="Settings.TRadiobutton",
             variable=self.main_sizing_mode,
             value=MAIN_WINDOW_CUSTOM,
             command=self._update_custom_field_state,
         ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(0, 6))
 
-        ttk.Label(main_frame, text="Width:").grid(row=3, column=0, sticky="e", padx=(24, 6), pady=3)
+        ttk.Label(main_frame, style="Settings.TLabel", text="Width:").grid(row=3, column=0, sticky="e", padx=(24, 6), pady=3)
 
-        self.custom_width_entry = ttk.Entry(main_frame, textvariable=self.custom_width, width=10)
+        self.custom_width_entry = ttk.Entry(main_frame, textvariable=self.custom_width, width=10, font=self._body_font)
         self.custom_width_entry.grid(row=3, column=1, sticky="w", pady=3)
 
-        ttk.Label(main_frame, text="pixels").grid(row=3, column=2, sticky="w", padx=(6, 0), pady=3)
+        ttk.Label(main_frame, style="Settings.TLabel", text="pixels").grid(row=3, column=2, sticky="w", padx=(6, 0), pady=3)
 
-        ttk.Label(main_frame, text="Height:").grid(row=4, column=0, sticky="e", padx=(24, 6), pady=3)
+        ttk.Label(main_frame, style="Settings.TLabel", text="Height:").grid(row=4, column=0, sticky="e", padx=(24, 6), pady=3)
 
-        self.custom_height_entry = ttk.Entry(main_frame, textvariable=self.custom_height, width=10)
+        self.custom_height_entry = ttk.Entry(main_frame, textvariable=self.custom_height, width=10, font=self._body_font)
         self.custom_height_entry.grid(row=4, column=1, sticky="w", pady=3)
 
-        ttk.Label(main_frame, text="pixels").grid(row=4, column=2, sticky="w", padx=(6, 0), pady=3)
+        ttk.Label(main_frame, style="Settings.TLabel", text="pixels").grid(row=4, column=2, sticky="w", padx=(6, 0), pady=3)
 
         ttk.Checkbutton(
             main_frame,
             text="Remember the last window size, position, and maximized state",
+            style="Settings.TCheckbutton",
             variable=self.remember_main_geometry,
         ).grid(row=5, column=0, columnspan=3, sticky="w", pady=(10, 0))
 
-        ttk.Label(
+        main_wrap_label = ttk.Label(
             main_frame,
+            style="Settings.TLabel",
             text="When enabled, the remembered window layout takes priority at the next startup.",
             wraplength=430,
             justify="left",
-        ).grid(row=6, column=0, columnspan=3, sticky="w", padx=(24, 0), pady=(3, 0))
+        )
+        main_wrap_label.grid(row=6, column=0, columnspan=3, sticky="w", padx=(24, 0), pady=(3, 0))
+        self._wrapped_labels.append(main_wrap_label)
 
-        summary_frame = ttk.LabelFrame(outer_frame, text="Summary Dialog", padding=10)
+        summary_frame = ttk.LabelFrame(outer_frame, style="Settings.TLabelframe", text="Summary Dialog", padding=10)
         summary_frame.grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
         ttk.Radiobutton(
             summary_frame,
             text="Automatic - scale to Summary design size",
+            style="Settings.TRadiobutton",
             variable=self.summary_sizing_mode,
             value=SUMMARY_DIALOG_AUTOMATIC,
         ).grid(row=0, column=0, sticky="w", pady=(0, 6))
@@ -468,6 +484,7 @@ class DisplaySettingsDialog(tk.Toplevel):
         ttk.Radiobutton(
             summary_frame,
             text="Maximized",
+            style="Settings.TRadiobutton",
             variable=self.summary_sizing_mode,
             value=SUMMARY_DIALOG_MAXIMIZED,
         ).grid(row=1, column=0, sticky="w", pady=(0, 6))
@@ -475,22 +492,27 @@ class DisplaySettingsDialog(tk.Toplevel):
         ttk.Checkbutton(
             summary_frame,
             text="Remember the last window size, position, and maximized state",
+            style="Settings.TCheckbutton",
             variable=self.remember_summary_geometry,
         ).grid(row=2, column=0, sticky="w", pady=(4, 0))
 
-        ttk.Label(
+        summary_wrap_label = ttk.Label(
             summary_frame,
+            style="Settings.TLabel",
             text="When enabled, the remembered window layout takes priority the next time Summary opens.",
             wraplength=430,
             justify="left",
-        ).grid(row=3, column=0, sticky="w", padx=(24, 0), pady=(3, 0))
+        )
+        summary_wrap_label.grid(row=3, column=0, sticky="w", padx=(24, 0), pady=(3, 0))
+        self._wrapped_labels.append(summary_wrap_label)
 
-        scenario_frame = ttk.LabelFrame(outer_frame, text="Scenario Explorer", padding=10)
+        scenario_frame = ttk.LabelFrame(outer_frame, style="Settings.TLabelframe", text="Scenario Explorer", padding=10)
         scenario_frame.grid(row=2, column=0, sticky="ew", pady=(12, 0))
 
         ttk.Radiobutton(
             scenario_frame,
             text="Automatic layout",
+            style="Settings.TRadiobutton",
             variable=self.scenario_layout_mode,
             value=SCENARIO_LAYOUT_AUTOMATIC,
         ).grid(row=0, column=0, sticky="w", pady=(0, 6))
@@ -498,6 +520,7 @@ class DisplaySettingsDialog(tk.Toplevel):
         ttk.Radiobutton(
             scenario_frame,
             text="Remember last window sizes and positions",
+            style="Settings.TRadiobutton",
             variable=self.scenario_layout_mode,
             value=SCENARIO_LAYOUT_REMEMBER,
         ).grid(row=1, column=0, sticky="w")
@@ -505,12 +528,49 @@ class DisplaySettingsDialog(tk.Toplevel):
         button_frame = ttk.Frame(outer_frame)
         button_frame.grid(row=3, column=0, sticky="e", pady=(14, 0))
 
-        ttk.Button(button_frame, text="Restore Defaults", command=self._restore_defaults).pack(
+        ttk.Button(button_frame, style="Settings.TButton", text="Restore Defaults", command=self._restore_defaults).pack(
             side="left", padx=(0, 20)
         )
 
-        ttk.Button(button_frame, text="OK", command=self._apply).pack(side="left", padx=(0, 6))
-        ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(side="left")
+        ttk.Button(button_frame, style="Settings.TButton", text="OK", command=self._apply).pack(side="left", padx=(0, 6))
+        ttk.Button(button_frame, style="Settings.TButton", text="Cancel", command=self.destroy).pack(side="left")
+
+
+    def _apply_scaled_styles(self):
+        # File: gui_settings.py; Function: _apply_scaled_styles
+        # Action: Apply current text scale to Settings-specific styles and wrapping.
+        style = ttk.Style(self)
+        style.configure("Settings.TLabel", font=self._body_font)
+        style.configure("Settings.TRadiobutton", font=self._body_font)
+        style.configure("Settings.TCheckbutton", font=self._body_font)
+        style.configure("Settings.TButton", font=self._body_font)
+        style.configure("Settings.TLabelframe.Label", font=self._body_font)
+
+        wraplength = max(1, round(430 * self._get_gui_scale()))
+        for label in self._wrapped_labels:
+            label.configure(wraplength=wraplength)
+
+
+    def _on_gui_scale_changed(self, *_):
+        # File: gui_settings.py; Function: _on_gui_scale_changed
+        # Action: Resize and recenter the dialog when the runtime scale changes.
+        self._apply_gui_scale()
+        self._resize_and_center()
+
+
+    def _resize_and_center(self):
+        # File: gui_settings.py; Function: _resize_and_center
+        # Action: Recalculate requested dialog size before centering.
+        self.geometry("")
+        self.update_idletasks()
+        self._center_over_parent()
+
+
+    def _on_scaling_destroy(self, event):
+        # File: gui_settings.py; Function: _on_scaling_destroy
+        # Action: Release the root scale-event binding when Settings closes.
+        if event.widget is self:
+            self._stop_scaling()
 
 
     def _update_custom_field_state(self):
