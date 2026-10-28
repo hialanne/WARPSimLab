@@ -80,10 +80,7 @@ def popup_menu_below_widget(widget, menu: tk.Menu):
     x = widget.winfo_rootx()
     y = widget.winfo_rooty() + widget.winfo_height()
 
-    try:
-        menu.tk_popup(x, y)
-    finally:
-        menu.grab_release()
+    menu.tk_popup(x, y)
 
 
 def create_dropdown_button(parent, text: str, menu_labels_and_commands, command=None, **grid_kwargs):
