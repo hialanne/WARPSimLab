@@ -114,8 +114,22 @@ class MainHomeFrame(ScalableFrameMixin, ttk.Frame):
             self._update_nav_buttons(enabled=True)
 
 
+    def _get_intro_wraplength(self):
+        # Scale the reference wrap width using actual font metrics.
+        reference_font = tkfont.Font(root=self, family="Arial", size=12)
+        reference_width = reference_font.measure("WARPSimLab")
+
+        development_width = 102
+        scale = reference_width / development_width
+
+        return max(1, round(800 * scale))
+
+
     def _apply_scaled_styles(self):
         ttk.Style(self).configure("Home.TButton", font=self._body_font)
+
+        if hasattr(self, "intro_label"):
+            self.intro_label.configure(wraplength=self._get_intro_wraplength())
 
 
     def _build_fields(self):
@@ -123,7 +137,10 @@ class MainHomeFrame(ScalableFrameMixin, ttk.Frame):
         ttk.Label(self, text=self.title, font=self._title_font).pack(anchor="w", pady=(0, 10))
 
         # Introduction text directly on the frame
-        self.intro_label = ttk.Label(self, text=INTRO_TEXT, wraplength=800, justify="left", font=self._intro_font)
+        wraplength = self._get_intro_wraplength()
+        self.intro_label = ttk.Label(self, text=INTRO_TEXT, wraplength=wraplength, justify="left",
+                                     font=self._intro_font)
+
         self.intro_label.pack(anchor="w", pady=(0, 10))
 
         if self.legal_already_accepted:

@@ -18,6 +18,8 @@ from src.warpsimlab.gui.gui_settings import (
     save_display_settings,
 )
 
+SCREEN_DEBUG = False
+
 
 def set_window_normal(window):
     try:
@@ -186,31 +188,22 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
     def _calculate_automatic_main_window_size(self):
         """Return the platform-adjusted WARPSimLab reference window size."""
-        development_screen_width = 1707
-        development_screen_height = 1067
         development_font_linespace = 24
 
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-
-        reference_font = tkfont.Font(family="Arial", size=16)
+        reference_font = tkfont.Font(root=self.root, family="Arial", size=16)
         current_font_linespace = reference_font.metrics("linespace")
         gui_scale = current_font_linespace / development_font_linespace
 
-        effective_screen_width = screen_width / gui_scale
-        effective_screen_height = screen_height / gui_scale
-        width_scale = effective_screen_width / development_screen_width
-        height_scale = effective_screen_height / development_screen_height
-        desktop_scale = min(width_scale, height_scale)
+        window_width = max(int(MAIN_WINDOW_REFERENCE_WIDTH * gui_scale), MAIN_WINDOW_REFERENCE_WIDTH)
+        window_height = max(int(MAIN_WINDOW_REFERENCE_HEIGHT * gui_scale), MAIN_WINDOW_REFERENCE_HEIGHT)
 
-        if desktop_scale > 1.0:
-            large_display_factor = 1.0 / (desktop_scale ** 0.5)
-        else:
-            large_display_factor = 1.0
-
-        scale = gui_scale * large_display_factor
-        window_width = max(int(MAIN_WINDOW_REFERENCE_WIDTH * scale), MAIN_WINDOW_REFERENCE_WIDTH)
-        window_height = max(int(MAIN_WINDOW_REFERENCE_HEIGHT * scale), MAIN_WINDOW_REFERENCE_HEIGHT)
+        if SCREEN_DEBUG:
+            print("\ngui_display.py: _calculate_automatic_main_window_size()")
+            print("-------------------------------------------------------")
+            print(f"Screen: {self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}")
+            print(f"Font linespace: {current_font_linespace}")
+            print(f"GUI scale: {gui_scale:.4f}")
+            print(f"Calculated window: {window_width}x{window_height}")
 
         return window_width, window_height
 
@@ -520,3 +513,81 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
         print("")
 
+
+    def _print_editor_geometry_diagnostics(self, event=None):
+        """
+        Diagnose active editor geometry and controls outside the main window.
+        """
+        if not SCREEN_DEBUG:
+            return
+
+        self.root.update_idletasks()
+
+        root = self.root
+        container = self.edit_frame_container
+        root_x = root.winfo_rootx()
+        root_y = root.winfo_rooty()
+        root_right = root_x + root.winfo_width()
+        root_bottom = root_y + root.winfo_height()
+
+        print("\ngui_display.py: _print_editor_geometry_diagnostics()")
+        print("----------------------------------------------------")
+        print(f"Screen: {root.winfo_screenwidth()}x{root.winfo_screenheight()}")
+        print(f"Root: actual={root.winfo_width()}x{root.winfo_height()}, "
+              f"requested={root.winfo_reqwidth()}x{root.winfo_reqheight()}")
+        print(f"Editor container: actual={container.winfo_width()}x{container.winfo_height()}, "
+              f"requested={container.winfo_reqwidth()}x{container.winfo_reqheight()}")
+
+        for editor in container.winfo_children():
+            if not editor.winfo_ismapped():
+                continue
+
+            print(f"Editor: {editor.winfo_class()} ({type(editor).__name__})")
+            print(f"  Actual: {editor.winfo_width()}x{editor.winfo_height()}")
+            print(f"  Requested: {editor.winfo_reqwidth()}x{editor.winfo_reqheight()}")
+
+        print("\nNavigation buttons")
+        for button in self.button_frame.winfo_children():
+            if not button.winfo_ismapped():
+                continue
+
+            x = button.winfo_rootx()
+            right = x + button.winfo_width()
+            print(f"  {button.cget('text')}: x={x - root_x}, right={right - root_x}, "
+                  f"visible={right <= root_right}")
+
+        print("\nControls outside root client area")
+        clipped = []
+        checked = 0
+
+        def inspect_children(parent):
+            nonlocal checked
+
+            for child in parent.winfo_children():
+                if not child.winfo_ismapped():
+                    continue
+
+                checked += 1
+                x = child.winfo_rootx()
+                y = child.winfo_rooty()
+                right = x + child.winfo_width()
+                bottom = y + child.winfo_height()
+
+                if x < root_x or y < root_y or right > root_right or bottom > root_bottom:
+                    clipped.append((type(child).__name__, str(child), x - root_x,
+                                    y - root_y, right - root_x, bottom - root_y))
+
+                inspect_children(child)
+
+        inspect_children(container)
+
+        print(f"Mapped widgets checked: {checked}")
+        print(f"Widgets outside root: {len(clipped)}")
+
+        for name, path, left, top, right, bottom in clipped[:20]:
+            print(f"  {name}: ({left},{top}) to ({right},{bottom})  {path}")
+
+        if len(clipped) > 20:
+            print(f"  ... and {len(clipped) - 20} more")
+
+        print("")

@@ -178,10 +178,11 @@ class PortfolioSimulatorGUI(
 
         self._build_run_button()
         self.edit_main_home()
+        if SCREEN_DEBUG:
+            self.root.bind("<Control-Shift-G>", self._print_editor_geometry_diagnostics)
 
-        # This should be commented out in production.
-        # self._print_content_geometry_diagnostics()
-
+        if SCREEN_DEBUG:
+            self._print_content_geometry_diagnostics()
 
     def _close_application(self):
         """
