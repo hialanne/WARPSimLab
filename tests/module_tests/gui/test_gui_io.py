@@ -3,12 +3,66 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from src.warpsimlab.gui.gui_io import PortfolioSimulatorGUI_IOMixin
-
+import json
+from unittest.mock import Mock
 import pytest
-
-
 from src.warpsimlab.gui.gui_io import PortfolioSimulatorGUI_IOMixin
+
+
+@pytest.mark.parametrize("metadata", ["invalid", {}, {"file_type": "financial_data", "schema_version": 0},
+    {"file_type": "financial_data", "schema_version": 999},
+    {"file_type": "financial_data", "schema_version": "2"}])
+def test_invalid_financial_metadata_is_rejected(metadata):
+    gui = PortfolioSimulatorGUI_IOMixin()
+    with pytest.raises(ValueError):
+        gui._validate_financial_data_metadata({"WARPSIMLAB_METADATA": metadata})
+
+
+def test_legacy_and_supported_financial_metadata():
+    gui = PortfolioSimulatorGUI_IOMixin()
+    assert gui._validate_financial_data_metadata({}) is True
+    assert gui._validate_financial_data_metadata({"WARPSIMLAB_METADATA": {
+        "file_type": "financial_data", "schema_version": 2}}) is False
+
+
+@pytest.mark.parametrize("couple", [False, True])
+def test_load_financial_file_populates_health_assets_and_expenses(tmp_path, monkeypatch, scenario_builders, couple):
+    from src.warpsimlab.gui import gui_io as mod
+    gui = _make_dummy_gui(tmp_path)
+    gui.expensesDict = scenario_builders.DynamicExpenses()
+    gui._sync_tax_status_from_second_person = Mock()
+    gui._remember_data_directory = Mock()
+    info, error = Mock(), Mock()
+    monkeypatch.setattr(mod.messagebox, "showinfo", info)
+    monkeypatch.setattr(mod.messagebox, "showerror", error)
+    data = {"WARPSIMLAB_METADATA": {"file_type": "financial_data", "schema_version": 2},
+        "DEFAULT_ENABLE_SECOND_PERSON": couple, "DEFAULT_HUSBAND_AGE": 64,
+        "DEFAULT_WIFE_AGE": 62, "DEFAULT_HUSBAND_MEDICARE_ANNUAL_COST": 4000,
+        "DEFAULT_HUSBAND_MODELED_DEATH_AGE": 90, "DEFAULT_LONGEVITY_MODE": "custom_death_age",
+        "DEFAULT_YEARS": 26, "DEFAULT_FIXED_YEARS": 30, "DEFAULT_EQUITY_ROTH_H": 5000,
+        "DEFAULT_HSA_BOND_H": 6000, "HISTORICAL_MAGI": {"one_year_prior": 150000},
+        "EXPENSES": [{"start_year": 2026, "end_year": 2027, "cost": 1000, "is_hsa_eligible": True}],
+        "SPECIAL_INCOME_STREAMS": [{"name": "Consulting", "amount": 2000}],
+        "ROTH_FLOWS": [{"amount": 3000}]}
+    path = tmp_path / "financial.json"
+    path.write_text(json.dumps(data))
+    gui._load_from_json(path)
+    error.assert_not_called()
+    info.assert_called_once()
+    assert gui.husband.age == 64
+    assert gui.husband.modeled_death_age == 90
+    assert gui.husband.medicare_annual_cost == 4000
+    assert gui.husband_portfolio.equity_roth == 5000
+    assert gui.husband_portfolio.hsa_bond == 6000
+    assert gui.wife.age == (62 if couple else 40)
+    assert gui.simulation_settings["years_to_simulate"] == 26
+    assert gui.simulation_settings["fixed_years_to_simulate"] == 30
+    assert gui.historical_magi == {"two_years_prior": None, "one_year_prior": 150000}
+    assert gui.expensesDict.get_expense_breakdown_for_year(2027)["hsa_eligible"] == 1000
+    assert gui.special_income_streams == data["SPECIAL_INCOME_STREAMS"]
+    assert gui.roth_flows == data["ROTH_FLOWS"]
+    assert gui.loaded_data_file == str(path)
+    gui._remember_data_directory.assert_called_once_with(path)
 
 def _make_dummy_gui(tmp_path: Path):
     class DummyGUI(PortfolioSimulatorGUI_IOMixin):

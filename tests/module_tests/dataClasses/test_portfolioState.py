@@ -68,3 +68,19 @@ def test_ratios_initially_zero():
     assert s.eq_ratio_post == 0
     assert s.bd_ratio_post == 0
     assert s.cs_ratio_post == 0
+
+
+def test_roth_and_hsa_buckets_participate_in_account_and_asset_totals():
+    s = PortfolioState(1, 2, 3, 4, 5, 6, 1000,
+                       eq_roth=10, bd_roth=20, cs_roth=30,
+                       hsa_eq=100, hsa_bd=200, hsa_cs=300)
+    assert s.total_value_roth == 60
+    assert s.total_value_hsa == 600
+    assert s.total_value == 681
+    assert s.total_value_including_real_estate == 1681
+    assert s.total_value_equity == 115
+    assert s.total_value_bonds == 227
+    assert s.total_value_cash == 339
+    s.hsa_cs = 0
+    assert s.total_value == 381
+    assert s.total_value_cash == 39

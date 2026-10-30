@@ -25,3 +25,12 @@ def test_parse_money_empty_string_raises():
 def test_parse_money_invalid_string_raises():
     with pytest.raises(ValueError):
         parse_money_strict("abc")
+
+
+def test_parse_money_reads_stringvar_like_input_and_names_errors():
+    from types import SimpleNamespace
+    assert parse_money_strict(SimpleNamespace(get=lambda: " 2,345.75 ")) == 2345.75
+    with pytest.raises(ValueError, match="Balance cannot be empty"):
+        parse_money_strict(" ", field_name="Balance")
+    with pytest.raises(ValueError, match="Invalid Balance"):
+        parse_money_strict("bad", field_name="Balance")

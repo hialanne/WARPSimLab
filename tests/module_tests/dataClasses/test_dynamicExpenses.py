@@ -110,3 +110,30 @@ def test_get_total_expense_multiple_rules():
     d.add_expense(2025, 300)          # future
 
     assert d.get_total_expense_for_year(2023) == 300
+
+
+@pytest.mark.parametrize("year,total,eligible", [(2024, 0, 0), (2025, 300, 100), (2026, 300, 100), (2027, 200, 0)])
+def test_hsa_breakdown_includes_both_endpoints(year, total, eligible):
+    d = DynamicExpenses()
+    d.add_expense(2025, 100, 2026, is_hsa_eligible=True)
+    d.add_expense(2025, 200)
+    assert d.get_expense_breakdown_for_year(year) == {
+        "total": total, "hsa_eligible": eligible, "non_hsa": total - eligible}
+
+
+def test_expense_updates_allow_zero_empty_comment_and_false_eligibility():
+    d = DynamicExpenses()
+    d.add_expense(2025, 100, 2026, "Medical", is_hsa_eligible=True)
+    d.update_expense(0, cost=0, comment="", is_hsa_eligible=False, start_year=2024, end_year=2027)
+    assert d.expenses == [{"start_year": 2024, "end_year": 2027, "cost": 0,
+                           "comment": "", "is_hsa_eligible": False}]
+
+
+@pytest.mark.parametrize("method", ["remove_expense", "update_expense"])
+def test_negative_index_is_rejected_without_changing_expenses(method):
+    d = DynamicExpenses()
+    d.add_expense(2025, 100)
+    before = d.get_expenses()
+    with pytest.raises(IndexError):
+        getattr(d, method)(-1)
+    assert d.expenses == before
