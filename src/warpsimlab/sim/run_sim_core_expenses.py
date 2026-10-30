@@ -503,8 +503,8 @@ def simulate_expense_year(
             wife_income_for_tax_alloc,
         )
 
-        net_income_husband = husband_income_for_tax_alloc - husband_tax_alloc
-        net_income_wife = wife_income_for_tax_alloc - wife_tax_alloc
+        net_income_husband = income["by_person"]["husband"] - husband_tax_alloc
+        net_income_wife = income["by_person"]["wife"] - wife_tax_alloc
     else:
         net_income_husband = net_income
         net_income_wife = 0.0

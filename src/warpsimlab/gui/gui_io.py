@@ -199,6 +199,17 @@ class PortfolioSimulatorGUI_IOMixin:
 
             legacy_file = self._validate_financial_data_metadata(data)
 
+            # Validate file content before modifying the active configuration.
+            longevity_mode = data.get("DEFAULT_LONGEVITY_MODE", "fixed_years")
+            if longevity_mode not in {"fixed_years", "average", "longer_life", "custom_death_age"}:
+                raise ValueError(f"Invalid longevity mode: {longevity_mode}")
+
+            historical_magi = data.get("HISTORICAL_MAGI", {})
+            if historical_magi is None:
+                historical_magi = {}
+            if not isinstance(historical_magi, dict):
+                raise ValueError("Historical MAGI data is invalid.")
+
             # --- Husband ---
             self.husband.age = data.get("DEFAULT_HUSBAND_AGE", self.husband.age)
             self.husband.retire_age = data.get("DEFAULT_HUSBAND_RETIRE", self.husband.retire_age)
@@ -299,9 +310,6 @@ class PortfolioSimulatorGUI_IOMixin:
                 w_port.real_estate = data.get("DEFAULT_REAL_ESTATE_W", w_port.real_estate)
 
             # --- Simulation / global settings ---
-            longevity_mode = data.get("DEFAULT_LONGEVITY_MODE", "fixed_years")
-            if longevity_mode not in {"fixed_years", "average", "longer_life", "custom_death_age"}:
-                raise ValueError(f"Invalid longevity mode: {longevity_mode}")
 
             loaded_years = data.get("DEFAULT_YEARS", DEFAULT_YEARS)
             fixed_years = data.get("DEFAULT_FIXED_YEARS", loaded_years)
@@ -320,13 +328,6 @@ class PortfolioSimulatorGUI_IOMixin:
             self.simulation_controls["state_of_residence"] = data.get(
                 "STATE_OF_RESIDENCE", DEFAULT_STATE_OF_RESIDENCE
             )
-
-            historical_magi = data.get("HISTORICAL_MAGI", {})
-            if historical_magi is None:
-                historical_magi = {}
-
-            if not isinstance(historical_magi, dict):
-                raise ValueError("Historical MAGI data is invalid.")
 
             self.historical_magi["two_years_prior"] = historical_magi.get("two_years_prior")
             self.historical_magi["one_year_prior"] = historical_magi.get("one_year_prior")

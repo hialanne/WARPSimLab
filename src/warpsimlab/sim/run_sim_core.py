@@ -477,8 +477,13 @@ def simulate_yearly_portfolios(
         results["cash"][s,0] = h_port.total_value_cash + (w_port.total_value_cash if second_person_enabled else 0)
         results["bonds"][s,0] = h_port.total_value_bonds + (w_port.total_value_bonds if second_person_enabled else 0)
         results["real_estate"][s,0] = h_port.re_post + (w_port.re_post if second_person_enabled else 0)
+
+        curr_w_age = 0
+        if second_person_enabled:
+            curr_w_age = wife.age
+
         mortality_state = mortalityEngine.get_household_mortality_state(
-            husband, wife, husband.age, wife.age, second_person_enabled
+            husband, wife, husband.age, curr_w_age, second_person_enabled
         )
 
         results["husband_alive"][s,0] = mortality_state["husband_alive"]
