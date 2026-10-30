@@ -207,6 +207,9 @@ def simulate_yearly_portfolios(
 
     monteCarloEngine.prepare_market_path_sampling(sim_config)
     
+    # Clear the active historical window from any previous run.
+    sim_config._active_historical_sim_index = None
+    
     if historical_window_mode_active:
         effective_num_sims = int(getattr(sim_config, "_hist_num_windows", 0))
         if effective_num_sims <= 0:

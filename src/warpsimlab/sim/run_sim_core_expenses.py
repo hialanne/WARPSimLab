@@ -314,6 +314,7 @@ def simulate_expense_year(
     )
 
     emergency_pre_tax_used = net_cash_result["pre_tax_used"]
+    wd_roth = net_cash_result["roth_used"]
     taxable_hsa_withdrawal = net_cash_result["hsa_used"]
     wd_hsa = qualified_hsa_withdrawal + taxable_hsa_withdrawal
 
