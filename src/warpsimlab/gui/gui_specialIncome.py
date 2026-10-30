@@ -488,8 +488,10 @@ class SpecialIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
                 self.row_vars.remove(item)
                 break
 
-        if stream in self.special_income_streams:
-            self.special_income_streams.remove(stream)
+        for index, existing_stream in enumerate(self.special_income_streams):
+            if existing_stream is stream:
+                del self.special_income_streams[index]
+                break
 
         self._regrid_rows()
 
