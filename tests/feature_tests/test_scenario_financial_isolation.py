@@ -114,3 +114,36 @@ def test_baseline_and_modified_scenarios_are_independent_with_real_execution(
     assert_tree_equal(state.baseline_results["p"]["core"], saved["baseline"])
     assert_tree_equal(session_input_tree(gui, state), source_before)
     assert_tree_equal(evaluate("scenario")["p"]["core"], saved["scenario"])
+
+
+@pytest.mark.parametrize("expense_mode", [False, True])
+def test_comparison_view_reconciles_real_results_and_reopened_session(expense_mode):
+    manager, gui, state = make_session(expense_mode)
+    assert manager.build_results_view_model() is None
+    manager.compute_baseline_results(True, "fill")
+    assert manager.build_results_view_model() is None
+    manager.compute_scenario_results(True, "fill")
+    comparison = manager.build_results_view_model()
+    for metrics, result in [(comparison.original_metrics, state.baseline_results),
+                            (comparison.changed_metrics, state.scenario_results)]:
+        summary = result["p"]["summary_results"]
+        assert metrics.ending_portfolio == summary["total_assets"][-1]
+        assert metrics.lifetime_taxes == pytest.approx(sum(summary["taxes"]))
+        assert metrics.lifetime_funding_gap == pytest.approx(sum(summary["funding_gap"]))
+        for name, key in [("ending_pre_tax", "pre_tax_assets"),
+                          ("ending_after_tax", "post_tax_assets"),
+                          ("ending_roth", "roth_assets"), ("ending_hsa", "hsa_assets")]:
+            assert getattr(metrics, name) == summary[key][-1]
+    assert comparison.original_assumptions.husband_retire_age == 70
+    assert comparison.changed_assumptions.husband_retire_age == 71
+    assert comparison.changed_assumptions.dynamic_value == (120 if expense_mode else 6.5)
+    saved = copy.deepcopy(state.baseline_results["p"]["core"])
+    # Closing and reopening starts from current main-window truth, not previous
+    # slider edits or mutable returned comparison data.
+    reopened = ScenarioStateManager(gui, ScenarioSessionState())
+    reopened.build_snapshots_from_truth()
+    assert reopened.session_state.person_snapshots["husband"].retire_age == 70
+    assert reopened.session_state.baseline_results is None
+    comparison.changed_metrics.ending_portfolio = -1
+    assert_tree_equal(state.baseline_results["p"]["core"], saved)
+    assert manager.build_results_view_model().changed_metrics.ending_portfolio != -1

@@ -9,7 +9,6 @@ from src.warpsimlab.sim.engines import monteCarloEngine
 from src.warpsimlab.sim.engines import portfolioEngine
 from src.warpsimlab.sim.engines import rothEngine
 from src.warpsimlab.sim.engines import taxEngine
-from src.warpsimlab.sim.engines import withdrawalEngine
 from src.warpsimlab.sim.run_sim_core import simulate_yearly_portfolios
 from src.warpsimlab.sim.simulationObject import Simulation
 
@@ -369,7 +368,8 @@ def test_rmd_and_roth_conversion_are_both_included_once_in_ordinary_income(
         husband_portfolio=make_portfolio(pre_tax=100_000.0),
         config=config,
     )
-    expected_rmd = withdrawalEngine.calculate_rmd(100_000.0, 73)
+    # Independently use the documented age-73 divisor, not the production calculator.
+    expected_rmd = 100_000.0 / 26.5
     expected_ordinary_income = expected_rmd + 10_000.0
 
     assert ordinary_income_calls == pytest.approx([expected_ordinary_income])
@@ -469,21 +469,13 @@ def test_emergency_pre_tax_tax_delta_reconciles_income_tax_and_remaining_assets(
     husband = make_person(income=40_000.0)
     portfolio = make_portfolio(pre_tax=100_000.0, post_tax=20_000.0)
 
-    taxEngine.initialize_tax_engine_for_simulation(config)
-    year_cache = taxEngine.prepare_tax_year_cache(1, config)
-    _, _, _, baseline_tax, _ = taxEngine.calculate_total_income_tax_split(
-        40_000.0,
-        0.0,
-        year_cache,
-        config,
-    )
+    # Independent 2026 single-filer arithmetic: 40k - 16,100 deduction,
+    # first 12,400 at 10%, then 11,500 at 12% = 2,620.
+    baseline_tax = 1_240.0 + 11_500.0 * 0.12
     expected_emergency = 100_000.0 - 40_000.0 + baseline_tax - 20_000.0
-    _, _, _, final_tax, _ = taxEngine.calculate_total_income_tax_split(
-        40_000.0 + expected_emergency,
-        0.0,
-        year_cache,
-        config,
-    )
+    # After the 42,620 emergency draw, ordinary income is 82,620;
+    # taxable income 66,520 spans 10%, 12% and 22% bands.
+    final_tax = 1_240.0 + 4_560.0 + 16_120.0 * 0.22
     expected_delta = final_tax - baseline_tax
 
     results = run_one_year(

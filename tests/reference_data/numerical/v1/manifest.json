@@ -1958,6 +1958,15 @@
         },
         "kind": "dict"
       },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "f0c165c6a71d72e6ceb8ee7999477018cc3d8537582d981c7ff88a8da1dfc39b",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
+      },
       "start_year": 2026
     },
     "s2_married_raw": {
@@ -2930,6 +2939,15 @@
           }
         },
         "kind": "dict"
+      },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "9eb3650ebe06d7ec9875ecb33eab5bc6489a05e06542978f346e514ca6fa0abf",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
       },
       "start_year": 2026
     },
@@ -3907,6 +3925,15 @@
           }
         },
         "kind": "dict"
+      },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "c9e99e44ae0230aa02bb0b7d5a8e35209378feef6595f3dd6fc94d123a43c708",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
       },
       "start_year": 2026
     },
@@ -7813,6 +7840,15 @@
         },
         "kind": "dict"
       },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "656fe4ba7cb699955fc3f22af4ff01acab52abe02144161675c343c749c5738d",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
+      },
       "start_year": 2026
     },
     "s4_uncorrelated": {
@@ -8787,6 +8823,15 @@
           }
         },
         "kind": "dict"
+      },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "51c05520b9c9d5f6abcdbfbe275a34485a1509dac33965c7b46bb16497117c91",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
       },
       "start_year": 2026
     },
@@ -9765,6 +9810,15 @@
         },
         "kind": "dict"
       },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "e8e7e92f5357119283020b197fa7f2df94eadded1e0e786dd23637fad75eb389",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
+      },
       "start_year": 2026
     },
     "s5_historical_real": {
@@ -10742,6 +10796,15 @@
         },
         "kind": "dict"
       },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "9f3b52b49af5a94933786a5375bfb025eb6d77c4d1a666fabca5d6d5d6f1fd88",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
+      },
       "start_year": 2026
     },
     "s6_baseline": {
@@ -11716,6 +11779,15 @@
         },
         "kind": "dict"
       },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "7d791bace34ba24fa67ecadfc971de3691c211c41bd0ea966bcb8dc9a7d22789",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
+      },
       "start_year": 2026
     },
     "s6_modified": {
@@ -12689,6 +12761,15 @@
           }
         },
         "kind": "dict"
+      },
+      "spouse_net_income_correction": {
+        "accepted_source": "User-approved corrected development workspace synchronized to WARPSimLab-codex",
+        "audited_utc": "2026-10-30T17:41:20.473139+00:00",
+        "fields": [
+          "net_income_husband"
+        ],
+        "previous_npz_sha256": "faea7f025b9997c907fdb3754645e4f78361e8fcdce522973ede160379040105",
+        "reason": "Exclude noncash Roth conversions and applicable emergency pre-tax withdrawals from individual net-income reporting; preserve tax allocation."
       },
       "start_year": 2026
     }

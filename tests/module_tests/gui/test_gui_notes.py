@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+import os
 
 from src.warpsimlab.gui import gui_notes as mod
 
@@ -19,10 +20,18 @@ def test_pdf_path_and_platform_launcher(monkeypatch, tmp_path, platform, launche
     monkeypatch.setattr(mod.subprocess, "run", run)
     mod.NotesFrame._open_pdf(None, "faq.pdf")
     base = tmp_path if frozen else Path(mod.__file__).resolve().parent.parent
-    expected = str(base / "docs" / "faq.pdf")
+
+    expected = os.path.normcase(str(base / "docs" / "faq.pdf"))
+
     if launcher == "startfile":
-        startfile.assert_called_once_with(expected)
+        startfile.assert_called_once()
+        actual = startfile.call_args.args[0]
+        assert os.path.normcase(actual) == expected
         run.assert_not_called()
     else:
-        run.assert_called_once_with([launcher, expected], check=False)
-        startfile.assert_not_called()
+        run.assert_called_once()
+        actual_command = run.call_args.args[0]
+        assert actual_command[0] == launcher
+        assert len(actual_command) == 2
+        assert os.path.normcase(actual_command[1]) == expected
+        assert run.call_args.kwargs == {"check": False}

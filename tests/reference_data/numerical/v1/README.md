@@ -65,3 +65,15 @@ The married raw case extends only the requested horizon to ten years so final
 death at year index eight leaves observable padding. The other married cases
 retain the proposed eight-year horizon. RNG/library changes can alter seeded
 results; investigate in the recorded environment rather than relaxing tolerances.
+
+**Approved spouse net-income correction (2026-10-30):** an exhaustive audit of
+all thirteen scenarios found 34 changed values, confined to
+`net_income_husband` in nine payloads. Only those nine arrays were replaced.
+The reductions remove the husband's $35,000 Roth conversions in 2027 and 2028
+(discounted in real-dollar scenarios). All `net_income_wife` arrays and all other
+arrays remain unchanged. No baseline differences arose from emergency pre-tax
+withdrawals. Inputs, schema, activation contracts, and tolerances are preserved.
+Per-case `spouse_net_income_correction` entries retain the separate correction
+provenance alongside the original capture and prior Roth-withdrawal correction.
+See `codex_reports/spouse_net_income_reference_correction.md` and the accompanying
+coordinate-level audit JSON for complete evidence.
