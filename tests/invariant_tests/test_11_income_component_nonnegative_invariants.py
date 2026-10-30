@@ -1,24 +1,9 @@
 import numpy as np
 
-from src.warpsimlab.sim.simulation import run_pipeline
+from tests.architectural_helpers import run_invariant_case as run_case
 
 
 EPS = 1e-9
-
-
-def run_case(make_case, **overrides):
-    husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config = make_case(**overrides)
-
-    result = run_pipeline(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-    )
-
-    return result["core"], sim_config
 
 
 def test_breakdown_by_class_components_are_never_negative(make_case):

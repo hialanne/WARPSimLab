@@ -6,7 +6,6 @@ from tests.feature_tests.monteCarlo.helpers_validation import make_sim_config
 
 def test_generate_market_path_is_reproducible_with_fixed_seed():
     sim_config = make_sim_config(
-        monte_carlo_mode="pathBasedAnnualSampling",
         use_correlated_returns=True,
         results_mode="risk_analysis",
         sim_type="portfolio_sim",
@@ -32,7 +31,6 @@ def test_generate_market_path_is_reproducible_with_fixed_seed():
 
 def test_generate_market_path_changes_with_different_seed():
     sim_config = make_sim_config(
-        monte_carlo_mode="pathBasedAnnualSampling",
         use_correlated_returns=True,
         results_mode="risk_analysis",
         sim_type="portfolio_sim",
@@ -58,7 +56,6 @@ def test_generate_market_path_changes_with_different_seed():
 
 def test_path_based_uncorrelated_mode_is_reproducible_with_fixed_seed():
     sim_config = make_sim_config(
-        monte_carlo_mode="pathBasedAnnualSampling",
         results_mode="risk_analysis",
         sim_type="portfolio_sim",
         use_correlated_returns=False,

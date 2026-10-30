@@ -161,8 +161,6 @@ def test_generate_market_path_non_monte_carlo_returns_constant_means(sim_factory
 
 
 def test_generate_market_path_path_based_correlated_has_expected_shapes(sim_factory):
-    np.random.seed(12345)
-
     sim_config = sim_factory.build(
         risk_analysis_mode="monte_carlo",
         use_correlated_returns=True,
@@ -179,8 +177,6 @@ def test_generate_market_path_path_based_correlated_has_expected_shapes(sim_fact
 
 
 def test_generate_market_path_path_based_uncorrelated_has_expected_shapes(sim_factory):
-    np.random.seed(54321)
-
     sim_config = sim_factory.build(
         risk_analysis_mode="monte_carlo",
         use_correlated_returns=False,
@@ -221,7 +217,7 @@ def test_generate_market_path_independent_mode_returns_nan_placeholders(sim_fact
         assert np.all(np.isnan(path[key][1:]))
 
 
-def test_generate_market_path_requires_prepared_sampling_data(sim_factory):
+def test_generate_market_path_requires_prepared_sampling_data(sim_factory, diagnostic_home):
     sim_config = sim_factory.build(
         results_mode="risk_analysis",
         use_correlated_returns=False,
@@ -233,7 +229,7 @@ def test_generate_market_path_requires_prepared_sampling_data(sim_factory):
         monteCarloEngine.generate_market_path(sim_config, years_to_simulate=3)
 
 
-def test_generate_market_path_correlated_requires_prepared_cholesky(sim_factory):
+def test_generate_market_path_correlated_requires_prepared_cholesky(sim_factory, diagnostic_home):
     sim_config = sim_factory.build(
         results_mode="risk_analysis",
         use_correlated_returns=True,
@@ -377,8 +373,8 @@ def test_build_covariance_matrix_rejects_invalid_correlation_matrix():
         monteCarloEngine.build_covariance_matrix(std_devs, corr)
 
 
-def test_debug_validate_correlated_sampling_runs_for_valid_inputs(sim_factory, capsys):
-    np.random.seed(321)
+def test_debug_validate_correlated_sampling_runs_for_valid_inputs(sim_factory, capsys, monkeypatch):
+    monkeypatch.setattr(np.random, "multivariate_normal", np.random.default_rng(321).multivariate_normal)
 
     sim_config = sim_factory.build(
         use_correlated_returns=True,

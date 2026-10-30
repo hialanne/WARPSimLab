@@ -1,21 +1,6 @@
 import numpy as np
 
-from src.warpsimlab.sim.simulation import run_pipeline
-
-
-def run_case(make_case, **overrides):
-    husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config = make_case(**overrides)
-
-    result = run_pipeline(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-    )
-
-    return result["core"], sim_config
+from tests.architectural_helpers import run_invariant_case as run_case
 
 
 def test_all_income_series_stay_zero_when_all_income_sources_and_yields_are_zero(make_case):

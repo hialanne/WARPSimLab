@@ -396,7 +396,7 @@ def test_total_income_tax_split_state_only():
     assert federal_marginal_rate == pytest.approx(0.0)
 
 
-def test_total_income_tax_split_negative_inputs_raise_runtime_error():
+def test_total_income_tax_split_negative_inputs_raise_runtime_error(diagnostic_home):
     cfg = make_config(
         calculate_income_taxes=True,
         calculate_state_taxes=True,

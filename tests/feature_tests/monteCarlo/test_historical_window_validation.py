@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from src.warpsimlab.sim.engines import monteCarloEngine
+from src.warpsimlab.sim.engines import diagnosticEngine, monteCarloEngine
 from src.warpsimlab.sim.engines.diagnosticEngine import WARPSimLabInternalError
 
 
@@ -188,7 +188,9 @@ def test_historical_market_path_rejects_out_of_range_index():
     )
 
 
-def test_historical_inflation_path_rejects_unprepared_cache():
+def test_historical_inflation_path_rejects_unprepared_cache(tmp_path, monkeypatch):
+    # Replace only the diagnostic module's home lookup, leaving real file I/O intact.
+    monkeypatch.setattr(diagnosticEngine, "Path", SimpleNamespace(home=lambda: tmp_path))
     config = SimpleNamespace(
         _hist_window_start_indices=None,
         _hist_num_windows=0,
@@ -199,3 +201,30 @@ def test_historical_inflation_path_rejects_unprepared_cache():
 
     assert exc_info.value.original_message == "Historical rolling-window data not prepared before inflation-path generation."
     assert exc_info.value.diagnostic_path is not None
+    diagnostic_path = exc_info.value.diagnostic_path
+    assert diagnostic_path.parent == tmp_path / "Desktop" / "WARPSimLab" / "Diagnostics"
+    assert diagnostic_path.is_file()
+    report = diagnostic_path.read_text(encoding="utf-8")
+    assert "WARPSimLab Internal Error Diagnostic" in report
+    assert exc_info.value.original_message in report
+
+
+def test_historical_inflation_path_preserves_error_when_diagnostic_destination_is_unwritable(
+    tmp_path, monkeypatch,
+):
+    monkeypatch.setattr(diagnosticEngine, "Path", SimpleNamespace(home=lambda: tmp_path))
+    # A file blocking the directory works reliably without platform-specific permissions.
+    desktop = tmp_path / "Desktop"
+    desktop.write_text("blocked diagnostic destination", encoding="utf-8")
+    config = SimpleNamespace(
+        _hist_window_start_indices=None,
+        _hist_num_windows=0,
+    )
+
+    with pytest.raises(WARPSimLabInternalError) as exc_info:
+        monteCarloEngine.build_historical_inflation_rate_path(config, years_to_simulate=2, sim_index=0)
+
+    assert exc_info.value.original_message == "Historical rolling-window data not prepared before inflation-path generation."
+    assert exc_info.value.diagnostic_path is None
+    assert "WARPSimLab was unable to write a diagnostic file." in str(exc_info.value)
+    assert desktop.read_text(encoding="utf-8") == "blocked diagnostic destination"

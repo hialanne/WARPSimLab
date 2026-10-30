@@ -2,11 +2,6 @@
 
 import numpy as np
 
-import pytest
-pytest.skip("Skipping test_market_return_sampler_validation due to slow running", allow_module_level=True)
-
-
-
 from tests.feature_tests.monteCarlo.helpers_validation import (
     assert_sampler_matches_targets,
     make_sim_config,
@@ -16,7 +11,6 @@ from tests.feature_tests.monteCarlo.helpers_validation import (
 
 def test_path_based_correlated_sampler_matches_targets():
     sim_config = make_sim_config(
-        monte_carlo_mode="pathBasedAnnualSampling",
         use_correlated_returns=True,
         results_mode="risk_analysis",
         sim_type="portfolio_sim",
@@ -36,7 +30,6 @@ def test_path_based_correlated_sampler_matches_targets():
 
 def test_path_based_uncorrelated_sampler_matches_identity_corr():
     sim_config = make_sim_config(
-        monte_carlo_mode="pathBasedAnnualSampling",
         use_correlated_returns=False,
         results_mode="risk_analysis",
         sim_type="portfolio_sim",
@@ -54,32 +47,13 @@ def test_path_based_uncorrelated_sampler_matches_identity_corr():
     )
 
 
-def test_independent_annual_sampler_matches_identity_corr():
-    sim_config = make_sim_config(
-        monte_carlo_mode="independentAnnualSampling",
-        results_mode="risk_analysis",
-        sim_type="portfolio_sim",
-    )
-
-    draws = sample_many_return_vectors(sim_config, sample_size=100_000, seed=789)
-    assert draws.shape == (100_000, 4)
-
-    assert_sampler_matches_targets(
-        sim_config,
-        draws,
-        mean_atol=0.003,
-        std_atol=0.003,
-        corr_atol=0.02,
-    )
-
-
 def test_return_sampler_outputs_decimal_scale_not_percentage_scale():
     sim_config = make_sim_config(
         eq_mean=0.07,
         bd_mean=0.03,
         cs_mean=0.02,
         re_mean=0.05,
-        monte_carlo_mode="independentAnnualSampling",
+        use_correlated_returns=False,
     )
 
     draws = sample_many_return_vectors(sim_config, sample_size=20_000, seed=999)
@@ -87,3 +61,21 @@ def test_return_sampler_outputs_decimal_scale_not_percentage_scale():
 
     assert np.all(empirical_mean < 1.0), empirical_mean
     assert np.all(empirical_mean > -1.0), empirical_mean
+
+
+def test_sampling_helper_uses_local_rng_without_changing_global_numpy_state():
+    before = np.random.get_state()
+    sample_many_return_vectors(make_sim_config(), sample_size=100, seed=321)
+    after = np.random.get_state()
+    assert before[0] == after[0]
+    np.testing.assert_array_equal(before[1], after[1])
+    assert before[2:] == after[2:]
+
+
+def test_sampling_helper_reprepares_reused_config_with_requested_seed():
+    config = make_sim_config()
+    first = sample_many_return_vectors(config, sample_size=100, seed=123)
+    different = sample_many_return_vectors(config, sample_size=100, seed=124)
+    repeated = sample_many_return_vectors(config, sample_size=100, seed=123)
+    np.testing.assert_array_equal(repeated, first)
+    assert not np.array_equal(different, first)

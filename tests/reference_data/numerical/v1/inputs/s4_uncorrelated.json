@@ -1,0 +1,280 @@
+{
+  "boundary": "pipeline",
+  "expenses": {
+    "expenses": [
+      {
+        "comment": "ordinary household spending",
+        "cost": 40000,
+        "end_year": null,
+        "is_hsa_eligible": false,
+        "start_year": 2027
+      },
+      {
+        "comment": "qualified spending",
+        "cost": 5000,
+        "end_year": null,
+        "is_hsa_eligible": true,
+        "start_year": 2027
+      }
+    ]
+  },
+  "husband": {
+    "age": 68,
+    "annual_401k_contribution": 9000,
+    "annual_employer_match": 2000,
+    "annual_hsa_contribution": 3000,
+    "annual_hsa_employer_contribution": 1000,
+    "annuity": 2000,
+    "annuity_age": 70,
+    "income": 120000,
+    "medicare_annual_cost": 3000,
+    "medicare_start_age": 65,
+    "modeled_death_age": 72,
+    "pension": 12000,
+    "pension_age": 70,
+    "pension_inflation_adjustment_pct": 0.0,
+    "retire_age": 70,
+    "ss": 28000,
+    "ss_age": 70
+  },
+  "husband_portfolio": {
+    "bond_post": 40000.0,
+    "bond_pre": 80000.0,
+    "bond_roth": 10000.0,
+    "cash_post": 40000.0,
+    "cash_pre": 20000.0,
+    "cash_roth": 5000.0,
+    "equity_post": 120000.0,
+    "equity_pre": 200000.0,
+    "equity_roth": 30000.0,
+    "hsa_bond": 3000.0,
+    "hsa_cash": 2000.0,
+    "hsa_equity": 5000.0,
+    "real_estate": 100000.0
+  },
+  "seed": 4201,
+  "sim_config": {
+    "always_use_expense_mode": true,
+    "annotate_plots": false,
+    "bd_mean": 0.03,
+    "bd_std": 0.04,
+    "calculate_income_taxes": true,
+    "calculate_payroll_taxes": true,
+    "calculate_simulated_shortfall_rate": false,
+    "calculate_state_taxes": true,
+    "constant_y_plots": false,
+    "cs_mean": 0.01,
+    "cs_std": 0.005,
+    "csv_output_dir": null,
+    "custom_bonds": 0.0,
+    "custom_cash": 1.0,
+    "custom_stock": 0.0,
+    "eq_mean": 0.07,
+    "eq_std": 0.14,
+    "fund_expense": 0.002,
+    "historical_asset_returns_file": "us_asset_returns_1876_2025.csv",
+    "historical_inflation_file": "us_inflation_1876_2025_real.csv",
+    "historical_magi": {
+      "one_year_prior": 150000,
+      "two_years_prior": 300000
+    },
+    "historical_window_mode": "rolling_overlapping_all",
+    "historical_window_start_year": null,
+    "historical_window_stop_year": null,
+    "historical_window_stride": 1,
+    "household_bd_target": null,
+    "household_cs_target": null,
+    "household_eq_target": null,
+    "husband_portfolio": {
+      "bond_post": 40000.0,
+      "bond_pre": 80000.0,
+      "bond_roth": 10000.0,
+      "cash_post": 40000.0,
+      "cash_pre": 20000.0,
+      "cash_roth": 5000.0,
+      "equity_post": 120000.0,
+      "equity_pre": 200000.0,
+      "equity_roth": 30000.0,
+      "hsa_bond": 3000.0,
+      "hsa_cash": 2000.0,
+      "hsa_equity": 5000.0,
+      "real_estate": 100000.0
+    },
+    "include_realestate": true,
+    "include_rmd": true,
+    "inflation_delta": 0.0,
+    "inflation_mode": "nominal",
+    "inflation_rate": 0.025,
+    "irmaa_enabled": true,
+    "loaded_data_file": null,
+    "num_sims": 3,
+    "output_csv": "None",
+    "overlay_fund_expense_impacts": false,
+    "overlay_household_expenses": false,
+    "overlay_profit_loss": true,
+    "overlay_retirement_age": false,
+    "overlay_tax_impacts": false,
+    "post_tax_bond_interest_yield": 0.02,
+    "post_tax_cash_interest_yield": 0.01,
+    "post_tax_equity_dividend_yield": 0.015,
+    "re_mean": 0.04,
+    "re_std": 0.08,
+    "rebalance_every_year": true,
+    "report_options": {
+      "columns": [
+        "taxes",
+        "magi"
+      ],
+      "options": {
+        "detail": true
+      }
+    },
+    "results_mode": "risk_analysis",
+    "retirement_withdraw_dollars": 0,
+    "retirement_withdraw_mode": "Percentage + Inflation",
+    "retirement_withdraw_pct": 5.0,
+    "return_asset_order": [
+      "eq",
+      "bd",
+      "cs",
+      "re"
+    ],
+    "return_correlation_matrix": [
+      [
+        1.0,
+        -0.2,
+        0.0,
+        0.55
+      ],
+      [
+        -0.2,
+        1.0,
+        0.2,
+        0.1
+      ],
+      [
+        0.0,
+        0.2,
+        1.0,
+        0.05
+      ],
+      [
+        0.55,
+        0.1,
+        0.05,
+        1.0
+      ]
+    ],
+    "risk_analysis_mode": "monte_carlo",
+    "risk_analysis_plot_style": "fill",
+    "root": null,
+    "roth_flows": [
+      {
+        "amount": 35000,
+        "enabled": true,
+        "end_age": 70,
+        "inflation_adjustment_pct": 0.0,
+        "name": "Early conversion",
+        "owner": "husband",
+        "start_age": 69,
+        "type": "roth_conversion"
+      }
+    ],
+    "scenario_expense_multiplier": 1.0,
+    "scenario_explorer_annotations": [
+      [
+        {
+          "color": "blue",
+          "text": "scenario note"
+        }
+      ]
+    ],
+    "second_person_enabled": true,
+    "sequence_risk_depth": "Moderate",
+    "sequence_risk_enabled": false,
+    "sequence_risk_length": "Medium",
+    "sequence_risk_start_year_offset": 0,
+    "sequence_risk_timing": "None",
+    "show_simulated_shortfall_rate": false,
+    "sim_initial_allocation_mode": "maintain-current-allocation",
+    "sim_type": "portfolio_sim",
+    "special_income_streams": [
+      {
+        "adjustment_mode": "inflation",
+        "adjustment_pct": 50.0,
+        "amount": 7000,
+        "enabled": true,
+        "end_age": 69,
+        "name": "Temporary consulting",
+        "owner": "wife",
+        "start_age": 67,
+        "taxable": true
+      }
+    ],
+    "start_year": 2026,
+    "state_of_residence": "CO",
+    "tax_filing_status": "Married filing jointly",
+    "use_correlated_returns": false,
+    "use_fund_expenses": true,
+    "use_snapshot_annotations": false,
+    "user_annotation_strings": [
+      [
+        {
+          "color": null,
+          "text": "user note"
+        }
+      ]
+    ],
+    "warpsimlab_version": "Unknown",
+    "wife_portfolio": {
+      "bond_post": 24000.0,
+      "bond_pre": 48000.0,
+      "bond_roth": 6000.0,
+      "cash_post": 24000.0,
+      "cash_pre": 12000.0,
+      "cash_roth": 3000.0,
+      "equity_post": 72000.0,
+      "equity_pre": 120000.0,
+      "equity_roth": 18000.0,
+      "hsa_bond": 1800.0,
+      "hsa_cash": 1200.0,
+      "hsa_equity": 3000.0,
+      "real_estate": 60000.0
+    },
+    "years_to_simulate": 8
+  },
+  "wife": {
+    "age": 66,
+    "annual_401k_contribution": 5000,
+    "annual_employer_match": 1000,
+    "annual_hsa_contribution": 2000,
+    "annual_hsa_employer_contribution": 500,
+    "annuity": 1000,
+    "annuity_age": 68,
+    "income": 75000,
+    "medicare_annual_cost": 2500,
+    "medicare_start_age": 65,
+    "modeled_death_age": 74,
+    "pension": 8000,
+    "pension_age": 68,
+    "pension_inflation_adjustment_pct": 0.0,
+    "retire_age": 68,
+    "ss": 20000,
+    "ss_age": 68
+  },
+  "wife_portfolio": {
+    "bond_post": 24000.0,
+    "bond_pre": 48000.0,
+    "bond_roth": 6000.0,
+    "cash_post": 24000.0,
+    "cash_pre": 12000.0,
+    "cash_roth": 3000.0,
+    "equity_post": 72000.0,
+    "equity_pre": 120000.0,
+    "equity_roth": 18000.0,
+    "hsa_bond": 1800.0,
+    "hsa_cash": 1200.0,
+    "hsa_equity": 3000.0,
+    "real_estate": 60000.0
+  }
+}

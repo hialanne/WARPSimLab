@@ -1,3 +1,5 @@
+"""Runner adapter contracts with a mocked pipeline; financial calculations are tested separately."""
+
 import numpy as np
 
 from src.warpsimlab.sim import run_sim_summary

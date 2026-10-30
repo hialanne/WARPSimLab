@@ -1,15 +1,10 @@
 import numpy as np
 
-from src.warpsimlab.sim.engines import monteCarloEngine
-from tests.feature_tests.monteCarlo.helpers_validation import make_sim_config
-
-import pytest
-pytest.skip("Skipping test_asset_order_consistency due to slow running", allow_module_level=True)
+from tests.feature_tests.monteCarlo.helpers_validation import make_sim_config, sample_many_return_vectors
 
 
 def test_asset_order_is_consistent_with_correlation_matrix():
     sim_config = make_sim_config(
-        monte_carlo_mode="pathBasedAnnualSampling",
         use_correlated_returns=True,
         results_mode="risk_analysis",
         sim_type="portfolio_sim",
@@ -21,18 +16,7 @@ def test_asset_order_is_consistent_with_correlation_matrix():
     assert corr.shape == (4, 4)
 
     # sample a large batch
-    np.random.seed(123)
-    draws = []
-    for _ in range(50000):
-        path = monteCarloEngine.generate_market_path(sim_config, 1)
-        draws.append([
-            path["eq"][1],
-            path["bd"][1],
-            path["cs"][1],
-            path["re"][1],
-        ])
-
-    draws = np.asarray(draws)
+    draws = sample_many_return_vectors(sim_config, sample_size=50_000, seed=123)
     empirical_corr = np.corrcoef(draws, rowvar=False)
 
     # diagonal should match identity

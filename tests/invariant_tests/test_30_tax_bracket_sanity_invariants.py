@@ -1,28 +1,13 @@
 import numpy as np
 import pytest
 
-from src.warpsimlab.sim.simulation import run_pipeline
+from tests.architectural_helpers import run_invariant_case as run_case
 
 #pytest.skip("Skipping invariant tests for now", allow_module_level=True)
 
 
 
 EPS = 1e-9
-
-
-def run_case(make_case, **overrides):
-    husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config = make_case(**overrides)
-
-    result = run_pipeline(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-    )
-
-    return result["core"], sim_config
 
 
 def test_tax_bracket_is_never_negative(make_case):

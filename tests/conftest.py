@@ -5,6 +5,15 @@ from types import SimpleNamespace
 import pytest
 
 
+@pytest.fixture
+def diagnostic_home(tmp_path, monkeypatch):
+    """Keep expected internal-error diagnostics inside this test's temporary home."""
+    from src.warpsimlab.sim.engines import diagnosticEngine
+
+    monkeypatch.setattr(diagnosticEngine, "Path", SimpleNamespace(home=lambda: tmp_path))
+    return tmp_path
+
+
 class PersonStub:
     def __init__(
         self,
@@ -186,14 +195,9 @@ def make_config(**overrides):
         use_snapshot_annotations=False,
         user_annotation_strings=[],
         root=None,
-        househould_eq_target=None,
-        househould_bd_target=None,
-        househould_cs_target=None,
         household_eq_target=None,
         household_bd_target=None,
         household_cs_target=None,
-        _ret_withdraw_base_dollars=None,
-        _ret_withdraw_base_year=None,
     )
     base.update(overrides)
     return SimpleNamespace(**base)

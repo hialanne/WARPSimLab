@@ -1,4 +1,4 @@
-# tests/test_deterministic_mode_validation.py
+"""Sampling contracts; core orchestration here uses financial-engine doubles."""
 
 import numpy as np
 
@@ -32,7 +32,7 @@ def test_generate_market_path_returns_constant_means_when_monte_carlo_is_off():
     np.testing.assert_allclose(path["re"][1:], np.full(5, 0.05), atol=0.0, rtol=0.0)
 
 
-def test_simulate_yearly_portfolios_all_paths_identical_when_monte_carlo_is_off(monkeypatch):
+def test_mocked_core_paths_are_identical_when_sampling_is_off(monkeypatch):
     install_minimal_core_engine_mocks(run_sim_core, monkeypatch)
 
     sim_config = make_sim_config(
@@ -43,7 +43,6 @@ def test_simulate_yearly_portfolios_all_paths_identical_when_monte_carlo_is_off(
         second_person_enabled=False,
         include_realestate=True,
         inflation_mode="nominal",
-        monte_carlo_mode="pathBasedAnnualSampling",
     )
 
     husband, wife = make_dummy_people()

@@ -1,27 +1,12 @@
 import numpy as np
 import pytest
 
-from src.warpsimlab.sim.simulation import run_pipeline
+from tests.architectural_helpers import run_invariant_case as run_case
 
 EPS = 1e-9
 
 #pytest.skip("Skipping invariant tests for now", allow_module_level=True)
 
-
-
-def run_case(make_case, **overrides):
-    hp, wp, h, w, e, cfg = make_case(**overrides)
-
-    result = run_pipeline(
-        hp,
-        wp,
-        h,
-        w,
-        e,
-        cfg,
-    )
-
-    return result["core"], cfg
 
 
 def test_assets_never_negative_even_under_stress(make_case):

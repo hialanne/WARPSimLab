@@ -1,21 +1,6 @@
 import numpy as np
 
-from src.warpsimlab.sim.simulation import run_pipeline
-
-
-def run_case(make_case, **overrides):
-    hp, wp, h, w, e, cfg = make_case(**overrides)
-
-    result = run_pipeline(
-        hp,
-        wp,
-        h,
-        w,
-        e,
-        cfg,
-    )
-
-    return result["core"], cfg
+from tests.architectural_helpers import run_invariant_case as run_case
 
 
 def test_withdrawal_mode_off_still_includes_rmd_when_required(make_case):

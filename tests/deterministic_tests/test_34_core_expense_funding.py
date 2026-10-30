@@ -1,57 +1,10 @@
 import numpy as np
 import pytest
+from tests.architectural_helpers import make_person, make_portfolio, make_simulation
 
 from src.warpsimlab.dataClasses.dynamicExpenses import DynamicExpenses
-from src.warpsimlab.dataClasses.person import Person
-from src.warpsimlab.dataClasses.portfolio import Portfolio
 from src.warpsimlab.sim.engines import monteCarloEngine
 from src.warpsimlab.sim.run_sim_core import simulate_yearly_portfolios
-from src.warpsimlab.sim.simulationObject import Simulation
-
-
-def make_person(
-    *,
-    income=0.0,
-):
-    return Person(
-        age=40,
-        retire_age=100,
-        income=income,
-        ss=0.0,
-        ss_age=99,
-        pension=0.0,
-        pension_age=99,
-        annuity=0.0,
-        annuity_age=99,
-        annual_401k_contribution=0.0,
-        annual_employer_match=0.0,
-        pension_inflation_adjustment_pct=0.0,
-    )
-
-
-def make_portfolio(
-    *,
-    equity_pre=0.0,
-    equity_post=0.0,
-    equity_roth=0.0,
-    hsa_equity=0.0,
-    real_estate=0.0,
-):
-    return Portfolio(
-        equity_pre=equity_pre,
-        equity_post=equity_post,
-        bond_pre=0.0,
-        bond_post=0.0,
-        cash_pre=0.0,
-        cash_post=0.0,
-        real_estate=real_estate,
-        equity_roth=equity_roth,
-        bond_roth=0.0,
-        cash_roth=0.0,
-        hsa_cash=0.0,
-        hsa_equity=hsa_equity,
-        hsa_bond=0.0,
-    )
 
 
 def make_config(
@@ -61,53 +14,14 @@ def make_config(
     second_person_enabled=False,
     include_realestate=False,
 ):
-    return Simulation(
-        start_year=2026,
-        years_to_simulate=1,
+    return make_simulation(
         inflation_rate=inflation_rate,
-        num_sims=1,
-        fund_expense=0.0,
-        use_fund_expenses=False,
-        inflation_mode="nominal",
         results_mode="baseline",
-        include_rmd=False,
-        calculate_income_taxes=False,
-        calculate_payroll_taxes=False,
-        tax_filing_status="Single",
-        calculate_state_taxes=False,
-        state_of_residence="TX",
         second_person_enabled=second_person_enabled,
-        eq_mean=0.0,
-        bd_mean=0.0,
-        cs_mean=0.0,
-        eq_std=0.0,
-        bd_std=0.0,
-        cs_std=0.0,
-        post_tax_equity_dividend_yield=0.0,
-        post_tax_bond_interest_yield=0.0,
-        post_tax_cash_interest_yield=0.0,
-        sim_type="portfolio_sim",
         sim_initial_allocation_mode="dont-rebalance",
-        rebalance_every_year=False,
         include_realestate=include_realestate,
-        re_mean=0.0,
-        re_std=0.0,
-        output_csv="None",
-        retirement_withdraw_mode="Off",
-        retirement_withdraw_pct=4.0,
         retirement_withdraw_dollars=0.0,
-        always_use_expense_mode=True,
-        sequence_risk_enabled=False,
         scenario_expense_multiplier=scenario_expense_multiplier,
-        overlay_tax_impacts=False,
-        overlay_fund_expense_impacts=False,
-        overlay_household_expenses=False,
-        overlay_profit_loss=False,
-        overlay_retirement_age=False,
-        show_simulated_shortfall_rate=False,
-        use_snapshot_annotations=False,
-        user_annotation_strings=[],
-        root=None,
     )
 
 

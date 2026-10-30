@@ -26,15 +26,10 @@ class DummyScenarioController:
         self.capture_called += 1
 
 
-def test_gui_class_contains_expected_mixins():
-    bases = gui_init.PortfolioSimulatorGUI.__bases__
-
-    assert gui_init.PortfolioSimulatorGUI_DisplayMixin in bases
-    assert gui_init.PortfolioSimulatorGUI_NavigationMixin in bases
-    assert gui_init.PortfolioSimulatorGUI_EditorsMixin in bases
-    assert gui_init.PortfolioSimulatorGUI_ReportsMixin in bases
-    assert gui_init.PortfolioSimulatorGUI_RunMixin in bases
-    assert gui_init.PortfolioSimulatorGUI_IOMixin in bases
+def test_gui_exposes_application_actions():
+    for name in ["edit_display_settings", "_on_second_person_changed", "edit_person_data",
+                 "edit_report_executive_summary", "run_simulation_from_gui", "load_values_from_json"]:
+        assert callable(getattr(gui_init.PortfolioSimulatorGUI, name, None)), name
 
 
 def test_init_vars_loads_market_data_and_defaults(monkeypatch):

@@ -1,24 +1,9 @@
 import numpy as np
 
-from src.warpsimlab.sim.simulation import run_pipeline
+from tests.architectural_helpers import run_invariant_case as run_case
 
 
 EPS = 1e-9
-
-
-def run_case(make_case, **overrides):
-    husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config = make_case(**overrides)
-
-    result = run_pipeline(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-    )
-
-    return result["core"], sim_config
 
 
 def test_state_income_tax_is_zero_when_state_taxes_disabled(make_case):

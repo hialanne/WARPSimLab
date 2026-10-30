@@ -68,10 +68,6 @@ def make_sim_config(**overrides):
         root=None,
     )
 
-    cfg.monte_carlo_mode = "pathBasedAnnualSampling"
-    cfg.monte_carlo_plot_style = "fill"
-    cfg.use_correlated_returns = True
-
     for key, value in overrides.items():
         setattr(cfg, key, value)
 
@@ -104,7 +100,7 @@ def target_stds_vector(sim_config):
 
 def target_corr_matrix(sim_config):
     use_correlated = (
-        sim_config.monte_carlo_mode == "pathBasedAnnualSampling"
+        sim_config.risk_analysis_mode == "monte_carlo"
         and bool(getattr(sim_config, "use_correlated_returns", True))
     )
     if use_correlated:
@@ -117,28 +113,14 @@ def sample_many_return_vectors(sim_config, sample_size, seed=12345):
     Return shape: (sample_size, 4)
     Asset order: [equity, bonds, cash, real_estate]
     """
-    np.random.seed(int(seed))
-    draws = np.zeros((sample_size, 4), dtype=float)
-
-    if sim_config.monte_carlo_mode == "pathBasedAnnualSampling":
-        for i in range(sample_size):
-            path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate=1)
-            draws[i, 0] = path["eq"][1]
-            draws[i, 1] = path["bd"][1]
-            draws[i, 2] = path["cs"][1]
-            draws[i, 3] = path["re"][1]
-        return draws
-
-    if sim_config.monte_carlo_mode == "independentAnnualSampling":
-        for i in range(sample_size):
-            year_returns = monteCarloEngine.sample_independent_annual_returns(sim_config)
-            draws[i, 0] = year_returns["eq"]
-            draws[i, 1] = year_returns["bd"]
-            draws[i, 2] = year_returns["cs"]
-            draws[i, 3] = year_returns["re"]
-        return draws
-
-    raise ValueError(f"Unsupported monte_carlo_mode: {sim_config.monte_carlo_mode}")
+    if sim_config.risk_analysis_mode != "monte_carlo":
+        raise ValueError(f"Unsupported sampling mode: {sim_config.risk_analysis_mode}")
+    monteCarloEngine.prepare_market_path_sampling(sim_config)
+    sim_config._mc_rng = np.random.default_rng(int(seed))
+    # One long path exercises the production sampler's vectorized batch rather
+    # than paying Python/path-allocation overhead for each independent year.
+    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate=sample_size)
+    return np.column_stack([path[asset][1:] for asset in ASSET_ORDER])
 
 
 def empirical_stats(draws):

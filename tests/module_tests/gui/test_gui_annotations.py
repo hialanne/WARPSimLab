@@ -7,13 +7,6 @@ from tkinter import ttk
 
 import pytest
 
-# This code is now clean.  pytest complains because my laptop has two installs of python - 
-#   system python and my personal update.  Not going to worry about it.
-
-pytest.skip("Skipping GUI tests for now", allow_module_level=True)
-
-
-
 @pytest.fixture
 def tk_root():
     """
@@ -34,7 +27,7 @@ def no_tooltip(monkeypatch):
     """
     Avoid tooltip behavior during tests (it may bind events / rely on timers).
     """
-    from src.warpsimlab.gui import gui_annotations as mod
+    from src.warpsimlab.gui import gui_userAnnotations as mod
 
     class DummyTooltip:
         def __init__(self, *args, **kwargs):

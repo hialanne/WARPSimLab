@@ -1,3 +1,5 @@
+"""CSV writer dispatch contracts with mocked pipeline and writers; no disk I/O."""
+
 import numpy as np
 
 from src.warpsimlab.sim import run_sim_income
