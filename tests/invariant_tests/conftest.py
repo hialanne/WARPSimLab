@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 
-from src.warpsimlab.sim.simulationObject import Simulation
+from src.warpsimlab.sim.simulationObject import SimulationConfig
 from src.warpsimlab.dataClasses.person import Person
 from src.warpsimlab.dataClasses.portfolio import Portfolio
 from src.warpsimlab.dataClasses.dynamicExpenses import DynamicExpenses
@@ -165,7 +165,7 @@ def make_case(tmp_path):
             comment="baseline household expenses",
         )
 
-        sim_config = Simulation(
+        sim_config = SimulationConfig(
             start_year=start_year,
             years_to_simulate=years_to_simulate,
             inflation_rate=inflation_rate,
@@ -214,7 +214,7 @@ def make_case(tmp_path):
 
             use_snapshot_annotations=False,
             user_annotation_strings=[],
-            root=None,
+            
         )
         sim_config.return_correlation_matrix = np.eye(4)
 

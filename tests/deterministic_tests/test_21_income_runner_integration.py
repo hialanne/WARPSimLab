@@ -46,17 +46,7 @@ def test_run_sim_income_plots_pipeline_outputs_exactly(monkeypatch):
         assert force_num_sims == 1
         return pipeline_payload
 
-    def fake_plot_yearly_income(
-        years_to_simulate,
-        net_profit,
-        net_income,
-        breakdown,
-        taxes,
-        expenses,
-        husband,
-        wife,
-        sim_config,
-    ):
+    def fake_plot_yearly_income(years_to_simulate, net_profit, net_income, breakdown, taxes, expenses, husband, wife, sim_config, *, root=None):
         captured["years_to_simulate"] = years_to_simulate
         captured["net_profit"] = net_profit
         captured["net_income"] = net_income

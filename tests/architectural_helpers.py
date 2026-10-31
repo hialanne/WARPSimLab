@@ -7,7 +7,7 @@ import numpy as np
 from src.warpsimlab.dataClasses.dynamicExpenses import DynamicExpenses
 from src.warpsimlab.dataClasses.person import Person
 from src.warpsimlab.dataClasses.portfolio import Portfolio
-from src.warpsimlab.sim.simulationObject import Simulation
+from src.warpsimlab.sim.simulationObject import SimulationConfig
 
 
 def make_simulation(**overrides):
@@ -15,7 +15,7 @@ def make_simulation(**overrides):
 
     Scenario-specific financial assumptions belong at the call site. Defaults
     contain no private engine state; production preparation owns that state.
-    Each call constructs fresh mutable defaults through Simulation itself.
+    Each call constructs fresh mutable defaults through SimulationConfig itself.
     """
     values = dict(
         start_year=2026, years_to_simulate=1, inflation_rate=0.0, num_sims=1,
@@ -31,7 +31,7 @@ def make_simulation(**overrides):
         overlay_profit_loss=False,
     )
     values.update(overrides)
-    return Simulation(**values)
+    return SimulationConfig(**values)
 
 
 def make_person(**overrides):
@@ -96,7 +96,6 @@ def make_execution_case(**config_overrides):
         calculate_state_taxes=True, state_of_residence="CO", second_person_enabled=True,
         eq_mean=0.07, bd_mean=0.03, cs_mean=0.01, re_mean=0.04,
         eq_std=0.14, bd_std=0.04, cs_std=0.005, re_std=0.08,
-        husband_portfolio=h_port, wife_portfolio=w_port,
         post_tax_equity_dividend_yield=0.015, post_tax_bond_interest_yield=0.02,
         post_tax_cash_interest_yield=0.01, sim_type="portfolio_sim",
         sim_initial_allocation_mode="maintain-current-allocation",
@@ -141,7 +140,7 @@ def user_config_tree(config):
 
     Maintain-current allocation writes these public derived targets; private
     sampling, withdrawal and engine caches are also existing runtime state.
-    Do not assert that those caches must remain stored on Simulation forever.
+    Do not assert that those caches must remain stored on SimulationConfig forever.
     """
     derived_targets = {"household_eq_target", "household_bd_target", "household_cs_target"}
     return {key: public_input_tree(value) for key, value in vars(config).items()

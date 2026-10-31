@@ -80,7 +80,7 @@ def test_run_sim_summary_calls_pipeline_and_creates_dialog(monkeypatch):
     assert captured["dialog_args"][1] is husband
     assert captured["dialog_args"][2] is wife
     assert captured["dialog_args"][3] is sim_config
-    assert captured["dialog_kwargs"] == {"title": "Simulation Summary"}
+    assert captured["dialog_kwargs"] == {"title": "Simulation Summary", "root": None}
 
     assert captured["csv_called"] is False
     assert result == _fake_pipeline_result()["summary_results"]

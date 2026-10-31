@@ -3,7 +3,7 @@ import numpy as np
 from src.warpsimlab.sim import simulation
 
 
-def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypatch):
+def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypatch, scenario_builders):
     monkeypatch.setattr(
         simulation,
         "validate_simulation_inputs",
@@ -132,10 +132,7 @@ def test_overlay_fund_expenses_off_attaches_series_and_exceeds_baseline(monkeypa
 
     monkeypatch.setattr(simulation, "simulate_yearly_portfolios", fake_simulate_yearly_portfolios)
 
-    class SimConfig:
-        pass
-
-    sim_config = SimConfig()
+    sim_config = scenario_builders.make_config()
     sim_config.years_to_simulate = years_to_simulate
     sim_config.inflation_rate = 0.0
     sim_config.num_sims = 10

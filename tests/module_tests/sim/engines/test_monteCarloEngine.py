@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from src.warpsimlab.sim.simulationObject import RunContext
+
 from dataclasses import dataclass
 from types import SimpleNamespace
 
@@ -66,84 +68,64 @@ def sim_factory() -> SimConfigFactory:
 
 
 def test_prepare_market_path_sampling_sets_expected_arrays_for_correlated_mode(sim_factory):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         results_mode="risk_analysis",
         use_correlated_returns=True,
     )
 
-    monteCarloEngine.prepare_market_path_sampling(sim_config)
+    monteCarloEngine.prepare_market_path_sampling(sim_config, run_context=run_context)
 
-    assert np.allclose(
-        sim_config._mc_means,
-        np.array([sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean]),
-    )
-    assert np.allclose(
-        sim_config._mc_std_devs,
-        np.array([sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std]),
-    )
+    assert np.allclose(run_context.mc_means, np.array([sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean]))
+    assert np.allclose(run_context.mc_std_devs, np.array([sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std]))
 
-    expected_cov = monteCarloEngine.build_covariance_matrix(
-        sim_config._mc_std_devs,
-        sim_config.return_correlation_matrix,
-    )
+    expected_cov = monteCarloEngine.build_covariance_matrix(run_context.mc_std_devs, sim_config.return_correlation_matrix)
 
-    assert sim_config._mc_cov_matrix.shape == (4, 4)
-    assert np.allclose(sim_config._mc_cov_matrix, expected_cov)
-    assert sim_config._mc_cholesky.shape == (4, 4)
-    assert np.allclose(
-        sim_config._mc_cholesky @ sim_config._mc_cholesky.T,
-        expected_cov,
-    )
+    assert run_context.mc_cov_matrix.shape == (4, 4)
+    assert np.allclose(run_context.mc_cov_matrix, expected_cov)
+    assert run_context.mc_cholesky.shape == (4, 4)
+    assert np.allclose(run_context.mc_cholesky @ run_context.mc_cholesky.T, expected_cov)
 
 
 def test_prepare_market_path_sampling_non_monte_carlo_leaves_covariance_unset(sim_factory):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         results_mode="summary",
         use_correlated_returns=True,
     )
 
-    monteCarloEngine.prepare_market_path_sampling(sim_config)
+    monteCarloEngine.prepare_market_path_sampling(sim_config, run_context=run_context)
 
-    assert np.allclose(
-        sim_config._mc_means,
-        np.array([sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean]),
-    )
-    assert np.allclose(
-        sim_config._mc_std_devs,
-        np.array([sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std]),
-    )
-    assert sim_config._mc_cov_matrix is None
-    assert sim_config._mc_cholesky is None
+    assert np.allclose(run_context.mc_means, np.array([sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean]))
+    assert np.allclose(run_context.mc_std_devs, np.array([sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std]))
+    assert run_context.mc_cov_matrix is None
+    assert run_context.mc_cholesky is None
 
 
 def test_prepare_market_path_sampling_uncorrelated_leaves_covariance_unset(sim_factory):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         results_mode="risk_analysis",
         use_correlated_returns=False,
     )
 
-    monteCarloEngine.prepare_market_path_sampling(sim_config)
+    monteCarloEngine.prepare_market_path_sampling(sim_config, run_context=run_context)
 
-    assert np.allclose(
-        sim_config._mc_means,
-        np.array([sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean]),
-    )
-    assert np.allclose(
-        sim_config._mc_std_devs,
-        np.array([sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std]),
-    )
-    assert sim_config._mc_cov_matrix is None
-    assert sim_config._mc_cholesky is None
+    assert np.allclose(run_context.mc_means, np.array([sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean]))
+    assert np.allclose(run_context.mc_std_devs, np.array([sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std]))
+    assert run_context.mc_cov_matrix is None
+    assert run_context.mc_cholesky is None
 
 
 def test_generate_market_path_non_monte_carlo_returns_constant_means(sim_factory):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         results_mode="summary",
         sim_type="portfolio_sim",
     )
 
     years_to_simulate = 5
-    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate)
+    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate, run_context=run_context)
 
     assert set(path.keys()) == {"eq", "bd", "cs", "re"}
 
@@ -161,14 +143,15 @@ def test_generate_market_path_non_monte_carlo_returns_constant_means(sim_factory
 
 
 def test_generate_market_path_path_based_correlated_has_expected_shapes(sim_factory):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         risk_analysis_mode="monte_carlo",
         use_correlated_returns=True,
     )
-    monteCarloEngine.prepare_market_path_sampling(sim_config)
+    monteCarloEngine.prepare_market_path_sampling(sim_config, run_context=run_context)
 
     years_to_simulate = 7
-    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate)
+    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate, run_context=run_context)
 
     for key in ("eq", "bd", "cs", "re"):
         assert path[key].shape == (years_to_simulate + 1,)
@@ -177,14 +160,15 @@ def test_generate_market_path_path_based_correlated_has_expected_shapes(sim_fact
 
 
 def test_generate_market_path_path_based_uncorrelated_has_expected_shapes(sim_factory):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         risk_analysis_mode="monte_carlo",
         use_correlated_returns=False,
     )
-    monteCarloEngine.prepare_market_path_sampling(sim_config)
+    monteCarloEngine.prepare_market_path_sampling(sim_config, run_context=run_context)
 
     years_to_simulate = 6
-    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate)
+    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate, run_context=run_context)
 
     for key in ("eq", "bd", "cs", "re"):
         assert path[key].shape == (years_to_simulate + 1,)
@@ -193,23 +177,25 @@ def test_generate_market_path_path_based_uncorrelated_has_expected_shapes(sim_fa
 
 
 def test_prepare_market_path_sampling_rejects_independent_annual_sampling(sim_factory):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         risk_analysis_mode="independentAnnualSampling",
         use_correlated_returns=False,
     )
 
     with pytest.raises(ValueError, match="Unsupported risk_analysis_mode: independentAnnualSampling"):
-        monteCarloEngine.prepare_market_path_sampling(sim_config)
+        monteCarloEngine.prepare_market_path_sampling(sim_config, run_context=run_context)
 
 
 def test_generate_market_path_independent_mode_returns_nan_placeholders(sim_factory):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         risk_analysis_mode="independentAnnualSampling",
         use_correlated_returns=False,
     )
 
     years_to_simulate = 4
-    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate)
+    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate, run_context=run_context)
 
     for key in ("eq", "bd", "cs", "re"):
         assert path[key].shape == (years_to_simulate + 1,)
@@ -218,34 +204,30 @@ def test_generate_market_path_independent_mode_returns_nan_placeholders(sim_fact
 
 
 def test_generate_market_path_requires_prepared_sampling_data(sim_factory, diagnostic_home):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         results_mode="risk_analysis",
         use_correlated_returns=False,
     )
-    sim_config._mc_means = None
-    sim_config._mc_std_devs = None
+    run_context.mc_means = None
+    run_context.mc_std_devs = None
 
     with pytest.raises(RuntimeError, match="Monte Carlo sampling data not prepared"):
-        monteCarloEngine.generate_market_path(sim_config, years_to_simulate=3)
+        monteCarloEngine.generate_market_path(sim_config, years_to_simulate=3, run_context=run_context)
 
 
 def test_generate_market_path_correlated_requires_prepared_cholesky(sim_factory, diagnostic_home):
+    run_context = RunContext()
     sim_config = sim_factory.build(
         results_mode="risk_analysis",
         use_correlated_returns=True,
     )
-    sim_config._mc_means = np.array(
-        [sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean],
-        dtype=float,
-    )
-    sim_config._mc_std_devs = np.array(
-        [sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std],
-        dtype=float,
-    )
-    sim_config._mc_cholesky = None
+    run_context.mc_means = np.array([sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean], dtype=float)
+    run_context.mc_std_devs = np.array([sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std], dtype=float)
+    run_context.mc_cholesky = None
 
     with pytest.raises(RuntimeError, match="Cholesky factor not prepared"):
-        monteCarloEngine.generate_market_path(sim_config, years_to_simulate=3)
+        monteCarloEngine.generate_market_path(sim_config, years_to_simulate=3, run_context=run_context)
 
 
 def test_validate_correlation_matrix_accepts_valid_matrix():

@@ -1,3 +1,7 @@
+
+from src.warpsimlab.sim.simulationObject import PathContext
+
+from src.warpsimlab.sim.simulationObject import RunContext
 from types import SimpleNamespace
 
 import numpy as np
@@ -54,25 +58,26 @@ def make_config(
         results_mode="baseline",
         sim_type="portfolio_sim",
         risk_analysis_mode="monte_carlo",
-        _ret_withdraw_base_dollars=None,
         inflation_delta=float(inflation_delta),
     )
 
 
-def calculate_withdrawal(husband_portfolio, wife_portfolio, config, *, year=0, additional_cash_needed=0.0):
+def calculate_withdrawal(husband_portfolio, wife_portfolio, config, *, year=0, additional_cash_needed=0.0, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
     return withdrawalEngine.calculate_retirement_withdrawal(
         husband_portfolio, wife_portfolio, make_person(), make_person(), year, config,
-        rmd_h=0.0, additional_cash_needed=additional_cash_needed
-    )
+        rmd_h=0.0, additional_cash_needed=additional_cash_needed, run_context=run_context, path_context=path_context)
 
 
 def test_couple_withdrawal_uses_proportional_spouse_post_tax_balances():
+    path_context = PathContext()
     husband_portfolio = make_portfolio_state(post_tax=100_000.0)
     wife_portfolio = make_portfolio_state(post_tax=60_000.0)
 
     config = make_config(withdrawal_amount=80_000.0,second_person_enabled=True,)
 
-    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config,)
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config, path_context=path_context)
 
     assert result["total"] == pytest.approx(80_000.0)
     assert result["post_tax"] == pytest.approx(80_000.0)
@@ -84,11 +89,12 @@ def test_couple_withdrawal_uses_proportional_spouse_post_tax_balances():
 
 
 def test_couple_withdrawal_uses_proportional_ownership_within_each_account_type():
+    path_context = PathContext()
     husband_portfolio = make_portfolio_state(post_tax=100_000.0, pre_tax=10_000.0)
     wife_portfolio = make_portfolio_state(post_tax=20_000.0, pre_tax=100_000.0)
     config = make_config(withdrawal_amount=150_000.0, second_person_enabled=True)
 
-    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config)
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config, path_context=path_context)
 
     assert result["post_tax"] == pytest.approx(120_000.0)
     assert result["pre_tax"] == pytest.approx(30_000.0)
@@ -100,6 +106,7 @@ def test_couple_withdrawal_uses_proportional_ownership_within_each_account_type(
 
 
 def test_single_person_withdrawal_uses_real_estate_after_hsa():
+    path_context = PathContext()
     husband_portfolio = make_portfolio_state(
         post_tax=10_000.0,
         pre_tax=20_000.0,
@@ -110,11 +117,7 @@ def test_single_person_withdrawal_uses_real_estate_after_hsa():
     wife_portfolio = make_portfolio_state()
     config = make_config(withdrawal_amount=125_000.0)
 
-    result = calculate_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        config,
-    )
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config, path_context=path_context)
 
     assert result["post_tax"] == pytest.approx(10_000.0)
     assert result["pre_tax"] == pytest.approx(20_000.0)
@@ -127,6 +130,7 @@ def test_single_person_withdrawal_uses_real_estate_after_hsa():
 
 
 def test_couple_real_estate_withdrawal_uses_larger_owner_first():
+    path_context = PathContext()
     husband_portfolio = make_portfolio_state(real_estate=40_000.0)
     wife_portfolio = make_portfolio_state(real_estate=100_000.0)
     config = make_config(
@@ -134,11 +138,7 @@ def test_couple_real_estate_withdrawal_uses_larger_owner_first():
         second_person_enabled=True,
     )
 
-    result = calculate_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        config,
-    )
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config, path_context=path_context)
 
     assert result["real_estate"] == pytest.approx(70_000.0)
     assert result["by_person"] == pytest.approx(
@@ -149,6 +149,7 @@ def test_couple_real_estate_withdrawal_uses_larger_owner_first():
 
 
 def test_insufficient_real_estate_reports_only_actual_withdrawal():
+    path_context = PathContext()
     husband_portfolio = make_portfolio_state(
         post_tax=10_000.0,
         pre_tax=20_000.0,
@@ -159,11 +160,7 @@ def test_insufficient_real_estate_reports_only_actual_withdrawal():
     wife_portfolio = make_portfolio_state()
     config = make_config(withdrawal_amount=200_000.0)
 
-    result = calculate_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        config,
-    )
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config, path_context=path_context)
 
     assert result["total"] == pytest.approx(150_000.0)
     assert result["real_estate"] == pytest.approx(50_000.0)
@@ -172,6 +169,8 @@ def test_insufficient_real_estate_reports_only_actual_withdrawal():
 
 
 def test_inflation_adjusted_withdrawal_uses_historical_inflation_path():
+    path_context = PathContext()
+    run_context = RunContext()
     husband_portfolio = make_portfolio_state(post_tax=1_000.0)
     wife_portfolio = make_portfolio_state()
     config = make_config(
@@ -181,22 +180,18 @@ def test_inflation_adjusted_withdrawal_uses_historical_inflation_path():
     )
     config.results_mode = "risk_analysis"
     config.risk_analysis_mode = "historical_windows"
-    config._active_historical_sim_index = 1
-    config._hist_window_start_indices = np.array([0, 2], dtype=int)
-    config._hist_inflation = np.array([0.01, 0.02, 0.10, -0.20])
+    path_context.active_historical_sim_index = 1
+    run_context.hist_window_start_indices = np.array([0, 2], dtype=int)
+    run_context.hist_inflation = np.array([0.01, 0.02, 0.10, -0.20])
 
-    result = calculate_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        config,
-        year=2,
-    )
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config, year=2, run_context=run_context, path_context=path_context)
 
     assert result["total"] == pytest.approx(88.0)
     assert husband_portfolio.total_value_post == pytest.approx(912.0)
 
 
 def test_additional_cash_needed_does_not_change_cached_base_withdrawal():
+    path_context = PathContext()
     husband_portfolio = make_portfolio_state(post_tax=1_000.0)
     wife_portfolio = make_portfolio_state()
     config = make_config(withdrawal_amount=100.0)
@@ -206,22 +201,17 @@ def test_additional_cash_needed_does_not_change_cached_base_withdrawal():
         wife_portfolio,
         config,
         year=0,
-        additional_cash_needed=50.0,
-    )
-    second_result = calculate_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        config,
-        year=1,
-    )
+        additional_cash_needed=50.0, path_context=path_context)
+    second_result = calculate_withdrawal(husband_portfolio, wife_portfolio, config, year=1, path_context=path_context)
 
     assert first_result["total"] == pytest.approx(150.0)
-    assert config._ret_withdraw_base_dollars == pytest.approx(100.0)
+    assert path_context.ret_withdraw_base_dollars == pytest.approx(100.0)
     assert second_result["total"] == pytest.approx(100.0)
     assert husband_portfolio.total_value_post == pytest.approx(750.0)
 
 
 def test_couple_withdrawal_person_totals_reconcile_to_account_type_totals():
+    path_context = PathContext()
     husband_portfolio = make_portfolio_state(
         post_tax=30_000.0,
         pre_tax=20_000.0,
@@ -241,11 +231,7 @@ def test_couple_withdrawal_person_totals_reconcile_to_account_type_totals():
         second_person_enabled=True,
     )
 
-    result = calculate_withdrawal(
-        husband_portfolio,
-        wife_portfolio,
-        config,
-    )
+    result = calculate_withdrawal(husband_portfolio, wife_portfolio, config, path_context=path_context)
 
     person_total = sum(result["by_person"].values())
     account_type_total = sum(

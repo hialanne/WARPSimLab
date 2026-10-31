@@ -8,7 +8,7 @@ def test_run_simulation_routes_cashflow_sim(monkeypatch):
     _disable_simulation_validation(monkeypatch)
     called = {}
 
-    def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
+    def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, root=None):
         called["args"] = (husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
         return "cashflow-result"
 
@@ -26,7 +26,7 @@ def test_run_simulation_routes_operating_balance_sim(monkeypatch):
     _disable_simulation_validation(monkeypatch)
     called = {}
 
-    def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
+    def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, root=None):
         called["args"] = (husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
         return "operating-balance-result"
 
@@ -44,7 +44,7 @@ def test_run_simulation_routes_portfolio_sim(monkeypatch):
     _disable_simulation_validation(monkeypatch)
     called = {}
 
-    def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
+    def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, root=None):
         called["args"] = (husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
         return "portfolio-result"
 
@@ -62,7 +62,7 @@ def test_run_simulation_routes_summary_sim(monkeypatch):
     _disable_simulation_validation(monkeypatch)
     called = {}
 
-    def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
+    def fake_runner(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, root=None):
         called["args"] = (husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
         return "summary-result"
 

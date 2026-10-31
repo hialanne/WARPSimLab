@@ -161,17 +161,9 @@ def install_identical_market_paths(
     cash_return=0.01,
     real_estate_return=0.03,
 ):
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         return make_path(
             years_to_simulate=years_to_simulate,
             equity_return=equity_return,
@@ -188,17 +180,9 @@ def install_identical_market_paths(
 
 
 def install_different_market_paths(monkeypatch):
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         equity_returns = {
             0: 0.10,
             1: 0.00,

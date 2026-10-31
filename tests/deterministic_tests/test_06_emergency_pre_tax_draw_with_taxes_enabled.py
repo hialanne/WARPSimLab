@@ -1,3 +1,7 @@
+
+from src.warpsimlab.sim.simulationObject import PathContext
+
+from src.warpsimlab.sim.simulationObject import RunContext
 import numpy as np
 import pytest
 from types import SimpleNamespace
@@ -131,6 +135,8 @@ def assert_discounted(raw_results, real_results, key, inflation_rate):
 
 
 def test_emergency_pre_tax_draw_with_taxes_enabled_nominal():
+    path_context = PathContext()
+    run_context = RunContext()
     husband = make_person(age=45, retire_age=100, income=20_000.0)
     wife = make_person(age=43, retire_age=100, income=20_000.0)
     expenses = FlatExpenses(100_000.0)
@@ -138,17 +144,12 @@ def test_emergency_pre_tax_draw_with_taxes_enabled_nominal():
     wife_portfolio = make_portfolio()
     cfg = make_sim(years=1, inflation_rate=0.0, inflation_mode="nominal")
 
-    taxEngine.initialize_tax_engine_for_simulation(cfg)
-    year_cache = taxEngine.prepare_tax_year_cache(0, cfg)
+    taxEngine.initialize_tax_engine_for_simulation(cfg, run_context=run_context, path_context=path_context)
+    year_cache = taxEngine.prepare_tax_year_cache(0, cfg, run_context=run_context, path_context=path_context)
 
     results = run_sim(cfg, husband, wife, expenses, husband_portfolio, wife_portfolio)
 
-    _, _, _, baseline_tax, _ = taxEngine.calculate_total_income_tax_split(
-        40_000.0,
-        0.0,
-        year_cache,
-        cfg,
-    )
+    _, _, _, baseline_tax, _ = taxEngine.calculate_total_income_tax_split(40000.0, 0.0, year_cache, cfg, run_context=run_context)
 
     expected_emergency_pre_tax_used = 100_000.0 - 40_000.0 + baseline_tax - 20_000.0
 
@@ -156,8 +157,7 @@ def test_emergency_pre_tax_draw_with_taxes_enabled_nominal():
         40_000.0 + expected_emergency_pre_tax_used,
         0.0,
         year_cache,
-        cfg,
-    )
+        cfg, run_context=run_context)
 
     expected_delta = final_total_tax - baseline_tax
 

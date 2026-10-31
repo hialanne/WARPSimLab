@@ -1,3 +1,7 @@
+
+from src.warpsimlab.sim.simulationObject import PathContext
+
+from src.warpsimlab.sim.simulationObject import RunContext
 import types
 import pytest
 
@@ -17,7 +21,9 @@ class DummyExpenses:
         return {"total": self.yearly_amount, "hsa_eligible": 0.0, "non_hsa": self.yearly_amount}
 
 
-def make_config(*, inflation_rate: float, start_year: int, scenario_expense_multiplier: float, years_to_simulate: int = 5, inflation_delta: float = 0.0):
+def make_config(*, inflation_rate: float, start_year: int, scenario_expense_multiplier: float, years_to_simulate: int=5, inflation_delta: float=0.0, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
     cfg = types.SimpleNamespace(
         years_to_simulate=years_to_simulate,
         inflation_rate=inflation_rate,
@@ -27,72 +33,62 @@ def make_config(*, inflation_rate: float, start_year: int, scenario_expense_mult
         results_mode=None,
         sim_type=None,
     )
-    initialize_expense_engine_for_simulation(cfg)
+    initialize_expense_engine_for_simulation(cfg, path_context=path_context)
     return cfg
 
 
 def test_expense_basic_no_inflation():
+    path_context = PathContext()
+    run_context = RunContext()
     expenses = DummyExpenses(10000)
-    sim_config = make_config(
-        inflation_rate=0.0,
-        start_year=2025,
-        scenario_expense_multiplier=1.0,
-    )
+    sim_config = make_config(inflation_rate=0.0, start_year=2025, scenario_expense_multiplier=1.0, path_context=path_context)
 
-    result = calculate_expenses(expenses, year=0, sim_config=sim_config)
+    result = calculate_expenses(expenses, year=0, sim_config=sim_config, run_context=run_context, path_context=path_context)
 
     assert result == 10000
 
 
 def test_expense_uses_correct_calendar_year():
+    path_context = PathContext()
+    run_context = RunContext()
     expenses = DummyExpenses(10000)
-    sim_config = make_config(
-        inflation_rate=0.0,
-        start_year=2025,
-        scenario_expense_multiplier=1.0,
-    )
+    sim_config = make_config(inflation_rate=0.0, start_year=2025, scenario_expense_multiplier=1.0, path_context=path_context)
 
-    calculate_expenses(expenses, year=3, sim_config=sim_config)
+    calculate_expenses(expenses, year=3, sim_config=sim_config, run_context=run_context, path_context=path_context)
 
     assert expenses.requested_year == 2028
 
 
 def test_expense_scenario_multiplier():
+    path_context = PathContext()
+    run_context = RunContext()
     expenses = DummyExpenses(10000)
-    sim_config = make_config(
-        inflation_rate=0.0,
-        start_year=2025,
-        scenario_expense_multiplier=1.5,
-    )
+    sim_config = make_config(inflation_rate=0.0, start_year=2025, scenario_expense_multiplier=1.5, path_context=path_context)
 
-    result = calculate_expenses(expenses, year=0, sim_config=sim_config)
+    result = calculate_expenses(expenses, year=0, sim_config=sim_config, run_context=run_context, path_context=path_context)
 
     assert result == 15000
 
 
 def test_expense_inflation_growth():
+    path_context = PathContext()
+    run_context = RunContext()
     expenses = DummyExpenses(10000)
-    sim_config = make_config(
-        inflation_rate=0.05,
-        start_year=2025,
-        scenario_expense_multiplier=1.0,
-    )
+    sim_config = make_config(inflation_rate=0.05, start_year=2025, scenario_expense_multiplier=1.0, path_context=path_context)
 
-    result = calculate_expenses(expenses, year=2, sim_config=sim_config)
+    result = calculate_expenses(expenses, year=2, sim_config=sim_config, run_context=run_context, path_context=path_context)
 
     expected = 10000 * (1.05 ** 2)
     assert result == pytest.approx(expected)
 
 
 def test_expense_multiplier_then_inflation():
+    path_context = PathContext()
+    run_context = RunContext()
     expenses = DummyExpenses(10000)
-    sim_config = make_config(
-        inflation_rate=0.10,
-        start_year=2025,
-        scenario_expense_multiplier=2.0,
-    )
+    sim_config = make_config(inflation_rate=0.1, start_year=2025, scenario_expense_multiplier=2.0, path_context=path_context)
 
-    result = calculate_expenses(expenses, year=1, sim_config=sim_config)
+    result = calculate_expenses(expenses, year=1, sim_config=sim_config, run_context=run_context, path_context=path_context)
 
     expected = 10000 * 2.0 * 1.10
     assert result == pytest.approx(expected)

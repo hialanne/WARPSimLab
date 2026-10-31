@@ -9,6 +9,29 @@ from tests.numerical_reference_helpers import (
 from tests.numerical_reference_scenarios import CASES, DATA, activation_checks, run_case
 
 
+def _without_legacy_allocation_defaults(value, portfolio_inputs=None):
+    """Project approved ownership removals after checking their frozen redundant values."""
+    if portfolio_inputs is None:
+        source = value.get("session", {}).get("truth", value)
+        portfolio_inputs = {key: source.get(key) for key in ("husband_portfolio", "wife_portfolio")}
+    if isinstance(value, dict):
+        projected = {}
+        is_config = {"years_to_simulate", "inflation_rate", "results_mode"} <= value.keys()
+        for key, item in value.items():
+            if key in {"household_eq_target", "household_bd_target", "household_cs_target"}:
+                assert item is None, f"Unexpected prepared allocation in frozen inputs: {key}={item}"
+            elif is_config and key == "root":
+                assert item is None
+            elif is_config and key in portfolio_inputs:
+                assert item == portfolio_inputs[key], f"Redundant portfolio differs from explicit inputs: {key}"
+            else:
+                projected[key] = _without_legacy_allocation_defaults(item, portfolio_inputs)
+        return projected
+    if isinstance(value, list):
+        return [_without_legacy_allocation_defaults(item, portfolio_inputs) for item in value]
+    return value
+
+
 @pytest.fixture(scope="module")
 def manifest():
     document = read_json(DATA / "manifest.json")
@@ -27,7 +50,7 @@ def current_results():
 def test_complete_core_matches_accepted_reference(name, manifest, current_results):
     actual, inputs = current_results[name]
     frozen_inputs = read_json(DATA / "inputs" / f"{name}.json")
-    assert inputs == frozen_inputs, f"{name}: scenario inputs changed; investigate, do not recapture"
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
     entry = manifest["cases"][name]
     checks = activation_checks(name, actual)
     assert all(checks.values()), f"{name}: inactive mechanisms: {[k for k, v in checks.items() if not v]}"

@@ -1,5 +1,9 @@
 """Boundaries of the simulator's annual Medicare/IRMAA planning model."""
 
+from src.warpsimlab.sim.simulationObject import PathContext
+
+from src.warpsimlab.sim.simulationObject import RunContext
+
 from types import SimpleNamespace
 
 import numpy as np
@@ -8,14 +12,16 @@ import pytest
 from src.warpsimlab.sim.engines import expenseEngine, medicareEngine
 
 
-def make_config(*, inflation_rate=0.0, start_year=2026):
+def make_config(*, inflation_rate=0.0, start_year=2026, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
     config = SimpleNamespace(
         start_year=start_year, years_to_simulate=4,
         inflation_rate=inflation_rate, inflation_delta=0.0,
         results_mode="baseline", sim_type="portfolio_sim",
     )
-    expenseEngine.initialize_expense_engine_for_simulation(config)
-    medicareEngine.initialize_medicare_engine_for_simulation(config)
+    expenseEngine.initialize_expense_engine_for_simulation(config, path_context=path_context)
+    medicareEngine.initialize_medicare_engine_for_simulation(config, path_context=path_context)
     return config
 
 
@@ -26,10 +32,10 @@ def make_config(*, inflation_rate=0.0, start_year=2026):
 @pytest.mark.parametrize("index", range(5))
 @pytest.mark.parametrize("offset", [-0.01, 0.0, 0.01])
 def test_irmaa_tiers_include_upper_boundary(single, thresholds, index, offset):
+    path_context = PathContext()
+    run_context = RunContext()
     expected_level = index + (offset > 0.0)
-    assert medicareEngine.get_irmaa_level(
-        thresholds[index] + offset, 0, single, make_config()
-    ) == expected_level
+    assert medicareEngine.get_irmaa_level(thresholds[index] + offset, 0, single, make_config(path_context=path_context), run_context=run_context, path_context=path_context) == expected_level
 
 
 @pytest.mark.parametrize("level,monthly_b,monthly_d", [
@@ -39,10 +45,12 @@ def test_irmaa_tiers_include_upper_boundary(single, thresholds, index, offset):
 def test_person_irmaa_is_annual_surcharge_and_starts_at_medicare_age(
     level, monthly_b, monthly_d,
 ):
+    path_context = PathContext()
+    run_context = RunContext()
     person = SimpleNamespace(medicare_start_age=65)
-    config = make_config()
-    assert medicareEngine.calculate_person_irmaa(person, 64, level, 0, config) == 0.0
-    assert medicareEngine.calculate_person_irmaa(person, 65, level, 0, config) == pytest.approx(
+    config = make_config(path_context=path_context)
+    assert medicareEngine.calculate_person_irmaa(person, 64, level, 0, config, run_context=run_context, path_context=path_context) == 0.0
+    assert medicareEngine.calculate_person_irmaa(person, 65, level, 0, config, run_context=run_context, path_context=path_context) == pytest.approx(
         12 * (monthly_b + monthly_d)
     )
 
@@ -53,15 +61,17 @@ def test_person_irmaa_is_annual_surcharge_and_starts_at_medicare_age(
 def test_inflation_rounds_lower_thresholds_but_freezes_top_through_2027(
     single, threshold_2027, top,
 ):
-    config = make_config(inflation_rate=0.10)
-    assert medicareEngine.get_irmaa_level(threshold_2027, 1, single, config) == 0
-    assert medicareEngine.get_irmaa_level(threshold_2027 + 0.01, 1, single, config) == 1
-    assert medicareEngine.get_irmaa_level(top, 1, single, config) == 4
-    assert medicareEngine.get_irmaa_level(top + 0.01, 1, single, config) == 5
+    path_context = PathContext()
+    run_context = RunContext()
+    config = make_config(inflation_rate=0.10, path_context=path_context)
+    assert medicareEngine.get_irmaa_level(threshold_2027, 1, single, config, run_context=run_context, path_context=path_context) == 0
+    assert medicareEngine.get_irmaa_level(threshold_2027 + 0.01, 1, single, config, run_context=run_context, path_context=path_context) == 1
+    assert medicareEngine.get_irmaa_level(top, 1, single, config, run_context=run_context, path_context=path_context) == 4
+    assert medicareEngine.get_irmaa_level(top + 0.01, 1, single, config, run_context=run_context, path_context=path_context) == 5
     # After the freeze, only one year's growth applies to the top threshold.
     top_2028 = round(top * 1.10)
-    assert medicareEngine.get_irmaa_level(top_2028, 2, single, config) == 4
-    assert medicareEngine.get_irmaa_level(top_2028 + 0.01, 2, single, config) == 5
+    assert medicareEngine.get_irmaa_level(top_2028, 2, single, config, run_context=run_context, path_context=path_context) == 4
+    assert medicareEngine.get_irmaa_level(top_2028 + 0.01, 2, single, config, run_context=run_context, path_context=path_context) == 5
 
 
 @pytest.mark.parametrize("historical,available,expected", [
@@ -107,11 +117,11 @@ def test_magi_includes_taxable_flows_once_and_adds_exempt_interest_without_deduc
 
 
 def test_later_simulation_start_anchors_surcharges_to_2026_constants():
+    path_context = PathContext()
+    run_context = RunContext()
     person = SimpleNamespace(medicare_start_age=65)
-    config = make_config(start_year=2028, inflation_rate=0.10)
-    assert medicareEngine.calculate_person_irmaa(person, 65, 1, 1, config) == pytest.approx(
-        1_147.92 * 1.10 ** 3
-    )
+    config = make_config(start_year=2028, inflation_rate=0.10, path_context=path_context)
+    assert medicareEngine.calculate_person_irmaa(person, 65, 1, 1, config, run_context=run_context, path_context=path_context) == pytest.approx(1147.92 * 1.1 ** 3)
     # Top threshold grows from the end of its 2027 freeze, not from 2026.
-    assert medicareEngine.get_irmaa_level(605_000, 1, True, config) == 4
-    assert medicareEngine.get_irmaa_level(605_000.01, 1, True, config) == 5
+    assert medicareEngine.get_irmaa_level(605_000, 1, True, config, run_context=run_context, path_context=path_context) == 4
+    assert medicareEngine.get_irmaa_level(605_000.01, 1, True, config, run_context=run_context, path_context=path_context) == 5

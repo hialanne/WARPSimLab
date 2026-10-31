@@ -79,11 +79,7 @@ def install_market_path(
     cash_return=0.0,
     real_estate_return=0.0,
 ):
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         equity = np.zeros(years_to_simulate + 1, dtype=float)
         bonds = np.zeros(years_to_simulate + 1, dtype=float)
         cash = np.zeros(years_to_simulate + 1, dtype=float)

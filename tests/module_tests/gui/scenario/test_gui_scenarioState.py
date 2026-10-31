@@ -1,3 +1,5 @@
+from tests.architectural_helpers import make_simulation
+
 from types import SimpleNamespace
 
 import pytest
@@ -96,7 +98,7 @@ def _make_result(summary=None, wife=None, expense_mode=True, dynamic_value=1.25)
 
     return {
         "p": {"summary_results": summary},
-        "sim_config": SimpleNamespace(
+        "sim_config": make_simulation(
             always_use_expense_mode=expense_mode, scenario_expense_multiplier=scenario_expense_multiplier,
             retirement_withdraw_pct=retirement_withdraw_pct, inflation_rate=0.03, fund_expense=0.005,
             custom_stock=0.60, custom_bonds=0.30, custom_cash=0.10, rebalance_every_year=True
@@ -310,7 +312,7 @@ def test_compute_results_from_inputs_uses_copies_and_explicit_options(monkeypatc
     persons = {"husband": _make_person()}
     portfolios = {"husband": _make_portfolio(equity_pre=100)}
     retirement = SimpleNamespace(fund_expense=0.5)
-    sim_config = SimpleNamespace(second_person_enabled=False)
+    sim_config = make_simulation(second_person_enabled=False)
     pipeline_args = {}
 
     def build_simulation_from_gui(**kwargs):
@@ -339,19 +341,22 @@ def test_compute_results_from_inputs_uses_copies_and_explicit_options(monkeypatc
     assert result["retirement_snapshots"] is not retirement
 
     assert sim_config.results_mode == "fill"
-    assert sim_config.include_realestate is True
+    assert sim_config.include_realestate is False
+    assert result["sim_config"] is not sim_config
+    assert result["sim_config"].include_realestate is True
+    assert pipeline_args["sim_config"] is result["sim_config"]
 
     assert pipeline_args["husband_portfolio"] is not portfolios["husband"]
     assert pipeline_args["wife_portfolio"] is None
     assert pipeline_args["husband"] is result["husband"]
     assert pipeline_args["wife"] is None
     assert pipeline_args["expenses_dict"] is main_gui.expensesDict
-    assert pipeline_args["sim_config"] is sim_config
+    assert pipeline_args["sim_config"] is result["sim_config"]
 
 
 def test_compute_results_from_inputs_configures_historical_risk(monkeypatch):
     manager, main_gui, _ = _make_manager()
-    main_gui.build_simulation_from_gui = lambda **kwargs: SimpleNamespace(second_person_enabled=False)
+    main_gui.build_simulation_from_gui = lambda **kwargs: make_simulation(second_person_enabled=False)
     monkeypatch.setattr(mod, "run_pipeline", lambda *args: {"result": 42})
 
     persons = {"husband": _make_person()}
@@ -369,7 +374,7 @@ def test_compute_results_from_inputs_configures_historical_risk(monkeypatch):
 
 def test_compute_results_from_inputs_passes_wife_when_enabled(monkeypatch):
     manager, main_gui, _ = _make_manager(second_person_enabled=True)
-    main_gui.build_simulation_from_gui = lambda **kwargs: SimpleNamespace(second_person_enabled=True)
+    main_gui.build_simulation_from_gui = lambda **kwargs: make_simulation(second_person_enabled=True)
 
     pipeline_args = {}
 

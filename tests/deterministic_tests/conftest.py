@@ -13,7 +13,7 @@ def run_financial_case():
             expenses=(), **settings):
         h_port = make_portfolio(**(h_assets or {}))
         w_port = make_portfolio(**(w_assets or {}))
-        config = make_simulation(husband_portfolio=h_port, wife_portfolio=w_port, **settings)
+        config = make_simulation(  **settings)
         spending = DynamicExpenses()
         for expense in expenses:
             spending.add_expense(**expense)

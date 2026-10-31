@@ -1,3 +1,7 @@
+
+from src.warpsimlab.sim.simulationObject import PathContext, SimData, RunContext
+from src.warpsimlab.sim.simulationObject import RunContext
+
 from types import SimpleNamespace
 
 import pytest
@@ -11,7 +15,7 @@ def _config(**overrides):
         use_fund_expenses=False,
         fund_expense=0.0,
         rebalance_every_year=False,
-        _post_tax_equity_dividend_yield=0.0,
+        post_tax_equity_dividend_yield=0.0,
     )
     values.update(overrides)
     return SimpleNamespace(**values)
@@ -149,6 +153,7 @@ def mod():
 
 
 def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
     h_port, w_port = _portfolio(), _portfolio()
     calls = []
@@ -166,7 +171,7 @@ def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
     monkeypatch.setattr(
         mod.incomeEngine,
         "calculate_income_breakdown",
-        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg:
+        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg, run_context=None, *, path_context=None:
             _income(rmd_h + rmd_w, rmd_h, rmd_w),
     )
     monkeypatch.setattr(
@@ -186,7 +191,7 @@ def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
         SimpleNamespace(),
         SimpleNamespace(),
         SimpleNamespace(),
-        _config(),
+        SimData(_config(), RunContext(post_tax_equity_dividend_yield_normalized=0.0), path_context),
         1,
         {"year": 1},
         74,
@@ -196,8 +201,7 @@ def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
         True,
         True,
         1.0,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert calls == [(h_port, 5.0), (w_port, 7.0)]
     assert result["rmd_h"] == pytest.approx(5.0)
@@ -205,6 +209,7 @@ def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
 
 
 def test_expense_year_emergency_pre_tax_draw_recomputes_tax_and_is_reported(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     monkeypatch.setattr(
@@ -242,7 +247,7 @@ def test_expense_year_emergency_pre_tax_draw_recomputes_tax_and_is_reported(mod,
         SimpleNamespace(),
         SimpleNamespace(),
         SimpleNamespace(),
-        _config(),
+        SimData(_config(), RunContext(post_tax_equity_dividend_yield_normalized=0.0), path_context),
         1,
         {"year": 1},
         61,
@@ -252,8 +257,7 @@ def test_expense_year_emergency_pre_tax_draw_recomputes_tax_and_is_reported(mod,
         True,
         False,
         1.0,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert tax_calls == pytest.approx([100.0, 125.0])
     assert result["emergency_pre_tax_used"] == pytest.approx(25.0)
@@ -265,6 +269,7 @@ def test_expense_year_emergency_pre_tax_draw_recomputes_tax_and_is_reported(mod,
 
 
 def test_expense_year_distinguishes_qualified_and_taxable_hsa_withdrawals(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     monkeypatch.setattr(
@@ -304,7 +309,7 @@ def test_expense_year_distinguishes_qualified_and_taxable_hsa_withdrawals(mod, m
         SimpleNamespace(),
         SimpleNamespace(),
         SimpleNamespace(),
-        _config(calculate_income_taxes=False),
+        SimData(_config(calculate_income_taxes=False), RunContext(post_tax_equity_dividend_yield_normalized=0.0), path_context),
         1,
         {"year": 1},
         61,
@@ -314,8 +319,7 @@ def test_expense_year_distinguishes_qualified_and_taxable_hsa_withdrawals(mod, m
         True,
         False,
         1.0,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert result["qualified_hsa_withdrawal"] == pytest.approx(10.0)
     assert result["taxable_hsa_withdrawal"] == pytest.approx(4.0)
@@ -325,6 +329,7 @@ def test_expense_year_distinguishes_qualified_and_taxable_hsa_withdrawals(mod, m
 
 
 def test_expense_year_reduces_roth_contributions_before_reporting_uncovered(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     monkeypatch.setattr(
@@ -372,7 +377,7 @@ def test_expense_year_reduces_roth_contributions_before_reporting_uncovered(mod,
         SimpleNamespace(),
         SimpleNamespace(),
         SimpleNamespace(),
-        _config(calculate_income_taxes=False),
+        SimData(_config(calculate_income_taxes=False), RunContext(post_tax_equity_dividend_yield_normalized=0.0), path_context),
         1,
         {"year": 1},
         61,
@@ -382,8 +387,7 @@ def test_expense_year_reduces_roth_contributions_before_reporting_uncovered(mod,
         True,
         False,
         1.0,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert seen["uncovered_amount"] == pytest.approx(12.0)
     assert result["funded_roth_contributions"]["total"] == pytest.approx(8.0)
@@ -392,13 +396,14 @@ def test_expense_year_reduces_roth_contributions_before_reporting_uncovered(mod,
 
 
 def test_expense_year_applies_price_return_and_rebalances_both_people(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     cfg = _config(
         rebalance_every_year=True,
         use_fund_expenses=True,
         fund_expense=0.002,
-        _post_tax_equity_dividend_yield=0.015,
+        post_tax_equity_dividend_yield=0.015,
     )
 
     h_port, w_port = _portfolio(), _portfolio()
@@ -410,11 +415,7 @@ def test_expense_year_applies_price_return_and_rebalances_both_people(mod, monke
         return 3.0 if port is h_port else 4.0
 
     monkeypatch.setattr(mod.portfolioEngine, "apply_returns_and_fund_expenses", apply_returns)
-    monkeypatch.setattr(
-        mod.portfolioEngine,
-        "rebalance",
-        lambda port, cfg: rebalance_calls.append(port),
-    )
+    monkeypatch.setattr(mod.portfolioEngine, 'rebalance', lambda port, cfg, run_context=None: rebalance_calls.append(port))
 
     result = mod.simulate_expense_year(
         h_port,
@@ -422,7 +423,7 @@ def test_expense_year_applies_price_return_and_rebalances_both_people(mod, monke
         SimpleNamespace(),
         SimpleNamespace(),
         SimpleNamespace(),
-        cfg,
+        SimData(cfg, RunContext(post_tax_equity_dividend_yield_normalized=cfg.post_tax_equity_dividend_yield), path_context),
         1,
         {"year": 1},
         61,
@@ -432,8 +433,7 @@ def test_expense_year_applies_price_return_and_rebalances_both_people(mod, monke
         True,
         True,
         1.0,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert len(return_calls) == 2
     assert return_calls[0][1] == pytest.approx((0.08, 0.065, 0.03, 0.01, 0.04, 0.002))

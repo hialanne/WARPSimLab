@@ -1,3 +1,7 @@
+
+from src.warpsimlab.sim.simulationObject import PathContext, SimData, RunContext
+from src.warpsimlab.sim.simulationObject import RunContext
+
 from types import SimpleNamespace
 
 import pytest
@@ -11,7 +15,7 @@ def _config(**overrides):
         use_fund_expenses=False,
         fund_expense=0.0,
         rebalance_every_year=False,
-        _post_tax_equity_dividend_yield=0.0,
+        post_tax_equity_dividend_yield=0.0,
     )
     values.update(overrides)
     return SimpleNamespace(**values)
@@ -171,6 +175,7 @@ def mod():
 
 
 def test_withdrawal_year_reserves_rmd_before_roth_conversion(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     h_port = _portfolio(100.0)
@@ -184,7 +189,7 @@ def test_withdrawal_year_reserves_rmd_before_roth_conversion(mod, monkeypatch):
     monkeypatch.setattr(
         mod.incomeEngine,
         "calculate_income_breakdown",
-        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg:
+        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg, run_context=None, *, path_context=None:
             _income(rmd_h, rmd_h, 0.0, rmd_h),
     )
     monkeypatch.setattr(
@@ -233,7 +238,7 @@ def test_withdrawal_year_reserves_rmd_before_roth_conversion(mod, monkeypatch):
         _portfolio(),
         SimpleNamespace(),
         SimpleNamespace(),
-        _config(),
+        SimData(_config(), RunContext(post_tax_equity_dividend_yield_normalized=0.0), path_context),
         1,
         {"year": 1},
         75,
@@ -242,8 +247,7 @@ def test_withdrawal_year_reserves_rmd_before_roth_conversion(mod, monkeypatch):
         False,
         True,
         False,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert seen["requested"]["husband"] == pytest.approx(70.0)
     assert seen["requested"]["total"] == pytest.approx(70.0)
@@ -253,6 +257,7 @@ def test_withdrawal_year_reserves_rmd_before_roth_conversion(mod, monkeypatch):
 
 
 def test_withdrawal_year_reports_spendable_strategy_cash_not_gross_distribution(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     monkeypatch.setattr(
@@ -263,7 +268,7 @@ def test_withdrawal_year_reports_spendable_strategy_cash_not_gross_distribution(
     monkeypatch.setattr(
         mod.incomeEngine,
         "calculate_income_breakdown",
-        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg:
+        lambda h, w, ha, wa, rmd_h, rmd_w, year, h_alive, w_alive, cfg, run_context=None, *, path_context=None:
             _income(10.0, 10.0, 0.0, 10.0),
     )
     monkeypatch.setattr(
@@ -314,7 +319,7 @@ def test_withdrawal_year_reports_spendable_strategy_cash_not_gross_distribution(
         _portfolio(),
         SimpleNamespace(),
         SimpleNamespace(),
-        _config(calculate_income_taxes=False),
+        SimData(_config(calculate_income_taxes=False), RunContext(post_tax_equity_dividend_yield_normalized=0.0), path_context),
         1,
         {"year": 1},
         75,
@@ -323,8 +328,7 @@ def test_withdrawal_year_reports_spendable_strategy_cash_not_gross_distribution(
         False,
         True,
         False,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert result["income"]["by_class"]["rmd"] == pytest.approx(10.0)
     assert result["income"]["by_class"]["withdrawal"] == pytest.approx(50.0)
@@ -333,6 +337,7 @@ def test_withdrawal_year_reports_spendable_strategy_cash_not_gross_distribution(
 
 
 def test_withdrawal_year_redirects_roth_contribution_cash_to_taxes_first(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     monkeypatch.setattr(
@@ -400,7 +405,7 @@ def test_withdrawal_year_redirects_roth_contribution_cash_to_taxes_first(mod, mo
         _portfolio(),
         SimpleNamespace(),
         SimpleNamespace(),
-        _config(),
+        SimData(_config(), RunContext(post_tax_equity_dividend_yield_normalized=0.0), path_context),
         1,
         {"year": 1},
         75,
@@ -409,8 +414,7 @@ def test_withdrawal_year_redirects_roth_contribution_cash_to_taxes_first(mod, mo
         False,
         True,
         False,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert resolve_calls == pytest.approx([0.0, 10.0])
     assert result["funded_roth_contributions"]["total"] == pytest.approx(10.0)
@@ -419,6 +423,7 @@ def test_withdrawal_year_redirects_roth_contribution_cash_to_taxes_first(mod, mo
 
 
 def test_withdrawal_year_tracks_tax_funding_separately_and_by_source(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     monkeypatch.setattr(
@@ -473,7 +478,7 @@ def test_withdrawal_year_tracks_tax_funding_separately_and_by_source(mod, monkey
         _portfolio(),
         SimpleNamespace(),
         SimpleNamespace(),
-        _config(),
+        SimData(_config(), RunContext(post_tax_equity_dividend_yield_normalized=0.0), path_context),
         1,
         {"year": 1},
         75,
@@ -482,8 +487,7 @@ def test_withdrawal_year_tracks_tax_funding_separately_and_by_source(mod, monkey
         False,
         True,
         False,
-        _zero_irmaa(),
-    )
+        _zero_irmaa())
 
     assert tax_calls == pytest.approx([20.0, 28.0])
     assert result["income"]["by_class"]["withdrawal"] == pytest.approx(0.0)
@@ -497,13 +501,14 @@ def test_withdrawal_year_tracks_tax_funding_separately_and_by_source(mod, monkey
     assert result["final_tax_delta_uncovered"] == pytest.approx(5.0)
 
 def test_withdrawal_year_applies_price_return_and_rebalances_both_people(mod, monkeypatch):
+    path_context = PathContext()
     _patch_common(monkeypatch, mod)
 
     cfg = _config(
         rebalance_every_year=True,
         use_fund_expenses=True,
         fund_expense=0.002,
-        _post_tax_equity_dividend_yield=0.015,
+        post_tax_equity_dividend_yield=0.015,
     )
 
     h_port, w_port = _portfolio(), _portfolio()
@@ -515,18 +520,14 @@ def test_withdrawal_year_applies_price_return_and_rebalances_both_people(mod, mo
         return 3.0 if port is h_port else 4.0
 
     monkeypatch.setattr(mod.portfolioEngine, "apply_returns_and_fund_expenses", apply_returns)
-    monkeypatch.setattr(
-        mod.portfolioEngine,
-        "rebalance",
-        lambda port, cfg: rebalance_calls.append(port),
-    )
+    monkeypatch.setattr(mod.portfolioEngine, 'rebalance', lambda port, cfg, run_context=None: rebalance_calls.append(port))
 
     result = mod.simulate_withdrawal_year(
         h_port,
         w_port,
         SimpleNamespace(),
         SimpleNamespace(),
-        cfg,
+        SimData(cfg, RunContext(post_tax_equity_dividend_yield_normalized=cfg.post_tax_equity_dividend_yield), path_context),
         1,
         {"year": 1},
         75,
@@ -535,8 +536,7 @@ def test_withdrawal_year_applies_price_return_and_rebalances_both_people(mod, mo
         True,
         True,
         True,
-        _zero_irmaa(),    
-    )
+        _zero_irmaa())
 
     assert len(return_calls) == 2
     assert return_calls[0][1] == pytest.approx((0.08, 0.065, 0.03, 0.01, 0.04, 0.002))

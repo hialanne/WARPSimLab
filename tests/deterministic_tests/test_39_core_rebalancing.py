@@ -40,11 +40,7 @@ def install_market_path(
     bond_return=0.0,
     cash_return=0.0,
 ):
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         assert years_to_simulate == 1
 
         return {

@@ -69,17 +69,9 @@ def install_market_path(
     cash_return=0.0,
     real_estate_return=0.0,
 ):
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         equity = np.zeros(
             years_to_simulate + 1,
             dtype=float,

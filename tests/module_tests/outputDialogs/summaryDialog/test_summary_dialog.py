@@ -124,7 +124,7 @@ def _make_tab_dialog():
 def _make_bare_dialog(tk_root, summary_settings):
     dialog = mod.SummaryDialog.__new__(mod.SummaryDialog)
     dialog.master = tk_root
-    dialog.sim_config = SimpleNamespace(root=tk_root)
+    dialog.parent_root = tk_root
     dialog._scaling_root = dialog
     dialog._warpsimlab_gui_scale = 1.0
 

@@ -1,5 +1,7 @@
 """HSA wage limits and qualified-spending conservation, independent of tax limits."""
 
+from src.warpsimlab.sim.simulationObject import PathContext
+
 from types import SimpleNamespace
 
 import pytest
@@ -22,22 +24,19 @@ def hsa_portfolio(**buckets):
 def test_employee_contribution_is_capped_after_401k_but_employer_is_not_deducted(
     wages, k401, employee, employer,
 ):
+    path_context = PathContext(income_inflation_factors=[1.0, 1.0])
     person = SimpleNamespace(retire_age=65, annual_hsa_contribution=5_000,
                              annual_hsa_employer_contribution=1_000)
-    result = hsaEngine.calculate_hsa_contributions(
-        person, 64, 1, wages, k401, True,
-        SimpleNamespace(_income_inflation_factors=[1.0, 1.0]),
-    )
+    result = hsaEngine.calculate_hsa_contributions(person, 64, 1, wages, k401, True, SimpleNamespace(), path_context=path_context)
     assert result == dict(employee=employee, employer=employer, total=employee + employer)
 
 
 @pytest.mark.parametrize("age,alive", [(65, True), (66, True), (64, False)])
 def test_retired_or_deceased_person_makes_no_hsa_contributions(age, alive):
+    path_context = PathContext()
     person = SimpleNamespace(retire_age=65, annual_hsa_contribution=5_000,
                              annual_hsa_employer_contribution=1_000)
-    assert hsaEngine.calculate_hsa_contributions(
-        person, age, 1, 10_000, 0, alive, SimpleNamespace()
-    ) == dict(employee=0.0, employer=0.0, total=0.0)
+    assert hsaEngine.calculate_hsa_contributions(person, age, 1, 10000, 0, alive, SimpleNamespace(), path_context=path_context) == dict(employee=0.0, employer=0.0, total=0.0)
 
 
 @pytest.mark.parametrize("requested,paid,uncovered", [
@@ -67,11 +66,9 @@ def test_disabled_spouse_hsa_cannot_pay_qualified_expenses():
 
 
 def test_employee_and_employer_requests_follow_income_inflation_before_wage_cap():
+    path_context = PathContext(income_inflation_factors=[1.0, 1.2, 1.5])
     person = SimpleNamespace(retire_age=65, annual_hsa_contribution=3_000,
                              annual_hsa_employer_contribution=1_000)
-    result = hsaEngine.calculate_hsa_contributions(
-        person, 40, 2, 10_000, 6_000, True,
-        SimpleNamespace(_income_inflation_factors=[1.0, 1.2, 1.5]),
-    )
+    result = hsaEngine.calculate_hsa_contributions(person, 40, 2, 10000, 6000, True, SimpleNamespace(), path_context=path_context)
     # Requested employee 4,500 is capped at 4,000; employer 1,500 is additional.
     assert result == dict(employee=4_000, employer=1_500, total=5_500)

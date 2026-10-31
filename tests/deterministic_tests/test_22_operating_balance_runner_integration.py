@@ -30,15 +30,7 @@ def test_run_sim_operating_balance_computes_cumulative_balance_exactly(monkeypat
         assert force_num_sims == 1
         return pipeline_payload
 
-    def fake_plot_operating_balance(
-        years_to_simulate,
-        net_profit,
-        operating_balance,
-        portfolio_value,
-        husband,
-        wife,
-        sim_config,
-    ):
+    def fake_plot_operating_balance(years_to_simulate, net_profit, operating_balance, portfolio_value, husband, wife, sim_config, *, root=None):
         captured["years_to_simulate"] = years_to_simulate
         captured["net_profit"] = net_profit
         captured["operating_balance"] = operating_balance

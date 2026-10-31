@@ -1,5 +1,7 @@
 """Sampling contracts; core orchestration here uses financial-engine doubles."""
 
+from src.warpsimlab.sim.simulationObject import RunContext
+
 import numpy as np
 
 from src.warpsimlab.sim import run_sim_core
@@ -14,6 +16,7 @@ from tests.feature_tests.monteCarlo.helpers_validation import (
 
 
 def test_generate_market_path_returns_constant_means_when_monte_carlo_is_off():
+    run_context = RunContext()
     sim_config = make_sim_config(
         results_mode="summary",   # anything except "risk_analysis"
         sim_type="portfolio_sim",
@@ -24,7 +27,7 @@ def test_generate_market_path_returns_constant_means_when_monte_carlo_is_off():
         re_mean=0.05,
     )
 
-    path = generate_market_path(sim_config, years_to_simulate=5)
+    path = generate_market_path(sim_config, years_to_simulate=5, run_context=run_context)
 
     np.testing.assert_allclose(path["eq"][1:], np.full(5, 0.07), atol=0.0, rtol=0.0)
     np.testing.assert_allclose(path["bd"][1:], np.full(5, 0.03), atol=0.0, rtol=0.0)

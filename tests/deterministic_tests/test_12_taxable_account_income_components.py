@@ -1,3 +1,7 @@
+
+from src.warpsimlab.sim.simulationObject import PathContext
+
+from src.warpsimlab.sim.simulationObject import RunContext
 import numpy as np
 import pytest
 from types import SimpleNamespace
@@ -133,6 +137,8 @@ def assert_discounted(raw_results, real_results, key, inflation_rate):
 
 
 def test_taxable_account_income_components_nominal():
+    path_context = PathContext()
+    run_context = RunContext()
     husband_portfolio = make_portfolio(
         equity_post=100_000.0,
         bond_post=50_000.0,
@@ -147,16 +153,15 @@ def test_taxable_account_income_components_nominal():
     expected_cash_interest = 25_000.0 * cfg.cs_mean    
     expected_ordinary = expected_bond_interest + expected_cash_interest
 
-    taxEngine.initialize_tax_engine_for_simulation(cfg)
-    year_cache = taxEngine.prepare_tax_year_cache(1, cfg)
+    taxEngine.initialize_tax_engine_for_simulation(cfg, run_context=run_context, path_context=path_context)
+    year_cache = taxEngine.prepare_tax_year_cache(1, cfg, run_context=run_context, path_context=path_context)
 
     federal_ordinary_tax, federal_qualified_dividend_tax, state_income_tax, total_tax, *_ = (
         taxEngine.calculate_total_income_tax_split(
             ordinary_income=expected_ordinary,
             qualified_equity_distributions=expected_qd,
             year_cache=year_cache,
-            sim_config=cfg,
-        )
+            sim_config=cfg, run_context=run_context)
     )
 
     assert row(results, "qualified_equity_distributions") == pytest.approx([0.0, expected_qd])

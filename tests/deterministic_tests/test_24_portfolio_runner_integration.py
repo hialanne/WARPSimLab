@@ -35,15 +35,7 @@ def test_run_sim_portfolio_caps_num_sims_at_40000_and_sends_correct_plot_payload
         captured["run_pipeline_sim_config_num_sims"] = sim_config.num_sims
         return pipeline_payload
 
-    def fake_plot_portfolio_projection(
-        years_list,
-        simulation_data,
-        sim_config,
-        annotate_plots,
-        sim_rebalance_string,
-        husband,
-        wife,
-    ):
+    def fake_plot_portfolio_projection(years_list, simulation_data, sim_config, annotate_plots, sim_rebalance_string, husband, wife, *, root=None):
         captured["years_list"] = years_list
         captured["simulation_data"] = simulation_data
         captured["sim_config"] = sim_config

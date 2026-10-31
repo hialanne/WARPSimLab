@@ -66,39 +66,19 @@ def install_historical_data(
         dtype=int,
     )
 
-    def fake_prepare_market_path_sampling(sim_config):
+    def fake_prepare_market_path_sampling(sim_config, run_context=None):
         data_length = len(inflation_rates)
 
-        sim_config._hist_num_windows = len(
-            window_start_indices
-        )
-        sim_config._hist_window_start_indices = (
-            window_start_indices.copy()
-        )
-        sim_config._hist_inflation = inflation_rates.copy()
+        run_context.hist_num_windows = len(window_start_indices)
+        run_context.hist_window_start_indices = window_start_indices.copy()
+        run_context.hist_inflation = inflation_rates.copy()
 
-        sim_config._hist_years = np.arange(
-            2000,
-            2000 + data_length,
-            dtype=int,
-        )
+        run_context.hist_years = np.arange(2000, 2000 + data_length, dtype=int)
 
-        sim_config._hist_eq_returns = np.zeros(
-            data_length,
-            dtype=float,
-        )
-        sim_config._hist_bd_returns = np.zeros(
-            data_length,
-            dtype=float,
-        )
-        sim_config._hist_cs_returns = np.zeros(
-            data_length,
-            dtype=float,
-        )
-        sim_config._hist_re_returns = np.zeros(
-            data_length,
-            dtype=float,
-        )
+        run_context.hist_eq = np.zeros(data_length, dtype=float)
+        run_context.hist_bd = np.zeros(data_length, dtype=float)
+        run_context.hist_cs = np.zeros(data_length, dtype=float)
+        run_context.hist_re = np.zeros(data_length, dtype=float)
 
     monkeypatch.setattr(
         monteCarloEngine,
@@ -106,14 +86,7 @@ def install_historical_data(
         fake_prepare_market_path_sampling,
     )
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
-        assert sim_index == (
-            sim_config._active_historical_sim_index
-        )
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
 
         zeros = np.zeros(
             years_to_simulate + 1,

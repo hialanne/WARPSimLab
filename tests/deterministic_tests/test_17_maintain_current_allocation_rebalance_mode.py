@@ -1,3 +1,5 @@
+
+from src.warpsimlab.sim.simulationObject import RunContext
 import numpy as np
 import pytest
 from types import SimpleNamespace
@@ -122,16 +124,16 @@ def run_sim(cfg):
     wife_portfolio = make_portfolio(cash_post=100.0)
     expenses = FlatExpenses(0.0)
 
-    results = simulate_yearly_portfolios(
+    results, run_context = simulate_yearly_portfolios(
         husband_portfolio,
         wife_portfolio,
         husband,
         wife,
         expenses,
         cfg,
-        num_sims=1,
+        num_sims=1, return_run_context=True,
     )
-    return results, cfg
+    return results, run_context
 
 
 def row(results, key):
@@ -144,12 +146,13 @@ def assert_discounted(raw_results, real_results, key, inflation_rate):
 
 
 def test_maintain_current_allocation_rebalance_mode_nominal():
-    results, cfg = run_sim(make_sim(years=1, inflation_rate=0.0, inflation_mode="nominal"))
+    run_context = RunContext()
+    results, run_context = run_sim(make_sim(years=1, inflation_rate=0.0, inflation_mode="nominal"))
 
     # Household targets are computed once from the combined starting investable assets.
-    assert cfg.household_eq_target == pytest.approx(0.50)
-    assert cfg.household_bd_target == pytest.approx(0.00)
-    assert cfg.household_cs_target == pytest.approx(0.50)
+    assert run_context.household_eq_target == pytest.approx(0.50)
+    assert run_context.household_bd_target == pytest.approx(0.00)
+    assert run_context.household_cs_target == pytest.approx(0.50)
 
     # Year 0 already reflects the maintain-current-allocation mapping per portfolio.
     assert row(results, "total_assets") == pytest.approx([200.0, 210.0])

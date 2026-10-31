@@ -70,17 +70,9 @@ def install_market_path(
 ):
     path = make_market_path(equity_returns)
 
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         assert years_to_simulate == len(equity_returns)
         return {
             key: values.copy()

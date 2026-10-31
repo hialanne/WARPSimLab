@@ -87,7 +87,7 @@ def build_case(name):
             husband_portfolio=h_port, wife_portfolio=w_port, expenses=expenses,
             sim_config=make_simulation(
                 years_to_simulate=4, inflation_rate=0.025,
-                husband_portfolio=h_port, wife_portfolio=w_port,
+                 
                 include_rmd=True, calculate_income_taxes=True,
                 calculate_state_taxes=True, state_of_residence="CO",
                 roth_flows=[flow("roth_conversion", 180_000 if name == "s3_tax_funding" else 30_000, 73, 73)],

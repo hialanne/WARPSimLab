@@ -114,17 +114,9 @@ def test_core_requests_one_market_path_per_simulation(
 
     requested_indices = []
 
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         requested_indices.append(sim_index)
 
         return make_path(
@@ -163,11 +155,7 @@ def test_different_market_paths_produce_different_simulation_rows(
         years_to_simulate=2,
     )
 
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
     paths = {
         0: make_path(
@@ -190,11 +178,7 @@ def test_different_market_paths_produce_different_simulation_rows(
         ),
     }
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         return paths[sim_index]
 
     monkeypatch.setattr(
@@ -242,17 +226,9 @@ def test_market_path_year_zero_value_is_not_applied(
         years_to_simulate=2,
     )
 
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         return {
             "eq": np.array(
                 [
@@ -296,17 +272,9 @@ def test_market_path_uses_correct_asset_return_indices(
         years_to_simulate=2,
     )
 
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         return make_path(
             equity_returns=[
                 0.10,
@@ -369,55 +337,22 @@ def install_historical_preparation(
     *,
     number_of_windows,
 ):
-    def fake_prepare_market_path_sampling(sim_config):
-        sim_config._hist_num_windows = number_of_windows
+    def fake_prepare_market_path_sampling(sim_config, run_context=None):
+        run_context.hist_num_windows = number_of_windows
 
-        sim_config._hist_years = np.array(
-            [
-                2000,
-                2001,
-                2002,
-                2003,
-                2004,
-            ],
-            dtype=int,
-        )
+        run_context.hist_years = np.array([2000, 2001, 2002, 2003, 2004], dtype=int)
 
-        sim_config._hist_window_start_indices = np.arange(
-            number_of_windows,
-            dtype=int,
-        )
+        run_context.hist_window_start_indices = np.arange(number_of_windows, dtype=int)
 
-        sim_config._hist_inflation = np.zeros(
-            len(sim_config._hist_years),
-            dtype=float,
-        )
+        run_context.hist_inflation = np.zeros(len(run_context.hist_years), dtype=float)
 
-        sim_config._hist_eq_returns = np.array(
-            [
-                0.10,
-                0.20,
-                -0.10,
-                0.05,
-                0.00,
-            ],
-            dtype=float,
-        )
+        run_context.hist_eq = np.array([0.1, 0.2, -0.1, 0.05, 0.0], dtype=float)
 
-        sim_config._hist_bd_returns = np.zeros(
-            len(sim_config._hist_years),
-            dtype=float,
-        )
+        run_context.hist_bd = np.zeros(len(run_context.hist_years), dtype=float)
 
-        sim_config._hist_cs_returns = np.zeros(
-            len(sim_config._hist_years),
-            dtype=float,
-        )
+        run_context.hist_cs = np.zeros(len(run_context.hist_years), dtype=float)
 
-        sim_config._hist_re_returns = np.zeros(
-            len(sim_config._hist_years),
-            dtype=float,
-        )
+        run_context.hist_re = np.zeros(len(run_context.hist_years), dtype=float)
 
     monkeypatch.setattr(
         monteCarloEngine,
@@ -427,22 +362,13 @@ def install_historical_preparation(
 
 
 def install_historical_paths(monkeypatch):
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
-        assert sim_index == sim_config._active_historical_sim_index
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
 
-        start_index = int(
-            sim_config._hist_window_start_indices[sim_index]
-        )
+        start_index = int(run_context.hist_window_start_indices[sim_index])
 
         end_index = start_index + years_to_simulate
 
-        equity_returns = sim_config._hist_eq_returns[
-            start_index:end_index
-        ]
+        equity_returns = run_context.hist_eq[start_index:end_index]
 
         return make_path(
             equity_returns=equity_returns,
@@ -552,16 +478,12 @@ def test_nonhistorical_mode_uses_default_historical_metadata(
         risk_analysis_mode="monte_carlo",
     )
 
-    monkeypatch.setattr(
-        monteCarloEngine,
-        "prepare_market_path_sampling",
-        lambda sim_config: None,
-    )
+    monkeypatch.setattr(monteCarloEngine, 'prepare_market_path_sampling', lambda sim_config, run_context=None: None)
 
     monkeypatch.setattr(
         monteCarloEngine,
         "generate_market_path",
-        lambda sim_config, years_to_simulate, sim_index=None: (
+        lambda sim_config, years_to_simulate, sim_index=None, run_context=None: (
             make_path(
                 equity_returns=[
                     0.0,

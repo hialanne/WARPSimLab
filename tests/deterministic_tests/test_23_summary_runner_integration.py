@@ -39,7 +39,7 @@ def test_run_sim_summary_sends_exact_summary_payload_to_ui_layer(monkeypatch):
         return pipeline_payload
 
     class FakeSummaryDialog:
-        def __init__(self, results, husband, wife, sim_config, title="Summary"):
+        def __init__(self, results, husband, wife, sim_config, title='Summary', *, root=None):
             captured["results"] = results
             captured["husband"] = husband
             captured["wife"] = wife

@@ -72,7 +72,7 @@ def test_run_sim_portfolio_calls_pipeline_and_plot(monkeypatch):
     assert kwargs["wife"] is wife
 
 
-def test_run_sim_portfolio_caps_num_sims_at_40000(monkeypatch):
+def test_run_sim_portfolio_caps_snapshot_at_100000_without_changing_origin(monkeypatch):
     from src.warpsimlab.sim import run_sim_portfolio as mod
 
     captured = {"sim_config_seen": None, "force_num_sims": None, "plot_args": None}
@@ -88,7 +88,9 @@ def test_run_sim_portfolio_caps_num_sims_at_40000(monkeypatch):
     monkeypatch.setattr(mod, "run_pipeline", fake_run_pipeline, raising=True)
     monkeypatch.setattr(mod, "plot_portfolio_projection", fake_plot, raising=True)
 
-    sim_config = DummySimConfig(num_sims=50000)
+    messages = []
+    monkeypatch.setattr(mod.messagebox, "showinfo", lambda *args: messages.append(args))
+    sim_config = DummySimConfig(num_sims=100001)
 
     mod.run_sim_portfolio(
         DummyPortfolio(),
@@ -99,8 +101,10 @@ def test_run_sim_portfolio_caps_num_sims_at_40000(monkeypatch):
         sim_config,
     )
 
-    assert sim_config.num_sims == 50000
-    assert captured["sim_config_seen"] is sim_config
+    assert sim_config.num_sims == 100001
+    assert captured["sim_config_seen"] is not sim_config
+    assert captured["sim_config_seen"].num_sims == 100000
+    assert messages == [("Simulation Limit", "Number of simulations limited to 100000.")]
     assert captured["force_num_sims"] is None
     assert captured["plot_args"] is not None
 

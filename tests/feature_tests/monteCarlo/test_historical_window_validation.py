@@ -1,3 +1,5 @@
+
+from src.warpsimlab.sim.simulationObject import RunContext
 from types import SimpleNamespace
 
 import numpy as np
@@ -64,6 +66,7 @@ def install_historical_loaders(
 
 
 def test_historical_returns_and_inflation_years_must_match_exactly(monkeypatch):
+    run_context = RunContext()
     config = make_historical_config()
     install_historical_loaders(
         monkeypatch,
@@ -72,7 +75,7 @@ def test_historical_returns_and_inflation_years_must_match_exactly(monkeypatch):
     )
 
     with pytest.raises(ValueError) as exc_info:
-        monteCarloEngine.prepare_market_path_sampling(config)
+        monteCarloEngine.prepare_market_path_sampling(config, run_context=run_context)
 
     assert str(exc_info.value) == (
         "Historical asset return years and historical inflation years must match exactly. "
@@ -82,11 +85,12 @@ def test_historical_returns_and_inflation_years_must_match_exactly(monkeypatch):
 
 
 def test_historical_horizon_must_be_positive(monkeypatch):
+    run_context = RunContext()
     config = make_historical_config(years_to_simulate=0)
     install_historical_loaders(monkeypatch)
 
     with pytest.raises(ValueError) as exc_info:
-        monteCarloEngine.prepare_market_path_sampling(config)
+        monteCarloEngine.prepare_market_path_sampling(config, run_context=run_context)
 
     assert str(exc_info.value) == (
         "years_to_simulate must be > 0 for rolling historical windows"
@@ -94,6 +98,7 @@ def test_historical_horizon_must_be_positive(monkeypatch):
 
 
 def test_historical_horizon_cannot_exceed_available_rows(monkeypatch):
+    run_context = RunContext()
     config = make_historical_config(years_to_simulate=4)
     install_historical_loaders(
         monkeypatch,
@@ -101,7 +106,7 @@ def test_historical_horizon_cannot_exceed_available_rows(monkeypatch):
     )
 
     with pytest.raises(ValueError) as exc_info:
-        monteCarloEngine.prepare_market_path_sampling(config)
+        monteCarloEngine.prepare_market_path_sampling(config, run_context=run_context)
 
     assert str(exc_info.value) == (
         "Historical data file has only 3 rows, but years_to_simulate is 4. "
@@ -110,11 +115,12 @@ def test_historical_horizon_cannot_exceed_available_rows(monkeypatch):
 
 
 def test_unsupported_historical_window_mode_is_rejected(monkeypatch):
+    run_context = RunContext()
     config = make_historical_config(historical_window_mode="non_overlapping")
     install_historical_loaders(monkeypatch)
 
     with pytest.raises(ValueError) as exc_info:
-        monteCarloEngine.prepare_market_path_sampling(config)
+        monteCarloEngine.prepare_market_path_sampling(config, run_context=run_context)
 
     assert str(exc_info.value) == (
         "Unsupported historical_window_mode: non_overlapping"
@@ -122,37 +128,31 @@ def test_unsupported_historical_window_mode_is_rejected(monkeypatch):
 
 
 def test_overlapping_historical_window_count_and_start_indices_are_exact(monkeypatch):
+    run_context = RunContext()
     config = make_historical_config(years_to_simulate=3)
     install_historical_loaders(
         monkeypatch,
         return_years=(2000, 2001, 2002, 2003, 2004),
     )
 
-    monteCarloEngine.prepare_market_path_sampling(config)
+    monteCarloEngine.prepare_market_path_sampling(config, run_context=run_context)
 
-    assert config._hist_num_windows == 3
-    np.testing.assert_array_equal(
-        config._hist_window_start_indices,
-        np.array([0, 1, 2], dtype=int),
-    )
-    np.testing.assert_array_equal(
-        config._hist_years,
-        np.array([2000, 2001, 2002, 2003, 2004], dtype=int),
-    )
+    assert run_context.hist_num_windows == 3
+    np.testing.assert_array_equal(run_context.hist_window_start_indices, np.array([0, 1, 2], dtype=int))
+    np.testing.assert_array_equal(run_context.hist_years, np.array([2000, 2001, 2002, 2003, 2004], dtype=int))
 
 
 def test_historical_market_path_requires_sim_index():
+    run_context = RunContext()
     config = SimpleNamespace(
-        _hist_window_start_indices=np.array([0], dtype=int),
-        _hist_num_windows=1,
+        
+        
     )
+    run_context.hist_window_start_indices = np.array([0], dtype=int)
+    run_context.hist_num_windows = 1
 
     with pytest.raises(ValueError) as exc_info:
-        monteCarloEngine._build_historical_market_path(
-            config,
-            years_to_simulate=2,
-            sim_index=None,
-        )
+        monteCarloEngine._build_historical_market_path(config, years_to_simulate=2, sim_index=None, run_context=run_context)
 
     assert str(exc_info.value) == (
         "sim_index is required for historical_windows mode"
@@ -160,28 +160,23 @@ def test_historical_market_path_requires_sim_index():
 
 
 def test_historical_market_path_rejects_out_of_range_index():
+    run_context = RunContext()
     config = SimpleNamespace(
-        _hist_window_start_indices=np.array([0, 1], dtype=int),
-        _hist_num_windows=2,
+        
+        
     )
+    run_context.hist_window_start_indices = np.array([0, 1], dtype=int)
+    run_context.hist_num_windows = 2
 
     with pytest.raises(IndexError) as negative_exc:
-        monteCarloEngine._build_historical_market_path(
-            config,
-            years_to_simulate=2,
-            sim_index=-1,
-        )
+        monteCarloEngine._build_historical_market_path(config, years_to_simulate=2, sim_index=-1, run_context=run_context)
 
     assert str(negative_exc.value) == (
         "Historical sim_index -1 is out of range for 2 available rolling windows."
     )
 
     with pytest.raises(IndexError) as upper_exc:
-        monteCarloEngine._build_historical_market_path(
-            config,
-            years_to_simulate=2,
-            sim_index=2,
-        )
+        monteCarloEngine._build_historical_market_path(config, years_to_simulate=2, sim_index=2, run_context=run_context)
 
     assert str(upper_exc.value) == (
         "Historical sim_index 2 is out of range for 2 available rolling windows."
@@ -190,14 +185,17 @@ def test_historical_market_path_rejects_out_of_range_index():
 
 def test_historical_inflation_path_rejects_unprepared_cache(tmp_path, monkeypatch):
     # Replace only the diagnostic module's home lookup, leaving real file I/O intact.
+    run_context = RunContext()
     monkeypatch.setattr(diagnosticEngine, "Path", SimpleNamespace(home=lambda: tmp_path))
     config = SimpleNamespace(
-        _hist_window_start_indices=None,
-        _hist_num_windows=0,
+        
+        
     )
+    run_context.hist_window_start_indices = None
+    run_context.hist_num_windows = 0
 
     with pytest.raises(WARPSimLabInternalError) as exc_info:
-        monteCarloEngine.build_historical_inflation_rate_path(config, years_to_simulate=2, sim_index=0)
+        monteCarloEngine.build_historical_inflation_rate_path(config, years_to_simulate=2, sim_index=0, run_context=run_context)
 
     assert exc_info.value.original_message == "Historical rolling-window data not prepared before inflation-path generation."
     assert exc_info.value.diagnostic_path is not None
@@ -212,17 +210,20 @@ def test_historical_inflation_path_rejects_unprepared_cache(tmp_path, monkeypatc
 def test_historical_inflation_path_preserves_error_when_diagnostic_destination_is_unwritable(
     tmp_path, monkeypatch,
 ):
+    run_context = RunContext()
     monkeypatch.setattr(diagnosticEngine, "Path", SimpleNamespace(home=lambda: tmp_path))
     # A file blocking the directory works reliably without platform-specific permissions.
     desktop = tmp_path / "Desktop"
     desktop.write_text("blocked diagnostic destination", encoding="utf-8")
     config = SimpleNamespace(
-        _hist_window_start_indices=None,
-        _hist_num_windows=0,
+        
+        
     )
+    run_context.hist_window_start_indices = None
+    run_context.hist_num_windows = 0
 
     with pytest.raises(WARPSimLabInternalError) as exc_info:
-        monteCarloEngine.build_historical_inflation_rate_path(config, years_to_simulate=2, sim_index=0)
+        monteCarloEngine.build_historical_inflation_rate_path(config, years_to_simulate=2, sim_index=0, run_context=run_context)
 
     assert exc_info.value.original_message == "Historical rolling-window data not prepared before inflation-path generation."
     assert exc_info.value.diagnostic_path is None

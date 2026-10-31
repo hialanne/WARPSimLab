@@ -20,6 +20,7 @@ def dummy_gui():
 
     inst = DummyGUI()
 
+    inst.root = object()
     inst.husband = object()
     inst.wife = object()
     inst.husband_portfolio = object()

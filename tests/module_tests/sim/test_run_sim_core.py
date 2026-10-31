@@ -225,14 +225,14 @@ def _tax_split(
 
 
 def _patch_baseline(monkeypatch, mod, sim_config: DummySimConfig):
-    monkeypatch.setattr(mod.taxEngine, "initialize_tax_engine_for_simulation", lambda cfg: None)
-    monkeypatch.setattr(mod.incomeEngine, "initialize_income_engine_for_simulation", lambda h, w, cfg: None)
-    monkeypatch.setattr(mod.monteCarloEngine, "prepare_market_path_sampling", lambda cfg: None)
+    monkeypatch.setattr(mod.taxEngine, "initialize_tax_engine_for_simulation", lambda cfg, run_context=None, *, path_context=None: None)
+    monkeypatch.setattr(mod.incomeEngine, "initialize_income_engine_for_simulation", lambda h, w, cfg, run_context=None, *, path_context=None: None)
+    monkeypatch.setattr(mod.monteCarloEngine, "prepare_market_path_sampling", lambda cfg, run_context=None: None)
 
     monkeypatch.setattr(
         mod.taxEngine,
         "prepare_tax_year_cache",
-        lambda year, cfg, filing_status_single: {
+        lambda year, cfg, filing_status_single, run_context=None, *, path_context=None: {
             "year": year,
             "social_security_wage_base": 200000.0,
             "additional_medicare_threshold": 200000.0,
@@ -250,11 +250,7 @@ def _patch_baseline(monkeypatch, mod, sim_config: DummySimConfig):
         ),
     )
 
-    monkeypatch.setattr(
-        mod.portfolioEngine,
-        "create_sim_portfolio",
-        lambda p, c: _make_portfolio(),
-    )
+    monkeypatch.setattr(mod.portfolioEngine, 'create_sim_portfolio', lambda p, c, run_context=None: _make_portfolio())
     monkeypatch.setattr(
         mod.portfolioEngine,
         "create_empty_sim_portfolio",
@@ -269,7 +265,7 @@ def _patch_baseline(monkeypatch, mod, sim_config: DummySimConfig):
     monkeypatch.setattr(
         mod.monteCarloEngine,
         "generate_market_path",
-        lambda cfg, years, sim_index: {
+        lambda cfg, years, sim_index, run_context=None: {
             "eq": [0.0] * (years + 1),
             "bd": [0.0] * (years + 1),
             "cs": [0.0] * (years + 1),

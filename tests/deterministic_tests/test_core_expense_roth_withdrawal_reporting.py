@@ -35,7 +35,7 @@ def test_expense_roth_reporting_matches_actual_funding(
         tax_filing_status="Married filing jointly" if married else "Single",
         calculate_income_taxes=True, calculate_payroll_taxes=True,
         calculate_state_taxes=True, state_of_residence="CO",
-        husband_portfolio=husband_assets, wife_portfolio=wife_assets,
+         
         always_use_expense_mode=True, retirement_withdraw_mode="Off",
     )
     core = run_pipeline(

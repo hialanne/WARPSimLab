@@ -56,11 +56,7 @@ def make_stream(
 
 
 def install_zero_market_path(monkeypatch):
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         zeros = np.zeros(
             years_to_simulate + 1,
             dtype=float,

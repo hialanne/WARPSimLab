@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from src.warpsimlab.sim.simulationObject import PathContext
+
 from types import SimpleNamespace
 
 import pytest
@@ -9,10 +11,12 @@ from src.warpsimlab.sim.engines import rothEngine
 from src.warpsimlab.dataClasses.person import Person
 
 
-def initialize_roth(cfg, husband_age=50, wife_age=48):
+def initialize_roth(cfg, husband_age=50, wife_age=48, *, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
     husband = Person(husband_age, 65, 0.0, 0.0, 99, 0.0, 99, 0.0, 99)
     wife = Person(wife_age, 65, 0.0, 0.0, 99, 0.0, 99, 0.0, 99)
-    rothEngine.initialize_roth_engine_for_simulation(cfg, husband, wife)
+    rothEngine.initialize_roth_engine_for_simulation(cfg, husband, wife, path_context=path_context)
     return cfg
 
 def make_sim_config(
@@ -32,9 +36,6 @@ def make_sim_config(
         results_mode="default",
         sim_type="portfolio_sim",
         monte_carlo_mode="pathBasedAnnualSampling",
-        _active_historical_sim_index=None,
-        _hist_inflation=None,
-        _hist_window_start_indices=None,
     )
 
 
@@ -121,6 +122,7 @@ def make_portfolio(
 
 
 def test_prepare_requested_roth_flows_caps_only_workplace_contributions_by_wages():
+    path_context = PathContext()
     cfg = make_sim_config(
         roth_flows=[
             make_flow(
@@ -146,7 +148,7 @@ def test_prepare_requested_roth_flows_caps_only_workplace_contributions_by_wages
         ]
     )
 
-    initialize_roth(cfg, husband_age=49, wife_age=47)
+    initialize_roth(cfg, husband_age=49, wife_age=47, path_context=path_context)
 
     result = rothEngine.prepare_requested_roth_flows(
         curr_husband_age=50,
@@ -157,8 +159,7 @@ def test_prepare_requested_roth_flows_caps_only_workplace_contributions_by_wages
         second_person_enabled=True,
         husband_alive=True,
         wife_alive=True,
-        sim_config=cfg,
-    )
+        sim_config=cfg, path_context=path_context)
     assert result[rothEngine.ROTH_IRA_CONTRIBUTION]["husband"] == pytest.approx(
         7000.0
     )

@@ -1,3 +1,5 @@
+
+from src.warpsimlab.sim.simulationObject import RunContext
 import numpy as np
 
 from src.warpsimlab.sim.engines import portfolioEngine
@@ -112,6 +114,7 @@ def test_rebalance_operation_preserves_post_tax_account_value(make_case):
     pipeline comparison would also include WARPSimLab's distinct taxable
     cash-flow treatment for equity, bond, and cash returns.
     """
+    run_context = RunContext()
     (
         husband_portfolio,
         wife_portfolio,
@@ -125,8 +128,8 @@ def test_rebalance_operation_preserves_post_tax_account_value(make_case):
         sim_initial_allocation_mode="dont-rebalance",
     )
 
-    h_port = portfolioEngine.create_sim_portfolio(husband_portfolio, sim_config)
-    w_port = portfolioEngine.create_sim_portfolio(wife_portfolio, sim_config)
+    h_port = portfolioEngine.create_sim_portfolio(husband_portfolio, sim_config, run_context=run_context)
+    w_port = portfolioEngine.create_sim_portfolio(wife_portfolio, sim_config, run_context=run_context)
 
     husband_before = h_port.total_value_post
     wife_before = w_port.total_value_post
@@ -137,8 +140,8 @@ def test_rebalance_operation_preserves_post_tax_account_value(make_case):
     sim_config.custom_bonds = 0.30
     sim_config.custom_cash = 0.50
 
-    portfolioEngine.rebalance(h_port, sim_config)
-    portfolioEngine.rebalance(w_port, sim_config)
+    portfolioEngine.rebalance(h_port, sim_config, run_context=run_context)
+    portfolioEngine.rebalance(w_port, sim_config, run_context=run_context)
 
     np.testing.assert_allclose(
         h_port.total_value_post,

@@ -81,11 +81,7 @@ def install_market_path(
     years_to_simulate,
     equity_return=0.0,
 ):
-    def fake_generate_market_path(
-        sim_config,
-        requested_years,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, requested_years, sim_index=None, run_context=None):
         assert requested_years == years_to_simulate
 
         equity = np.zeros(requested_years + 1, dtype=float)

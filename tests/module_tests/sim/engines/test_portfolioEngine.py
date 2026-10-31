@@ -1,3 +1,5 @@
+
+from src.warpsimlab.sim.simulationObject import RunContext
 import types
 import pytest
 
@@ -157,7 +159,7 @@ def make_config(
     post_tax_cash_interest_yield=0.0,
     post_tax_equity_dividend_yield=0.0,
 ):
-    return types.SimpleNamespace(
+    config = types.SimpleNamespace(
         include_realestate=include_realestate,
         sim_initial_allocation_mode=sim_initial_allocation_mode,
         custom_stock=custom_stock,
@@ -174,16 +176,15 @@ def make_config(
         cs_std=cs_std,
         re_std=re_std,
         second_person_enabled=second_person_enabled,
-        household_eq_target=household_eq_target,
-        household_bd_target=household_bd_target,
-        household_cs_target=household_cs_target,
         post_tax_bond_interest_yield=post_tax_bond_interest_yield,
         post_tax_cash_interest_yield=post_tax_cash_interest_yield,
         post_tax_equity_dividend_yield=post_tax_equity_dividend_yield,
-        _post_tax_bond_interest_yield=post_tax_bond_interest_yield,
-        _post_tax_cash_interest_yield=post_tax_cash_interest_yield,
-        _post_tax_equity_dividend_yield=post_tax_equity_dividend_yield,
     )
+    run_context = RunContext(household_eq_target=household_eq_target, household_bd_target=household_bd_target,
+        household_cs_target=household_cs_target, post_tax_bond_interest_yield_normalized=post_tax_bond_interest_yield,
+        post_tax_cash_interest_yield_normalized=post_tax_cash_interest_yield,
+        post_tax_equity_dividend_yield_normalized=post_tax_equity_dividend_yield)
+    return config, run_context
 
 @pytest.fixture(autouse=True)
 def patch_portfolio_state(monkeypatch):
@@ -196,6 +197,7 @@ def test_initialize_portfolio_returns_inputs():
 
 
 def test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings():
+    run_context = RunContext()
     p = make_portfolio(
         equity_pre=60,
         bond_pre=30,
@@ -205,9 +207,9 @@ def test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings():
         cash_post=60,
         real_estate=999,
     )
-    cfg = make_config(include_realestate=True, sim_initial_allocation_mode="dont-rebalance")
+    cfg, run_context = make_config(include_realestate=True, sim_initial_allocation_mode="dont-rebalance")
 
-    ps = pe.create_sim_portfolio(p, cfg)
+    ps = pe.create_sim_portfolio(p, cfg, run_context=run_context)
 
     assert ps.eq_pre == 60
     assert ps.bd_pre == 30
@@ -227,6 +229,7 @@ def test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings():
 
 
 def test_create_sim_portfolio_maintain_current_allocation_applies_household_targets():
+    run_context = RunContext()
     p = make_portfolio(
         equity_pre=60,
         bond_pre=30,
@@ -235,14 +238,14 @@ def test_create_sim_portfolio_maintain_current_allocation_applies_household_targ
         bond_post=20,
         cash_post=60,
     )
-    cfg = make_config(
+    cfg, run_context = make_config(
         sim_initial_allocation_mode="maintain-current-allocation",
         household_eq_target=0.5,
         household_bd_target=0.3,
         household_cs_target=0.2,
     )
 
-    ps = pe.create_sim_portfolio(p, cfg)
+    ps = pe.create_sim_portfolio(p, cfg, run_context=run_context)
 
     assert ps.eq_pre == pytest.approx(50.0)
     assert ps.bd_pre == pytest.approx(30.0)
@@ -254,6 +257,7 @@ def test_create_sim_portfolio_maintain_current_allocation_applies_household_targ
 
 
 def test_create_sim_portfolio_preset_rebalance_70_20_10_applies_to_pre_and_post():
+    run_context = RunContext()
     p = make_portfolio(
         equity_pre=60,
         bond_pre=30,
@@ -262,9 +266,9 @@ def test_create_sim_portfolio_preset_rebalance_70_20_10_applies_to_pre_and_post(
         bond_post=20,
         cash_post=60,
     )
-    cfg = make_config(sim_initial_allocation_mode="70-20-10")
+    cfg, run_context = make_config(sim_initial_allocation_mode="70-20-10")
 
-    ps = pe.create_sim_portfolio(p, cfg)
+    ps = pe.create_sim_portfolio(p, cfg, run_context=run_context)
 
     assert ps.eq_pre == pytest.approx(70.0)
     assert ps.bd_pre == pytest.approx(20.0)
@@ -276,6 +280,7 @@ def test_create_sim_portfolio_preset_rebalance_70_20_10_applies_to_pre_and_post(
 
 
 def test_create_sim_portfolio_custom_rebalance_applies_to_pre_and_post():
+    run_context = RunContext()
     p = make_portfolio(
         equity_pre=60,
         bond_pre=30,
@@ -284,14 +289,9 @@ def test_create_sim_portfolio_custom_rebalance_applies_to_pre_and_post():
         bond_post=20,
         cash_post=60,
     )
-    cfg = make_config(
-        sim_initial_allocation_mode="custom",
-        custom_stock=0.5,
-        custom_bonds=0.3,
-        custom_cash=0.2,
-    )
+    cfg, run_context = make_config(sim_initial_allocation_mode='custom', custom_stock=0.5, custom_bonds=0.3, custom_cash=0.2)
 
-    ps = pe.create_sim_portfolio(p, cfg)
+    ps = pe.create_sim_portfolio(p, cfg, run_context=run_context)
 
     assert ps.eq_pre == pytest.approx(50.0)
     assert ps.bd_pre == pytest.approx(30.0)
@@ -303,6 +303,7 @@ def test_create_sim_portfolio_custom_rebalance_applies_to_pre_and_post():
 
 
 def test_compute_household_allocation_targets_single_person():
+    run_context = RunContext()
     husband = make_portfolio(
         equity_pre=60,
         bond_pre=20,
@@ -311,21 +312,22 @@ def test_compute_household_allocation_targets_single_person():
         bond_post=10,
         cash_post=10,
     )
-    cfg = make_config(second_person_enabled=False)
+    cfg, run_context = make_config(second_person_enabled=False)
 
-    pe.compute_household_allocation_targets(husband, None, cfg)
+    pe.compute_household_allocation_targets(husband, None, cfg, run_context=run_context)
 
     total_eq = 60 + 40
     total_bd = 20 + 10
     total_cs = 20 + 10
     total = total_eq + total_bd + total_cs
 
-    assert cfg.household_eq_target == pytest.approx(total_eq / total)
-    assert cfg.household_bd_target == pytest.approx(total_bd / total)
-    assert cfg.household_cs_target == pytest.approx(total_cs / total)
+    assert run_context.household_eq_target == pytest.approx(total_eq / total)
+    assert run_context.household_bd_target == pytest.approx(total_bd / total)
+    assert run_context.household_cs_target == pytest.approx(total_cs / total)
 
 
 def test_compute_household_allocation_targets_two_people():
+    run_context = RunContext()
     husband = make_portfolio(
         equity_pre=50,
         bond_pre=20,
@@ -342,40 +344,38 @@ def test_compute_household_allocation_targets_two_people():
         bond_post=20,
         cash_post=10,
     )
-    cfg = make_config(second_person_enabled=True)
+    cfg, run_context = make_config(second_person_enabled=True)
 
-    pe.compute_household_allocation_targets(husband, wife, cfg)
+    pe.compute_household_allocation_targets(husband, wife, cfg, run_context=run_context)
 
     total_eq = 50 + 20 + 30 + 20
     total_bd = 20 + 0 + 10 + 20
     total_cs = 10 + 0 + 10 + 10
     total = total_eq + total_bd + total_cs
 
-    assert cfg.household_eq_target == pytest.approx(total_eq / total)
-    assert cfg.household_bd_target == pytest.approx(total_bd / total)
-    assert cfg.household_cs_target == pytest.approx(total_cs / total)
+    assert run_context.household_eq_target == pytest.approx(total_eq / total)
+    assert run_context.household_bd_target == pytest.approx(total_bd / total)
+    assert run_context.household_cs_target == pytest.approx(total_cs / total)
 
 
 def test_compute_household_allocation_targets_empty_defaults_to_thirds():
+    run_context = RunContext()
     husband = make_portfolio()
-    cfg = make_config(second_person_enabled=False)
+    cfg, run_context = make_config(second_person_enabled=False)
 
-    pe.compute_household_allocation_targets(husband, None, cfg)
+    pe.compute_household_allocation_targets(husband, None, cfg, run_context=run_context)
 
-    assert cfg.household_eq_target == pytest.approx(1 / 3)
-    assert cfg.household_bd_target == pytest.approx(1 / 3)
-    assert cfg.household_cs_target == pytest.approx(1 / 3)
+    assert run_context.household_eq_target == pytest.approx(1 / 3)
+    assert run_context.household_bd_target == pytest.approx(1 / 3)
+    assert run_context.household_cs_target == pytest.approx(1 / 3)
 
 
 def test_estimate_post_tax_income_components_uses_post_tax_yields():
+    run_context = RunContext()
     ps = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=1000, bd_post=2000, cs_post=500)
-    cfg = make_config(
-        post_tax_bond_interest_yield=0.05,
-        post_tax_cash_interest_yield=0.02,
-        post_tax_equity_dividend_yield=0.03,
-    )
+    cfg, run_context = make_config(post_tax_bond_interest_yield=0.05, post_tax_cash_interest_yield=0.02, post_tax_equity_dividend_yield=0.03)
 
-    out = pe.estimate_post_tax_income_components(ps, cfg)
+    out = pe.estimate_post_tax_income_components(ps, cfg, run_context=run_context)
 
     assert out["bond_interest"] == pytest.approx(100.0)
     assert out["cash_interest"] == pytest.approx(10.0)
@@ -386,6 +386,7 @@ def test_estimate_post_tax_income_components_uses_post_tax_yields():
 
 
 def test_estimate_household_post_tax_income_components_two_people():
+    run_context = RunContext()
     h = DummyPortfolioState(
         eq_pre=0,
         bd_pre=0,
@@ -402,19 +403,10 @@ def test_estimate_household_post_tax_income_components_two_people():
         bd_post=500,
         cs_post=500,
     )
-    cfg = make_config(
-        second_person_enabled=True,
-        post_tax_equity_dividend_yield=0.03,
-    )
+    cfg, run_context = make_config(second_person_enabled=True, post_tax_equity_dividend_yield=0.03)
 
     bond_interest, cash_interest, qualified_equity_distributions, total, h_total, w_total = (
-        pe.estimate_household_post_tax_income_components(
-            h,
-            w,
-            cfg,
-            bond_return=0.04,
-            cash_return=0.02,
-        )
+        pe.estimate_household_post_tax_income_components(h, w, cfg, bond_return=0.04, cash_return=0.02, run_context=run_context)
     )
 
     assert bond_interest == pytest.approx(40.0 + 20.0)
@@ -474,7 +466,7 @@ def test_apply_returns_deterministic_branch_applies_means_to_all_buckets_and_rea
         cs_post=100,
         re_post=100,
     )
-    cfg = make_config(
+    cfg, run_context = make_config(
         results_mode="not-monte-carlo",
         sim_type="portfolio_sim",
         eq_mean=0.10,
@@ -513,7 +505,7 @@ def test_apply_returns_clamps_to_zero_when_negative():
         cs_post=10,
         re_post=10,
     )
-    cfg = make_config(
+    cfg, run_context = make_config(
         results_mode="not-monte-carlo",
         sim_type="portfolio_sim",
         eq_mean=-2.0,
@@ -552,8 +544,9 @@ def test_apply_fund_expenses_reduces_all_components_and_returns_removed_amount()
 
 
 def test_rebalance_dont_rebalance_uses_stored_ratios():
+    run_context = RunContext()
     ps = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=50, bd_post=25, cs_post=25)
-    cfg = make_config(sim_initial_allocation_mode="dont-rebalance")
+    cfg, run_context = make_config(sim_initial_allocation_mode="dont-rebalance")
 
     ps.eq_ratio_post = 0.2
     ps.bd_ratio_post = 0.3
@@ -567,7 +560,7 @@ def test_rebalance_dont_rebalance_uses_stored_ratios():
     ps.bd_post = 10
     ps.cs_post = 10
 
-    pe.rebalance(ps, cfg)
+    pe.rebalance(ps, cfg, run_context=run_context)
 
     assert ps.eq_post == pytest.approx(100 * 0.2)
     assert ps.bd_post == pytest.approx(100 * 0.3)
@@ -575,15 +568,16 @@ def test_rebalance_dont_rebalance_uses_stored_ratios():
 
 
 def test_rebalance_maintain_current_allocation_uses_household_targets():
+    run_context = RunContext()
     ps = DummyPortfolioState(eq_pre=40, bd_pre=30, cs_pre=30, eq_post=50, bd_post=25, cs_post=25)
-    cfg = make_config(
+    cfg, run_context = make_config(
         sim_initial_allocation_mode="maintain-current-allocation",
         household_eq_target=0.6,
         household_bd_target=0.2,
         household_cs_target=0.2,
     )
 
-    pe.rebalance(ps, cfg)
+    pe.rebalance(ps, cfg, run_context=run_context)
 
     assert ps.eq_pre == pytest.approx(100 * 0.6)
     assert ps.bd_pre == pytest.approx(100 * 0.2)
@@ -595,15 +589,11 @@ def test_rebalance_maintain_current_allocation_uses_household_targets():
 
 
 def test_rebalance_custom_uses_custom_ratios():
+    run_context = RunContext()
     ps = DummyPortfolioState(eq_pre=60, bd_pre=20, cs_pre=20, eq_post=10, bd_post=40, cs_post=50)
-    cfg = make_config(
-        sim_initial_allocation_mode="custom",
-        custom_stock=0.5,
-        custom_bonds=0.25,
-        custom_cash=0.25,
-    )
+    cfg, run_context = make_config(sim_initial_allocation_mode='custom', custom_stock=0.5, custom_bonds=0.25, custom_cash=0.25)
 
-    pe.rebalance(ps, cfg)
+    pe.rebalance(ps, cfg, run_context=run_context)
 
     assert ps.eq_pre == pytest.approx(100 * 0.5)
     assert ps.bd_pre == pytest.approx(100 * 0.25)
@@ -615,10 +605,11 @@ def test_rebalance_custom_uses_custom_ratios():
 
 
 def test_rebalance_preset_uses_preset_ratios():
+    run_context = RunContext()
     ps = DummyPortfolioState(eq_pre=90, bd_pre=5, cs_pre=5, eq_post=10, bd_post=10, cs_post=80)
-    cfg = make_config(sim_initial_allocation_mode="30-30-40")
+    cfg, run_context = make_config(sim_initial_allocation_mode="30-30-40")
 
-    pe.rebalance(ps, cfg)
+    pe.rebalance(ps, cfg, run_context=run_context)
 
     assert ps.eq_pre == pytest.approx(30.0)
     assert ps.bd_pre == pytest.approx(30.0)
@@ -702,7 +693,7 @@ def test_get_pre_tax_ratios_empty_returns_thirds():
 
 
 def test_create_empty_sim_portfolio_returns_zeros():
-    cfg = make_config(include_realestate=True)
+    cfg, run_context = make_config(include_realestate=True)
 
     ps = pe.create_empty_sim_portfolio(cfg)
 
@@ -718,7 +709,7 @@ def test_create_empty_sim_portfolio_returns_zeros():
 def test_deduct_post_tax_amount_single_person_proportional():
     h = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=50, bd_post=30, cs_post=20)
     w = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=0, bd_post=0, cs_post=0)
-    cfg = make_config(second_person_enabled=False)
+    cfg, run_context = make_config(second_person_enabled=False)
 
     deducted = pe.deduct_post_tax_amount(h, w, amount=40, sim_config=cfg)
 
@@ -731,7 +722,7 @@ def test_deduct_post_tax_amount_single_person_proportional():
 def test_deduct_post_tax_amount_two_people_splits_by_household_post_tax():
     h = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=60, bd_post=20, cs_post=20)
     w = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=20, bd_post=20, cs_post=10)
-    cfg = make_config(second_person_enabled=True)
+    cfg, run_context = make_config(second_person_enabled=True)
 
     deducted = pe.deduct_post_tax_amount(h, w, amount=60, sim_config=cfg)
 
@@ -743,7 +734,7 @@ def test_deduct_post_tax_amount_two_people_splits_by_household_post_tax():
 def test_deduct_post_tax_amount_cannot_exceed_available():
     h = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=10, bd_post=0, cs_post=0)
     w = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=0, bd_post=0, cs_post=0)
-    cfg = make_config(second_person_enabled=False)
+    cfg, run_context = make_config(second_person_enabled=False)
 
     deducted = pe.deduct_post_tax_amount(h, w, amount=50, sim_config=cfg)
 

@@ -81,7 +81,9 @@ def test_irmaa_rows_milestones_and_reference_tiers():
 def test_pipeline_restores_shortfall_flag(monkeypatch, scenario_builders, fail):
     config = scenario_builders.make_config(calculate_simulated_shortfall_rate=True)
     def pipeline(*args, **kwargs):
-        assert config.calculate_simulated_shortfall_rate is False
+        assert args[5] is not config
+        assert args[5].calculate_simulated_shortfall_rate is False
+        assert config.calculate_simulated_shortfall_rate is True
         assert kwargs == {"force_num_sims": 1}
         if fail:
             raise RuntimeError("pipeline failed")

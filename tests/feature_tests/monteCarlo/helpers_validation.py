@@ -1,10 +1,12 @@
+
+from src.warpsimlab.sim.simulationObject import RunContext
 # tests/helpers_validation.py
 
 from types import SimpleNamespace
 
 import numpy as np
 
-from src.warpsimlab.sim.simulationObject import Simulation
+from src.warpsimlab.sim.simulationObject import SimulationConfig
 from src.warpsimlab.sim.engines import monteCarloEngine
 
 
@@ -13,12 +15,12 @@ ASSET_ORDER = ("eq", "bd", "cs", "re")
 
 def make_sim_config(**overrides):
     """
-    Build a Simulation config with decimal return assumptions.
+    Build a SimulationConfig config with decimal return assumptions.
     Example:
       0.07 == 7%
       0.15 == 15% std dev
     """
-    cfg = Simulation(
+    cfg = SimulationConfig(
         start_year=2025,
         years_to_simulate=30,
         inflation_rate=0.02,
@@ -65,7 +67,7 @@ def make_sim_config(**overrides):
         overlay_retirement_age=False,
         use_snapshot_annotations=False,
         user_annotation_strings=[],
-        root=None,
+        
     )
 
     for key, value in overrides.items():
@@ -113,13 +115,14 @@ def sample_many_return_vectors(sim_config, sample_size, seed=12345):
     Return shape: (sample_size, 4)
     Asset order: [equity, bonds, cash, real_estate]
     """
+    run_context = RunContext()
     if sim_config.risk_analysis_mode != "monte_carlo":
         raise ValueError(f"Unsupported sampling mode: {sim_config.risk_analysis_mode}")
-    monteCarloEngine.prepare_market_path_sampling(sim_config)
-    sim_config._mc_rng = np.random.default_rng(int(seed))
+    monteCarloEngine.prepare_market_path_sampling(sim_config, run_context=run_context)
+    run_context.mc_rng = np.random.default_rng(int(seed))
     # One long path exercises the production sampler's vectorized batch rather
     # than paying Python/path-allocation overhead for each independent year.
-    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate=sample_size)
+    path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate=sample_size, run_context=run_context)
     return np.column_stack([path[asset][1:] for asset in ASSET_ORDER])
 
 

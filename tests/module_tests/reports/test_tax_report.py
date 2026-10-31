@@ -387,7 +387,7 @@ def test_build_tax_plot_assets_calls_plot_helpers(tmp_path, monkeypatch):
 
     calls = []
 
-    def fake_plot(output_folder, filename, rows):
+    def fake_plot(output_folder, filename, rows, *, root=None):
         calls.append((output_folder, filename, rows))
         return str(tmp_path / filename)
 

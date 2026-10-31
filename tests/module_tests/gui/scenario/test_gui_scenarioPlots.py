@@ -1,3 +1,5 @@
+from tests.architectural_helpers import make_simulation
+
 from types import SimpleNamespace
 
 import numpy as np
@@ -89,7 +91,7 @@ def _make_result():
                 "qualified_equity_distributions": np.array([10, 10]),
             }, 
         },
-        "sim_config": SimpleNamespace(
+        "sim_config": make_simulation(
             sim_type="portfolio_sim",
             annotate_plots=True,
             use_snapshot_annotations=False,

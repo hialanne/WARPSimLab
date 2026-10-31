@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from src.warpsimlab.sim.simulationObject import Simulation
+from src.warpsimlab.sim.simulationObject import SimulationConfig
 
 
 def _base_args():
-    """Return a minimal argument set required to construct Simulation."""
+    """Return a minimal argument set required to construct SimulationConfig."""
     return dict(
         start_year=2025,
         years_to_simulate=5,
@@ -36,7 +36,7 @@ def _base_args():
 
 def test_simulation_assigns_core_attributes():
     args = _base_args()
-    sim = Simulation(**args)
+    sim = SimulationConfig(**args)
 
     assert sim.start_year == 2025
     assert sim.years_to_simulate == 5
@@ -48,7 +48,7 @@ def test_simulation_assigns_core_attributes():
 
 def test_simulation_assigns_plot_configuration():
     args = _base_args()
-    sim = Simulation(**args)
+    sim = SimulationConfig(**args)
 
     assert sim.inflation_mode == "nominal"
     assert sim.results_mode == "risk_analysis"
@@ -58,7 +58,7 @@ def test_simulation_assigns_plot_configuration():
 
 def test_simulation_assigns_tax_settings():
     args = _base_args()
-    sim = Simulation(**args)
+    sim = SimulationConfig(**args)
 
     assert sim.calculate_income_taxes is True
     assert sim.tax_filing_status == "married"
@@ -69,7 +69,7 @@ def test_simulation_assigns_tax_settings():
 
 def test_simulation_assigns_asset_parameters():
     args = _base_args()
-    sim = Simulation(**args)
+    sim = SimulationConfig(**args)
 
     assert sim.eq_mean == 7
     assert sim.bd_mean == 3
@@ -82,7 +82,7 @@ def test_simulation_assigns_asset_parameters():
 
 def test_simulation_overlay_flags_defaults():
     args = _base_args()
-    sim = Simulation(**args)
+    sim = SimulationConfig(**args)
 
     assert sim.overlay_tax_impacts is False
     assert sim.overlay_fund_expense_impacts is False
@@ -93,7 +93,7 @@ def test_simulation_overlay_flags_defaults():
 
 def test_simulation_annotation_defaults():
     args = _base_args()
-    sim = Simulation(**args)
+    sim = SimulationConfig(**args)
 
     assert sim.use_snapshot_annotations is False
     assert isinstance(sim.user_annotation_strings, list)
@@ -102,7 +102,7 @@ def test_simulation_annotation_defaults():
 def test_simulation_custom_asset_mix():
     args = _base_args()
 
-    sim = Simulation(
+    sim = SimulationConfig(
         **args,
         custom_stock=60,
         custom_bonds=30,
@@ -117,7 +117,7 @@ def test_simulation_custom_asset_mix():
 def test_simulation_real_estate_settings():
     args = _base_args()
 
-    sim = Simulation(
+    sim = SimulationConfig(
         **args,
         include_realestate=True,
         re_mean=4,
@@ -132,7 +132,7 @@ def test_simulation_real_estate_settings():
 def test_simulation_output_csv_configuration():
     args = _base_args()
 
-    sim = Simulation(
+    sim = SimulationConfig(
         **args,
         output_csv="Output",
         csv_output_dir="/tmp"

@@ -46,9 +46,10 @@ def test_pipeline_temporary_options_restored_on_success_and_failure(monkeypatch,
                                           report_options={"custom": True})
     before = vars(config).copy()
     def pipeline(*args, **kwargs):
-        assert args[-1] is config
-        assert config.include_realestate is True
-        assert config.calculate_simulated_shortfall_rate is False
+        assert args[-1] is not config
+        assert vars(config) == before
+        assert args[-1].include_realestate is True
+        assert args[-1].calculate_simulated_shortfall_rate is False
         assert kwargs == {"force_num_sims": 1}
         if fail:
             raise RuntimeError("pipeline failed")

@@ -83,16 +83,7 @@ def test_negative_operating_balance_scenario(monkeypatch):
         }
         return pipeline_payload
 
-    def fake_plot_operating_balance(
-        *,
-        years_to_simulate,
-        net_profit,
-        operating_balance,
-        portfolio_value,
-        husband,
-        wife,
-        sim_config,
-    ):
+    def fake_plot_operating_balance(*, years_to_simulate, net_profit, operating_balance, portfolio_value, husband, wife, sim_config, root=None):
         captured["plot_call"] = {
             "years_to_simulate": np.array(years_to_simulate, dtype=float),
             "net_profit": np.array(net_profit, dtype=float),

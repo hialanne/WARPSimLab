@@ -16,17 +16,17 @@ def test_center_uses_main_window_position_and_both_sizes():
     window.winfo_width.return_value = 400
     window.winfo_height.return_value = 300
     fig = SimpleNamespace(canvas=SimpleNamespace(manager=SimpleNamespace(window=window)))
-    center_plot_window_on_main(fig, SimpleNamespace(root=root))
+    center_plot_window_on_main(fig, root)
     window.geometry.assert_called_once_with("+400+450")
 
 
 @pytest.mark.parametrize("error", [tk.TclError("closed"), AttributeError("no geometry")])
 def test_missing_or_destroyed_window_is_safe(error):
     fig = SimpleNamespace(canvas=SimpleNamespace(manager=None))
-    center_plot_window_on_main(fig, SimpleNamespace())
+    center_plot_window_on_main(fig, None)
     root = Mock()
     root.update_idletasks.side_effect = error
     window = Mock()
     fig.canvas.manager = SimpleNamespace(window=window)
-    center_plot_window_on_main(fig, SimpleNamespace(root=root))
+    center_plot_window_on_main(fig, root)
     window.geometry.assert_not_called()

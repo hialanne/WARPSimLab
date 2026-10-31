@@ -88,7 +88,7 @@ def test_run_sim_income_calls_plotter(monkeypatch, scenario_builders):
 
     monkeypatch.setattr("src.warpsimlab.sim.run_sim_income.run_pipeline", lambda *a, **k: _fake_pipeline_output())
 
-    def fake_plot(years, net_profit, net_income, breakdown, taxes, expenses, husband, wife, sim_config):
+    def fake_plot(years, net_profit, net_income, breakdown, taxes, expenses, husband, wife, sim_config, *, root=None):
         captured["years"] = years
         captured["net_profit"] = net_profit
         captured["net_income"] = net_income
@@ -124,7 +124,7 @@ def test_run_sim_operating_balance_builds_cumulative_series(monkeypatch, scenari
 
     monkeypatch.setattr("src.warpsimlab.sim.run_sim_operating_balance.run_pipeline", lambda *a, **k: _fake_pipeline_output())
 
-    def fake_plot(years_to_simulate, net_profit, operating_balance, portfolio_value, husband, wife, sim_config):
+    def fake_plot(years_to_simulate, net_profit, operating_balance, portfolio_value, husband, wife, sim_config, *, root=None):
         captured["years_to_simulate"] = years_to_simulate
         captured["net_profit"] = net_profit
         captured["operating_balance"] = operating_balance
@@ -159,7 +159,7 @@ def test_run_sim_summary_returns_summary_results_and_constructs_dialog(monkeypat
     monkeypatch.setattr("src.warpsimlab.sim.run_sim_summary.run_pipeline", lambda *a, **k: pipeline_output)
 
     class FakeDialog:
-        def __init__(self, summary_results, husband, wife, sim_config, title="Simulation Summary"):
+        def __init__(self, summary_results, husband, wife, sim_config, title='Simulation Summary', *, root=None):
             captured["summary_results"] = summary_results
             captured["title"] = title
 
@@ -189,7 +189,7 @@ def test_run_sim_portfolio_caps_num_sims_and_calls_plotter(monkeypatch, scenario
 
     monkeypatch.setattr("src.warpsimlab.sim.run_sim_portfolio.run_pipeline", lambda *a, **k: _fake_pipeline_output())
 
-    def fake_plot(years_list, simulation_data, sim_config, annotate_plots, sim_rebalance_string, husband, wife):
+    def fake_plot(years_list, simulation_data, sim_config, annotate_plots, sim_rebalance_string, husband, wife, *, root=None):
         captured["years_list"] = years_list
         captured["simulation_data"] = simulation_data
         captured["sim_rebalance_string"] = sim_rebalance_string

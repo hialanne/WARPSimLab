@@ -2,6 +2,8 @@
 
 from types import SimpleNamespace
 
+from src.warpsimlab.sim.simulationObject import SimulationConfig
+
 import pytest
 
 
@@ -194,13 +196,9 @@ def make_config(**overrides):
         show_simulated_shortfall_rate=False,
         use_snapshot_annotations=False,
         user_annotation_strings=[],
-        root=None,
-        household_eq_target=None,
-        household_bd_target=None,
-        household_cs_target=None,
     )
     base.update(overrides)
-    return SimpleNamespace(**base)
+    return SimulationConfig(**base)
 
 
 @pytest.fixture

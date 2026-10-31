@@ -50,11 +50,7 @@ def install_market_path(
     """
     Replace random market-path generation with one known annual return.
     """
-    def fake_generate_market_path(
-        sim_config,
-        years_to_simulate,
-        sim_index=None,
-    ):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         assert years_to_simulate == 1
 
         return {

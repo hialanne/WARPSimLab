@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from src.warpsimlab.sim import run_sim_risk_reports as mod
+from src.warpsimlab.sim.simulationObject import RunContext
 
 
 def test_failure_statistics_counts_first_depletion_even_after_recovery():
@@ -45,20 +46,26 @@ def test_risk_runner_temporary_modes_restored(monkeypatch, scenario_builders, ru
     config = scenario_builders.make_config(include_realestate=True, calculate_simulated_shortfall_rate=True,
                                           show_simulated_shortfall_rate=True, sim_type="income_sim")
     before = vars(config).copy()
+    run_context = RunContext(mc_seed=12345)
     def pipeline(*args, **kwargs):
-        assert config.results_mode == "risk_analysis"
-        assert config.sim_type == "portfolio_sim"
-        assert config.risk_analysis_mode == mode
-        assert config.include_realestate is False
-        assert config.calculate_simulated_shortfall_rate is False
-        assert config.show_simulated_shortfall_rate is False
-        assert kwargs == {"force_num_sims": None}
+        actual_config = args[5]
+        assert actual_config is not config
+        assert vars(config) == before
+        assert actual_config.results_mode == "risk_analysis"
+        assert actual_config.sim_type == "portfolio_sim"
+        assert actual_config.risk_analysis_mode == mode
+        assert actual_config.include_realestate is False
+        assert actual_config.calculate_simulated_shortfall_rate is False
+        assert actual_config.show_simulated_shortfall_rate is False
+        assert kwargs == {"force_num_sims": None, "return_run_context": True}
         if failure_stage == "pipeline":
             raise RuntimeError("pipeline failed")
-        return {"pipeline": True}
+        return {"pipeline": True}, run_context
     def generate(result, actual_config, husband, wife, **kwargs):
         assert result == {"pipeline": True}
-        assert actual_config is config
+        assert actual_config is not config
+        assert vars(config) == before
+        assert kwargs["run_context"] is run_context
         assert kwargs["risk_analysis_mode"] == mode
         if failure_stage == "report":
             raise RuntimeError("report failed")

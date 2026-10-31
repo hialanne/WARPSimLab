@@ -1,5 +1,7 @@
 """Full-run reproducibility and standalone-versus-batch financial isolation."""
 
+from src.warpsimlab.sim.simulationObject import RunContext
+
 import copy
 
 import numpy as np
@@ -48,11 +50,12 @@ def test_complete_seeded_runs_reproduce_after_reuse_and_intervening_seed(
 def test_captured_market_paths_match_independent_real_financial_execution(
     monkeypatch, expense_mode, correlated,
 ):
+    run_context = RunContext()
     paths = []
     original_generate = monteCarloEngine.generate_market_path
 
-    def capture(config, years_to_simulate, sim_index=None):
-        path = original_generate(config, years_to_simulate, sim_index=sim_index)
+    def capture(config, years_to_simulate, sim_index=None, run_context=None):
+        path = original_generate(config, years_to_simulate, sim_index=sim_index, run_context=run_context)
         paths.append(copy.deepcopy(path))
         return path
 
@@ -69,7 +72,7 @@ def test_captured_market_paths_match_independent_real_financial_execution(
     # financial engine remain real. This asserts no RNG path-order guarantee.
     # Reuse the batch's config in reverse path order to exercise stale caches.
     for index in [2, 1, 0]:
-        def replay(config, years_to_simulate, sim_index=None):
+        def replay(config, years_to_simulate, sim_index=None, run_context=None):
             return copy.deepcopy(paths[index])
 
         monkeypatch.setattr(monteCarloEngine, "generate_market_path", replay)

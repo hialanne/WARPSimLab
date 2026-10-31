@@ -1,3 +1,7 @@
+
+from src.warpsimlab.sim.simulationObject import PathContext
+
+from src.warpsimlab.sim.simulationObject import RunContext
 import numpy as np
 import pytest
 
@@ -10,7 +14,7 @@ from src.warpsimlab.sim.engines import portfolioEngine
 from src.warpsimlab.sim.engines import rothEngine
 from src.warpsimlab.sim.engines import taxEngine
 from src.warpsimlab.sim.run_sim_core import simulate_yearly_portfolios
-from src.warpsimlab.sim.simulationObject import Simulation
+from src.warpsimlab.sim.simulationObject import SimulationConfig
 
 
 def make_person(*, age=40, retire_age=65, income=0.0):
@@ -95,7 +99,7 @@ def make_config(
     initial_allocation_mode="dont-rebalance",
     roth_flows=None,
 ):
-    return Simulation(
+    return SimulationConfig(
         start_year=2026,
         years_to_simulate=1,
         inflation_rate=0.0,
@@ -145,12 +149,12 @@ def make_config(
         use_snapshot_annotations=False,
         user_annotation_strings=[],
         roth_flows=[] if roth_flows is None else roth_flows,
-        root=None,
+        
     )
 
 
 def install_market_path(monkeypatch, *, equity_return=0.0, bond_return=0.0, cash_return=0.0):
-    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None):
+    def fake_generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
         assert years_to_simulate == 1
         return {
             "eq": np.array([0.0, equity_return], dtype=float),
@@ -230,6 +234,8 @@ def test_expense_shortfall_reduces_ira_and_workplace_roth_contributions_proporti
 
 
 def test_couple_roth_shortfall_preserves_owner_and_flow_type_allocation():
+    path_context = PathContext()
+    run_context = RunContext()
     config = make_config(
         second_person_enabled=True,
         roth_flows=[
@@ -258,7 +264,7 @@ def test_couple_roth_shortfall_preserves_owner_and_flow_type_allocation():
     husband = make_person(age=40)
     wife = make_person(age=40)
 
-    rothEngine.initialize_roth_engine_for_simulation(config, husband, wife)
+    rothEngine.initialize_roth_engine_for_simulation(config, husband, wife, run_context=run_context, path_context=path_context)
 
     requested = rothEngine.prepare_requested_roth_flows(
         curr_husband_age=41,
@@ -269,21 +275,14 @@ def test_couple_roth_shortfall_preserves_owner_and_flow_type_allocation():
         second_person_enabled=True,
         husband_alive=True,
         wife_alive=True,
-        sim_config=config,
-    )
+        sim_config=config, path_context=path_context)
     
     resolved = rothEngine.resolve_contribution_shortfall(
         requested_flows=requested,
         uncovered_amount=4_000.0,
     )
-    husband_portfolio = portfolioEngine.create_sim_portfolio(
-        make_portfolio(),
-        config,
-    )
-    wife_portfolio = portfolioEngine.create_sim_portfolio(
-        make_portfolio(),
-        config,
-    )
+    husband_portfolio = portfolioEngine.create_sim_portfolio(make_portfolio(), config, run_context=run_context)
+    wife_portfolio = portfolioEngine.create_sim_portfolio(make_portfolio(), config, run_context=run_context)
 
     deposited = rothEngine.deposit_funded_roth_contributions(
         husband_portfolio=husband_portfolio,
@@ -352,7 +351,7 @@ def test_rmd_and_roth_conversion_are_both_included_once_in_ordinary_income(
     )
     ordinary_income_calls = []
 
-    def capture_tax_split(*, ordinary_income, qualified_equity_distributions, year_cache, sim_config):
+    def capture_tax_split(*, ordinary_income, qualified_equity_distributions, year_cache, sim_config, run_context=None):
         ordinary_income_calls.append(ordinary_income)
         return 0.0, 0.0, 0.0, 0.0, 0.0
 
@@ -502,6 +501,7 @@ def test_emergency_pre_tax_tax_delta_reconciles_income_tax_and_remaining_assets(
 
 
 def test_hsa_returns_fund_expenses_and_rebalance_preserve_bucket_accounting():
+    run_context = RunContext()
     portfolio = PortfolioState(
         eq_pre=0.0,
         bd_pre=0.0,
@@ -526,7 +526,7 @@ def test_hsa_returns_fund_expenses_and_rebalance_preserve_bucket_accounting():
         fund_expense=0.01,
     )
     value_after_returns_and_expenses = portfolio.total_value_hsa
-    portfolioEngine.rebalance(portfolio, config)
+    portfolioEngine.rebalance(portfolio, config, run_context=run_context)
 
     assert fund_expenses == pytest.approx(3.15)
     assert value_after_returns_and_expenses == pytest.approx(311.85)
