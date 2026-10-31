@@ -1,3 +1,5 @@
+from src.warpsimlab.sim.simulationObject import RunContext, PathContext
+
 # rothEngine.py
 
 from . import portfolioEngine, diagnosticEngine
@@ -13,10 +15,7 @@ ROTH_FLOW_TYPES = {
 }
 
 
-def _build_percent_of_inflation_factors(
-    sim_config,
-    inflation_adjustment_pct,
-):
+def _build_percent_of_inflation_factors(sim_config, inflation_adjustment_pct, run_context=None, path_context=None):
     """
     Build annual adjustment factors using a selected percentage of inflation.
 
@@ -25,6 +24,10 @@ def _build_percent_of_inflation_factors(
         100.0 -> full inflation adjustment
         50.0  -> half of annual inflation
     """
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
     years = sim_config.years_to_simulate + 1
     factors = [1.0] * years
 
@@ -40,26 +43,16 @@ def _build_percent_of_inflation_factors(
             "risk_analysis_mode",
             "monte_carlo",
         ) == "historical_windows"
-        and getattr(
-            sim_config,
-            "_active_historical_sim_index",
-            None,
-        ) is not None
-        and getattr(
-            sim_config,
-            "_hist_inflation",
-            None,
-        ) is not None
+        and getattr(path_context, 'active_historical_sim_index', None) is not None
+        and getattr(run_context, 'hist_inflation', None) is not None
     )
 
     if historical_mode_active:
-        sim_index = sim_config._active_historical_sim_index
-        start_idx = int(
-            sim_config._hist_window_start_indices[sim_index]
-        )
+        sim_index = path_context.active_historical_sim_index
+        start_idx = int(run_context.hist_window_start_indices[sim_index])
 
         for year in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + year - 1]) + sim_config.inflation_delta
+            annual_inflation = float(run_context.hist_inflation[start_idx + year - 1]) + sim_config.inflation_delta
             factors[year] = factors[year - 1] * (1.0 + annual_inflation * adjustment_fraction)
 
         return factors
@@ -77,15 +70,16 @@ def _build_percent_of_inflation_factors(
     return factors
 
 
-def initialize_roth_engine_for_simulation(sim_config, husband, wife):
-
+def initialize_roth_engine_for_simulation(sim_config, husband, wife, run_context=None, path_context=None):
+    """Build independent annual Roth schedules in the supplied or new PathContext."""
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
     years = sim_config.years_to_simulate + 1
 
-    sim_config._roth_inflation_factor_cache = {}
-    sim_config._roth_scheduled_flows = [
-        _empty_flow_totals()
-        for _ in range(years)
-    ]
+    path_context.roth_inflation_factor_cache = {}
+    path_context.roth_scheduled_flows = [_empty_flow_totals() for _ in range(years)]
 
     for flow in sim_config.roth_flows:
         if not flow.get("enabled", True):
@@ -128,19 +122,12 @@ def initialize_roth_engine_for_simulation(sim_config, husband, wife):
             )
         )
 
-        factors = sim_config._roth_inflation_factor_cache.get(
-            inflation_adjustment_pct
-        )
+        factors = path_context.roth_inflation_factor_cache.get(inflation_adjustment_pct)
 
         if factors is None:
-            factors = _build_percent_of_inflation_factors(
-                sim_config,
-                inflation_adjustment_pct,
-            )
+            factors = _build_percent_of_inflation_factors(sim_config, inflation_adjustment_pct, run_context=run_context, path_context=path_context)
 
-            sim_config._roth_inflation_factor_cache[
-                inflation_adjustment_pct
-            ] = factors
+            path_context.roth_inflation_factor_cache[inflation_adjustment_pct] = factors
 
         if owner == "wife":
             owner_age = wife.age
@@ -163,10 +150,11 @@ def initialize_roth_engine_for_simulation(sim_config, husband, wife):
         for year in range(first_year, last_year + 1):
             adjusted_amount = amount * factors[year]
 
-            scheduled = sim_config._roth_scheduled_flows[year]
+            scheduled = path_context.roth_scheduled_flows[year]
 
             scheduled[flow_type][owner] += adjusted_amount
             scheduled[flow_type]["total"] += adjusted_amount
+    return path_context
 
 
 def _empty_flow_totals():
@@ -273,8 +261,7 @@ def prepare_requested_roth_flows(
     second_person_enabled,
     husband_alive,
     wife_alive,
-    sim_config,
-):
+    sim_config, path_context=None):
     """
     Build the requested Roth flows for one simulation year.
 
@@ -285,7 +272,9 @@ def prepare_requested_roth_flows(
     This function does not mutate portfolios.
     """
 
-    scheduled_flows = sim_config._roth_scheduled_flows[year]
+    if path_context is None:
+        path_context = PathContext()
+    scheduled_flows = path_context.roth_scheduled_flows[year]
 
     requested_husband_roth_ira = 0.0
     requested_husband_roth_workplace = 0.0

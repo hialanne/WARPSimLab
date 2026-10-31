@@ -1,10 +1,16 @@
+from src.warpsimlab.sim.simulationObject import RunContext, PathContext
+
 # expenseEngine.py
 
 # ----------------------------
 # Expense Functions
 # ----------------------------
 
-def _build_expense_inflation_factors(sim_config):
+def _build_expense_inflation_factors(sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
     years = sim_config.years_to_simulate + 1
     factors = [1.0] * years
 
@@ -12,16 +18,14 @@ def _build_expense_inflation_factors(sim_config):
         sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "risk_analysis_mode", "monte_carlo") == "historical_windows"
-        and getattr(sim_config, "_active_historical_sim_index", None) is not None
-        and getattr(sim_config, "_hist_inflation", None) is not None
+        and getattr(path_context, 'active_historical_sim_index', None) is not None
+        and getattr(run_context, 'hist_inflation', None) is not None
     )
 
     if historical_mode_active:
-        start_idx = int(
-            sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
-        )
+        start_idx = int(run_context.hist_window_start_indices[path_context.active_historical_sim_index])
         for y in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
+            annual_inflation = float(run_context.hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
             factors[y] = factors[y - 1] * (1.0 + annual_inflation)
         return factors
 
@@ -32,23 +36,32 @@ def _build_expense_inflation_factors(sim_config):
     return factors
 
 
-def initialize_expense_engine_for_simulation(sim_config):
+def initialize_expense_engine_for_simulation(sim_config, run_context=None, path_context=None):
     """
     Precompute inflation factors for expenses.
 
     Stores:
-        sim_config._expense_inflation_factors
+        path_context.expense_inflation_factors
     """
-    sim_config._expense_inflation_factors = _build_expense_inflation_factors(sim_config)
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    path_context.expense_inflation_factors = _build_expense_inflation_factors(sim_config, run_context=run_context, path_context=path_context)
+    return path_context
 
 
-def calculate_expense_breakdown(expenses, year, sim_config):
-    if not hasattr(sim_config, "_expense_inflation_factors"):
-        initialize_expense_engine_for_simulation(sim_config)
+def calculate_expense_breakdown(expenses, year, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if path_context.expense_inflation_factors is None:
+        initialize_expense_engine_for_simulation(sim_config, run_context=run_context, path_context=path_context)
 
     current_year = year + sim_config.start_year
     base = expenses.get_expense_breakdown_for_year(current_year)
-    factor = sim_config.scenario_expense_multiplier * sim_config._expense_inflation_factors[year]
+    factor = sim_config.scenario_expense_multiplier * path_context.expense_inflation_factors[year]
 
     return {
         "total": base["total"] * factor,
@@ -57,5 +70,9 @@ def calculate_expense_breakdown(expenses, year, sim_config):
     }
 
 
-def calculate_expenses(expenses, year, sim_config):
-    return calculate_expense_breakdown(expenses, year, sim_config)["total"]
+def calculate_expenses(expenses, year, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    return calculate_expense_breakdown(expenses, year, sim_config, run_context=run_context, path_context=path_context)["total"]

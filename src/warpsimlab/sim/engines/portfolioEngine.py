@@ -1,3 +1,5 @@
+from src.warpsimlab.sim.simulationObject import RunContext
+
 # portfolioEngine.py
 
 import numpy as np
@@ -49,13 +51,15 @@ def _rebalance_three_asset_bucket(port, eq_attr, bd_attr, cs_attr, eq_ratio, bd_
     setattr(port, cs_attr, total * cs_ratio)
 
 
-def compute_household_allocation_targets(husband_portfolio, wife_portfolio, sim_config):
+def compute_household_allocation_targets(husband_portfolio, wife_portfolio, sim_config, run_context=None):
     """
     Computes household stock/bond/cash allocation from all investable assets:
     pre-tax, post-tax, Roth, and HSA.
     Excludes real estate.
     """
 
+    if run_context is None:
+        run_context = RunContext()
     h_eq = (
         husband_portfolio.equity_pre
         + husband_portfolio.equity_post
@@ -104,13 +108,14 @@ def compute_household_allocation_targets(husband_portfolio, wife_portfolio, sim_
     total = total_eq + total_bd + total_cs
 
     if total > 0:
-        sim_config.household_eq_target = total_eq / total
-        sim_config.household_bd_target = total_bd / total
-        sim_config.household_cs_target = total_cs / total
+        run_context.household_eq_target = total_eq / total
+        run_context.household_bd_target = total_bd / total
+        run_context.household_cs_target = total_cs / total
     else:
-        sim_config.household_eq_target = 1 / 3
-        sim_config.household_bd_target = 1 / 3
-        sim_config.household_cs_target = 1 / 3
+        run_context.household_eq_target = 1 / 3
+        run_context.household_bd_target = 1 / 3
+        run_context.household_cs_target = 1 / 3
+    return run_context
 
 
 def _dbg_ps(ps, name):
@@ -140,7 +145,7 @@ def initialize_portfolio(equity_pre, bond_pre, cash_pre, equity_post, bond_post,
     return equity_pre, bond_pre, cash_pre, equity_post, bond_post, cash_post
 
 
-def create_sim_portfolio(portfolio, sim_config=None):
+def create_sim_portfolio(portfolio, sim_config=None, run_context=None):
     """
     Initializes a PortfolioState from a Portfolio object and applies rebalancing.
 
@@ -155,6 +160,8 @@ def create_sim_portfolio(portfolio, sim_config=None):
     - included in net worth
     """
 
+    if run_context is None:
+        run_context = RunContext()
     sim_portfolio = PortfolioState(
         eq_pre=portfolio.equity_pre,
         bd_pre=portfolio.bond_pre,
@@ -197,9 +204,9 @@ def create_sim_portfolio(portfolio, sim_config=None):
     }
 
     if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
-        eq_ratio = getattr(sim_config, "household_eq_target", 1 / 3)
-        bd_ratio = getattr(sim_config, "household_bd_target", 1 / 3)
-        cs_ratio = getattr(sim_config, "household_cs_target", 1 / 3)
+        eq_ratio = getattr(run_context, 'household_eq_target', 1 / 3)
+        bd_ratio = getattr(run_context, 'household_bd_target', 1 / 3)
+        cs_ratio = getattr(run_context, 'household_cs_target', 1 / 3)
 
     elif sim_config.sim_initial_allocation_mode == "custom":
         eq_ratio = sim_config.custom_stock
@@ -234,10 +241,12 @@ def create_sim_portfolio(portfolio, sim_config=None):
     return sim_portfolio
 
 
-def estimate_post_tax_income_components(sim_portfolio, sim_config):
-    equity_div_yield = sim_config._post_tax_equity_dividend_yield
-    bond_yield = sim_config._post_tax_bond_interest_yield
-    cash_yield = sim_config._post_tax_cash_interest_yield
+def estimate_post_tax_income_components(sim_portfolio, sim_config, run_context=None):
+    if run_context is None:
+        run_context = RunContext()
+    equity_div_yield = run_context.post_tax_equity_dividend_yield_normalized
+    bond_yield = run_context.post_tax_bond_interest_yield_normalized
+    cash_yield = run_context.post_tax_cash_interest_yield_normalized
 
     eq_post = sim_portfolio.eq_post
     bd_post = sim_portfolio.bd_post
@@ -283,13 +292,7 @@ def apply_post_tax_income_components_to_income(income, post_tax_income, second_p
     return income
 
 
-def estimate_household_post_tax_income_components(
-    h_port,
-    w_port,
-    sim_config,
-    bond_return,
-    cash_return,
-):
+def estimate_household_post_tax_income_components(h_port, w_port, sim_config, bond_return, cash_return, run_context=None):
     """
     Estimate taxable-account income for the current simulation year.
 
@@ -302,7 +305,9 @@ def estimate_household_post_tax_income_components(
 
     Pre-tax, Roth, and HSA bond/cash returns remain inside their accounts.
     """
-    eq_yield = sim_config._post_tax_equity_dividend_yield
+    if run_context is None:
+        run_context = RunContext()
+    eq_yield = run_context.post_tax_equity_dividend_yield_normalized
 
     taxable_bond_return = max(0.0, float(bond_return))
     taxable_cash_return = max(0.0, float(cash_return))
@@ -507,16 +512,18 @@ def apply_fund_expenses(sim_portfolio, fund_expense):
         return 0.0
 
 
-def rebalance(sim_portfolio, sim_config):
+def rebalance(sim_portfolio, sim_config, run_context=None):
     """
     Rebalance all investable buckets:
     pre-tax, post-tax, Roth, and HSA.
     """
     
+    if run_context is None:
+        run_context = RunContext()
     if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
-        eq_ratio = sim_config.household_eq_target
-        bd_ratio = sim_config.household_bd_target
-        cs_ratio = sim_config.household_cs_target
+        eq_ratio = run_context.household_eq_target
+        bd_ratio = run_context.household_bd_target
+        cs_ratio = run_context.household_cs_target
 
         total = (
             sim_portfolio.eq_pre

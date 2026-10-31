@@ -252,39 +252,15 @@ def draw_yearly_income(
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f'{int(v):,}'))
 
 
-def plot_yearly_income(
-        years_to_simulate,
-        net_profit,
-        net_income,
-        breakdown,
-        taxes,
-        expenses,
-        husband,
-        wife,
-        sim_config
-    ):
+def plot_yearly_income(years_to_simulate, net_profit, net_income, breakdown, taxes, expenses, husband, wife, sim_config, *, root=None):
 
     fig, ax = plt.subplots(figsize=(12, 6))
 
-    draw_yearly_income(
-        ax,
-        years_to_simulate,
-        net_profit,
-        net_income,
-        breakdown,
-        taxes,
-        expenses,
-        husband,
-        wife,
-        sim_config
-    )
+    draw_yearly_income(ax, years_to_simulate, net_profit, net_income, breakdown, taxes, expenses, husband, wife, sim_config)
 
     plt.show(block=False)
 
-    center_plot_window_on_main(
-        fig,
-        sim_config,
-    )
+    center_plot_window_on_main(fig, root)
 
 
 

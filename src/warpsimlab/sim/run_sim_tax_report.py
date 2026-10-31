@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 # run_sim_tax_report.py
 
 from datetime import datetime
@@ -427,23 +429,13 @@ def build_tax_report_data_from_pipeline(
     expenses,
     sim_config,
 ):
-    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
+    original_config = sim_config
 
-    try:
-        sim_config.calculate_simulated_shortfall_rate = False
+    sim_config = replace(sim_config, calculate_simulated_shortfall_rate=False)
 
-        p = run_pipeline(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-            force_num_sims=1,
-        )
+    p = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=1)
 
-    finally:
-        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
+    sim_config = original_config
 
     results = p["summary_results"]
     irmaa_yearly_rows = _build_irmaa_yearly_rows(p["core"], husband, wife, sim_config)

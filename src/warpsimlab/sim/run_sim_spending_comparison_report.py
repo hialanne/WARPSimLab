@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 # run_sim_spending_comparison_report.py
 
 from datetime import datetime
@@ -157,102 +159,55 @@ def run_sim_spending_comparison_report(
     expenses,
     sim_config,
 ):
+    original_config = sim_config
     report_options = getattr(sim_config, "report_options", {})
     spending_percentages = report_options.get("spending_percentages", [])
 
-    original_subplot_mode = getattr(sim_config, "results_mode", None)
-    original_sim_type = getattr(sim_config, "sim_type", None)
-    original_monte_carlo_mode = getattr(sim_config, "risk_analysis_mode", None)
-    original_include_realestate = getattr(sim_config, "include_realestate", None)
-    original_show_simulated_shortfall_rate = getattr(sim_config, "show_simulated_shortfall_rate", None)
-    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
-    original_expense_multiplier = getattr(sim_config, "scenario_expense_multiplier", 1.0)
-    original_overlay_tax_impacts = getattr(sim_config, "overlay_tax_impacts", False)
-    original_overlay_fund_expense_impacts = getattr(sim_config, "overlay_fund_expense_impacts", False)
-    original_historical_window_stride = sim_config.historical_window_stride
 
     cases = []
     effective_years = None
 
-    try:
-        # Spending Comparison evaluates the investment portfolio.
-        # Real estate is excluded to match the existing portfolio risk analysis.
-        sim_config.include_realestate = False
+    # Spending Comparison evaluates the investment portfolio.
+    # Real estate is excluded to match the existing portfolio risk analysis.
+    sim_config = replace(sim_config, include_realestate=False)
 
-        # The report calculates depletion directly from the Historical Window run.
-        sim_config.show_simulated_shortfall_rate = False
-        sim_config.calculate_simulated_shortfall_rate = False
+    # The report calculates depletion directly from the Historical Window run.
+    sim_config = replace(sim_config, show_simulated_shortfall_rate=False, calculate_simulated_shortfall_rate=False)
 
-        # Prevent run_pipeline() from launching unrelated overlay simulations for every comparison case.
-        sim_config.overlay_tax_impacts = False
-        sim_config.overlay_fund_expense_impacts = False
+    # Prevent run_pipeline() from launching unrelated overlay simulations for every comparison case.
+    sim_config = replace(sim_config, overlay_tax_impacts=False, overlay_fund_expense_impacts=False)
 
-        for spending_percentage in spending_percentages:
-            sim_config.scenario_expense_multiplier = float(spending_percentage) / 100.0
+    for spending_percentage in spending_percentages:
+        sim_config = replace(sim_config, scenario_expense_multiplier=float(spending_percentage) / 100.0)
 
-            # -------------------------------------------------
-            # Deterministic projection
-            # -------------------------------------------------
+        # -------------------------------------------------
+        # Deterministic projection
+        # -------------------------------------------------
 
-            sim_config.results_mode = "fill"
-            sim_config.sim_type = "portfolio_sim"
+        sim_config = replace(sim_config, results_mode="fill", sim_type="portfolio_sim")
 
-            deterministic_pipeline_result = run_pipeline(
-                husband_portfolio,
-                wife_portfolio,
-                husband,
-                wife,
-                expenses,
-                sim_config,
-                force_num_sims=1,
-            )
-            if effective_years is None:
-                effective_years = deterministic_pipeline_result["years"]
+        deterministic_pipeline_result = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=1)
+        if effective_years is None:
+            effective_years = deterministic_pipeline_result["years"]
 
-            # -------------------------------------------------
-            # Historical Window risk analysis
-            # -------------------------------------------------
+        # -------------------------------------------------
+        # Historical Window risk analysis
+        # -------------------------------------------------
 
-            sim_config.results_mode = "risk_analysis"
-            sim_config.sim_type = "portfolio_sim"
-            sim_config.risk_analysis_mode = "historical_windows"
+        sim_config = replace(sim_config, results_mode="risk_analysis", sim_type="portfolio_sim", risk_analysis_mode="historical_windows")
 
-            # Use all Historical Windows for current spending and a subset for comparison cases.
-            if abs(float(spending_percentage) - 100.0) < 1e-9:
-                sim_config.historical_window_stride = 1
-            else:
-                #sim_config.historical_window_stride = 4
-                sim_config.historical_window_stride = 2
+        # Use all Historical Windows for current spending and a subset for comparison cases.
+        if abs(float(spending_percentage) - 100.0) < 1e-9:
+            sim_config = replace(sim_config, historical_window_stride=1)
+        else:
+            #sim_config.historical_window_stride = 4
+            sim_config = replace(sim_config, historical_window_stride=2)
 
-            historical_pipeline_result = run_pipeline(
-                husband_portfolio,
-                wife_portfolio,
-                husband,
-                wife,
-                expenses,
-                sim_config,
-                force_num_sims=None,
-            )
+        historical_pipeline_result = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=None)
 
-            cases.append(
-                _build_case_result(
-                    spending_percentage,
-                    deterministic_pipeline_result,
-                    historical_pipeline_result,
-                )
-            )
+        cases.append(_build_case_result(spending_percentage, deterministic_pipeline_result, historical_pipeline_result))
 
-    finally:
-        sim_config.results_mode = original_subplot_mode
-        sim_config.sim_type = original_sim_type
-        sim_config.risk_analysis_mode = original_monte_carlo_mode
-        sim_config.include_realestate = original_include_realestate
-        sim_config.show_simulated_shortfall_rate = original_show_simulated_shortfall_rate
-        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
-        sim_config.scenario_expense_multiplier = original_expense_multiplier
-        sim_config.overlay_tax_impacts = original_overlay_tax_impacts
-        sim_config.overlay_fund_expense_impacts = original_overlay_fund_expense_impacts
-        sim_config.historical_window_stride = original_historical_window_stride
+    sim_config = original_config
 
     report_data = SpendingComparisonReportData(
         report_options=report_options,

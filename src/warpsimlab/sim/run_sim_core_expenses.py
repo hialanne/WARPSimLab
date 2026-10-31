@@ -48,7 +48,7 @@ def simulate_expense_year(
     husband,
     wife,
     expenses,
-    sim_config,
+    sim_data,
     year,
     year_cache,
     curr_h_age,
@@ -58,8 +58,7 @@ def simulate_expense_year(
     husband_alive,
     wife_alive,
     survivor_expense_factor,
-    irmaa_result,
-):
+    irmaa_result):
     # -------------------------------------------------------------------------
     # Expense-mode yearly flow
     # -------------------------------------------------------------------------
@@ -109,6 +108,9 @@ def simulate_expense_year(
     # -------------------------------------------------------------------------
 
     # RMDs
+    sim_config = sim_data.config
+    run_context = sim_data.run
+    path_context = sim_data.path
     rmd_h = 0.0
     if husband_alive:
         rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
@@ -122,7 +124,7 @@ def simulate_expense_year(
     # Income breakdown
     income = incomeEngine.calculate_income_breakdown(
         husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year,
-        husband_alive, wife_alive, sim_config)
+        husband_alive, wife_alive, sim_config, run_context=run_context, path_context=path_context)
 
     income["by_class"]["roth_conversion"] = 0.0
 
@@ -138,8 +140,7 @@ def simulate_expense_year(
         w_port,
         sim_config,
         bond_return=year_returns["bd"],
-        cash_return=year_returns["cs"],
-    )
+        cash_return=year_returns["cs"], run_context=run_context)
 
     income["by_class"]["bond_interest"] += bond_interest
     income["by_class"]["cash_interest"] += cash_interest
@@ -159,7 +160,7 @@ def simulate_expense_year(
 
     # 401k contributions
     h_401k_employee, h_401k_employer = incomeEngine.calculate_pre_tax_401k_contributions(
-        husband, curr_h_age, year, husband_alive, sim_config)
+        husband, curr_h_age, year, husband_alive, sim_config, path_context=path_context)
 
     incomeEngine.apply_employee_401k_to_income(income, h_401k_employee, "husband")
     portfolioEngine.apply_pre_tax_contribution(h_port, h_401k_employee + h_401k_employer)
@@ -169,14 +170,14 @@ def simulate_expense_year(
 
     if second_person_enabled:
         w_401k_employee, w_401k_employer = incomeEngine.calculate_pre_tax_401k_contributions(
-            wife, curr_w_age, year, wife_alive, sim_config)
+            wife, curr_w_age, year, wife_alive, sim_config, path_context=path_context)
 
         incomeEngine.apply_employee_401k_to_income(income, w_401k_employee, "wife")
         portfolioEngine.apply_pre_tax_contribution(w_port, w_401k_employee + w_401k_employer)
 
     # HSA contributions
     h_hsa = hsaEngine.calculate_hsa_contributions(
-        husband, curr_h_age, year, payroll_wages_husband, h_401k_employee, husband_alive, sim_config)
+        husband, curr_h_age, year, payroll_wages_husband, h_401k_employee, husband_alive, sim_config, path_context=path_context)
 
     hsaEngine.apply_employee_hsa_to_income(income, h_hsa["employee"], "husband")
     hsaEngine.deposit_hsa_contributions(h_port, h_hsa)
@@ -186,7 +187,7 @@ def simulate_expense_year(
 
     if second_person_enabled:
         w_hsa = hsaEngine.calculate_hsa_contributions(
-            wife, curr_w_age, year, payroll_wages_wife, w_401k_employee, wife_alive, sim_config)
+            wife, curr_w_age, year, payroll_wages_wife, w_401k_employee, wife_alive, sim_config, path_context=path_context)
 
         hsaEngine.apply_employee_hsa_to_income(income, w_hsa["employee"], "wife")
         hsaEngine.deposit_hsa_contributions(w_port, w_hsa)
@@ -202,8 +203,7 @@ def simulate_expense_year(
         second_person_enabled=second_person_enabled,
         husband_alive=husband_alive,
         wife_alive=wife_alive,
-        sim_config=sim_config,
-    )
+        sim_config=sim_config, path_context=path_context)
 
     applied_roth_conversions = rothEngine.apply_roth_conversions(
         husband_portfolio=h_port,
@@ -235,10 +235,10 @@ def simulate_expense_year(
     )
     # Baseline Medicare insurance costs
     medicare_cost = medicareEngine.calculate_household_medicare_cost(
-        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config)
+        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config, path_context=path_context)
 
     # User expenses and qualified HSA expenses
-    expense_breakdown = expenseEngine.calculate_expense_breakdown(expenses, year, sim_config)
+    expense_breakdown = expenseEngine.calculate_expense_breakdown(expenses, year, sim_config, run_context=run_context, path_context=path_context)
 
     expense_breakdown["total"] *= survivor_expense_factor
     expense_breakdown["hsa_eligible"] *= survivor_expense_factor
@@ -261,7 +261,7 @@ def simulate_expense_year(
         diagnosticEngine.raise_internal_error("Qualified dividends exceed total income", sim_config,
                                               context={"year": year, "qualified_equity_distributions": qualified_equity_distributions,
                                                        "income_total": income["total"],
-                                                       "difference": qualified_equity_distributions - income["total"]})
+                                                       "difference": qualified_equity_distributions - income["total"]}, run_context=run_context, path_context=path_context)
 
     # One-pass approximation for emergency pre-tax withdrawals.
     qualified_equity_distributions = income["by_class"].get("qualified_equity_distributions", 0.0)
@@ -284,8 +284,7 @@ def simulate_expense_year(
         ordinary_income=baseline_ordinary_income,
         qualified_equity_distributions=qualified_equity_distributions,
         year_cache=year_cache,
-        sim_config=sim_config,
-    )
+        sim_config=sim_config, run_context=run_context)
 
     baseline_total_tax += payroll_tax
 
@@ -345,8 +344,7 @@ def simulate_expense_year(
             ordinary_income=ordinary_income,
             qualified_equity_distributions=qualified_equity_distributions,
             year_cache=year_cache,
-            sim_config=sim_config,
-        )
+            sim_config=sim_config, run_context=run_context)
         total_tax += payroll_tax
     else:
         federal_ordinary_tax = baseline_federal_ordinary_tax
@@ -371,15 +369,15 @@ def simulate_expense_year(
 
     if final_tax_delta < -1e-9:
         diagnosticEngine.raise_internal_error("final_tax_delta should never be negative", sim_config,
-                                              context={"year": year, "final_tax_delta": final_tax_delta})
+                                              context={"year": year, "final_tax_delta": final_tax_delta}, run_context=run_context, path_context=path_context)
 
     if final_tax_delta_deducted < -1e-9:
         diagnosticEngine.raise_internal_error("final_tax_delta_deducted should never be negative", sim_config,
-                                              context={"year": year, "final_tax_delta_deducted": final_tax_delta_deducted})
+                                              context={"year": year, "final_tax_delta_deducted": final_tax_delta_deducted}, run_context=run_context, path_context=path_context)
 
     if final_tax_delta_uncovered < -1e-9:
         diagnosticEngine.raise_internal_error("final_tax_delta_uncovered should never be negative", sim_config,
-                                              context={"year": year, "final_tax_delta_uncovered": final_tax_delta_uncovered})
+                                              context={"year": year, "final_tax_delta_uncovered": final_tax_delta_uncovered}, run_context=run_context, path_context=path_context)
 
     funding_gap = uncovered_expense + final_tax_delta_uncovered
 
@@ -401,11 +399,11 @@ def simulate_expense_year(
                                               context={"year": year,
                                                        "deposited_total": deposited_roth_contributions["total"],
                                                        "funded_total": funded_roth_contributions["total"],
-                                                       "difference": deposited_roth_contributions["total"] - funded_roth_contributions["total"]})
+                                                       "difference": deposited_roth_contributions["total"] - funded_roth_contributions["total"]}, run_context=run_context, path_context=path_context)
 
     # Portfolio returns and fund expenses.
     equity_total_return = year_returns["eq"]
-    equity_dividend_yield = sim_config._post_tax_equity_dividend_yield
+    equity_dividend_yield = run_context.post_tax_equity_dividend_yield_normalized
     taxable_equity_price_return = equity_total_return - equity_dividend_yield
     fund_expense_rate = sim_config.fund_expense if sim_config.use_fund_expenses else 0.0
 
@@ -432,9 +430,9 @@ def simulate_expense_year(
 
     # Rebalance if requested.
     if sim_config.rebalance_every_year:
-        portfolioEngine.rebalance(h_port, sim_config)
+        portfolioEngine.rebalance(h_port, sim_config, run_context=run_context)
         if second_person_enabled:
-            portfolioEngine.rebalance(w_port, sim_config)
+            portfolioEngine.rebalance(w_port, sim_config, run_context=run_context)
 
     # Reporting values.
     net_income = income["total"] - total_tax if taxes_enabled else income["total"]
@@ -495,7 +493,7 @@ def simulate_expense_year(
                                                            "emergency_pre_tax_used": emergency_pre_tax_used,
                                                            "expected_total": expected_person_income_total,
                                                            "actual_total": actual_person_income_total,
-                                                           "difference": actual_person_income_total - expected_person_income_total})
+                                                           "difference": actual_person_income_total - expected_person_income_total}, run_context=run_context, path_context=path_context)
 
         husband_tax_alloc, wife_tax_alloc = taxEngine.allocate_tax_proportionally_couple(
             total_tax,

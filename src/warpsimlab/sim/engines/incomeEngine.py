@@ -1,8 +1,14 @@
+from src.warpsimlab.sim.simulationObject import RunContext, PathContext
+
 # incomeEngine.py
 
 from . import diagnosticEngine
 
-def _build_income_inflation_factors(sim_config):
+def _build_income_inflation_factors(sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
     years = sim_config.years_to_simulate + 1
     factors = [1.0] * years
 
@@ -10,16 +16,14 @@ def _build_income_inflation_factors(sim_config):
         sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "risk_analysis_mode", "monte_carlo") == "historical_windows"
-        and getattr(sim_config, "_active_historical_sim_index", None) is not None
-        and getattr(sim_config, "_hist_inflation", None) is not None
+        and getattr(path_context, 'active_historical_sim_index', None) is not None
+        and getattr(run_context, 'hist_inflation', None) is not None
     )
 
     if historical_mode_active:
-        start_idx = int(
-            sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
-        )
+        start_idx = int(run_context.hist_window_start_indices[path_context.active_historical_sim_index])
         for y in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
+            annual_inflation = float(run_context.hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
             factors[y] = factors[y - 1] * (1.0 + annual_inflation)
         return factors
 
@@ -30,7 +34,11 @@ def _build_income_inflation_factors(sim_config):
     return factors
 
 
-def _build_pension_factors(sim_config, inflation_adjustment_pct):
+def _build_pension_factors(sim_config, inflation_adjustment_pct, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
     years = sim_config.years_to_simulate + 1
     factors = [1.0] * years
 
@@ -38,16 +46,14 @@ def _build_pension_factors(sim_config, inflation_adjustment_pct):
         sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "risk_analysis_mode", "monte_carlo") == "historical_windows"
-        and getattr(sim_config, "_active_historical_sim_index", None) is not None
-        and getattr(sim_config, "_hist_inflation", None) is not None
+        and getattr(path_context, 'active_historical_sim_index', None) is not None
+        and getattr(run_context, 'hist_inflation', None) is not None
     )
 
     if historical_mode_active:
-        start_idx = int(
-            sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
-        )
+        start_idx = int(run_context.hist_window_start_indices[path_context.active_historical_sim_index])
         for y in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
+            annual_inflation = float(run_context.hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
             pension_step = 1.0 + (
                 annual_inflation * inflation_adjustment_pct / 100.0
             )
@@ -63,8 +69,12 @@ def _build_pension_factors(sim_config, inflation_adjustment_pct):
     return factors
 
 
-def _build_special_income_factor(sim_config, adjustment_mode, adjustment_pct, start_year, year):
-    start_factor = sim_config._income_inflation_factors[start_year]
+def _build_special_income_factor(sim_config, adjustment_mode, adjustment_pct, start_year, year, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    start_factor = path_context.income_inflation_factors[start_year]
 
     if year <= start_year or adjustment_mode == "none":
         return start_factor
@@ -81,16 +91,16 @@ def _build_special_income_factor(sim_config, adjustment_mode, adjustment_pct, st
         sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "risk_analysis_mode", "monte_carlo") == "historical_windows"
-        and getattr(sim_config, "_active_historical_sim_index", None) is not None
-        and getattr(sim_config, "_hist_inflation", None) is not None
+        and getattr(path_context, 'active_historical_sim_index', None) is not None
+        and getattr(run_context, 'hist_inflation', None) is not None
     )
 
     if historical_mode_active:
-        hist_start_idx = int(sim_config._hist_window_start_indices[sim_config._active_historical_sim_index])
+        hist_start_idx = int(run_context.hist_window_start_indices[path_context.active_historical_sim_index])
         factor = start_factor
 
         for y in range(start_year + 1, year + 1):
-            annual_inflation = float(sim_config._hist_inflation[hist_start_idx + (y - 1)]) + sim_config.inflation_delta
+            annual_inflation = float(run_context.hist_inflation[hist_start_idx + (y - 1)]) + sim_config.inflation_delta
             factor *= 1.0 + annual_inflation * adjustment_pct / 100.0
 
         return factor
@@ -99,14 +109,7 @@ def _build_special_income_factor(sim_config, adjustment_mode, adjustment_pct, st
     return start_factor * (1.0 + annual_step) ** years_since_start
 
 
-def _calculate_special_income_for_year(
-    curr_husband_age,
-    curr_wife_age,
-    year,
-    husband_alive,
-    wife_alive,
-    sim_config,
-):
+def _calculate_special_income_for_year(curr_husband_age, curr_wife_age, year, husband_alive, wife_alive, sim_config, run_context=None, path_context=None):
     """
     Calculate special income streams for the current simulation year.
 
@@ -119,6 +122,10 @@ def _calculate_special_income_for_year(
       - may be taxable or non-taxable
       - is not payroll wage income
     """
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
     taxable_special_income = 0.0
     non_taxable_special_income = 0.0
     husband_special_income = 0.0
@@ -156,8 +163,7 @@ def _calculate_special_income_for_year(
 
         start_year = max(0, year - (owner_age - start_age))
         special_income_factor = _build_special_income_factor(
-            sim_config, adjustment_mode, adjustment_pct, start_year, year
-        )
+            sim_config, adjustment_mode, adjustment_pct, start_year, year, run_context=run_context, path_context=path_context)
 
         adjusted_amount = amount * special_income_factor
 
@@ -180,9 +186,13 @@ def _calculate_special_income_for_year(
     }
 
 
-def _ensure_income_engine_initialized(husband, wife, sim_config):
-    if not hasattr(sim_config, "_income_inflation_factors"):
-        initialize_income_engine_for_simulation(husband, wife, sim_config)
+def _ensure_income_engine_initialized(husband, wife, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if path_context.income_inflation_factors is None:
+        initialize_income_engine_for_simulation(husband, wife, sim_config, run_context=run_context, path_context=path_context)
 
     if not hasattr(husband, "_ss_start_age"):
         husband._ss_start_age = husband.ss_age if husband.ss_age <= 70 else 70
@@ -191,26 +201,26 @@ def _ensure_income_engine_initialized(husband, wife, sim_config):
         wife._ss_start_age = wife.ss_age if wife.ss_age <= 70 else 70
 
 
-def initialize_income_engine_for_simulation(husband, wife, sim_config):
-    sim_config._income_inflation_factors = _build_income_inflation_factors(sim_config)
+def initialize_income_engine_for_simulation(husband, wife, sim_config, run_context=None, path_context=None):
+    """Initialize this path's factors and preserve existing Person SS preparation."""
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    path_context.income_inflation_factors = _build_income_inflation_factors(sim_config, run_context=run_context, path_context=path_context)
 
-    sim_config._husband_pension_factors = _build_pension_factors(
-        sim_config,
-        husband.pension_inflation_adjustment_pct,
-    )
+    path_context.husband_pension_factors = _build_pension_factors(sim_config, husband.pension_inflation_adjustment_pct, run_context=run_context, path_context=path_context)
 
     if sim_config.second_person_enabled:
-        sim_config._wife_pension_factors = _build_pension_factors(
-            sim_config,
-            wife.pension_inflation_adjustment_pct,
-        )
+        path_context.wife_pension_factors = _build_pension_factors(sim_config, wife.pension_inflation_adjustment_pct, run_context=run_context, path_context=path_context)
     else:
-        sim_config._wife_pension_factors = None
+        path_context.wife_pension_factors = None
 
     husband._ss_start_age = husband.ss_age if husband.ss_age <= 70 else 70
 
     if sim_config.second_person_enabled:
         wife._ss_start_age = wife.ss_age if wife.ss_age <= 70 else 70
+    return path_context
 
 
 def _calculate_social_security_for_year(
@@ -221,9 +231,10 @@ def _calculate_social_security_for_year(
     year,
     husband_alive,
     wife_alive,
-    sim_config,
-):
-    income_factor = sim_config._income_inflation_factors[year]
+    sim_config, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    income_factor = path_context.income_inflation_factors[year]
 
     husband_ss = 0.0
     wife_ss = 0.0
@@ -263,15 +274,18 @@ def calculate_income_breakdown(
     year,
     husband_alive,
     wife_alive,
-    sim_config,
-):
+    sim_config, run_context=None, path_context=None):
     """
     Returns structured income data:
       - total household income
       - income by class
       - income by person
     """
-    _ensure_income_engine_initialized(husband, wife, sim_config)
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    _ensure_income_engine_initialized(husband, wife, sim_config, run_context=run_context, path_context=path_context)
 
     second_person_enabled = sim_config.second_person_enabled
 
@@ -279,8 +293,8 @@ def calculate_income_breakdown(
         rmd_w = 0.0
         wife_alive = False
 
-    income_factor = sim_config._income_inflation_factors[year]
-    h_pension_factor = sim_config._husband_pension_factors[year]
+    income_factor = path_context.income_inflation_factors[year]
+    h_pension_factor = path_context.husband_pension_factors[year]
 
     work = 0.0
     pension = 0.0
@@ -315,7 +329,7 @@ def calculate_income_breakdown(
             husband_income += husband.annuity
 
     if second_person_enabled and wife_alive:
-        w_pension_factor = sim_config._wife_pension_factors[year]
+        w_pension_factor = path_context.wife_pension_factors[year]
 
         if curr_wife_age < wife.retire_age:
             wife_work = wife.income * income_factor
@@ -339,8 +353,7 @@ def calculate_income_breakdown(
         year,
         husband_alive,
         wife_alive,
-        sim_config,
-    )
+        sim_config, path_context=path_context)
 
     ss = husband_ss + wife_ss
     husband_income += husband_ss
@@ -352,8 +365,7 @@ def calculate_income_breakdown(
         year,
         husband_alive,
         wife_alive,
-        sim_config,
-    )
+        sim_config, run_context=run_context, path_context=path_context)
 
     special_income_amt = special_income["total"]
     non_taxable_income = special_income["non_taxable"]
@@ -392,11 +404,15 @@ def calculate_income_breakdown(
     }
 
 
-def calculate_social_security(husband, wife, year, sim_config):
+def calculate_social_security(husband, wife, year, sim_config, run_context=None, path_context=None):
     """
     Calculate husband's and wife's Social Security with inflation adjustment.
     """
-    _ensure_income_engine_initialized(husband, wife, sim_config)
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    _ensure_income_engine_initialized(husband, wife, sim_config, run_context=run_context, path_context=path_context)
 
     second_person_enabled = sim_config.second_person_enabled
 
@@ -404,19 +420,19 @@ def calculate_social_security(husband, wife, year, sim_config):
     curr_husband_age = husband.age + year
     husband_ss_infl = 0.0
     if curr_husband_age >= husband._ss_start_age:
-        husband_ss_infl = husband.ss * sim_config._income_inflation_factors[year]
+        husband_ss_infl = husband.ss * path_context.income_inflation_factors[year]
 
     # Wife SS
     wife_ss_infl = 0.0
     if second_person_enabled:
         curr_wife_age = wife.age + year
         if curr_wife_age >= wife._ss_start_age:
-            wife_ss_infl = wife.ss * sim_config._income_inflation_factors[year]
+            wife_ss_infl = wife.ss * path_context.income_inflation_factors[year]
 
     return husband_ss_infl, wife_ss_infl
 
 
-def calculate_pre_tax_401k_contributions(person, current_age, year, alive, sim_config):
+def calculate_pre_tax_401k_contributions(person, current_age, year, alive, sim_config, path_context=None):
     """
     Returns
     -------
@@ -424,9 +440,11 @@ def calculate_pre_tax_401k_contributions(person, current_age, year, alive, sim_c
         (employee_contribution, employer_contribution)
     """
 
-    if not hasattr(sim_config, "_income_inflation_factors"):
+    if path_context is None:
+        path_context = PathContext()
+    if path_context.income_inflation_factors is None:
         diagnosticEngine.raise_internal_error("Income engine not initialized before 401(k) contribution calculation.", sim_config,
-                                              context={"year": year, "current_age": current_age})
+                                              context={"year": year, "current_age": current_age}, path_context=path_context)
 
     if not alive:
         return 0.0, 0.0
@@ -434,7 +452,7 @@ def calculate_pre_tax_401k_contributions(person, current_age, year, alive, sim_c
     if current_age >= person.retire_age:
         return 0.0, 0.0
 
-    infl_factor = sim_config._income_inflation_factors[year]
+    infl_factor = path_context.income_inflation_factors[year]
 
     current_work_income = person.income * infl_factor
     if current_work_income < 0.0:

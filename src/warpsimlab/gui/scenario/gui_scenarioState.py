@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 # gui_scenarioState.py
 
 import copy
@@ -207,22 +209,17 @@ class ScenarioStateManager:
 
 
     def compute_results_from_inputs(self, persons, portfolios, retirement_snapshots, include_realestate, plot_style):
-        persons_copy, portfolios_copy, retirement_copy = self.clone_result_inputs(
-            persons, portfolios, retirement_snapshots
-        )
+        persons_copy, portfolios_copy, retirement_copy = self.clone_result_inputs(persons, portfolios, retirement_snapshots)
 
-        sim_config = self.main_gui.build_simulation_from_gui(
-            sim_type="portfolio_sim", use_snapshots=True, retirement_snapshots=retirement_copy
-        )
+        sim_config = self.main_gui.build_simulation_from_gui(sim_type='portfolio_sim', use_snapshots=True, retirement_snapshots=retirement_copy)
 
         if plot_style == "historical_risk":
-            sim_config.results_mode = "risk_analysis"
-            sim_config.risk_analysis_mode = "historical_windows"
-            sim_config.risk_analysis_plot_style = "fill"
+            sim_config = replace(sim_config, results_mode='risk_analysis', risk_analysis_mode='historical_windows',
+                risk_analysis_plot_style='fill')
         else:
-            sim_config.results_mode = plot_style
+            sim_config = replace(sim_config, results_mode=plot_style)
 
-        sim_config.include_realestate = bool(include_realestate)
+        sim_config = replace(sim_config, include_realestate=bool(include_realestate))
 
         husband = persons_copy["husband"]
         if sim_config.second_person_enabled:

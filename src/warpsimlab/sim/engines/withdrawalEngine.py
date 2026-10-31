@@ -1,3 +1,5 @@
+from src.warpsimlab.sim.simulationObject import RunContext, PathContext
+
 # withdrawalEngine.py
 from . import diagnosticEngine
 
@@ -5,22 +7,24 @@ from src.warpsimlab.dataClasses.portfolioState import *
 from src.warpsimlab.utils.constants import UNIFORM_LIFETIME_TABLE, RMD_START_AGE
 
 
-def _get_withdrawal_inflation_factor(year, sim_config):
+def _get_withdrawal_inflation_factor(year, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
     historical_mode_active = (
         sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "risk_analysis_mode", "monte_carlo") == "historical_windows"
-        and getattr(sim_config, "_active_historical_sim_index", None) is not None
-        and getattr(sim_config, "_hist_inflation", None) is not None
+        and getattr(path_context, 'active_historical_sim_index', None) is not None
+        and getattr(run_context, 'hist_inflation', None) is not None
     )
 
     if historical_mode_active:
-        start_idx = int(
-            sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
-        )
+        start_idx = int(run_context.hist_window_start_indices[path_context.active_historical_sim_index])
         factor = 1.0
         for y in range(1, year + 1):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
+            annual_inflation = float(run_context.hist_inflation[start_idx + (y - 1)]) + sim_config.inflation_delta
             factor *= (1.0 + annual_inflation)
         return factor
 
@@ -192,10 +196,11 @@ def calculate_retirement_withdrawal(
     *,
     rmd_h,
     rmd_w=0.0,
-    additional_cash_needed=0.0,
-):
+    additional_cash_needed=0.0, run_context=None, path_context=None):
     """
     Retirement withdrawals.
+
+    Reuse path_context across years to retain the lazily captured withdrawal base.
 
     additional_cash_needed is an optional scheduled after-tax cash use,
     such as a Roth IRA or Roth workplace-plan contribution. It increases
@@ -213,19 +218,23 @@ def calculate_retirement_withdrawal(
     RMDs apply only to pre-tax assets.
     """
 
-    if not hasattr(sim_config, "_ret_withdraw_base_dollars") or sim_config._ret_withdraw_base_dollars is None:
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if path_context.ret_withdraw_base_dollars is None:
         total_portfolio = h_port.total_value + (w_port.total_value if sim_config.second_person_enabled else 0.0)
         mode = sim_config.retirement_withdraw_mode
 
         if mode in ["Percentage", "Percentage + Inflation"]:
-            sim_config._ret_withdraw_base_dollars = total_portfolio * sim_config.retirement_withdraw_pct / 100.0
+            path_context.ret_withdraw_base_dollars = total_portfolio * sim_config.retirement_withdraw_pct / 100.0
         elif mode in ["Fixed Dollar Amount", "Fixed Dollar Amount + Inflation"]:
-            sim_config._ret_withdraw_base_dollars = sim_config.retirement_withdraw_dollars
+            path_context.ret_withdraw_base_dollars = sim_config.retirement_withdraw_dollars
         else:
-            sim_config._ret_withdraw_base_dollars = 0.0
+            path_context.ret_withdraw_base_dollars = 0.0
 
     mode = sim_config.retirement_withdraw_mode
-    base = sim_config._ret_withdraw_base_dollars
+    base = path_context.ret_withdraw_base_dollars
 
     rmd_h = max(0.0, float(rmd_h))
 
@@ -238,13 +247,13 @@ def calculate_retirement_withdrawal(
         diagnosticEngine.raise_internal_error("Husband RMD exceeds remaining pre-tax assets", sim_config,
                                               context={"year": year, "rmd": rmd_h,
                                                        "remaining_pre_tax_assets": h_port.total_value_pre,
-                                                       "difference": rmd_h - h_port.total_value_pre})
+                                                       "difference": rmd_h - h_port.total_value_pre}, run_context=run_context, path_context=path_context)
 
     if sim_config.second_person_enabled and rmd_w > w_port.total_value_pre + 1.0:
         diagnosticEngine.raise_internal_error("Wife RMD exceeds remaining pre-tax assets", sim_config,
                                               context={"year": year, "rmd": rmd_w,
                                                        "remaining_pre_tax_assets": w_port.total_value_pre,
-                                                       "difference": rmd_w - w_port.total_value_pre})
+                                                       "difference": rmd_w - w_port.total_value_pre}, run_context=run_context, path_context=path_context)
 
     withdraw_rmds(h_port, rmd_h)
 
@@ -258,11 +267,11 @@ def calculate_retirement_withdrawal(
     elif mode == "Percentage":
         withdrawal_amount = base
     elif mode == "Percentage + Inflation":
-        withdrawal_amount = base * _get_withdrawal_inflation_factor(year, sim_config)
+        withdrawal_amount = base * _get_withdrawal_inflation_factor(year, sim_config, run_context=run_context, path_context=path_context)
     elif mode == "Fixed Dollar Amount":
         withdrawal_amount = base
     elif mode == "Fixed Dollar Amount + Inflation":
-        withdrawal_amount = base * _get_withdrawal_inflation_factor(year, sim_config)
+        withdrawal_amount = base * _get_withdrawal_inflation_factor(year, sim_config, run_context=run_context, path_context=path_context)
     else:
         withdrawal_amount = rmd_total
 

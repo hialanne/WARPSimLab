@@ -1,3 +1,5 @@
+from src.warpsimlab.sim.simulationObject import RunContext, PathContext
+
 # medicareEngine.py
 
 from . import diagnosticEngine
@@ -14,7 +16,15 @@ PART_D_IRMAA_MONTHLY_2026 = (0.0, 14.50, 37.50, 60.40, 83.30, 91.00)
 IRMAA_BASE_YEAR = 2026
 IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR = 2027
 
-def initialize_medicare_engine_for_simulation(sim_config):
+def prepare_medicare_run_context(sim_config, run_context):
+    """Prepare the configured start-year anchor independently of path inflation."""
+    base_multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
+    years_from_base = sim_config.start_year - IRMAA_BASE_YEAR
+    run_context.medicare_2026_anchor_factor = base_multiplier ** years_from_base
+    return run_context
+
+
+def initialize_medicare_engine_for_simulation(sim_config, run_context=None, path_context=None):
     """
     Initialize Medicare inflation factors for the active simulation path.
 
@@ -23,44 +33,48 @@ def initialize_medicare_engine_for_simulation(sim_config):
 
     Published Medicare and IRMAA constants are anchored to calendar year 2026.
     """
-    if not hasattr(sim_config, "_expense_inflation_factors"):
-        diagnosticEngine.raise_internal_error(
-            "Expense engine not initialized before Medicare engine.",
-            sim_config,
-        )
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.medicare_2026_anchor_factor is None:
+        prepare_medicare_run_context(sim_config, run_context)
+    if path_context.expense_inflation_factors is None:
+        diagnosticEngine.raise_internal_error('Expense engine not initialized before Medicare engine.', sim_config, run_context=run_context, path_context=path_context)
 
-    sim_config._medicare_inflation_factors = list(sim_config._expense_inflation_factors)
-
-    base_multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
-    years_from_base = sim_config.start_year - IRMAA_BASE_YEAR
-    sim_config._medicare_2026_anchor_factor = base_multiplier ** years_from_base
+    path_context.medicare_inflation_factors = list(path_context.expense_inflation_factors)
+    return run_context
 
 
-def calculate_medicare_cost(person, current_age, year, sim_config):
+
+def calculate_medicare_cost(person, current_age, year, sim_config, path_context=None):
     """
     Calculate one person's baseline Medicare cost for a simulation year.
 
     Medicare is modeled at annual resolution. Once current_age reaches
     medicare_start_age, the full inflation-adjusted annual cost applies.
     """
+    if path_context is None:
+        path_context = PathContext()
     if current_age < person.medicare_start_age:
         return 0.0
 
     annual_cost = max(0.0, float(person.medicare_annual_cost))
-    return annual_cost * sim_config._medicare_inflation_factors[year]
+    return annual_cost * path_context.medicare_inflation_factors[year]
 
 
 def calculate_household_medicare_cost(
-    husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config
-):
+    husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
     medicare_husband = 0.0
     medicare_wife = 0.0
 
     if husband_alive:
-        medicare_husband = calculate_medicare_cost(husband, curr_h_age, year, sim_config)
+        medicare_husband = calculate_medicare_cost(husband, curr_h_age, year, sim_config, path_context=path_context)
 
     if second_person_enabled and wife_alive:
-        medicare_wife = calculate_medicare_cost(wife, curr_w_age, year, sim_config)
+        medicare_wife = calculate_medicare_cost(wife, curr_w_age, year, sim_config, path_context=path_context)
 
     return {
         "husband": medicare_husband,
@@ -69,11 +83,19 @@ def calculate_household_medicare_cost(
     }
 
 
-def _get_2026_constant_factor(year, sim_config):
-    return sim_config._medicare_2026_anchor_factor * sim_config._medicare_inflation_factors[year]
+def _get_2026_constant_factor(year, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.medicare_2026_anchor_factor is None:
+        prepare_medicare_run_context(sim_config, run_context)
+    return run_context.medicare_2026_anchor_factor * path_context.medicare_inflation_factors[year]
 
 
-def _get_top_threshold_factor(year, sim_config):
+def _get_top_threshold_factor(year, sim_config, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
     calendar_year = sim_config.start_year + year
 
     if calendar_year <= IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR:
@@ -85,10 +107,10 @@ def _get_top_threshold_factor(year, sim_config):
         base_multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
         years_from_freeze = start_year - IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR
         start_factor = base_multiplier ** years_from_freeze
-        return start_factor * sim_config._medicare_inflation_factors[year]
+        return start_factor * path_context.medicare_inflation_factors[year]
 
     freeze_index = IRMAA_TOP_THRESHOLD_FROZEN_THROUGH_YEAR - start_year
-    frozen_factor = sim_config._medicare_inflation_factors[freeze_index]
+    frozen_factor = path_context.medicare_inflation_factors[freeze_index]
 
     if frozen_factor <= 0.0:
         diagnosticEngine.raise_internal_error(
@@ -99,10 +121,9 @@ def _get_top_threshold_factor(year, sim_config):
                 "start_year": start_year,
                 "freeze_index": freeze_index,
                 "frozen_factor": frozen_factor,
-            },
-        )
+            }, path_context=path_context)
 
-    return sim_config._medicare_inflation_factors[year] / frozen_factor
+    return path_context.medicare_inflation_factors[year] / frozen_factor
 
 
 def calculate_modeled_agi(income, traditional_withdrawal, taxable_hsa_withdrawal, roth_conversion):
@@ -173,12 +194,18 @@ def _round_irmaa_threshold(value):
     return round(value / 1000.0) * 1000.0
 
 
-def _get_irmaa_thresholds(year, filing_status_single, sim_config):
+def _get_irmaa_thresholds(year, filing_status_single, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.medicare_2026_anchor_factor is None:
+        prepare_medicare_run_context(sim_config, run_context)
     filing_key = "Other"
     if filing_status_single:
         filing_key = "Single"
 
-    threshold_factor = _get_2026_constant_factor(year, sim_config)
+    threshold_factor = _get_2026_constant_factor(year, sim_config, run_context=run_context, path_context=path_context)
     base_thresholds = IRMAA_THRESHOLDS_2026[filing_key]
     thresholds = []
 
@@ -186,15 +213,21 @@ def _get_irmaa_thresholds(year, filing_status_single, sim_config):
         factor = threshold_factor
 
         if index == 4:
-            factor = _get_top_threshold_factor(year, sim_config)
+            factor = _get_top_threshold_factor(year, sim_config, path_context=path_context)
 
         thresholds.append(_round_irmaa_threshold(base_threshold * factor))
 
     return thresholds
 
 
-def get_irmaa_level(magi, year, filing_status_single, sim_config):
-    thresholds = _get_irmaa_thresholds(year, filing_status_single, sim_config)
+def get_irmaa_level(magi, year, filing_status_single, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.medicare_2026_anchor_factor is None:
+        prepare_medicare_run_context(sim_config, run_context)
+    thresholds = _get_irmaa_thresholds(year, filing_status_single, sim_config, run_context=run_context, path_context=path_context)
 
     for level, upper_limit in enumerate(thresholds):
         if magi <= upper_limit:
@@ -203,11 +236,17 @@ def get_irmaa_level(magi, year, filing_status_single, sim_config):
     return 5
 
 
-def calculate_person_irmaa(person, current_age, level, year, sim_config):
+def calculate_person_irmaa(person, current_age, level, year, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.medicare_2026_anchor_factor is None:
+        prepare_medicare_run_context(sim_config, run_context)
     if current_age < person.medicare_start_age:
         return 0.0
 
-    inflation_factor = _get_2026_constant_factor(year, sim_config)
+    inflation_factor = _get_2026_constant_factor(year, sim_config, run_context=run_context, path_context=path_context)
     part_b_standard = PART_B_STANDARD_MONTHLY_2026 * inflation_factor
     part_b_irmaa = part_b_standard * PART_B_IRMAA_MULTIPLIERS[level]
     part_d_irmaa = PART_D_IRMAA_MONTHLY_2026[level] * inflation_factor
@@ -217,8 +256,13 @@ def calculate_person_irmaa(person, current_age, level, year, sim_config):
 
 def calculate_household_irmaa(
     husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive,
-    lookback_magi, lookback_available, lookback_filing_status_single, sim_config
-):
+    lookback_magi, lookback_available, lookback_filing_status_single, sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.medicare_2026_anchor_factor is None:
+        prepare_medicare_run_context(sim_config, run_context)
     irmaa_husband = 0.0
     irmaa_wife = 0.0
     level = None
@@ -238,8 +282,8 @@ def calculate_household_irmaa(
             "filing_status_single": lookback_filing_status_single,
         }
 
-    thresholds = _get_irmaa_thresholds(year, lookback_filing_status_single, sim_config)
-    level = get_irmaa_level(lookback_magi, year, lookback_filing_status_single, sim_config)
+    thresholds = _get_irmaa_thresholds(year, lookback_filing_status_single, sim_config, run_context=run_context, path_context=path_context)
+    level = get_irmaa_level(lookback_magi, year, lookback_filing_status_single, sim_config, run_context=run_context, path_context=path_context)
 
     if level == 0:
         upper_threshold = thresholds[0]
@@ -250,10 +294,10 @@ def calculate_household_irmaa(
         upper_threshold = thresholds[level]
 
     if husband_alive:
-        irmaa_husband = calculate_person_irmaa(husband, curr_h_age, level, year, sim_config)
+        irmaa_husband = calculate_person_irmaa(husband, curr_h_age, level, year, sim_config, run_context=run_context, path_context=path_context)
 
     if second_person_enabled and wife_alive:
-        irmaa_wife = calculate_person_irmaa(wife, curr_w_age, level, year, sim_config)
+        irmaa_wife = calculate_person_irmaa(wife, curr_w_age, level, year, sim_config, run_context=run_context, path_context=path_context)
 
     return {
         "husband": irmaa_husband,

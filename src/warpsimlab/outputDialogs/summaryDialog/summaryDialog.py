@@ -21,15 +21,16 @@ from .summaryOverview import build_summary_tab
 
 class SummaryDialog(ScalableClientMixin, tk.Toplevel):
 
-    def __init__(self, results, husband, wife, sim_config, title="Simulation Summary"):
-        super().__init__(sim_config.root)
+    def __init__(self, results, husband, wife, sim_config, title="Simulation Summary", *, root=None):
+        super().__init__(root)
+        self.parent_root = root
 
         self.results = results
         self.husband = husband
         self.wife = wife
         self.sim_config = sim_config
 
-        parent = sim_config.root
+        parent = root
         parent.update_idletasks()
 
         development_font_linespace = 24
@@ -82,7 +83,7 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
 
 
     def _apply_summary_startup_settings(self, width, height):
-        settings = self.sim_config.root._warpsimlab_display_settings["summary_dialog"]
+        settings = self.parent_root._warpsimlab_display_settings["summary_dialog"]
 
         if settings.get("remember_geometry", False):
             if settings.get("last_maximized", False):
@@ -106,14 +107,14 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
 
         set_window_normal(self)
 
-        parent = self.sim_config.root
+        parent = self.parent_root
         x = parent.winfo_rootx() + (parent.winfo_width() - width) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - height) // 2
         self.geometry(f"{width}x{height}+{x}+{y}")
 
 
     def _save_summary_geometry(self):
-        display_settings = self.sim_config.root._warpsimlab_display_settings
+        display_settings = self.parent_root._warpsimlab_display_settings
         settings = display_settings["summary_dialog"]
 
         if not settings.get("remember_geometry", False):

@@ -1,8 +1,10 @@
+from src.warpsimlab.sim.simulationObject import PathContext
+
 # hsaEngine.py
 
 from . import portfolioEngine, diagnosticEngine
 
-def calculate_hsa_contributions(person, current_age, year, gross_wages, employee_401k_contribution, alive, sim_config):
+def calculate_hsa_contributions(person, current_age, year, gross_wages, employee_401k_contribution, alive, sim_config, path_context=None):
     """
     Calculate employee and employer HSA contributions for one person.
 
@@ -18,16 +20,18 @@ def calculate_hsa_contributions(person, current_age, year, gross_wages, employee
 
     WARPSimLab does not enforce HSA eligibility or statutory contribution limits.
     """
+    if path_context is None:
+        path_context = PathContext()
     gross_wages = max(0.0, float(gross_wages))
 
     if not alive or current_age >= person.retire_age or gross_wages <= 0.0:
         return {"employee": 0.0, "employer": 0.0, "total": 0.0}
 
-    if not hasattr(sim_config, "_income_inflation_factors"):
+    if path_context.income_inflation_factors is None:
         diagnosticEngine.raise_internal_error("Income engine not initialized before HSA contribution calculation.", sim_config,
-                                              context={"year": year, "current_age": current_age})
+                                              context={"year": year, "current_age": current_age}, path_context=path_context)
 
-    infl_factor = sim_config._income_inflation_factors[year]
+    infl_factor = path_context.income_inflation_factors[year]
 
     requested_employee = max(0.0, float(person.annual_hsa_contribution) * infl_factor)
     requested_employer = max(0.0, float(person.annual_hsa_employer_contribution) * infl_factor)

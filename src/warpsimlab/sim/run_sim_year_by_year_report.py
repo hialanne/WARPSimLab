@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 # run_sim_year_by_year_report.py
 
 from datetime import datetime
@@ -188,26 +190,13 @@ def build_year_by_year_report_data_from_pipeline(
     expenses,
     sim_config,
 ):
-    original_include_realestate = getattr(sim_config, "include_realestate", False)
-    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
+    original_config = sim_config
 
-    try:
-        sim_config.include_realestate = True
-        sim_config.calculate_simulated_shortfall_rate = False
+    sim_config = replace(sim_config, include_realestate=True, calculate_simulated_shortfall_rate=False)
 
-        p = run_pipeline(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-            force_num_sims=1,
-        )
+    p = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=1)
 
-    finally:
-        sim_config.include_realestate = original_include_realestate
-        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
+    sim_config = original_config
 
     results = p["summary_results"]
     report_options = dict(getattr(sim_config, "report_options", {}) or {})

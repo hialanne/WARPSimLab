@@ -41,7 +41,7 @@ def simulate_withdrawal_year(
     w_port,
     husband,
     wife,
-    sim_config,
+    sim_data,
     year,
     year_cache,
     curr_h_age,
@@ -50,8 +50,7 @@ def simulate_withdrawal_year(
     second_person_enabled,
     husband_alive,
     wife_alive,
-    irmaa_result,
-):
+    irmaa_result):
 
     # -------------------------------------------------------------------------
     # Withdrawal-mode yearly flow
@@ -110,6 +109,9 @@ def simulate_withdrawal_year(
 
     # RMD amounts are needed for income reporting. Actual RMD withdrawal
     # occurs inside calculate_retirement_withdrawal() in Withdrawal mode.
+    sim_config = sim_data.config
+    run_context = sim_data.run
+    path_context = sim_data.path
     rmd_h = 0.0
     if husband_alive:
         rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
@@ -121,7 +123,7 @@ def simulate_withdrawal_year(
     # Income breakdown
     income = incomeEngine.calculate_income_breakdown(
         husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year,
-        husband_alive, wife_alive, sim_config)
+        husband_alive, wife_alive, sim_config, run_context=run_context, path_context=path_context)
 
     income["by_class"]["roth_conversion"] = 0.0
 
@@ -137,8 +139,7 @@ def simulate_withdrawal_year(
         w_port,
         sim_config,
         bond_return=year_returns["bd"],
-        cash_return=year_returns["cs"],
-    )
+        cash_return=year_returns["cs"], run_context=run_context)
 
     income["by_class"]["bond_interest"] += bond_interest
     income["by_class"]["cash_interest"] += cash_interest
@@ -183,7 +184,7 @@ def simulate_withdrawal_year(
         second_person_enabled=second_person_enabled,
         sim_config=sim_config,
         husband_alive=husband_alive,
-        wife_alive=wife_alive,)
+        wife_alive=wife_alive, path_context=path_context)
 
     # Preserve the already-determined RMD in pre-tax assets until it is physically withdrawn.
     roth_conversion = requested_roth_flows[rothEngine.ROTH_CONVERSION]
@@ -232,7 +233,7 @@ def simulate_withdrawal_year(
 
     # Baseline Medicare insurance costs
     medicare_cost = medicareEngine.calculate_household_medicare_cost(
-        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config)
+        husband, wife, curr_h_age, curr_w_age, year, second_person_enabled, husband_alive, wife_alive, sim_config, path_context=path_context)
 
     mandatory_medicare_cost = medicare_cost["total"] + irmaa_result["total"]
     additional_cash_needed = mandatory_medicare_cost + requested_roth_contribution_total
@@ -246,8 +247,7 @@ def simulate_withdrawal_year(
         sim_config,
         rmd_h=rmd_h,
         rmd_w=rmd_w,
-        additional_cash_needed=additional_cash_needed,
-    )
+        additional_cash_needed=additional_cash_needed, run_context=run_context, path_context=path_context)
 
     expense_amt = 0
     wd_pre_tax = wd["pre_tax"]
@@ -292,7 +292,7 @@ def simulate_withdrawal_year(
         diagnosticEngine.raise_internal_error("Qualified dividends exceed total income", sim_config,
                                               context={"year": year, "qualified_equity_distributions": qualified_equity_distributions,
                                                        "income_total": income["total"],
-                                                       "difference": qualified_equity_distributions - income["total"]})
+                                                       "difference": qualified_equity_distributions - income["total"]}, run_context=run_context, path_context=path_context)
 
     qualified_equity_distributions = income["by_class"].get("qualified_equity_distributions", 0.0)
 
@@ -315,8 +315,7 @@ def simulate_withdrawal_year(
         ordinary_income=ordinary_income,
         qualified_equity_distributions=qualified_equity_distributions,
         year_cache=year_cache,
-        sim_config=sim_config,
-    )
+        sim_config=sim_config, run_context=run_context)
 
     total_tax += payroll_tax
     baseline_total_tax = total_tax
@@ -402,8 +401,7 @@ def simulate_withdrawal_year(
                 ordinary_income=ordinary_income,
                 qualified_equity_distributions=qualified_equity_distributions,
                 year_cache=year_cache,
-                sim_config=sim_config,
-            )
+                sim_config=sim_config, run_context=run_context)
 
             total_tax += payroll_tax
 
@@ -436,11 +434,11 @@ def simulate_withdrawal_year(
                                               context={"year": year,
                                                        "deposited_total": deposited_roth_contributions["total"],
                                                        "funded_total": funded_roth_contributions["total"],
-                                                       "difference": deposited_roth_contributions["total"] - funded_roth_contributions["total"]})
+                                                       "difference": deposited_roth_contributions["total"] - funded_roth_contributions["total"]}, run_context=run_context, path_context=path_context)
 
     # Portfolio returns and fund expenses.
     equity_total_return = year_returns["eq"]
-    equity_dividend_yield = sim_config._post_tax_equity_dividend_yield
+    equity_dividend_yield = run_context.post_tax_equity_dividend_yield_normalized
     taxable_equity_price_return = equity_total_return - equity_dividend_yield
     fund_expense_rate = sim_config.fund_expense if sim_config.use_fund_expenses else 0.0
 
@@ -466,9 +464,9 @@ def simulate_withdrawal_year(
         )
 
     if sim_config.rebalance_every_year:
-        portfolioEngine.rebalance(h_port, sim_config)
+        portfolioEngine.rebalance(h_port, sim_config, run_context=run_context)
         if second_person_enabled:
-            portfolioEngine.rebalance(w_port, sim_config)
+            portfolioEngine.rebalance(w_port, sim_config, run_context=run_context)
 
     # Reporting values.
 
@@ -513,7 +511,7 @@ def simulate_withdrawal_year(
                                                            "emergency_pre_tax_used": emergency_pre_tax_used,
                                                            "expected_total": expected_person_income_total,
                                                            "actual_total": actual_person_income_total,
-                                                           "difference": actual_person_income_total - expected_person_income_total})
+                                                           "difference": actual_person_income_total - expected_person_income_total}, run_context=run_context, path_context=path_context)
 
         husband_tax_alloc, wife_tax_alloc = taxEngine.allocate_tax_proportionally_couple(
             total_tax, husband_income_for_tax_alloc, wife_income_for_tax_alloc

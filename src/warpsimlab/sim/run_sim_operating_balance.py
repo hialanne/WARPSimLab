@@ -7,7 +7,7 @@ from src.warpsimlab.plots.plotOperatingBalance import plot_operating_balance
 from src.warpsimlab.plots import io  # ensure io.py is imported
 
 
-def run_sim_operating_balance(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
+def run_sim_operating_balance(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, root=None):
     """
     Run an operating-balance-focused simulation.
 
@@ -20,15 +20,7 @@ def run_sim_operating_balance(husband_portfolio, wife_portfolio, husband, wife, 
     """
 
     # Deterministic only
-    p = run_pipeline(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-        force_num_sims=1
-    )
+    p = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=1)
 
     years = p["years"]
 
@@ -58,8 +50,7 @@ def run_sim_operating_balance(husband_portfolio, wife_portfolio, husband, wife, 
         portfolio_value=portfolio_value,   # NEW
         husband=husband,
         wife=wife,
-        sim_config=sim_config
-    )
+        sim_config=sim_config, root=root)
 
     # Optional CSV output (reuse existing toggle; write function may or may not exist)
     if sim_config.output_csv == "Output":

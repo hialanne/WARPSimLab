@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 # run_sim_risk_reports.py
 
 import os
@@ -13,7 +15,7 @@ from src.warpsimlab.reports.report_plot_helpers import (
 )
 
 
-def _run_risk_pipeline_with_temporary_modes(
+def _run_risk_pipeline(
     husband_portfolio,
     wife_portfolio,
     husband,
@@ -21,58 +23,35 @@ def _run_risk_pipeline_with_temporary_modes(
     expenses,
     sim_config,
     *,
-    risk_analysis_mode,
-):
+    risk_analysis_mode):
     from .simulation import run_pipeline
 
-    original_subplot_mode = getattr(sim_config, "results_mode", None)
-    original_sim_type = getattr(sim_config, "sim_type", None)
-    original_monte_carlo_mode = getattr(sim_config, "risk_analysis_mode", None)
-    original_include_realestate = getattr(sim_config, "include_realestate", None)
-    original_show_simulated_shortfall_rate = getattr(sim_config, "show_simulated_shortfall_rate", None)
-    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
 
-    try:
-        sim_config.results_mode = "risk_analysis"
-        sim_config.sim_type = "portfolio_sim"
+    sim_config = replace(sim_config, results_mode="risk_analysis", sim_type="portfolio_sim")
 
-        if risk_analysis_mode is not None:
-            sim_config.risk_analysis_mode = risk_analysis_mode
+    if risk_analysis_mode is not None:
+        sim_config = replace(sim_config, risk_analysis_mode=risk_analysis_mode)
 
-        # Risk reports measure depletion of liquid/investment portfolio assets.
-        # Real estate is excluded by default to match Monte Carlo and Historical Window plots.
-        sim_config.include_realestate = False
+    # Risk reports measure depletion of liquid/investment portfolio assets.
+    # Real estate is excluded by default to match Monte Carlo and Historical Window plots.
+    sim_config = replace(sim_config, include_realestate=False)
 
-        # Risk reports calculate failure statistics from the primary multi-path result.
-        # Do not let run_pipeline launch any extra helper runs.
-        sim_config.show_simulated_shortfall_rate = False
-        sim_config.calculate_simulated_shortfall_rate = False
+    # Risk reports calculate failure statistics from the primary multi-path result.
+    # Do not let run_pipeline launch any extra helper runs.
+    sim_config = replace(sim_config, show_simulated_shortfall_rate=False, calculate_simulated_shortfall_rate=False)
 
-        result = run_pipeline(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-            force_num_sims=None,
-        )
+    result, run_context = run_pipeline(
+        husband_portfolio,
+        wife_portfolio,
+        husband,
+        wife,
+        expenses,
+        sim_config,
+        force_num_sims=None, return_run_context=True,
+    )
 
-        return _build_and_generate_risk_report(
-            result,
-            sim_config,
-            husband,
-            wife,
-            risk_analysis_mode=risk_analysis_mode,
-        )
+    return _build_and_generate_risk_report(result, sim_config, husband, wife, risk_analysis_mode=risk_analysis_mode, run_context=run_context)
 
-    finally:
-        sim_config.results_mode = original_subplot_mode
-        sim_config.sim_type = original_sim_type
-        sim_config.risk_analysis_mode = original_monte_carlo_mode
-        sim_config.include_realestate = original_include_realestate
-        sim_config.show_simulated_shortfall_rate = original_show_simulated_shortfall_rate
-        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
 
 
 def _as_float(value, default=0.0):
@@ -121,7 +100,7 @@ def _build_report_metadata(sim_config, method, years):
     }
 
 
-def _build_simulation_snapshot(sim_config, method, scenario_count, years):
+def _build_simulation_snapshot(sim_config, method, scenario_count, years, run_context=None):
     snapshot = {
         "Analysis Method": method,
         "Scenario Count": scenario_count,
@@ -139,7 +118,7 @@ def _build_simulation_snapshot(sim_config, method, scenario_count, years):
         snapshot["Sampling Method"] = "Monte Carlo"
         snapshot["Correlated Returns"] = bool(getattr(sim_config, "use_correlated_returns", True))
         snapshot["Sequence Risk"] = bool(getattr(sim_config, "sequence_risk_enabled", False))
-        snapshot["Random Seed"] = getattr(sim_config, "_mc_seed", None)
+        snapshot["Random Seed"] = getattr(run_context, "mc_seed", None)
 
         if snapshot["Sequence Risk"]:
             snapshot["Sequence Risk Timing"] = getattr(sim_config, "sequence_risk_timing", None)
@@ -411,14 +390,7 @@ def _build_risk_plot_assets(
     return plot_assets
 
 
-def _build_and_generate_risk_report(
-    pipeline_result,
-    sim_config,
-    husband,
-    wife,
-    *,
-    risk_analysis_mode,
-):
+def _build_and_generate_risk_report(pipeline_result, sim_config, husband, wife, *, risk_analysis_mode, run_context=None):
     core = pipeline_result["core"]
 
     total_assets = np.asarray(core["total_assets"], dtype=float)
@@ -490,7 +462,7 @@ def _build_and_generate_risk_report(
     report_data = RiskReportData(
         report_options=report_options,
         report_metadata=report_metadata,
-        simulation_snapshot=_build_simulation_snapshot(sim_config, method, scenario_count, effective_years),
+        simulation_snapshot=_build_simulation_snapshot(sim_config, method, scenario_count, effective_years, run_context=run_context),
         analysis_summary=analysis_summary,
         historical_insights=historical_insights,
         percentile_table=_build_percentile_table(total_assets, years),
@@ -510,15 +482,7 @@ def run_sim_historical_window_risk_report(
     expenses,
     sim_config,
 ):
-    return _run_risk_pipeline_with_temporary_modes(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-        risk_analysis_mode="historical_windows",
-    )
+    return _run_risk_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, risk_analysis_mode='historical_windows')
 
 
 def run_sim_monte_carlo_risk_report(
@@ -529,12 +493,4 @@ def run_sim_monte_carlo_risk_report(
     expenses,
     sim_config,
 ):
-    return _run_risk_pipeline_with_temporary_modes(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-        risk_analysis_mode="monte_carlo",
-    )
+    return _run_risk_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, risk_analysis_mode='monte_carlo')

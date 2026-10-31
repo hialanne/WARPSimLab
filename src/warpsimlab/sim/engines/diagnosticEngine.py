@@ -31,7 +31,7 @@ def _format_value(value):
             return "<unable to format value>"
 
 
-def _write_diagnostic_report(message, sim_config, context, call_stack):
+def _write_diagnostic_report(message, sim_config, context, call_stack, run_context=None, path_context=None):
     try:
         target_dir = Path.home() / "Desktop" / "WARPSimLab" / "Diagnostics"
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -83,6 +83,23 @@ def _write_diagnostic_report(message, sim_config, context, call_stack):
                     f.write(f"<unable to record sim_config: {exc}>\n")
                 f.write("\n")
 
+            if run_context is not None:
+                f.write("Run Context\n")
+                f.write("-----------\n")
+                for key, value in sorted(vars(run_context).items()):
+                    if key != "mc_rng":
+                        f.write(f"{key}: {_format_value(value)}\n")
+                f.write("\n")
+
+            if path_context is not None:
+                f.write("Path Context\n")
+                f.write("------------\n")
+                excluded_path_keys = {key.lstrip("_") for key in excluded_config_keys}
+                for key, value in sorted(vars(path_context).items()):
+                    if key not in excluded_path_keys:
+                        f.write(f"{key}: {_format_value(value)}\n")
+                f.write("\n")
+
             f.write("Call Stack\n")
             f.write("----------\n")
             f.write("".join(call_stack))
@@ -93,9 +110,10 @@ def _write_diagnostic_report(message, sim_config, context, call_stack):
         return None
 
 
-def raise_internal_error(message, sim_config, context=None):
+def raise_internal_error(message, sim_config, context=None, run_context=None, path_context=None):
     call_stack = traceback.format_stack()[:-1]
-    diagnostic_path = _write_diagnostic_report(message, sim_config, context or {}, call_stack)
+    diagnostic_path = _write_diagnostic_report(message, sim_config, context or {}, call_stack,
+        run_context=run_context, path_context=path_context)
 
     print()
     print("WARPSimLab encountered an internal simulation error.")

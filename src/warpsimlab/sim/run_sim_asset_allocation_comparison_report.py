@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 # run_sim_asset_allocation_comparison_report.py
 
 import os
@@ -376,192 +378,106 @@ def run_sim_asset_allocation_comparison_report(
     current_allocation = _current_household_allocation(husband_portfolio, wife_portfolio, sim_config)
     current_equity_percentage = 100.0 * current_allocation["equity"]
 
-    highlight_equity_percentages = [
-        max(0.0, current_equity_percentage - 20.0),
-        min(100.0, current_equity_percentage + 20.0),
-    ]
+    highlight_equity_percentages = [max(0.0, current_equity_percentage - 20.0), min(100.0, current_equity_percentage + 20.0)]
 
     simulation_equity_percentages = list(requested_equity_percentages)
 
     for equity_percentage in highlight_equity_percentages:
-        if not any(
-            abs(equity_percentage - existing_percentage) < 1e-9
-            for existing_percentage in simulation_equity_percentages
-        ):
+        if not any((abs(equity_percentage - existing_percentage) < 1e-09 for existing_percentage in simulation_equity_percentages)):
             simulation_equity_percentages.append(equity_percentage)
 
-    original_subplot_mode = getattr(sim_config, "results_mode", None)
-    original_sim_type = getattr(sim_config, "sim_type", None)
-    original_monte_carlo_mode = getattr(sim_config, "risk_analysis_mode", None)
-    original_monte_carlo_plot_style = getattr(sim_config, "risk_analysis_plot_style", "fill")
-    original_include_realestate = getattr(sim_config, "include_realestate", None)
-    original_show_simulated_shortfall_rate = getattr(sim_config, "show_simulated_shortfall_rate", None)
-    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
-    original_initial_allocation_mode = getattr(sim_config, "sim_initial_allocation_mode", None)
-    original_custom_stock = getattr(sim_config, "custom_stock", 0.0)
-    original_custom_bonds = getattr(sim_config, "custom_bonds", 0.0)
-    original_custom_cash = getattr(sim_config, "custom_cash", 0.0)
-    original_overlay_tax_impacts = getattr(sim_config, "overlay_tax_impacts", False)
-    original_overlay_fund_expense_impacts = getattr(sim_config, "overlay_fund_expense_impacts", False)
-    original_historical_window_stride = sim_config.historical_window_stride
 
     cases = []
 
-    try:
-        # Asset Allocation Comparison operates on the investable portfolio.
-        # Real estate is excluded from both deterministic and Historical Window comparisons.
-        sim_config.include_realestate = False
+    # Asset Allocation Comparison operates on the investable portfolio.
+    # Real estate is excluded from both deterministic and Historical Window comparisons.
+    sim_config = replace(sim_config, include_realestate=False)
 
-        # Depletion is calculated directly from the Historical Window results.
-        sim_config.show_simulated_shortfall_rate = False
-        sim_config.calculate_simulated_shortfall_rate = False
-        sim_config.risk_analysis_plot_style = "fill"
+    # Depletion is calculated directly from the Historical Window results.
+    sim_config = replace(sim_config, show_simulated_shortfall_rate=False, calculate_simulated_shortfall_rate=False,
+        risk_analysis_plot_style='fill')
 
-        # Prevent run_pipeline() from performing unrelated overlay simulations for every case.
-        sim_config.overlay_tax_impacts = False
-        sim_config.overlay_fund_expense_impacts = False
+    # Prevent run_pipeline() from performing unrelated overlay simulations for every case.
+    sim_config = replace(sim_config, overlay_tax_impacts=False, overlay_fund_expense_impacts=False)
 
-        # All comparison cases use the same custom allocation semantics.
-        sim_config.sim_initial_allocation_mode = "custom"
+    # All comparison cases use the same custom allocation semantics.
+    sim_config = replace(sim_config, sim_initial_allocation_mode="custom")
 
-        for equity_percentage in simulation_equity_percentages:
-            allocation = _derive_allocation(float(equity_percentage) / 100.0, current_allocation)
+    for equity_percentage in simulation_equity_percentages:
+        allocation = _derive_allocation(float(equity_percentage) / 100.0, current_allocation)
 
-            sim_config.custom_stock = allocation["equity"]
-            sim_config.custom_bonds = allocation["bonds"]
-            sim_config.custom_cash = allocation["cash"]
+        sim_config = replace(sim_config, custom_stock=allocation["equity"], custom_bonds=allocation["bonds"], custom_cash=allocation["cash"])
 
-            # -------------------------------------------------
-            # Deterministic projection
-            # -------------------------------------------------
-
-            sim_config.results_mode = "fill"
-            sim_config.sim_type = "portfolio_sim"
-
-            deterministic_pipeline_result = run_pipeline(
-                husband_portfolio,
-                wife_portfolio,
-                husband,
-                wife,
-                expenses,
-                sim_config,
-                force_num_sims=1,
-            )
-
-            # -------------------------------------------------
-            # Historical Window risk analysis
-            # -------------------------------------------------
-
-            sim_config.results_mode = "risk_analysis"
-            sim_config.sim_type = "portfolio_sim"
-            sim_config.risk_analysis_mode = "historical_windows"
-
-            # Comparison allocations use a subset of Historical Windows for speed.
-            sim_config.historical_window_stride = 2
-            #sim_config.historical_window_stride = 4
-
-            historical_pipeline_result = run_pipeline(
-                husband_portfolio,
-                wife_portfolio,
-                husband,
-                wife,
-                expenses,
-                sim_config,
-                force_num_sims=None,
-            )
-
-            highlight_only = not any(
-                abs(float(equity_percentage) - requested_percentage) < 1e-9
-                for requested_percentage in requested_equity_percentages
-            )
-
-            cases.append(
-                _build_case_result(
-                    allocation,
-                    deterministic_pipeline_result,
-                    historical_pipeline_result,
-                    is_current_allocation=False,
-                    highlight_only=highlight_only,
-                )
-            )
-
-        # -----------------------------------------------------
-        # User's actual current allocation
-        # -----------------------------------------------------
-
-        sim_config.custom_stock = current_allocation["equity"]
-        sim_config.custom_bonds = current_allocation["bonds"]
-        sim_config.custom_cash = current_allocation["cash"]
-
+        # -------------------------------------------------
         # Deterministic projection
+        # -------------------------------------------------
 
-        sim_config.results_mode = "fill"
-        sim_config.sim_type = "portfolio_sim"
+        sim_config = replace(sim_config, results_mode="fill", sim_type="portfolio_sim")
 
-        deterministic_pipeline_result = run_pipeline(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-            force_num_sims=1,
-        )
+        deterministic_pipeline_result = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=1)
 
+        # -------------------------------------------------
         # Historical Window risk analysis
+        # -------------------------------------------------
 
-        sim_config.results_mode = "risk_analysis"
-        sim_config.sim_type = "portfolio_sim"
-        sim_config.risk_analysis_mode = "historical_windows"
+        sim_config = replace(sim_config, results_mode="risk_analysis", sim_type="portfolio_sim", risk_analysis_mode="historical_windows")
 
-        # Current allocation is the baseline and uses all Historical Windows.
-        sim_config.historical_window_stride = 1
+        # Comparison allocations use a subset of Historical Windows for speed.
+        sim_config = replace(sim_config, historical_window_stride=2)
+        #sim_config.historical_window_stride = 4
 
-        historical_pipeline_result = run_pipeline(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-            force_num_sims=None,
+        historical_pipeline_result = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=None)
+
+        highlight_only = not any(
+            abs(float(equity_percentage) - requested_percentage) < 1e-9
+            for requested_percentage in requested_equity_percentages
         )
 
         cases.append(
             _build_case_result(
-                current_allocation,
+                allocation,
                 deterministic_pipeline_result,
                 historical_pipeline_result,
-                is_current_allocation=True,
+                is_current_allocation=False,
+                highlight_only=highlight_only,
             )
         )
 
-        report_metadata = _build_report_metadata(sim_config, deterministic_pipeline_result["years"])
+    # -----------------------------------------------------
+    # User's actual current allocation
+    # -----------------------------------------------------
 
-        historical_plot_assets = _generate_historical_allocation_plots(
-            cases=cases,
-            current_equity_percentage=current_equity_percentage,
-            sim_config=sim_config,
-            husband=husband,
-            wife=wife,
-            report_id=report_metadata["Report ID"],
-        )
+    sim_config = replace(sim_config, custom_stock=current_allocation['equity'],
+        custom_bonds=current_allocation['bonds'], custom_cash=current_allocation['cash'])
 
-    finally:
-        sim_config.results_mode = original_subplot_mode
-        sim_config.sim_type = original_sim_type
-        sim_config.risk_analysis_mode = original_monte_carlo_mode
-        sim_config.risk_analysis_plot_style = original_monte_carlo_plot_style
-        sim_config.include_realestate = original_include_realestate
-        sim_config.show_simulated_shortfall_rate = original_show_simulated_shortfall_rate
-        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
-        sim_config.sim_initial_allocation_mode = original_initial_allocation_mode
-        sim_config.custom_stock = original_custom_stock
-        sim_config.custom_bonds = original_custom_bonds
-        sim_config.custom_cash = original_custom_cash
-        sim_config.overlay_tax_impacts = original_overlay_tax_impacts
-        sim_config.overlay_fund_expense_impacts = original_overlay_fund_expense_impacts
-        sim_config.historical_window_stride = original_historical_window_stride
+    # Deterministic projection
+
+    sim_config = replace(sim_config, results_mode="fill", sim_type="portfolio_sim")
+
+    deterministic_pipeline_result = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=1)
+
+    # Historical Window risk analysis
+
+    sim_config = replace(sim_config, results_mode="risk_analysis", sim_type="portfolio_sim", risk_analysis_mode="historical_windows")
+
+    # Current allocation is the baseline and uses all Historical Windows.
+    sim_config = replace(sim_config, historical_window_stride=1)
+
+    historical_pipeline_result = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=None)
+
+    cases.append(_build_case_result(current_allocation, deterministic_pipeline_result, historical_pipeline_result, is_current_allocation=True))
+
+    report_metadata = _build_report_metadata(sim_config, deterministic_pipeline_result["years"])
+
+    historical_plot_assets = _generate_historical_allocation_plots(
+        cases=cases,
+        current_equity_percentage=current_equity_percentage,
+        sim_config=sim_config,
+        husband=husband,
+        wife=wife,
+        report_id=report_metadata["Report ID"],
+    )
+
 
     cases.sort(key=lambda case: (case["equity_percentage"], 1 if case["is_current_allocation"] else 0))
 

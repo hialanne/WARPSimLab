@@ -41,13 +41,7 @@ BLUE_CYAN_CMAP = LinearSegmentedColormap.from_list(
 )
 
 
-def plot_portfolio_projection(  years_list, 
-                                simulation_data,
-                                sim_config=None,
-                                annotate_plots=False,
-                                sim_rebalance_string="",
-                                husband=None,
-                                wife=None):
+def plot_portfolio_projection(years_list, simulation_data, sim_config=None, annotate_plots=False, sim_rebalance_string='', husband=None, wife=None, *, root=None):
 
     fig, ax = plt.subplots(figsize=(11, 7))
 
@@ -64,10 +58,7 @@ def plot_portfolio_projection(  years_list,
 
     plt.show(block=False)
 
-    center_plot_window_on_main(
-        fig,
-        sim_config,
-    )
+    center_plot_window_on_main(fig, root)
 
 
 

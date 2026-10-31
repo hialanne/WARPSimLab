@@ -1,3 +1,5 @@
+from src.warpsimlab.sim.simulationObject import RunContext
+
 # monteCarloEngine.py
 
 import numpy as np
@@ -13,23 +15,16 @@ from src.warpsimlab.utils.io_utils import (
 
 MONTE_CARLO_SEED = 12345
 
-def _prepare_historical_window_data(sim_config):
+def _prepare_historical_window_data(sim_config, run_context=None):
     """
     Load and cache historical asset return arrays plus matching historical
     inflation arrays and valid rolling-window start indices for the configured
     simulation length.
 
-    Cached fields on sim_config
-    ---------------------------
-    _hist_years
-    _hist_eq
-    _hist_bd
-    _hist_cs
-    _hist_re
-    _hist_inflation
-    _hist_window_start_indices
-    _hist_num_windows
+    RunContext owns the loaded arrays, filtered source offsets and window count.
     """
+    if run_context is None:
+        run_context = RunContext()
     hist = load_historical_asset_returns_csv(
         filename=sim_config.historical_asset_returns_file
     )
@@ -141,69 +136,61 @@ def _prepare_historical_window_data(sim_config):
             "the configured horizon and historical-window selection"
         )
 
-    sim_config._hist_years = years
-    sim_config._hist_eq = eq
-    sim_config._hist_bd = bd
-    sim_config._hist_cs = cs
-    sim_config._hist_re = re
-    sim_config._hist_inflation = inflation
-    sim_config._hist_window_start_indices = start_indices
-    sim_config._hist_num_windows = int(len(start_indices))
+    run_context.hist_years = years
+    run_context.hist_eq = eq
+    run_context.hist_bd = bd
+    run_context.hist_cs = cs
+    run_context.hist_re = re
+    run_context.hist_inflation = inflation
+    run_context.hist_window_start_indices = start_indices
+    run_context.hist_num_windows = int(len(start_indices))
 
 
-def prepare_market_path_sampling(sim_config):
+def prepare_market_path_sampling(sim_config, run_context=None):
     """
     Precompute market-path data once per run.
 
+    Return the supplied or newly created RunContext; pass it explicitly to path generation.
+
     For Monte Carlo path-based annual sampling, this stores:
-      - sim_config._mc_means
-      - sim_config._mc_std_devs
-      - sim_config._mc_cov_matrix
-      - sim_config._mc_cholesky
+      - run_context.mc_means
+      - run_context.mc_std_devs
+      - run_context.mc_cov_matrix
+      - run_context.mc_cholesky
 
     For rolling historical windows, this stores:
-      - sim_config._hist_years
-      - sim_config._hist_eq
-      - sim_config._hist_bd
-      - sim_config._hist_cs
-      - sim_config._hist_re
-      - sim_config._hist_window_start_indices
-      - sim_config._hist_num_windows
+      - run_context.hist_years
+      - run_context.hist_eq
+      - run_context.hist_bd
+      - run_context.hist_cs
+      - run_context.hist_re
+      - run_context.hist_window_start_indices
+      - run_context.hist_num_windows
     """
 
-    sim_config._mc_seed = MONTE_CARLO_SEED
+    if run_context is None:
+        run_context = RunContext()
+    run_context.mc_seed = MONTE_CARLO_SEED
 
-    sim_config._mc_rng = np.random.default_rng(
-        MONTE_CARLO_SEED
-    )
+    run_context.mc_rng = np.random.default_rng(MONTE_CARLO_SEED)
 
     # --- reset Monte Carlo caches ---
-    sim_config._mc_means = np.array([
-        sim_config.eq_mean,
-        sim_config.bd_mean,
-        sim_config.cs_mean,
-        sim_config.re_mean,
-    ], dtype=float)
+    run_context.mc_means = np.array([sim_config.eq_mean, sim_config.bd_mean, sim_config.cs_mean, sim_config.re_mean], dtype=float)
 
-    sim_config._mc_std_devs = np.array([
-        sim_config.eq_std,
-        sim_config.bd_std,
-        sim_config.cs_std,
-        sim_config.re_std,
-    ], dtype=float)
+    run_context.mc_std_devs = np.array([sim_config.eq_std, sim_config.bd_std, sim_config.cs_std, sim_config.re_std], dtype=float)
 
-    sim_config._mc_cov_matrix = None
-    sim_config._mc_cholesky = None
+    run_context.mc_cov_matrix = None
+    run_context.mc_cholesky = None
 
     # --- reset historical caches ---
-    sim_config._hist_years = None
-    sim_config._hist_eq = None
-    sim_config._hist_bd = None
-    sim_config._hist_cs = None
-    sim_config._hist_re = None
-    sim_config._hist_inflation = None
-    sim_config._hist_window_start_indices = None
-    sim_config._hist_num_windows = 0
+    run_context.hist_years = None
+    run_context.hist_eq = None
+    run_context.hist_bd = None
+    run_context.hist_cs = None
+    run_context.hist_re = None
+    run_context.hist_inflation = None
+    run_context.hist_window_start_indices = None
+    run_context.hist_num_windows = 0
 
     is_monte_carlo = (
         sim_config.results_mode == "risk_analysis"
@@ -211,29 +198,24 @@ def prepare_market_path_sampling(sim_config):
     )
 
     if not is_monte_carlo:
-        return
+        return run_context
 
     mode = getattr(sim_config, "risk_analysis_mode", "monte_carlo")
 
     if mode == "monte_carlo":
         use_correlated = bool(getattr(sim_config, "use_correlated_returns", True))
         if not use_correlated:
-            return
+            return run_context
 
         corr_matrix = np.asarray(sim_config.return_correlation_matrix, dtype=float)
 
-        sim_config._mc_cov_matrix = build_covariance_matrix(
-            sim_config._mc_std_devs,
-            corr_matrix,
-        )
-        sim_config._mc_cholesky = build_covariance_factor(
-            sim_config._mc_cov_matrix
-        )
-        return
+        run_context.mc_cov_matrix = build_covariance_matrix(run_context.mc_std_devs, corr_matrix)
+        run_context.mc_cholesky = build_covariance_factor(run_context.mc_cov_matrix)
+        return run_context
 
     if mode == "historical_windows":
-        _prepare_historical_window_data(sim_config)
-        return
+        _prepare_historical_window_data(sim_config, run_context=run_context)
+        return run_context
 
 
     raise ValueError(f"Unsupported risk_analysis_mode: {mode}")
@@ -425,7 +407,7 @@ def apply_sequence_risk_overlay(
     return adjusted, metadata
 
 
-def _build_historical_market_path(sim_config, years_to_simulate, sim_index):
+def _build_historical_market_path(sim_config, years_to_simulate, sim_index, run_context=None):
     """
     Build one market path from the cached historical rolling windows.
 
@@ -435,22 +417,24 @@ def _build_historical_market_path(sim_config, years_to_simulate, sim_index):
         Zero-based simulation index. In rolling historical mode, each sim_index
         maps to one overlapping historical window.
     """
+    if run_context is None:
+        run_context = RunContext()
     if sim_index is None:
         raise ValueError(
             "sim_index is required for historical_windows mode"
         )
 
-    if sim_config._hist_window_start_indices is None or sim_config._hist_num_windows <= 0:
+    if run_context.hist_window_start_indices is None or run_context.hist_num_windows <= 0:
         diagnosticEngine.raise_internal_error("Historical rolling-window data not prepared before market-path generation.", sim_config,
                                               context={"sim_index": sim_index, "years_to_simulate": years_to_simulate,
-                                                       "hist_num_windows": sim_config._hist_num_windows})
+                                                       "hist_num_windows": run_context.hist_num_windows}, run_context=run_context)
 
     sim_index = int(sim_index)
 
-    if sim_index < 0 or sim_index >= sim_config._hist_num_windows:
-        raise IndexError(f"Historical sim_index {sim_index} is out of range for {sim_config._hist_num_windows} available rolling windows.")
+    if sim_index < 0 or sim_index >= run_context.hist_num_windows:
+        raise IndexError(f"Historical sim_index {sim_index} is out of range for {run_context.hist_num_windows} available rolling windows.")
 
-    start_idx = int(sim_config._hist_window_start_indices[sim_index])
+    start_idx = int(run_context.hist_window_start_indices[sim_index])
     end_idx = start_idx + int(years_to_simulate)
 
     eq = np.zeros(years_to_simulate + 1)
@@ -458,46 +442,45 @@ def _build_historical_market_path(sim_config, years_to_simulate, sim_index):
     cs = np.zeros(years_to_simulate + 1)
     re = np.zeros(years_to_simulate + 1)
 
-    eq[1:] = sim_config._hist_eq[start_idx:end_idx]
-    bd[1:] = sim_config._hist_bd[start_idx:end_idx]
-    cs[1:] = sim_config._hist_cs[start_idx:end_idx]
-    re[1:] = sim_config._hist_re[start_idx:end_idx]
+    eq[1:] = run_context.hist_eq[start_idx:end_idx]
+    bd[1:] = run_context.hist_bd[start_idx:end_idx]
+    cs[1:] = run_context.hist_cs[start_idx:end_idx]
+    re[1:] = run_context.hist_re[start_idx:end_idx]
 
     return {"eq": eq, "bd": bd, "cs": cs, "re": re}
 
 
-def build_historical_inflation_rate_path(sim_config, years_to_simulate, sim_index):
+def build_historical_inflation_rate_path(sim_config, years_to_simulate, sim_index, run_context=None):
     """
     Returns annual inflation rates aligned to the selected historical window.
 
     Index 0 is 0.0 so year indexing aligns with simulation year indexing.
     """
+    if run_context is None:
+        run_context = RunContext()
     if sim_index is None:
         raise ValueError("sim_index is required for historical_windows mode")
 
-    if sim_config._hist_window_start_indices is None or sim_config._hist_num_windows <= 0:
+    if run_context.hist_window_start_indices is None or run_context.hist_num_windows <= 0:
         diagnosticEngine.raise_internal_error("Historical rolling-window data not prepared before inflation-path generation.", sim_config,
                                               context={"sim_index": sim_index, "years_to_simulate": years_to_simulate,
-                                                       "hist_num_windows": sim_config._hist_num_windows})
+                                                       "hist_num_windows": run_context.hist_num_windows}, run_context=run_context)
 
     sim_index = int(sim_index)
 
-    if sim_index < 0 or sim_index >= sim_config._hist_num_windows:
-        raise IndexError(
-            f"Historical sim_index {sim_index} is out of range for "
-            f"{sim_config._hist_num_windows} available rolling windows."
-        )
+    if sim_index < 0 or sim_index >= run_context.hist_num_windows:
+        raise IndexError(f'Historical sim_index {sim_index} is out of range for {run_context.hist_num_windows} available rolling windows.')
 
-    start_idx = int(sim_config._hist_window_start_indices[sim_index])
+    start_idx = int(run_context.hist_window_start_indices[sim_index])
     end_idx = start_idx + int(years_to_simulate)
 
     inflation_rates = np.zeros(years_to_simulate + 1, dtype=float)
-    inflation_rates[1:] = sim_config._hist_inflation[start_idx:end_idx] + sim_config.inflation_delta
+    inflation_rates[1:] = run_context.hist_inflation[start_idx:end_idx] + sim_config.inflation_delta
 
     return inflation_rates
 
 
-def build_historical_inflation_factor_path(sim_config, years_to_simulate, sim_index):
+def build_historical_inflation_factor_path(sim_config, years_to_simulate, sim_index, run_context=None):
     """
     Returns cumulative inflation factors aligned to the selected historical window.
 
@@ -506,11 +489,12 @@ def build_historical_inflation_factor_path(sim_config, years_to_simulate, sim_in
     factor[2] = (1 + inflation_year_1) * (1 + inflation_year_2)
     etc.
     """
+    if run_context is None:
+        run_context = RunContext()
     inflation_rates = build_historical_inflation_rate_path(
         sim_config=sim_config,
         years_to_simulate=years_to_simulate,
-        sim_index=sim_index,
-    )
+        sim_index=sim_index, run_context=run_context)
 
     factors = np.ones(years_to_simulate + 1, dtype=float)
     for year in range(1, years_to_simulate + 1):
@@ -519,7 +503,7 @@ def build_historical_inflation_factor_path(sim_config, years_to_simulate, sim_in
     return factors
 
 
-def generate_market_path(sim_config, years_to_simulate, sim_index=None):
+def generate_market_path(sim_config, years_to_simulate, sim_index=None, run_context=None):
     """
     Generate a sequence of yearly market returns for one simulation path.
 
@@ -537,6 +521,8 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
     with simulation year indexing where year 0 is the initial state.
     """
 
+    if run_context is None:
+        run_context = RunContext()
     eq = np.zeros(years_to_simulate + 1)
     bd = np.zeros(years_to_simulate + 1)
     cs = np.zeros(years_to_simulate + 1)
@@ -559,25 +545,25 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
     if mode == "monte_carlo":
         use_correlated = bool(getattr(sim_config, "use_correlated_returns", True))
 
-        means = sim_config._mc_means
-        std_devs = sim_config._mc_std_devs
+        means = run_context.mc_means
+        std_devs = run_context.mc_std_devs
 
         if means is None or std_devs is None:
             diagnosticEngine.raise_internal_error("Monte Carlo sampling data not prepared before market-path generation.", sim_config,
                                                   context={"means_is_none": means is None, "std_devs_is_none": std_devs is None,
-                                                           "years_to_simulate": years_to_simulate, "sim_index": sim_index})
+                                                           "years_to_simulate": years_to_simulate, "sim_index": sim_index}, run_context=run_context)
 
         if use_correlated:
-            chol = sim_config._mc_cholesky
+            chol = run_context.mc_cholesky
             if chol is None:
                 diagnosticEngine.raise_internal_error("Cholesky factor not prepared before correlated market-path generation.", sim_config,
-                                                      context={"years_to_simulate": years_to_simulate, "sim_index": sim_index})
+                                                      context={"years_to_simulate": years_to_simulate, "sim_index": sim_index}, run_context=run_context)
 
-            rng = sim_config._mc_rng
+            rng = run_context.mc_rng
             z = rng.normal(size=(years_to_simulate, 4))
             draws = z @ chol.T + means
         else:
-            rng = sim_config._mc_rng
+            rng = run_context.mc_rng
 
             draws = np.column_stack([
                 rng.normal(
@@ -622,8 +608,7 @@ def generate_market_path(sim_config, years_to_simulate, sim_index=None):
         return _build_historical_market_path(
             sim_config=sim_config,
             years_to_simulate=years_to_simulate,
-            sim_index=sim_index,
-        )
+            sim_index=sim_index, run_context=run_context)
 
     else:
         raise ValueError(

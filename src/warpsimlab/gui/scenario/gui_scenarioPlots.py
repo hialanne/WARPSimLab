@@ -1,10 +1,11 @@
+from dataclasses import replace
+
 # gui_scenarioPlots.py
 
 # gui_scenarioPlots.py
 
 import tkinter as tk
 import matplotlib.pyplot as plt
-import copy
 
 from src.warpsimlab.plots.plotYearlyIncome import draw_yearly_income
 from src.warpsimlab.plots.plotPortfolioProjection import draw_portfolio_projection
@@ -251,14 +252,13 @@ class ScenarioPlotManager:
         """
         Return a display-only sim_config copy for plot rendering tweaks.
         """
-        sim_config = copy.copy(result["sim_config"])
-        sim_config.use_snapshot_annotations = bool(annotations_enabled)
-        sim_config.scenario_explorer_annotations = []
+        sim_config = result["sim_config"]
+        sim_config = replace(sim_config, use_snapshot_annotations=bool(annotations_enabled), scenario_explorer_annotations=[])
 
         if panel["plot_family"] == PLOT_FAMILY_INCOME:
-            sim_config.sim_type = "income_sim"
+            sim_config = replace(sim_config, sim_type="income_sim")
         elif panel["plot_family"] == PLOT_FAMILY_CASHFLOW:
-            sim_config.sim_type = "cashflow_sim"
+            sim_config = replace(sim_config, sim_type="cashflow_sim")
 
         return sim_config
 

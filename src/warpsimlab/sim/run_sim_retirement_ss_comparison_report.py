@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import copy
 import cProfile
 import pstats
@@ -315,6 +317,7 @@ def run_sim_retirement_ss_comparison_report(
     expenses,
     sim_config,
 ):
+    original_config = sim_config
     report_options = getattr(sim_config, "report_options", {}) or {}
 
     retirement_ages = sorted({int(value) for value in report_options.get("retirement_ages", [])})
@@ -348,129 +351,105 @@ def run_sim_retirement_ss_comparison_report(
             "social_security_amount": float(wife.ss),
         }
 
-    original_subplot_mode = sim_config.results_mode
-    original_sim_type = sim_config.sim_type
-    original_monte_carlo_mode = sim_config.risk_analysis_mode
-    original_include_realestate = sim_config.include_realestate
-    original_show_shortfall_rate = sim_config.show_simulated_shortfall_rate
-    original_calculate_shortfall_rate = sim_config.calculate_simulated_shortfall_rate
-    original_overlay_tax_impacts = sim_config.overlay_tax_impacts
-    original_overlay_fund_expense_impacts = sim_config.overlay_fund_expense_impacts
-    original_historical_window_stride = sim_config.historical_window_stride
 
     cases = []
     effective_years = None
 
-    try:
-        # This report compares the investment portfolio.
-        # Keep real estate excluded, matching the existing
-        # Retirement / Social Security comparison semantics.
-        sim_config.include_realestate = False
+    # This report compares the investment portfolio.
+    # Keep real estate excluded, matching the existing
+    # Retirement / Social Security comparison semantics.
+    sim_config = replace(sim_config, include_realestate=False)
 
-        # Historical Window depletion is calculated directly.
-        sim_config.show_simulated_shortfall_rate = False
-        sim_config.calculate_simulated_shortfall_rate = False
+    # Historical Window depletion is calculated directly.
+    sim_config = replace(sim_config, show_simulated_shortfall_rate=False, calculate_simulated_shortfall_rate=False)
 
-        # Prevent unrelated overlay runs for every timing case.
-        sim_config.overlay_tax_impacts = False
-        sim_config.overlay_fund_expense_impacts = False
+    # Prevent unrelated overlay runs for every timing case.
+    sim_config = replace(sim_config, overlay_tax_impacts=False, overlay_fund_expense_impacts=False)
 
-        if PROFILE_RETIREMENT_SS_REPORT:
-            profiler = cProfile.Profile()
-            profiler.enable()
+    if PROFILE_RETIREMENT_SS_REPORT:
+        profiler = cProfile.Profile()
+        profiler.enable()
 
-        for retirement_age in retirement_ages:
-            retirement_shift = int(retirement_age) - int(baseline_retirement_age)
+    for retirement_age in retirement_ages:
+        retirement_shift = int(retirement_age) - int(baseline_retirement_age)
 
-            for ss_age in social_security_ages:
-                social_security_shift = int(ss_age) - int(baseline_ss_age)
+        for ss_age in social_security_ages:
+            social_security_shift = int(ss_age) - int(baseline_ss_age)
 
-                # ---------------------------------------------
-                # Deterministic case
-                # ---------------------------------------------
+            # ---------------------------------------------
+            # Deterministic case
+            # ---------------------------------------------
 
-                deterministic_husband, deterministic_wife = _build_case_persons(
-                    husband, wife, second_person_enabled, retirement_shift, social_security_shift
-                )
+            deterministic_husband, deterministic_wife = _build_case_persons(
+                husband, wife, second_person_enabled, retirement_shift, social_security_shift
+            )
 
-                sim_config.results_mode = "fill"
-                sim_config.sim_type = "portfolio_sim"
+            sim_config = replace(sim_config, results_mode="fill", sim_type="portfolio_sim")
 
-                deterministic_pipeline_result = run_pipeline(
-                    husband_portfolio,
-                    wife_portfolio,
+            deterministic_pipeline_result = run_pipeline(
+                husband_portfolio,
+                wife_portfolio,
+                deterministic_husband,
+                deterministic_wife,
+                expenses,
+                sim_config,
+                force_num_sims=1,
+            )
+            if effective_years is None:
+                effective_years = deterministic_pipeline_result["years"]
+
+            # ---------------------------------------------
+            # Historical Window case
+            # ---------------------------------------------
+
+            historical_husband, historical_wife = _build_case_persons(
+                husband, wife, second_person_enabled, retirement_shift, social_security_shift
+            )
+
+            sim_config = replace(sim_config, results_mode="risk_analysis", sim_type="portfolio_sim", risk_analysis_mode="historical_windows")
+
+            # We are going to create a 6x6 matrix of percents portfolio goes to zero.
+            # This is very computational heavy. Lets use stride 4 except on our
+            # baseline, where we will use stride 1.
+            if int(retirement_age) == int(baseline_retirement_age) and int(ss_age) == int(baseline_ss_age):
+                sim_config = replace(sim_config, historical_window_stride=1)
+            else:
+                # sim_config.historical_window_stride = 2
+                sim_config = replace(sim_config, historical_window_stride=4)
+
+            historical_pipeline_result = run_pipeline(
+                husband_portfolio,
+                wife_portfolio,
+                historical_husband,
+                historical_wife,
+                expenses,
+                sim_config,
+                force_num_sims=None,
+            )
+
+            cases.append(
+                _build_case_result(
+                    deterministic_pipeline_result,
+                    historical_pipeline_result,
                     deterministic_husband,
                     deterministic_wife,
-                    expenses,
-                    sim_config,
-                    force_num_sims=1,
+                    second_person_enabled,
+                    retirement_age,
+                    ss_age,
+                    baseline_retirement_age,
+                    baseline_ss_age,
                 )
-                if effective_years is None:
-                    effective_years = deterministic_pipeline_result["years"]
+            )
 
-                # ---------------------------------------------
-                # Historical Window case
-                # ---------------------------------------------
+    if PROFILE_RETIREMENT_SS_REPORT:
+        profiler.disable()
 
-                historical_husband, historical_wife = _build_case_persons(
-                    husband, wife, second_person_enabled, retirement_shift, social_security_shift
-                )
+        stats = pstats.Stats(profiler)
+        stats.strip_dirs()
+        stats.sort_stats("cumulative")
+        stats.print_stats(40)
 
-                sim_config.results_mode = "risk_analysis"
-                sim_config.sim_type = "portfolio_sim"
-                sim_config.risk_analysis_mode = "historical_windows"
-
-                # We are going to create a 6x6 matrix of percents portfolio goes to zero.
-                # This is very computational heavy. Lets use stride 4 except on our
-                # baseline, where we will use stride 1.
-                if int(retirement_age) == int(baseline_retirement_age) and int(ss_age) == int(baseline_ss_age):
-                    sim_config.historical_window_stride = 1
-                else:
-                    # sim_config.historical_window_stride = 2
-                    sim_config.historical_window_stride = 4
-
-                historical_pipeline_result = run_pipeline(
-                    husband_portfolio,
-                    wife_portfolio,
-                    historical_husband,
-                    historical_wife,
-                    expenses,
-                    sim_config,
-                    force_num_sims=None,
-                )
-
-                cases.append(
-                    _build_case_result(
-                        deterministic_pipeline_result,
-                        historical_pipeline_result,
-                        deterministic_husband,
-                        deterministic_wife,
-                        second_person_enabled,
-                        retirement_age,
-                        ss_age,
-                        baseline_retirement_age,
-                        baseline_ss_age,
-                    )
-                )
-
-        if PROFILE_RETIREMENT_SS_REPORT:
-            profiler.disable()
-
-            stats = pstats.Stats(profiler)
-            stats.strip_dirs()
-            stats.sort_stats("cumulative")
-            stats.print_stats(40)
-
-    finally:
-        sim_config.results_mode = original_subplot_mode
-        sim_config.sim_type = original_sim_type
-        sim_config.risk_analysis_mode = original_monte_carlo_mode
-        sim_config.include_realestate = original_include_realestate
-        sim_config.show_simulated_shortfall_rate = original_show_shortfall_rate
-        sim_config.calculate_simulated_shortfall_rate = original_calculate_shortfall_rate
-        sim_config.overlay_tax_impacts = original_overlay_tax_impacts
-        sim_config.overlay_fund_expense_impacts = original_overlay_fund_expense_impacts
-        sim_config.historical_window_stride = original_historical_window_stride
+    sim_config = original_config
 
     generated_timestamp = datetime.now()
     visible_report_id = generated_timestamp.strftime("%Y-%m-%d %H:%M:%S")

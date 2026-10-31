@@ -159,15 +159,7 @@ def draw_operating_balance(
     plt.tight_layout()
 
 
-def plot_operating_balance(
-    years_to_simulate,
-    net_profit,
-    operating_balance,
-    portfolio_value,
-    husband,
-    wife,
-    sim_config
-):
+def plot_operating_balance(years_to_simulate, net_profit, operating_balance, portfolio_value, husband, wife, sim_config, *, root=None):
     fig, ax = plt.subplots(figsize=(12, 6))
 
     draw_operating_balance(
@@ -182,6 +174,4 @@ def plot_operating_balance(
     )
     plt.show(block=False)
 
-    center_plot_window_on_main(
-    fig,
-    sim_config,)
+    center_plot_window_on_main(fig, root)

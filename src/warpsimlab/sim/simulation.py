@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 # simulation.py
 
 import numpy as np
@@ -274,45 +276,23 @@ def _compute_simulated_shortfall_rate(
     if num_sims <= 0:
         raise ValueError("num_sims must be > 0 for simulated shortfall rate")
 
-    original_subplot_mode = sim_config.results_mode
-    original_sim_type = sim_config.sim_type
-    original_monte_carlo_mode = sim_config.risk_analysis_mode
-    original_include_realestate = sim_config.include_realestate
 
-    try:
-        sim_config.results_mode = "risk_analysis"
-        sim_config.sim_type = "portfolio_sim"
-        sim_config.risk_analysis_mode = "historical_windows"
-        sim_config.include_realestate = False
+    sim_config = replace(sim_config, results_mode='risk_analysis', sim_type='portfolio_sim',
+        risk_analysis_mode='historical_windows', include_realestate=False)
 
-        historical_core = simulate_yearly_portfolios(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-            num_sims=num_sims,
-        )
-    finally:
-        sim_config.results_mode = original_subplot_mode
-        sim_config.sim_type = original_sim_type
-        sim_config.risk_analysis_mode = original_monte_carlo_mode
-        sim_config.include_realestate = original_include_realestate
+    historical_core = simulate_yearly_portfolios(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, num_sims=num_sims)
 
     historical_core = _trim_core_to_effective_horizon(historical_core)
 
     total_assets = np.asarray(historical_core["total_assets"])
     if total_assets.ndim != 2:
-        raise ValueError(
-            f"Expected 2D total_assets array, got shape {total_assets.shape}"
-        )
+        raise ValueError(f'Expected 2D total_assets array, got shape {total_assets.shape}')
 
     failed_mask = np.any(total_assets <= 0.0, axis=1)
     return float(failed_mask.mean() * 100.0)
 
 
-def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, force_num_sims=None):
+def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, force_num_sims=None, return_run_context=False):
     """
     Returns a dict with:
       - years, years_list
@@ -320,7 +300,10 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
       - net_income, net_profit, breakdown_by_class, taxes, expense_amt
       - summary_results
       - portfolio_plot_data (with overlays attached when enabled)
+
+    With return_run_context=True, return (result, baseline_run_context) without changing result keys.
     """
+    original_config = sim_config
     validate_simulation_inputs(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
     # Centralized sim count policy (matches existing portfolio behavior)
@@ -334,9 +317,12 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
     # number of valid overlapping historical windows.
 
     # Baseline core run
-    core = simulate_yearly_portfolios(
-        husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, num_sims=num_sims
-    )
+    if return_run_context:
+        core, run_context = simulate_yearly_portfolios(
+            husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config,
+            num_sims=num_sims, return_run_context=True)
+    else:
+        core = simulate_yearly_portfolios(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, num_sims=num_sims)
     core = _trim_core_to_effective_horizon(core)
 
     years = core["effective_years"]
@@ -349,15 +335,10 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
     simulated_shortfall_rate = None
 
     if sim_config.calculate_simulated_shortfall_rate:
-        primary_run_is_multi_path_portfolio = (
-            sim_config.results_mode == "risk_analysis"
-            and sim_config.sim_type == "portfolio_sim"
-        )
+        primary_run_is_multi_path_portfolio = sim_config.results_mode == 'risk_analysis' and sim_config.sim_type == 'portfolio_sim'
 
         if primary_run_is_multi_path_portfolio:
-            simulated_shortfall_rate = _calculate_shortfall_rate_from_total_assets(
-                core["total_assets"]
-            )
+            simulated_shortfall_rate = _calculate_shortfall_rate_from_total_assets(core['total_assets'])
         elif sim_config.sim_type != "cashflow_sim":
             simulated_shortfall_rate = _compute_simulated_shortfall_rate(
                 husband_portfolio,
@@ -371,46 +352,30 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
 
         portfolio_plot_data.simulated_shortfall_rate = simulated_shortfall_rate
 
-    summary_results = _extract_summary_single_run(
-        core,
-        simulated_shortfall_rate=simulated_shortfall_rate,
-    )
+    summary_results = _extract_summary_single_run(core, simulated_shortfall_rate=simulated_shortfall_rate)
 
     # Attach overlay lines (same toggles as existing portfolio runner)
     if getattr(sim_config, "overlay_tax_impacts", False):
-        original = sim_config.calculate_income_taxes
-        sim_config.calculate_income_taxes = False
-        try:
-            portfolio_plot_data.median_without_taxes = _run_overlay_total_assets_line(
-                husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config
-            )
-        finally:
-            sim_config.calculate_income_taxes = original
+        sim_config = replace(sim_config, calculate_income_taxes=False)
+        portfolio_plot_data.median_without_taxes = _run_overlay_total_assets_line(
+            husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config
+        )
+        sim_config = original_config
 
     if getattr(sim_config, "overlay_fund_expense_impacts", False):
-        original = sim_config.use_fund_expenses
-        sim_config.use_fund_expenses = False
-        try:
-            portfolio_plot_data.median_without_fund_expenses = _run_overlay_total_assets_line(
-                husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config
-            )
-        finally:
-            sim_config.use_fund_expenses = original
+        sim_config = replace(sim_config, use_fund_expenses=False)
+        portfolio_plot_data.median_without_fund_expenses = _run_overlay_total_assets_line(
+            husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config
+        )
+        sim_config = original_config
 
     if getattr(sim_config, "overlay_tax_impacts", False) and getattr(sim_config, "overlay_fund_expense_impacts", False):
-        orig_tax = sim_config.calculate_income_taxes
-        orig_fund = sim_config.use_fund_expenses
-        sim_config.calculate_income_taxes = False
-        sim_config.use_fund_expenses = False
-        try:
-            portfolio_plot_data.median_without_taxes_or_fund_expenses = _run_overlay_total_assets_line(
-                husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config
-            )
-        finally:
-            sim_config.calculate_income_taxes = orig_tax
-            sim_config.use_fund_expenses = orig_fund
+        sim_config = replace(sim_config, calculate_income_taxes=False, use_fund_expenses=False)
+        portfolio_plot_data.median_without_taxes_or_fund_expenses = _run_overlay_total_assets_line(
+            husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config
+        )
 
-    return {
+    pipeline_result = {
         "years": years,
         "years_list": years_list,
         "core": core,
@@ -422,9 +387,12 @@ def run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim
         "summary_results": summary_results,
         "portfolio_plot_data": portfolio_plot_data,
     }
+    if return_run_context:
+        return pipeline_result, run_context
+    return pipeline_result
 
 
-def run_simulation(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
+def run_simulation(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, root=None):
     """
     Dispatcher. Pattern A: import mode runners inside the function
     to avoid circular imports when runners later import run_pipeline.
@@ -447,93 +415,37 @@ def run_simulation(husband_portfolio, wife_portfolio, husband, wife, expenses, s
     # debug_dump_simulation(sim_config)
 
     if sim_config.sim_type in {"income_sim", "cashflow_sim"}:
-        return run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
+        return run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, root=root)
 
     if sim_config.sim_type == "operating_balance_sim":
-        return run_sim_operating_balance(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
+        return run_sim_operating_balance(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, root=root)
 
     if sim_config.sim_type == "portfolio_sim":
-        return run_sim_portfolio(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
+        return run_sim_portfolio(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, root=root)
 
     if sim_config.sim_type == "summary_sim":
-        return run_sim_summary(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
+        return run_sim_summary(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, root=root)
 
     if sim_config.sim_type == "summary_report":
-        return run_sim_summary_report(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config
-        )
+        return run_sim_summary_report(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
     if sim_config.sim_type == "year_by_year_report":
-        return run_sim_year_by_year_report(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config
-        )
+        return run_sim_year_by_year_report(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
     if sim_config.sim_type == "tax_report":
-        return run_sim_tax_report(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config
-        )
+        return run_sim_tax_report(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
     if sim_config.sim_type == "historical_window_risk_report":
-        return run_sim_historical_window_risk_report(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-        )
+        return run_sim_historical_window_risk_report(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
     if sim_config.sim_type == "monte_carlo_risk_report":
-        return run_sim_monte_carlo_risk_report(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-        )
+        return run_sim_monte_carlo_risk_report(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
     if sim_config.sim_type == "spending_comparison_report":
-        return run_sim_spending_comparison_report(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-        )
+        return run_sim_spending_comparison_report(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
     if sim_config.sim_type == "asset_allocation_comparison_report":
-        return run_sim_asset_allocation_comparison_report(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-        )
+        return run_sim_asset_allocation_comparison_report(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)
 
     if sim_config.sim_type == "retirement_ss_comparison_report":
-        return run_sim_retirement_ss_comparison_report(
-            husband_portfolio,
-            wife_portfolio,
-            husband,
-            wife,
-            expenses,
-            sim_config,
-        )
+        return run_sim_retirement_ss_comparison_report(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config)

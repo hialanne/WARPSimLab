@@ -1,286 +1,207 @@
-# simulationObject.py
-
-# -----------------------------------------------------------------------------
-# Architectural debt - Simulation cleanup after mortality / IRMAA
-# -----------------------------------------------------------------------------
-#
-# After mortality and IRMAA work is complete, review the Simulation object and:
-#
-# - classify fields as configuration, runtime state, or results/output state
-# - identify fields added for mortality
-# - identify IRMAA lookback/history state
-# - separate persistent user inputs from derived simulation state
-# - remove temporary dynamic/runtime attributes where practical
-# - reconsider ownership of per-person state
-#
-# Mortality and IRMAA are intentionally being implemented before this cleanup.
-# These features should expose the actual state and ownership requirements and
-# provide concrete evidence for a later refactor rather than designing a new
-# architecture prematurely.
-#
-# -----------------------------------------------------------------------------
+from copy import deepcopy
+from dataclasses import dataclass, field
 
 import numpy as np
-from src.warpsimlab.utils.constants import EQUITY_MEAN, BOND_MEAN, CASH_MEAN, EQUITY_STD, BOND_STD, CASH_STD
 
 
-class Simulation:
-    def __init__(self, start_year, years_to_simulate, inflation_rate, num_sims, 
-            fund_expense, use_fund_expenses, inflation_mode, results_mode, 
-            include_rmd, calculate_income_taxes, calculate_payroll_taxes, tax_filing_status, calculate_state_taxes, state_of_residence,
-            second_person_enabled, 
-            eq_mean, bd_mean, cs_mean,
-            eq_std, bd_std, cs_std,
-            husband_portfolio=None,
-            wife_portfolio=None,        
-            post_tax_equity_dividend_yield=None,
-            post_tax_bond_interest_yield=None,
-            post_tax_cash_interest_yield=None,
-            sim_type=False,
-            report_options=None,
-            sim_initial_allocation_mode="none",
-            risk_analysis_plot_style="fill",
-            use_correlated_returns=True,
-            risk_analysis_mode="monte_carlo",
-            historical_asset_returns_file="us_asset_returns_1876_2025.csv",
-            historical_inflation_file="us_inflation_1876_2025_real.csv",
-            historical_window_mode="rolling_overlapping_all",
-            show_simulated_shortfall_rate=True,
-            calculate_simulated_shortfall_rate=True,
+@dataclass(kw_only=True)
+class SimulationConfig:
+    # Required input fields: preserve existing constructor's required arguments.
+    start_year: int
+    years_to_simulate: int
+    inflation_rate: float
+    num_sims: int
+    fund_expense: float
+    use_fund_expenses: bool
+    inflation_mode: str
+    results_mode: str
+    include_rmd: bool
+    calculate_income_taxes: bool
+    calculate_payroll_taxes: bool
+    tax_filing_status: str
+    calculate_state_taxes: bool
+    state_of_residence: str
+    second_person_enabled: bool
+    eq_mean: float
+    bd_mean: float
+    cs_mean: float
+    eq_std: float
+    bd_std: float
+    cs_std: float
 
-            custom_stock=0.0, custom_bonds=0.0, custom_cash=1.0,
-            annotate_plots=False,
-            constant_y_plots=False,
-            rebalance_every_year=False,
-            include_realestate=False,
-            re_mean=3.0, re_std=5.0,
-            output_csv="None",
-            csv_output_dir=None,
+    # Optional investment and market assumptions.
+    post_tax_equity_dividend_yield: float | None = None
+    post_tax_bond_interest_yield: float | None = None
+    post_tax_cash_interest_yield: float | None = None
+    sim_initial_allocation_mode: str = "none"
+    use_correlated_returns: bool = True
+    custom_stock: float = 0.0
+    custom_bonds: float = 0.0
+    custom_cash: float = 1.0
+    rebalance_every_year: bool = False
+    include_realestate: bool = False
+    re_mean: float = 3.0
+    re_std: float = 5.0
 
-            retirement_withdraw_mode="Off",
-            retirement_withdraw_pct=4.0,
-            retirement_withdraw_dollars=0,
-            always_use_expense_mode=True,
+    # Simulation selection and historical market settings.
+    sim_type: str | bool = False
+    risk_analysis_plot_style: str = "fill"
+    risk_analysis_mode: str = "monte_carlo"
+    historical_asset_returns_file: str = "us_asset_returns_1876_2025.csv"
+    historical_inflation_file: str = "us_inflation_1876_2025_real.csv"
+    historical_window_mode: str = "rolling_overlapping_all"
+    historical_window_start_year: int | None = None
+    historical_window_stop_year: int | None = None
+    historical_window_stride: int = 1
 
-            sequence_risk_enabled=False,
-            sequence_risk_timing="None",
-            sequence_risk_start_year_offset=0,
-            sequence_risk_length="Medium",
-            sequence_risk_depth="Moderate",
+    # Tax, household and inflation settings.
+    irmaa_enabled: bool = False
+    historical_magi: dict | None = None
+    special_income_streams: list | None = None
+    roth_flows: list | None = None
+    inflation_delta: float = 0.0
 
-            scenario_expense_multiplier=1.0,            
-            overlay_tax_impacts=False,
-            overlay_fund_expense_impacts=False,
-            overlay_household_expenses=False,
-            overlay_profit_loss=True,
-            overlay_retirement_age=False,
-            use_snapshot_annotations=False,
-            user_annotation_strings=None,
-            scenario_explorer_annotations=None,
-            special_income_streams=None,
-            roth_flows=None,
-            root=None,
-            historical_window_start_year=None,
-            historical_window_stop_year=None,
-            historical_window_stride=1,
-            warpsimlab_version="Unknown",
-            loaded_data_file=None,
-            inflation_delta=0.0,
-            irmaa_enabled=False,
-            historical_magi=None
-    ):
+    # Retirement, withdrawals, and sequence-risk assumptions.
+    retirement_withdraw_mode: str = "Off"
+    retirement_withdraw_pct: float = 4.0
+    retirement_withdraw_dollars: float = 0
+    always_use_expense_mode: bool = True
+    sequence_risk_enabled: bool = False
+    sequence_risk_timing: str = "None"
+    sequence_risk_start_year_offset: int = 0
+    sequence_risk_length: str = "Medium"
+    sequence_risk_depth: str = "Moderate"
 
+    # Scenario configuration and overlays.
+    scenario_expense_multiplier: float = 1.0
+    overlay_tax_impacts: bool = False
+    overlay_fund_expense_impacts: bool = False
+    overlay_household_expenses: bool = False
+    overlay_profit_loss: bool = True
+    overlay_retirement_age: bool = False
+    use_snapshot_annotations: bool = False
+    user_annotation_strings: list | None = None
+    scenario_explorer_annotations: list | None = None
 
-        self.warpsimlab_version = warpsimlab_version
-        self.loaded_data_file = loaded_data_file
-        self.root = root
-        self.start_year = start_year
-        self.years_to_simulate = years_to_simulate
+    # Presentation, output, and metadata.
+    report_options: dict | None = None
+    show_simulated_shortfall_rate: bool = True
+    calculate_simulated_shortfall_rate: bool | None = None
+    annotate_plots: bool = False
+    constant_y_plots: bool = False
+    output_csv: str = "None"
+    csv_output_dir: str | None = None
+    warpsimlab_version: str = "Unknown"
+    loaded_data_file: str | None = None
 
-        # inflation_rate is real.
-        # inflation_delta comes from Scenario Explorer, doing "what if" analysis.
-        self.inflation_rate = inflation_rate
-        self.inflation_delta = inflation_delta
-        
-        self.num_sims = num_sims
-        self.fund_expense = fund_expense
-        self.use_fund_expenses = use_fund_expenses
-        self.output_csv = output_csv
-        self.csv_output_dir = csv_output_dir
-        
-        self.inflation_mode = inflation_mode  # "nominal" or "real"
-        self.results_mode = results_mode # Currently controls all subplots, including logic for monte carlo.  Should be split.
-        #self.risk_analysis = risk_analysis # This variable, not currently used, should be what controls the monte carlo simulation.
+    # Fixed correlation inputs (the covariance / Cholesky are run state).
+    return_asset_order: tuple[str, ...] = ("eq", "bd", "cs", "re")
+    return_correlation_matrix: np.ndarray = field(default_factory=lambda: np.array([
+        [1.00, -0.20, 0.00, 0.55],
+        [-0.20, 1.00, 0.20, 0.10],
+        [0.00, 0.20, 1.00, 0.05],
+        [0.55, 0.10, 0.05, 1.00],
+    ], dtype=float))
 
-        self.include_rmd = include_rmd
-        self.calculate_income_taxes = calculate_income_taxes
-        self.calculate_payroll_taxes = calculate_payroll_taxes
-        self.tax_filing_status = tax_filing_status
-        self.calculate_state_taxes = calculate_state_taxes
-        self.state_of_residence = state_of_residence
+    def __post_init__(self):
+        if self.post_tax_equity_dividend_yield is None:
+            self.post_tax_equity_dividend_yield = 0.015
+        if self.post_tax_bond_interest_yield is None:
+            self.post_tax_bond_interest_yield = max(0.0, self.bd_mean)
+        if self.post_tax_cash_interest_yield is None:
+            self.post_tax_cash_interest_yield = self.cs_mean
+        if self.calculate_simulated_shortfall_rate is None:
+            self.calculate_simulated_shortfall_rate = self.show_simulated_shortfall_rate
 
-        self.second_person_enabled = second_person_enabled
-        self.husband_portfolio = husband_portfolio
-        self.wife_portfolio = wife_portfolio
-
-        self.irmaa_enabled = irmaa_enabled
-
-        if historical_magi is None:
-            self.historical_magi = {
-                "two_years_prior": None,
-                "one_year_prior": None,
-            }
-        elif isinstance(historical_magi, dict):
-            self.historical_magi = dict(historical_magi)
+        if self.historical_magi is None:
+            self.historical_magi = {"two_years_prior": None, "one_year_prior": None}
         else:
-            self.historical_magi = historical_magi
-
-        if special_income_streams is None:
-            special_income_streams = []
-
-        self.special_income_streams = [
-            dict(stream)
-            for stream in special_income_streams
-        ]
-
-        if roth_flows is None:
-            roth_flows = []
-
-        self.roth_flows = [
-            dict(flow)
-            for flow in roth_flows
-        ]
-
-        # Controls which sim we run.  Current is plots such as portfolio, income and summary,
-        #   and reports such as execuative summary, year by year and assumptions.
-        self.sim_type = sim_type
-
-        if report_options is None:
-            report_options = {}
-
-        self.report_options = report_options
-
-        self.annotate_plots = annotate_plots 
-        self.constant_y_plots = constant_y_plots 
-        self.rebalance_every_year = rebalance_every_year 
-        self.include_realestate = include_realestate 
-
-        self.retirement_withdraw_mode = retirement_withdraw_mode
-        self.retirement_withdraw_pct = retirement_withdraw_pct
-        self.retirement_withdraw_dollars = retirement_withdraw_dollars
-        self.always_use_expense_mode = always_use_expense_mode
-
-        self.sequence_risk_enabled = sequence_risk_enabled
-        self.sequence_risk_timing = sequence_risk_timing
-        self.sequence_risk_start_year_offset = sequence_risk_start_year_offset
-        self.sequence_risk_length = sequence_risk_length
-        self.sequence_risk_depth = sequence_risk_depth
-
-        self.scenario_expense_multiplier = scenario_expense_multiplier
-        self.overlay_tax_impacts = overlay_tax_impacts
-        self.overlay_fund_expense_impacts = overlay_fund_expense_impacts
-        self.overlay_household_expenses = overlay_household_expenses
-        self.overlay_profit_loss = overlay_profit_loss
-        self.overlay_retirement_age = overlay_retirement_age
-
-        self.use_snapshot_annotations = use_snapshot_annotations
-
-        if user_annotation_strings is None:
-            user_annotation_strings = []
-        if scenario_explorer_annotations is None:
-            scenario_explorer_annotations = []
-
-        self.user_annotation_strings = user_annotation_strings
-        self.scenario_explorer_annotations = scenario_explorer_annotations
-
-        self.sim_initial_allocation_mode = sim_initial_allocation_mode
-        self.risk_analysis_plot_style = risk_analysis_plot_style
-        self.use_correlated_returns = use_correlated_returns
-        self.risk_analysis_mode = risk_analysis_mode
-        self.historical_asset_returns_file = historical_asset_returns_file
-        self.historical_inflation_file = historical_inflation_file
-        self.historical_window_mode = historical_window_mode
-
-        # Users really only have one toggle for simulated shortfall rate - show_simulated_shortfall_rate
-        #   However, we need two in the simulator.  One to show shortfall on plots, one to calculate the shortfall.
-        self.show_simulated_shortfall_rate = show_simulated_shortfall_rate
-        self.calculate_simulated_shortfall_rate = show_simulated_shortfall_rate
-
-        self.historical_window_start_year = historical_window_start_year
-        self.historical_window_stop_year = historical_window_stop_year
-        self.historical_window_stride = historical_window_stride
-
-        
-        # Asset order for correlation/covariance logic:
-        # [equity, bonds, cash, real_estate]
-        #
-        # This is intentionally hardcoded for the educational simulator.
-        # Keep this aligned with run_sim_core.generate_market_path().
-
-        self.return_asset_order = ("eq", "bd", "cs", "re")
-
-        self.return_correlation_matrix = np.array([
-            [1.00, -0.20, 0.00, 0.55],
-            [-0.20, 1.00, 0.20, 0.10],
-            [0.00, 0.20, 1.00, 0.05],
-            [0.55, 0.10, 0.05, 1.00],
-        ], dtype=float)
-        
-        # --- Precomputed Monte Carlo sampling data ---
-        # Built once per simulation run to avoid repeated covariance setup
-        # in monteCarloEngine.generate_market_path().
-        self._mc_means = None
-        self._mc_std_devs = None
-        self._mc_cov_matrix = None
-        self._mc_cholesky = None
-        # --- Precomputed historical rolling-window data ---
-        self._hist_years = None
-        self._hist_eq = None
-        self._hist_bd = None
-        self._hist_cs = None
-        self._hist_re = None
-        self._hist_inflation = None
-        self._active_historical_sim_index = None
-        self._hist_window_start_indices = None
-        self._hist_num_windows = 0
-
-        # --- Household allocation targets (used by "maintain-current-allocation") ---
-        # These are fractions (0.0 - 1.0) and should sum to 1.0 when set.
-        # They are computed once at the start of the simulation run.
-        self.household_eq_target = None
-        self.household_bd_target = None
-        self.household_cs_target = None
-
-        self.custom_stock = custom_stock
-        self.custom_bonds = custom_bonds
-        self.custom_cash = custom_cash
-
-        self.eq_mean = eq_mean
-        self.bd_mean = bd_mean
-        self.cs_mean = cs_mean
-        self.re_mean = re_mean
-
-        # --- Taxable account income assumptions ---
-        if post_tax_equity_dividend_yield is None:
-            self.post_tax_equity_dividend_yield = 0.015 # Approximate average of S&P500 over the last 25 years.
+            self.historical_magi = deepcopy(self.historical_magi)
+        if self.special_income_streams is None:
+            self.special_income_streams = []
         else:
-            self.post_tax_equity_dividend_yield = post_tax_equity_dividend_yield
-
-        if post_tax_bond_interest_yield is None:
-            bond_price_return_assumption = 0.0
-            self.post_tax_bond_interest_yield = max(0.0, self.bd_mean - bond_price_return_assumption)
+            self.special_income_streams = deepcopy(self.special_income_streams)
+        if self.roth_flows is None:
+            self.roth_flows = []
         else:
-            self.post_tax_bond_interest_yield = post_tax_bond_interest_yield
-
-        if post_tax_cash_interest_yield is None:
-            self.post_tax_cash_interest_yield = cs_mean
+            self.roth_flows = deepcopy(self.roth_flows)
+        if self.report_options is None:
+            self.report_options = {}
         else:
-            self.post_tax_cash_interest_yield = post_tax_cash_interest_yield
+            self.report_options = deepcopy(self.report_options)
+        if self.user_annotation_strings is None:
+            self.user_annotation_strings = []
+        else:
+            self.user_annotation_strings = deepcopy(self.user_annotation_strings)
+        if self.scenario_explorer_annotations is None:
+            self.scenario_explorer_annotations = []
+        else:
+            self.scenario_explorer_annotations = deepcopy(self.scenario_explorer_annotations)
+        self.return_correlation_matrix = self.return_correlation_matrix.copy()
 
-        self.eq_std = eq_std
-        self.bd_std = bd_std
-        self.cs_std = cs_std
-        self.re_std = re_std
+
+@dataclass
+class RunContext:
+    # Monte Carlo preparation and RNG.
+    mc_means: np.ndarray | None = None
+    mc_std_devs: np.ndarray | None = None
+    mc_cov_matrix: np.ndarray | None = None
+    mc_cholesky: np.ndarray | None = None
+    mc_rng: np.random.Generator | None = None
+    mc_seed: int | None = None
+
+    # Loaded market history and filtered window map.
+    hist_years: np.ndarray | None = None
+    hist_eq: np.ndarray | None = None
+    hist_bd: np.ndarray | None = None
+    hist_cs: np.ndarray | None = None
+    hist_re: np.ndarray | None = None
+    hist_inflation: np.ndarray | None = None
+    hist_window_start_indices: np.ndarray | None = None
+    hist_num_windows: int = 0
+
+    # Initial household allocation targets.
+    household_eq_target: float | None = None
+    household_bd_target: float | None = None
+    household_cs_target: float | None = None
+
+    # Normalized execution assumptions, distinct from config inputs.
+    post_tax_equity_dividend_yield_normalized: float | None = None
+    post_tax_bond_interest_yield_normalized: float | None = None
+    post_tax_cash_interest_yield_normalized: float | None = None
+
+    # Path-independent tax and Medicare preparation.
+    tax_2026_anchor_factor: float | None = None
+    state_tax_enabled: bool | None = None
+    state_tax_type: str | None = None
+    state_tax_rate: float | None = None
+    medicare_2026_anchor_factor: float | None = None
 
 
+@dataclass
+class PathContext:
+    # Window selected for this path before initializing inflation caches.
+    active_historical_sim_index: int | None = None
 
+    # Path-specific inflation and pension preparation.
+    income_inflation_factors: list | np.ndarray | None = None
+    expense_inflation_factors: list | np.ndarray | None = None
+    inflation_factors: list | None = None
+    husband_pension_factors: list | np.ndarray | None = None
+    wife_pension_factors: list | np.ndarray | None = None
+    medicare_inflation_factors: list | None = None
+
+    # Path-specific tax and Roth state.
+    tax_year_cache: list = field(default_factory=list)
+    roth_inflation_factor_cache: dict = field(default_factory=dict)
+    roth_scheduled_flows: list = field(default_factory=list)
+
+    # Lazily captured retirement withdrawal state.
+    ret_withdraw_base_dollars: float | None = None
+
+
+@dataclass
+class SimData:
+    config: SimulationConfig
+    run: RunContext
+    path: PathContext

@@ -1,3 +1,5 @@
+from src.warpsimlab.sim.simulationObject import RunContext, PathContext, SimData
+
 # run_sim_core.py
 
 import numpy as np
@@ -154,10 +156,11 @@ def simulate_yearly_portfolios(
     wife,
     expenses,
     sim_config,
-    num_sims
-):
+    num_sims, return_run_context=False):
     """
     Core simulation engine for portfolio, summary, or income simulations.
+
+    With return_run_context=True, return (results, run_context) for explicit metadata handoff.
     
     Returns:
         results: dict containing arrays/lists for each tracked quantity.
@@ -183,6 +186,7 @@ def simulate_yearly_portfolios(
     #print("DEBUG inflation_delta:", sim_config.inflation_delta)
 
     #print('num_sims: '+str(num_sims))
+    run_context = RunContext()
     years_to_simulate = sim_config.years_to_simulate
     second_person_enabled = sim_config.second_person_enabled
 
@@ -205,30 +209,21 @@ def simulate_yearly_portfolios(
         years_to_simulate,
     )
 
-    monteCarloEngine.prepare_market_path_sampling(sim_config)
-    
-    # Clear the active historical window from any previous run.
-    sim_config._active_historical_sim_index = None
+    monteCarloEngine.prepare_market_path_sampling(sim_config, run_context=run_context)
     
     if historical_window_mode_active:
-        effective_num_sims = int(getattr(sim_config, "_hist_num_windows", 0))
+        effective_num_sims = int(getattr(run_context, 'hist_num_windows', 0))
         if effective_num_sims <= 0:
             diagnosticEngine.raise_internal_error("Historical rolling-window mode prepared zero windows.", sim_config,
                                                   context={"effective_num_sims": effective_num_sims,
-                                                           "years_to_simulate": years_to_simulate})
-
-    expenseEngine.initialize_expense_engine_for_simulation(sim_config)
+                                                           "years_to_simulate": years_to_simulate}, run_context=run_context)
 
     # ---------------------------------------------------------
     # Compute household allocation target if using
     # "maintain-current-allocation"
     # ---------------------------------------------------------
     if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
-        portfolioEngine.compute_household_allocation_targets(
-            husband_portfolio,
-            wife_portfolio,
-            sim_config
-        )
+        portfolioEngine.compute_household_allocation_targets(husband_portfolio, wife_portfolio, sim_config, run_context=run_context)
 
     # --------------------------
     # Initialize results containers
@@ -353,18 +348,12 @@ def simulate_yearly_portfolios(
         "historical_window_end_year": np.full((effective_num_sims,), -1, dtype=int),
     }
 
-    sim_config._post_tax_equity_dividend_yield = max(
-        0.0,
-        float(getattr(sim_config, "post_tax_equity_dividend_yield", 0.0)),
-    )
-    sim_config._post_tax_bond_interest_yield = max(
-        0.0,
-        float(getattr(sim_config, "post_tax_bond_interest_yield", 0.0)),
-    )
-    sim_config._post_tax_cash_interest_yield = max(
-        0.0,
-        float(getattr(sim_config, "post_tax_cash_interest_yield", 0.0)),
-    )
+    run_context.post_tax_equity_dividend_yield_normalized = max(0.0, float(getattr(sim_config, 'post_tax_equity_dividend_yield', 0.0)))
+    run_context.post_tax_bond_interest_yield_normalized = max(0.0, float(getattr(sim_config, 'post_tax_bond_interest_yield', 0.0)))
+    run_context.post_tax_cash_interest_yield_normalized = max(0.0, float(getattr(sim_config, 'post_tax_cash_interest_yield', 0.0)))
+
+    taxEngine.prepare_tax_run_context(sim_config, run_context)
+    medicareEngine.prepare_medicare_run_context(sim_config, run_context)
 
     real_discount_factors = np.ones((effective_num_sims, years_to_simulate + 1), dtype=float)
 
@@ -379,33 +368,31 @@ def simulate_yearly_portfolios(
     # Simulation loop
     # --------------------------
     for s in range(effective_num_sims):
+        path_context = PathContext()
+        sim_data = SimData(sim_config, run_context, path_context)
         # Initialize portfolios
-        h_port = portfolioEngine.create_sim_portfolio(husband_portfolio, sim_config)
+        h_port = portfolioEngine.create_sim_portfolio(husband_portfolio, sim_config, run_context=run_context)
         if second_person_enabled:
-            w_port = portfolioEngine.create_sim_portfolio(wife_portfolio, sim_config)
+            w_port = portfolioEngine.create_sim_portfolio(wife_portfolio, sim_config, run_context=run_context)
         else:
             w_port = portfolioEngine.create_empty_sim_portfolio(sim_config)
 
         if historical_window_mode_active:
-            sim_config._active_historical_sim_index = s
+            path_context.active_historical_sim_index = s
         else:
-            sim_config._active_historical_sim_index = None
+            path_context.active_historical_sim_index = None
 
         # Rebuild inflation-driven caches for the active simulation path/window.
-        taxEngine.initialize_tax_engine_for_simulation(sim_config)
-        incomeEngine.initialize_income_engine_for_simulation(husband, wife, sim_config)
-        expenseEngine.initialize_expense_engine_for_simulation(sim_config)
-        medicareEngine.initialize_medicare_engine_for_simulation(sim_config)
-        rothEngine.initialize_roth_engine_for_simulation(sim_config, husband, wife)
+        taxEngine.initialize_tax_engine_for_simulation(sim_config, run_context=run_context, path_context=path_context)
+        incomeEngine.initialize_income_engine_for_simulation(husband, wife, sim_config, run_context=run_context, path_context=path_context)
+        expenseEngine.initialize_expense_engine_for_simulation(sim_config, run_context=run_context, path_context=path_context)
+        medicareEngine.initialize_medicare_engine_for_simulation(sim_config, run_context=run_context, path_context=path_context)
+        rothEngine.initialize_roth_engine_for_simulation(sim_config, husband, wife, run_context=run_context, path_context=path_context)
 
         # Optional but recommended: reset per-simulation cached withdrawal base.
-        sim_config._ret_withdraw_base_dollars = None
+        path_context.ret_withdraw_base_dollars = None
         
-        market_path = monteCarloEngine.generate_market_path(
-            sim_config,
-            years_to_simulate,
-            sim_index=s,
-        )
+        market_path = monteCarloEngine.generate_market_path(sim_config, years_to_simulate, sim_index=s, run_context=run_context)
 
         market_path, sequence_risk_meta = monteCarloEngine.apply_sequence_risk_overlay(
             market_path=market_path, sim_config=sim_config, years_to_simulate=years_to_simulate,
@@ -419,11 +406,11 @@ def simulate_yearly_portfolios(
         )
 
         if historical_window_mode_active:
-            start_idx = int(sim_config._hist_window_start_indices[s])
+            start_idx = int(run_context.hist_window_start_indices[s])
             end_idx = start_idx + years_to_simulate - 1
 
-            results["historical_window_start_year"][s] = int(sim_config._hist_years[start_idx])
-            results["historical_window_end_year"][s] = int(sim_config._hist_years[end_idx])
+            results["historical_window_start_year"][s] = int(run_context.hist_years[start_idx])
+            results["historical_window_end_year"][s] = int(run_context.hist_years[end_idx])
 
         results["sequence_risk_active"][s] = sequence_risk_meta["applied"]
         results["sequence_risk_start_year"][s] = (
@@ -440,8 +427,7 @@ def simulate_yearly_portfolios(
                 real_discount_factors[s, :] = monteCarloEngine.build_historical_inflation_factor_path(
                     sim_config=sim_config,
                     years_to_simulate=years_to_simulate,
-                    sim_index=s,
-                )
+                    sim_index=s, run_context=run_context)
             else:
                 real_discount_factors[s, :] = np.zeros(years_to_simulate + 1, dtype=float)
 
@@ -504,8 +490,7 @@ def simulate_yearly_portfolios(
             results["effective_end_index"][s] = 0
             continue
 
-        sim_config._ret_withdraw_base_dollars = None
-        sim_config._ret_withdraw_base_year = None
+        path_context.ret_withdraw_base_dollars = None
 
         # Years 1..N
         for year in range(1, years_to_simulate + 1):
@@ -564,7 +549,7 @@ def simulate_yearly_portfolios(
                     results, s, year, h_port, w_port, second_person_enabled, sim_config)
                 break
 
-            year_cache = taxEngine.prepare_tax_year_cache(year, sim_config, filing_status_single)
+            year_cache = taxEngine.prepare_tax_year_cache(year, sim_config, filing_status_single, run_context=run_context, path_context=path_context)
 
             previous_husband_alive = mortality_state["husband_alive"]
             previous_wife_alive = mortality_state["wife_alive"]
@@ -581,7 +566,7 @@ def simulate_yearly_portfolios(
             irmaa_result = medicareEngine.calculate_household_irmaa(
                 husband, wife, curr_h_age, curr_w_age, year, second_person_enabled,
                 mortality_state["husband_alive"], mortality_state["wife_alive"],
-                lookback_magi, lookback_available, lookback_filing_status_single, sim_config)
+                lookback_magi, lookback_available, lookback_filing_status_single, sim_config, run_context=run_context, path_context=path_context)
 
             year_returns = {
                 "eq": market_path["eq"][year],
@@ -592,15 +577,13 @@ def simulate_yearly_portfolios(
 
             if use_expenses:
                 model_result = simulate_expense_year(
-                    h_port, w_port, husband, wife, expenses, sim_config, year, year_cache, curr_h_age, curr_w_age,
+                    h_port, w_port, husband, wife, expenses, sim_data, year, year_cache, curr_h_age, curr_w_age,
                     year_returns, second_person_enabled, mortality_state["husband_alive"],
-                    mortality_state["wife_alive"], mortality_state["survivor_expense_factor"], irmaa_result
-                )
+                    mortality_state["wife_alive"], mortality_state["survivor_expense_factor"], irmaa_result)
             else:
                 model_result = simulate_withdrawal_year(
-                    h_port, w_port, husband, wife, sim_config, year, year_cache, curr_h_age, curr_w_age, year_returns,
-                    second_person_enabled, mortality_state["husband_alive"], mortality_state["wife_alive"], irmaa_result
-                )
+                    h_port, w_port, husband, wife, sim_data, year, year_cache, curr_h_age, curr_w_age, year_returns,
+                    second_person_enabled, mortality_state["husband_alive"], mortality_state["wife_alive"], irmaa_result)
 
             income = model_result["income"]
 
@@ -966,6 +949,8 @@ def simulate_yearly_portfolios(
                 results["breakdown_by_class"]["qualified_equity_distributions"] / discount_factors
         results["breakdown_by_class"]["roth_conversion"] /= discount_factors
         results["breakdown_by_class"]["tax_funding_withdrawal"] /= discount_factors
+    if return_run_context:
+        return results, run_context
     return results
 
 

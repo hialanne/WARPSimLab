@@ -5,21 +5,13 @@ from src.warpsimlab.plots.plotYearlyIncome import plot_yearly_income
 from src.warpsimlab.plots import io  # ensure io.py is imported
 
 
-def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config):
+def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, *, root=None):
     """
     Run a yearly income-focused simulation using the canonical pipeline.
     """
 
     # Income mode is deterministic
-    p = run_pipeline(
-        husband_portfolio,
-        wife_portfolio,
-        husband,
-        wife,
-        expenses,
-        sim_config,
-        force_num_sims=1
-    )
+    p = run_pipeline(husband_portfolio, wife_portfolio, husband, wife, expenses, sim_config, force_num_sims=1)
 
     breakdown = p["breakdown_by_class"]
 
@@ -31,33 +23,15 @@ def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, s
     flow_end = flow_years + 1
     breakdown = {key: values[:flow_end] for key, values in breakdown.items()}
 
-    income_keys = [
-        "work",
-        "pension",
-        "annuity",
-        "ss",
-        "special_income",
-    ]
+    income_keys = ['work', 'pension', 'annuity', 'ss', 'special_income']
 
-    cashflow_extra_keys = [
-        "rmd",
-        "withdrawal",
-        "tax_funding_withdrawal",
-        "bond_interest",
-        "cash_interest",
-        "qualified_equity_distributions",
-    ]
+    cashflow_extra_keys = ['rmd', 'withdrawal', 'tax_funding_withdrawal', 'bond_interest', 'cash_interest', 'qualified_equity_distributions']
 
     if sim_config.sim_type == "income_sim":
-        plot_breakdown = {
-            key: breakdown[key].copy()
-            for key in income_keys
-        }
+        plot_breakdown = {key: breakdown[key].copy() for key in income_keys}
 
     elif sim_config.sim_type == "cashflow_sim":
-        plot_breakdown = {
-            "income": sum(breakdown[key] for key in income_keys)
-        }
+        plot_breakdown = {'income': sum((breakdown[key] for key in income_keys))}
 
         for key in cashflow_extra_keys:
             plot_breakdown[key] = breakdown[key].copy()
@@ -114,8 +88,7 @@ def run_sim_income(husband_portfolio, wife_portfolio, husband, wife, expenses, s
         expenses=p["expense_amt"][:flow_end],
         husband=husband,
         wife=wife,
-        sim_config=sim_config
-    )
+        sim_config=sim_config, root=root)
 
     # Optional CSV output
     if sim_config.output_csv == "Output":

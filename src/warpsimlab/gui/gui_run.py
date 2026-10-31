@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 # gui_run.py
 
 import json
@@ -10,7 +12,7 @@ from src.warpsimlab.sim.simulation import run_simulation
 from src.warpsimlab.sim.validation import SimulationValidationError
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.dataClasses.portfolio import Portfolio  # import the new class
-from src.warpsimlab.sim.simulationObject import Simulation
+from src.warpsimlab.sim.simulationObject import SimulationConfig
 from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.utils.io_utils import *
 from src.warpsimlab.utils.utilities import *
@@ -64,6 +66,7 @@ class PortfolioSimulatorGUI_RunMixin:
             raise SimulationValidationError(f"{name} must be numeric.") from exc
 
     def build_simulation_from_gui(self, sim_type=None, use_snapshots=False, retirement_snapshots=None):
+        """Build an independent configuration snapshot from the current GUI settings."""
 
         report_options = self._build_report_options(sim_type)
         
@@ -74,17 +77,12 @@ class PortfolioSimulatorGUI_RunMixin:
             inflation               = self.inflation
             fund_expense            = retirement_snapshots.fund_expense
             initial_allocation_mode = "custom"
-            custom_stock = self._simulation_float(
-                "Scenario stock allocation", retirement_snapshots.custom_stock_percent) / 100
-            custom_bonds = self._simulation_float(
-                "Scenario bond allocation", retirement_snapshots.custom_bonds_percent) / 100
-            custom_cash = self._simulation_float(
-                "Scenario cash allocation", retirement_snapshots.custom_cash_percent) / 100
+            custom_stock = self._simulation_float('Scenario stock allocation', retirement_snapshots.custom_stock_percent) / 100
+            custom_bonds = self._simulation_float('Scenario bond allocation', retirement_snapshots.custom_bonds_percent) / 100
+            custom_cash = self._simulation_float('Scenario cash allocation', retirement_snapshots.custom_cash_percent) / 100
             historical_multiplier = self._simulation_float(
                 "Scenario historical data multiplier", retirement_snapshots.historical_data_multiplier) / 100
-            inflation_delta = self._simulation_float(
-                "Scenario inflation adjustment", getattr(retirement_snapshots, "delta_inflation", 0.0)
-            )
+            inflation_delta = self._simulation_float('Scenario inflation adjustment', getattr(retirement_snapshots, 'delta_inflation', 0.0))
 
             calculate_real_dollars = bool(getattr(retirement_snapshots, "calculate_real_dollars", False))
 
@@ -138,9 +136,7 @@ class PortfolioSimulatorGUI_RunMixin:
         #print("historical_multiplier "+str(historical_multiplier))
 
 
-        # --- Build Simulation object ---
-        sim_config = Simulation(
-            root=self.root,
+        sim_config = SimulationConfig(
             warpsimlab_version=self.warpsimlab_version,
             loaded_data_file=self.loaded_data_file,
             start_year=self._simulation_int("Simulation start year", sim_cfg["start_year"]),
@@ -196,18 +192,9 @@ class PortfolioSimulatorGUI_RunMixin:
             risk_analysis_plot_style=controls.get("risk_analysis_plot_style", "fill"),
             use_correlated_returns=controls.get("use_correlated_returns", True),
             risk_analysis_mode=controls.get("risk_analysis_mode", "monte_carlo"),
-            historical_asset_returns_file=controls.get(
-                "historical_asset_returns_file",
-                "us_asset_returns_1876_2025.csv"
-            ),
-            historical_inflation_file=controls.get(
-                "historical_inflation_file",
-                "us_inflation_1876_2025_real.csv"
-            ),
-            historical_window_mode=controls.get(
-                "historical_window_mode",
-                "rolling_overlapping_all"
-            ),
+            historical_asset_returns_file=controls.get('historical_asset_returns_file', 'us_asset_returns_1876_2025.csv'),
+            historical_inflation_file=controls.get('historical_inflation_file', 'us_inflation_1876_2025_real.csv'),
+            historical_window_mode=controls.get('historical_window_mode', 'rolling_overlapping_all'),
             show_simulated_shortfall_rate=controls.get("show_simulated_shortfall_rate", True),
             output_csv=controls.get("output_csv", False),
             csv_output_dir=controls.get("csv_output_dir", ""),
@@ -220,29 +207,14 @@ class PortfolioSimulatorGUI_RunMixin:
             irmaa_enabled=controls.get("irmaa_enabled", False),
             historical_magi=dict(getattr(self, "historical_magi", {})),
 
-            husband_portfolio=self._portfolio_for_sim(self.husband_portfolio),
-            wife_portfolio=(
-                self._portfolio_for_sim(self.wife_portfolio)
-                if controls.get("second_person_enabled", False)
-                else None
-            ),
-
             special_income_streams=[
                 dict(stream)
-                for stream in getattr(
-                    self,
-                    "special_income_streams",
-                    [],
-                )
+                for stream in getattr(self, 'special_income_streams', [])
             ],
 
             roth_flows=[
                 dict(flow)
-                for flow in getattr(
-                    self,
-                    "roth_flows",
-                    [],
-                )
+                for flow in getattr(self, 'roth_flows', [])
             ],
 
             overlay_tax_impacts=controls.get("overlay_tax_impacts", False),
@@ -266,7 +238,7 @@ class PortfolioSimulatorGUI_RunMixin:
         # Normalize incompatible plot options:
         # In Monte Carlo mode, do not draw or label fund expense overlays.
         if getattr(sim_config, "results_mode", None) == "risk_analysis":
-            sim_config.overlay_fund_expense_impacts = False
+            sim_config = replace(sim_config, overlay_fund_expense_impacts=False)
 
         # Testing code for the reports
         #print(sim_config.sim_type)
@@ -469,7 +441,7 @@ class PortfolioSimulatorGUI_RunMixin:
                 husband=husband,
                 wife=wife,
                 expenses=self.expensesDict,
-                sim_config=sim_config
+                sim_config=sim_config, root=self.root
             )
 
         except SimulationValidationError as exc:

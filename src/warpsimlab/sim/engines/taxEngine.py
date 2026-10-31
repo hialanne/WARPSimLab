@@ -1,3 +1,5 @@
+from src.warpsimlab.sim.simulationObject import RunContext, PathContext
+
 # taxEngine.py
 
 from . import diagnosticEngine
@@ -89,7 +91,7 @@ def calculate_employee_payroll_tax_split(
     )
 
 
-def calculate_total_income_tax_split(ordinary_income, qualified_equity_distributions, year_cache, sim_config):
+def calculate_total_income_tax_split(ordinary_income, qualified_equity_distributions, year_cache, sim_config, run_context=None):
     """
     Calculates total tax using split treatment and returns component detail.
 
@@ -99,10 +101,14 @@ def calculate_total_income_tax_split(ordinary_income, qualified_equity_distribut
         (federal_ordinary_tax, federal_qualified_dividend_tax, state_income_tax, total_tax)
     """
 
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.tax_2026_anchor_factor is None:
+        prepare_tax_run_context(sim_config, run_context)
     if ordinary_income < -1.0 or qualified_equity_distributions < -1.0:
         diagnosticEngine.raise_internal_error("Tax engine received materially negative income inputs", sim_config,
                                               context={"ordinary_income": ordinary_income,
-                                                       "qualified_equity_distributions": qualified_equity_distributions})
+                                                       "qualified_equity_distributions": qualified_equity_distributions}, run_context=run_context)
 
     ordinary_income = max(0.0, ordinary_income)
     qualified_equity_distributions = max(0.0, qualified_equity_distributions)
@@ -122,9 +128,7 @@ def calculate_total_income_tax_split(ordinary_income, qualified_equity_distribut
 
     if sim_config.calculate_state_taxes:
         state_taxable_income = ordinary_income + qualified_equity_distributions
-        state_income_tax = calculate_state_income_tax(
-            state_taxable_income, year_cache, sim_config
-        )
+        state_income_tax = calculate_state_income_tax(state_taxable_income, year_cache, sim_config, run_context=run_context)
 
     total_tax = (
         federal_ordinary_tax
@@ -204,76 +208,72 @@ def _inflate_brackets(brackets_base, inflation_factor):
     return tuple(result)
 
 
-def initialize_tax_engine_for_simulation(sim_config):
-    filing_key = "Single" if sim_config.tax_filing_status == "Single" else "Other"
-
-    ordinary_standard_deduction_base, ordinary_brackets_base = (
-        FEDERAL_ORDINARY_TAX_TABLES_2026[filing_key]
-    )
-    qd_standard_deduction_base, qd_brackets_base = (
-        FEDERAL_QUALIFIED_DIVIDEND_TAX_TABLES_2026[filing_key]
-    )
-
-    sim_config._tax_filing_key = filing_key
-    sim_config._federal_standard_deduction_base = ordinary_standard_deduction_base
-    sim_config._federal_ordinary_brackets_base = ordinary_brackets_base
-    sim_config._federal_qd_brackets_base = qd_brackets_base
-
+def prepare_tax_run_context(sim_config, run_context):
+    """Prepare path-independent tax assumptions once per core execution."""
     state = getattr(sim_config, "state_of_residence", None)
     rules = STATE_TAX_RULES.get(state) if state else None
-
     if not rules or rules["type"] == "none":
-        sim_config._state_tax_enabled = False
-        sim_config._state_tax_type = "none"
-        sim_config._state_tax_rate = 0.0
-        sim_config._state_tax_brackets_base = None
+        run_context.state_tax_enabled = False
+        run_context.state_tax_type = "none"
+        run_context.state_tax_rate = 0.0
     elif rules["type"] == "flat":
-        sim_config._state_tax_enabled = True
-        sim_config._state_tax_type = "flat"
-        sim_config._state_tax_rate = rules["rate"]
-        sim_config._state_tax_brackets_base = None
+        run_context.state_tax_enabled = True
+        run_context.state_tax_type = "flat"
+        run_context.state_tax_rate = rules["rate"]
     else:
-        sim_config._state_tax_enabled = True
-        sim_config._state_tax_type = "progressive"
-        sim_config._state_tax_rate = 0.0
-        sim_config._state_tax_brackets_base = rules["brackets"][filing_key]
+        run_context.state_tax_enabled = True
+        run_context.state_tax_type = "progressive"
+        run_context.state_tax_rate = 0.0
+    base_multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
+    years_from_base = sim_config.start_year - TAX_BASE_YEAR
+    run_context.tax_2026_anchor_factor = base_multiplier ** years_from_base
+    return run_context
 
+
+def initialize_tax_engine_for_simulation(sim_config, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.tax_2026_anchor_factor is None:
+        prepare_tax_run_context(sim_config, run_context)
     years = sim_config.years_to_simulate + 1
 
     historical_mode_active = (
         sim_config.results_mode == "risk_analysis"
         and sim_config.sim_type == "portfolio_sim"
         and getattr(sim_config, "risk_analysis_mode", "monte_carlo") == "historical_windows"
-        and getattr(sim_config, "_active_historical_sim_index", None) is not None
-        and getattr(sim_config, "_hist_inflation", None) is not None
+        and getattr(path_context, 'active_historical_sim_index', None) is not None
+        and getattr(run_context, 'hist_inflation', None) is not None
     )
 
     inflation_factors = [1.0] * years
 
     if historical_mode_active:
-        start_idx = int(
-            sim_config._hist_window_start_indices[sim_config._active_historical_sim_index]
-        )
+        start_idx = int(run_context.hist_window_start_indices[path_context.active_historical_sim_index])
         for year in range(1, years):
-            annual_inflation = float(sim_config._hist_inflation[start_idx + (year - 1)]) + sim_config.inflation_delta
+            annual_inflation = float(run_context.hist_inflation[start_idx + (year - 1)]) + sim_config.inflation_delta
             inflation_factors[year] = inflation_factors[year - 1] * (1.0 + annual_inflation)
     else:
         multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
         for year in range(1, years):
             inflation_factors[year] = inflation_factors[year - 1] * multiplier
 
-    sim_config._inflation_factors = inflation_factors
+    path_context.inflation_factors = inflation_factors
 
-    base_multiplier = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
-    years_from_base = sim_config.start_year - TAX_BASE_YEAR
-    sim_config._tax_2026_anchor_factor = base_multiplier ** years_from_base
-
-    sim_config._tax_year_cache = []
+    path_context.tax_year_cache = []
     for _ in range(years):
-        sim_config._tax_year_cache.append({})
+        path_context.tax_year_cache.append({})
+    return run_context
 
 
-def prepare_tax_year_cache(year, sim_config, filing_status_single=None):
+def prepare_tax_year_cache(year, sim_config, filing_status_single=None, run_context=None, path_context=None):
+    if path_context is None:
+        path_context = PathContext()
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.tax_2026_anchor_factor is None:
+        prepare_tax_run_context(sim_config, run_context)
     if filing_status_single is None:
         filing_status_single = sim_config.tax_filing_status == "Single"
 
@@ -281,12 +281,12 @@ def prepare_tax_year_cache(year, sim_config, filing_status_single=None):
     if filing_status_single:
         filing_key = "Single"
 
-    year_cache = sim_config._tax_year_cache[year].get(filing_key)
+    year_cache = path_context.tax_year_cache[year].get(filing_key)
     if year_cache is not None:
         return year_cache
 
-    simulation_inflation_factor = sim_config._inflation_factors[year]
-    federal_inflation_factor = sim_config._tax_2026_anchor_factor * simulation_inflation_factor
+    simulation_inflation_factor = path_context.inflation_factors[year]
+    federal_inflation_factor = run_context.tax_2026_anchor_factor * simulation_inflation_factor
 
     ordinary_standard_deduction_base, ordinary_brackets_base = FEDERAL_ORDINARY_TAX_TABLES_2026[filing_key]
     _, qd_brackets_base = FEDERAL_QUALIFIED_DIVIDEND_TAX_TABLES_2026[filing_key]
@@ -296,7 +296,7 @@ def prepare_tax_year_cache(year, sim_config, filing_status_single=None):
     qd_brackets = _inflate_brackets(qd_brackets_base, federal_inflation_factor)
 
     state_brackets = None
-    if sim_config._state_tax_type == "progressive":
+    if run_context.state_tax_type == "progressive":
         state = getattr(sim_config, "state_of_residence", None)
         rules = STATE_TAX_RULES.get(state)
         state_brackets = _inflate_brackets(rules["brackets"][filing_key], simulation_inflation_factor)
@@ -310,7 +310,7 @@ def prepare_tax_year_cache(year, sim_config, filing_status_single=None):
         "social_security_wage_base": SOCIAL_SECURITY_WAGE_BASE_2026 * federal_inflation_factor,
     }
 
-    sim_config._tax_year_cache[year][filing_key] = year_cache
+    path_context.tax_year_cache[year][filing_key] = year_cache
     return year_cache
 
 
@@ -756,12 +756,16 @@ STATE_TAX_RULES = {
 
 
 
-def calculate_state_income_tax(total_income, year_cache, sim_config):
-    if not sim_config._state_tax_enabled:
+def calculate_state_income_tax(total_income, year_cache, sim_config, run_context=None):
+    if run_context is None:
+        run_context = RunContext()
+    if run_context.tax_2026_anchor_factor is None:
+        prepare_tax_run_context(sim_config, run_context)
+    if not run_context.state_tax_enabled:
         return 0.0
 
-    if sim_config._state_tax_type == "flat":
-        return total_income * sim_config._state_tax_rate
+    if run_context.state_tax_type == "flat":
+        return total_income * run_context.state_tax_rate
 
     brackets = year_cache["state_brackets"]
 

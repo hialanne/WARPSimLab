@@ -9,7 +9,6 @@ from src.warpsimlab.dataClasses.person import Person
 from src.warpsimlab.sim.simulation import run_simulation
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.dataClasses.portfolio import Portfolio  # import the new class
-from src.warpsimlab.sim.simulationObject import Simulation
 from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.utils.io_utils import *
 from src.warpsimlab.utils.utilities import *
