@@ -31,7 +31,8 @@ class DerivedStatisticsFrame(ScalableFrameMixin, ttk.Frame):
         self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
         self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
         self._section_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
-        self._total_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
+        self._total_font = self._body_font.copy()
+        self._total_font.configure(weight="bold")
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)
