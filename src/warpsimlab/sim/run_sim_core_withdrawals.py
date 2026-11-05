@@ -121,8 +121,15 @@ def simulate_withdrawal_year(
         rmd_w = withdrawalEngine.calculate_rmds(w_port, wife, curr_w_age, sim_config)
 
     # Income breakdown
+    qcd_h = withdrawalEngine.calculate_qcd(
+        h_port, "husband", curr_h_age, husband_alive, rmd_h, year, sim_config,
+        run_context=run_context, path_context=path_context)
+    qcd_w = withdrawalEngine.calculate_qcd(
+        w_port, "wife", curr_w_age, second_person_enabled and wife_alive, rmd_w, year, sim_config,
+        run_context=run_context, path_context=path_context)
+
     income = incomeEngine.calculate_income_breakdown(
-        husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year,
+        husband, wife, curr_h_age, curr_w_age, qcd_h["taxable_rmd"], qcd_w["taxable_rmd"], year,
         husband_alive, wife_alive, sim_config, run_context=run_context, path_context=path_context)
 
     income["by_class"]["roth_conversion"] = 0.0
@@ -186,16 +193,16 @@ def simulate_withdrawal_year(
         husband_alive=husband_alive,
         wife_alive=wife_alive, path_context=path_context)
 
-    # Preserve the already-determined RMD in pre-tax assets until it is physically withdrawn.
     roth_conversion = requested_roth_flows[rothEngine.ROTH_CONVERSION]
 
+    # Preserve the already-determined RMD in pre-tax assets until it is physically withdrawn.
     roth_conversion["husband"] = min(
-        roth_conversion["husband"], max(0.0, float(h_port.total_value_pre) - rmd_h)
+        roth_conversion["husband"], max(0.0, float(h_port.total_value_pre) - max(rmd_h, qcd_h["qcd"]))
     )
 
     if second_person_enabled:
         roth_conversion["wife"] = min(
-            roth_conversion["wife"], max(0.0, float(w_port.total_value_pre) - rmd_w)
+            roth_conversion["wife"], max(0.0, float(w_port.total_value_pre) - max(rmd_w, qcd_w["qcd"]))
         )
     else:
         roth_conversion["wife"] = 0.0
@@ -239,14 +246,8 @@ def simulate_withdrawal_year(
     additional_cash_needed = mandatory_medicare_cost + requested_roth_contribution_total
 
     wd = withdrawalEngine.calculate_retirement_withdrawal(
-        h_port,
-        w_port,
-        husband,
-        wife,
-        year,
-        sim_config,
-        rmd_h=rmd_h,
-        rmd_w=rmd_w,
+        h_port, w_port, husband, wife, year, sim_config,
+        rmd_h=rmd_h, rmd_w=rmd_w, qcd_h=qcd_h["qcd"], qcd_w=qcd_w["qcd"],
         additional_cash_needed=additional_cash_needed, run_context=run_context, path_context=path_context)
 
     expense_amt = 0
@@ -557,6 +558,12 @@ def simulate_withdrawal_year(
         "cash_flow_shortfall": cash_flow_shortfall,
         "rmd_h": rmd_h,
         "rmd_w": rmd_w,
+        "qcd_h": qcd_h["qcd"],
+        "qcd_w": qcd_w["qcd"],
+        "qcd_rmd_offset_h": qcd_h["rmd_offset"],
+        "qcd_rmd_offset_w": qcd_w["rmd_offset"],
+        "taxable_rmd_h": qcd_h["taxable_rmd"],
+        "taxable_rmd_w": qcd_w["taxable_rmd"],
         "wd_roth": wd_roth,
         "wd_hsa": wd_hsa,
         "pre_tax_withdrawal": wd_pre_tax,

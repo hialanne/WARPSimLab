@@ -171,11 +171,17 @@ def _make_dummy_gui(tmp_path: Path):
 
     gui.special_income_streams = []
     gui.roth_flows = []
+    gui.qcd_settings = {}
+    for owner in ("husband", "wife"):
+        gui.qcd_settings[owner] = dict(enabled=False, mode="Fixed Amount", amount=0.0,
+                                       percent=0.0, start_age=70.5, end_age=None)
+
     gui.historical_magi = {}
 
     gui.simulation_controls = {
         "second_person_enabled": 0,
         "state_of_residence": "Colorado",
+        "include_rmd": True,
     }
     gui.simulation_settings = {"start_year": 2026, "years_to_simulate": 30, "num_sims": 500, "fund_expense": 0.0}
 

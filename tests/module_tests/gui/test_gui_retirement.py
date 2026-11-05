@@ -25,16 +25,25 @@ def tk_root():
 
 @pytest.fixture
 def mod_no_tooltip(monkeypatch):
-    """
-    Patch Tooltip to no-op to avoid timing / UI deps.
-    """
-    from src.warpsimlab.gui import gui_retirement as mod
+    from src.warpsimlab.gui import gui_withdrawals as mod
 
-    class DummyTooltip:
-        def __init__(self, *args, **kwargs):
-            pass
+    monkeypatch.setattr(mod, "Tooltip", lambda *args, **kwargs: None)
+    return mod
 
-    monkeypatch.setattr(mod, "Tooltip", DummyTooltip, raising=True)
+
+@pytest.fixture
+def sequence_mod(monkeypatch):
+    from src.warpsimlab.gui import gui_sequenceRisk as mod
+
+    monkeypatch.setattr(mod, "Tooltip", lambda *args, **kwargs: None)
+    return mod
+
+
+@pytest.fixture
+def rmd_mod(monkeypatch):
+    from src.warpsimlab.gui import gui_rmdQcd as mod
+
+    monkeypatch.setattr(mod, "Tooltip", lambda *args, **kwargs: None)
     return mod
 
 
@@ -107,20 +116,13 @@ def test_builds_intro_and_mode_checkboxes(mod_no_tooltip, tk_root):
     mod = mod_no_tooltip
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(
-        tk_root,
-        main_gui=None,
-        control_vars=control_vars,
-        persons=None,
-        portfolio=None,
-        title="Retirement",
-    )
+    frame = mod.WithdrawalsEditFrame(tk_root, control_vars=control_vars, title="Retirement")
     frame.pack()
 
     texts = _all_texts(frame)
 
     # Top description label exists
-    assert any("Defines how the simulation models retirement spending withdrawals" in t for t in texts)
+    assert any("Choose how to calculate withdrawals" in t for t in texts)
 
     # Mode checkboxes exist (nested in frame, so scan recursively)
     cb_texts = _find_child_checkbutton_texts(frame)
@@ -137,7 +139,7 @@ def test_withdrawal_mode_menu_has_expected_options(mod_no_tooltip, tk_root):
     mod = mod_no_tooltip
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame = mod.WithdrawalsEditFrame(tk_root, control_vars=control_vars)
     frame.pack()
 
     values = _menu_values(frame.ret_mode_menu)
@@ -158,7 +160,7 @@ def test_controls_disabled_when_using_expenses_enabled_when_using_retirement(mod
     mod = mod_no_tooltip
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame = mod.WithdrawalsEditFrame(tk_root, control_vars=control_vars)
     frame.pack()
 
     # Default is use_mode == "expenses" => controls disabled
@@ -186,7 +188,7 @@ def test_pct_and_dollars_write_back_to_controls_and_ignore_invalid(monkeypatch, 
     mod = mod_no_tooltip
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame = mod.WithdrawalsEditFrame(tk_root, control_vars=control_vars)
     frame.pack()
 
     shown_errors = []
@@ -246,7 +248,7 @@ def test_retirement_withdrawal_fields_reject_negative_and_nonfinite_values(
     mod = mod_no_tooltip
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame = mod.WithdrawalsEditFrame(tk_root, control_vars=control_vars)
     frame.pack()
 
     shown_errors = []
@@ -273,7 +275,7 @@ def test_retirement_withdrawal_zero_is_valid(monkeypatch, mod_no_tooltip, tk_roo
     mod = mod_no_tooltip
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame = mod.WithdrawalsEditFrame(tk_root, control_vars=control_vars)
     frame.pack()
 
     shown_errors = []
@@ -287,11 +289,11 @@ def test_retirement_withdrawal_zero_is_valid(monkeypatch, mod_no_tooltip, tk_roo
     assert shown_errors == []
 
 
-def test_sequence_start_year_offset_accepts_nonnegative_integer(monkeypatch, mod_no_tooltip, tk_root):
-    mod = mod_no_tooltip
+def test_sequence_start_year_offset_accepts_nonnegative_integer(monkeypatch, sequence_mod, tk_root):
+    mod = sequence_mod
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame = mod.SequenceRiskEditFrame(tk_root, control_vars=control_vars)
     frame.pack()
 
     shown_errors = []
@@ -309,14 +311,14 @@ def test_sequence_start_year_offset_accepts_nonnegative_integer(monkeypatch, mod
 @pytest.mark.parametrize("bad_value", ["-1", "1.5", "bad", ""])
 def test_sequence_start_year_offset_rejects_invalid_values(
     monkeypatch,
-    mod_no_tooltip,
+    sequence_mod,
     tk_root,
     bad_value,
 ):
-    mod = mod_no_tooltip
+    mod = sequence_mod
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame = mod.SequenceRiskEditFrame(tk_root, control_vars=control_vars)
     frame.pack()
 
     shown_errors = []
@@ -333,15 +335,17 @@ def test_sequence_start_year_offset_rejects_invalid_values(
     assert len(shown_errors) == 1
 
 
-def test_include_rmd_checkbox_default_and_writeback(mod_no_tooltip, tk_root):
-    mod = mod_no_tooltip
+def test_include_rmd_checkbox_default_and_writeback(rmd_mod, tk_root):
+    mod = rmd_mod
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    settings = {"husband": dict(enabled=False, mode="Fixed Amount", amount=0.0,
+                                percent=0.0, start_age=70.5, end_age=None)}
+    frame = mod.RmdQcdEditFrame(tk_root, control_vars=control_vars, qcd_settings=settings)
     frame.pack()
 
     # Default include_rmd True if missing
-    assert frame.controls["include_rmd"] is True
+    assert frame.rmd_var.get() is True
 
     # The checkbutton lives in rmd_frame
     assert isinstance(frame.rmd_cb, ttk.Checkbutton)
@@ -359,7 +363,7 @@ def test_mode_change_updates_controls_retirement_withdraw_mode(mod_no_tooltip, t
     mod = mod_no_tooltip
 
     control_vars = {"_controls_dict": {}}
-    frame = mod.RetirementEditFrame(tk_root, main_gui=None, control_vars=control_vars)
+    frame = mod.WithdrawalsEditFrame(tk_root, control_vars=control_vars)
     frame.pack()
 
     # Set to "Off" should update controls and disable entries (via trace)

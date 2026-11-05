@@ -224,43 +224,37 @@ def build_advanced_building_tutorial_steps(gui):
             "title": "Retirement -> Spending Model",
             "section_title": "What to decide",
             "text": (
-                "The Retirement screen supports two ways to model retirement "
-                "spending. Use Manually Entered Expenses uses the expense "
-                "schedule entered under Cash Flow. Income pays those expenses, "
-                "and the portfolio supplies any remaining shortfall. Use "
-                "Automatically Calculated Withdrawals instead takes money from "
-                "the portfolio according to a withdrawal rule. Select the "
-                "approach that matches the question you want to study."
+                "Retirement -> Withdrawal Strategies supports two approaches "
+                "to retirement spending. Manually Entered Expenses uses the "
+                "expense schedule under Cash Flow. Automatically Calculated "
+                "Withdrawals instead uses a portfolio withdrawal rule. "
+                "Select the approach appropriate for your simulation."
             ),
-            "screen_callback": gui.edit_retirement_controls,
+            "screen_callback": gui.edit_withdrawal_strategies,
         },
         {
             "title": "Retirement -> Withdrawal Rules",
             "section_title": "What to review",
             "text": (
-                "Automatic withdrawal mode can use a portfolio percentage or "
-                "a fixed annual dollar amount. A mode ending in + Inflation "
-                "adjusts the withdrawal over time for inflation. Enter either "
-                "the annual percentage or dollar amount used by the selected "
-                "mode. Include RMDs adds required withdrawals from applicable "
-                "retirement accounts. These withdrawal controls are disabled "
-                "when Manually Entered Expenses is selected."
+                "Withdrawal Strategies supports percentage-based and fixed-dollar "
+                "withdrawals, with optional inflation adjustments. The separate "
+                "RMD / QCD screen controls required minimum distributions and "
+                "qualified charitable distributions. These settings affect "
+                "retirement portfolio withdrawals and their tax treatment."
             ),
-            "screen_callback": gui.edit_retirement_controls,
+            "screen_callback": gui.edit_withdrawal_strategies,
         },
         {
             "title": "Retirement -> Sequence Risk",
             "section_title": "What to review",
             "text": (
-                "The right side of the Retirement screen contains optional "
-                "sequence-of-returns scenarios. These controls deliberately "
-                "apply a downturn at an early, middle, late, or custom point "
-                "in the simulation. You can also select its duration and "
-                "severity. Use this feature to stress-test retirement timing. "
-                "It is an imposed scenario and is separate from the normal "
-                "market assumptions used by the simulation."
+                "Retirement -> Sequence Risk provides optional sequence-of-returns "
+                "scenarios. These controls can impose a market downturn at an "
+                "early, middle, late, or custom point in the simulation. "
+                "You can configure its duration and severity independently "
+                "of the normal market assumptions."
             ),
-            "screen_callback": gui.edit_retirement_controls,
+            "screen_callback": gui.edit_withdrawal_strategies,
         },
         {
             "title": "Simulation -> Assumptions",

@@ -1,0 +1,478 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Year-by-Year Details Report</title>
+
+<style>
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    color: #222;
+    line-height: 1.4;
+    background: #fff;
+}
+
+.report-page {
+    max-width: 920px;
+    margin: 34px auto;
+}
+
+.report-header {
+    border-top: 6px solid #2e7d32;
+    padding-top: 12px;
+}
+
+.brand-name {
+    color: #2e7d32;
+}
+
+.brand-website {
+    color: #666;
+    font-size: 14px;
+    margin-top: -4px;
+    margin-bottom: 12px;
+}
+
+h1 {
+    margin: 0 0 10px 0;
+    font-size: 30px;
+}
+
+h2 {
+    margin-top: 34px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #ddd;
+    font-size: 22px;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 6px;
+    font-size: 17px;
+}
+
+section {
+    margin-bottom: 28px;
+    page-break-inside: avoid;
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 6px 24px;
+    margin: 10px 0 14px 0;
+    font-size: 14px;
+}
+
+.disclaimer {
+    border: 1px solid #bbb;
+    background: #f8f8f8;
+    padding: 10px 12px;
+    max-width: 900px;
+    font-size: 14px;
+}
+
+.disclaimer p {
+    margin: 4px 0;
+}
+
+.section-intro {
+    max-width: 900px;
+    color: #444;
+    margin-top: 0;
+}
+
+.card-grid {
+    display: grid;
+    gap: 16px;
+    margin-top: 14px;
+}
+
+.three-col {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.two-col {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+}
+
+.summary-card,
+.explanation-card,
+.placeholder-card,
+.plot-card {
+    border: 1px solid #ccc;
+    background: #fafafa;
+    padding: 14px;
+    border-radius: 6px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.kv-table th,
+.kv-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 6px 4px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.kv-table th {
+    width: 58%;
+    color: #333;
+}
+
+.kv-table td {
+    text-align: right;
+}
+
+.emphasis-row th,
+.emphasis-row td {
+    font-weight: bold;
+    background: #f2f2f2;
+}
+
+.wide-table {
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+.wide-table th,
+.wide-table td {
+    border: 1px solid #ccc;
+    padding: 7px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.wide-table thead th {
+    background: #f0f0f0;
+}
+
+.negative {
+    color: #b00020;
+    font-weight: bold;
+}
+
+.highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.highlight-card {
+    border: 1px solid #bbb;
+    background: #f5f7fa;
+    padding: 16px;
+    border-radius: 7px;
+    border-top: 5px solid #2e7d32;
+}
+
+.highlight-card.negative-risk {
+    border-top-color: #b00020;
+}
+
+.highlight-label {
+    font-size: 16px;
+    color: #2e7d32;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.highlight-card.negative-risk .highlight-label {
+    color: #b00020;
+}
+
+.highlight-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+}
+
+.plot-card {
+    margin-top: 14px;
+}
+
+.plot-card img {
+    width: 90%;
+    max-width: none;
+    height: auto;
+    display: block;
+    margin: 10px auto 0 auto;
+}
+
+.plot-stack {
+    display: block;
+    max-width: 1200px;
+    margin-top: 14px;
+}
+
+.warnings {
+    border: 1px solid #d6b656;
+    background: #fff8dd;
+    padding: 12px 12px 12px 30px;
+}
+
+.footer {
+    margin-top: 36px;
+    color: #666;
+    font-size: 13px;
+}
+
+@media print {
+    body {
+        margin: 0;
+    }
+
+    .report-page {
+        max-width: 900px;
+        margin: 22px auto;
+        padding: 0;
+    }
+
+    .three-col {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .two-col {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .highlight-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .plot-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    section {
+        page-break-inside: avoid;
+    }
+}
+
+
+.table-scroll {
+    overflow: visible;
+}
+
+.year-table {
+    font-size: 12px;
+}
+
+.year-table th,
+.year-table td {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.year-table th:first-child,
+.year-table td:first-child {
+    text-align: left;
+}
+
+.year-table th.section-divider,
+.year-table td.section-divider {
+    border-left: 4px solid #555;
+}
+
+.year-table tbody tr:nth-child(even) {
+    background: #f8f8f8;
+}
+
+.year-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f0f0f0;
+}
+
+.five-year-break td {
+    border-top: 3px solid #2e7d32;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.summary-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.summary-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.summary-label {
+    font-weight: bold;
+    width: 65%;
+}
+
+.summary-value {
+    text-align: right;
+    white-space: nowrap;
+}
+
+@media print {
+
+    .table-scroll {
+        overflow-x: visible;
+    }
+
+    .year-table {
+        font-size: 10px;
+    }
+
+    .year-table thead {
+        display: table-header-group;
+    }
+
+    .year-table thead th {
+        position: static;
+    }
+
+}
+
+</style>
+
+</head>
+<body>
+<main class="report-page">
+
+
+<section class="report-header">
+    <h1>
+        <span class="brand-name">WARPSimLab</span> Year-by-Year Details Report
+    </h1>
+    <div class="brand-website">warpsimlab.org</div>
+    <div class="metadata-grid">
+        <div><strong>Generated:</strong> 2026-01-01</div>
+        <div><strong>Projection Period:</strong> 2026-2031</div>
+        <div><strong>Report Basis:</strong> Raw Dollars</div>
+        <div><strong>Report ID:</strong> unsafe/id</div>
+    </div>
+    <div class="disclaimer">
+        <p>This report is intended solely for educational purposes.</p>
+        <p>It is not financial, investment, tax, legal, retirement, or other professional advice.</p>
+        <p>All results are generated from user-provided data and simulated market conditions.</p>
+    </div>
+</section>
+
+
+
+<section>
+
+<h2>Summary Statistics</h2>
+
+<div class="summary-grid">
+
+
+<table class="summary-table">
+<tbody>
+
+<tr>
+    <td class="summary-label">Years Simulated</td>
+    <td class="summary-value">1</td>
+</tr>
+
+<tr>
+    <td class="summary-label">Total Gross Income</td>
+    <td class="summary-value">$2,200</td>
+</tr>
+
+<tr>
+    <td class="summary-label">Total Taxes Paid</td>
+    <td class="summary-value">$220</td>
+</tr>
+
+<tr>
+    <td class="summary-label">Total Household Expenses</td>
+    <td class="summary-value">$1,100</td>
+</tr>
+
+</tbody>
+</table>
+
+
+
+<table class="summary-table">
+<tbody>
+
+<tr>
+    <td class="summary-label">Lifetime Funding Gap</td>
+    <td class="summary-value">$0</td>
+</tr>
+
+<tr>
+    <td class="summary-label">Total Retirement Withdrawals</td>
+    <td class="summary-value">$100</td>
+</tr>
+
+<tr>
+    <td class="summary-label">Largest Annual Retirement Withdrawal</td>
+    <td class="summary-value">$100</td>
+</tr>
+
+<tr>
+    <td class="summary-label">Ending Portfolio</td>
+    <td class="summary-value">$109,300</td>
+</tr>
+
+<tr>
+    <td class="summary-label">Ending Total Assets</td>
+    <td class="summary-value">$109,300</td>
+</tr>
+
+</tbody>
+</table>
+
+
+</div>
+
+</section>
+
+
+<section>
+    <h2>Year-by-Year Details</h2>
+    <p class="section-intro">
+        This table shows one deterministic simulation path using the selected assumptions.
+        Monte Carlo and Historical Window detail rows are intentionally excluded from this report.
+    </p>
+    
+    <div class="table-scroll">
+        <table class="wide-table year-table">
+            <thead>
+                <tr><th>Year</th><th>Age</th><th>Age 1</th><th>Age 2</th><th>Gross<br>Income</th><th>Taxes</th><th>Household<br>Expenses</th><th>Retirement<br>Withdrawals</th><th>Net Cash<br>Flow</th><th>Total<br>Portfolio</th><th>Total<br>Assets</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>2026</td><td>60</td><td>60</td><td>58</td><td>$1,000</td><td>$100</td><td>$500</td><td>$0</td><td>$400</td><td>$107,000</td><td>$107,000</td></tr><tr><td>2027</td><td>61</td><td>61</td><td>59</td><td>$1,200</td><td>$120</td><td>$600</td><td>$100</td><td>$480</td><td>$109,300</td><td>$109,300</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</section>
+
+
+
+
+<div class="footer">
+    Generated by WARPSimLab on 2026-11-04T15:57:36.
+</div>
+
+
+</main>
+</body>
+</html>

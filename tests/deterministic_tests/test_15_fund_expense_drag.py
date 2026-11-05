@@ -61,6 +61,7 @@ def make_sim(*, years, use_fund_expenses, fund_expense, inflation_rate=0.0, infl
         monte_carlo_plot_style="fill",
         use_correlated_returns=True,
 
+        qcd_settings={},
         include_rmd=False,
         calculate_income_taxes=False,
         calculate_payroll_taxes=False,

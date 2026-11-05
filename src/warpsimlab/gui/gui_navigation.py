@@ -70,9 +70,11 @@ class PortfolioSimulatorGUI_NavigationMixin(ScalableClientMixin):
         set_tk_button_soft_disabled(
             self.balance_sheet_button, basic_enabled, self._show_balance_sheet_menu, noop_command=noop
         )
+
         set_tk_button_soft_disabled(
-            self.edit_retirement_button, advanced_enabled, self._cmd_edit_retirement_controls, noop_command=noop
+            self.retirement_button, advanced_enabled, self._show_retirement_menu, noop_command=noop
         )
+
         set_tk_button_soft_disabled(
             self.simulation_button, advanced_enabled, self._show_simulation_menu, noop_command=noop
         )
@@ -377,12 +379,16 @@ class PortfolioSimulatorGUI_NavigationMixin(ScalableClientMixin):
         self.balance_sheet_menu.add_command(label="Derived Statistics", command=self.edit_derived_statistics)
         self._balance_sheet_derived_statistics_index = self.balance_sheet_menu.index("end")
 
-        self.edit_retirement_button = create_top_button(
-            self.button_frame, text="Retirement", command=self.edit_retirement_controls,
-            grid_kwargs={"row": 0, "column": 4, "padx": (25, 10), "pady": 2}, font=self._navigation_font
+        self.retirement_button, self.retirement_menu, self._show_retirement_menu = create_dropdown_button(
+            self.button_frame, text="Retirement \u25BE", menu_labels_and_commands=[],
+            row=0, column=4, padx=(25, 10), pady=2
         )
+        self.retirement_button.configure(font=self._navigation_font)
+        self.retirement_menu.configure(font=self._menu_font)
 
-        self._cmd_edit_retirement_controls = self.edit_retirement_controls
+        self.retirement_menu.add_command(label="Withdrawal Strategies", command=self.edit_withdrawal_strategies)
+        self.retirement_menu.add_command(label="RMDs & QCDs", command=self.edit_rmd_qcd)
+        self.retirement_menu.add_command(label="Sequence-of-Returns Scenarios", command=self.edit_sequence_risk)
 
         self.simulation_button, self.simulation_menu, self._show_simulation_menu = create_dropdown_button(
             self.button_frame,

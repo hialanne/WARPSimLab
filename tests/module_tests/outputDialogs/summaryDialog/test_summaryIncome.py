@@ -32,6 +32,8 @@ def _make_results():
         "employee_401k_contributions": values(10000, 9000, 0, 0),
         "hsa_employee_contributions": values(2000, 1800, 0, 0),
         "rmd": values(0, 0, 0, 5000),
+        "qcd_husband": values(0, 0, 0, 0),
+        "qcd_wife": values(0, 0, 0, 0),
         "social_security": values(0, 0, 30000, 30000),
         "pensions": values(0, 0, 12000, 12000),
         "annuities": values(0, 0, 6000, 6000),
@@ -121,7 +123,7 @@ def test_income_tab_contains_all_major_income_rows(tk_root):
 
     expected_labels = {
         "Gross Wages",
-        "RMD",
+        "Taxable RMD",
         "Social Security",
         "Pensions and Annuities",
         "Special Income",

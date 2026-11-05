@@ -35,6 +35,7 @@ def make_session(expense_mode):
     gui.historical_magi = copy.deepcopy(config.historical_magi)
     gui.special_income_streams = copy.deepcopy(config.special_income_streams)
     gui.roth_flows = copy.deepcopy(config.roth_flows)
+    gui.qcd_settings = copy.deepcopy(config.qcd_settings)
     gui.root = None
     gui.warpsimlab_version = "test"
     gui.loaded_data_file = None
@@ -66,7 +67,7 @@ def make_session(expense_mode):
 def session_input_tree(gui, state):
     truth_names = ["husband", "wife", "husband_portfolio", "wife_portfolio", "expensesDict",
                    "simulation_controls", "simulation_settings", "historical_magi",
-                   "special_income_streams", "roth_flows"]
+                   "special_income_streams", "roth_flows", "qcd_settings"]
     snapshot_names = ["baseline_person_snapshots", "baseline_portfolio_snapshots",
                       "baseline_retirement_snapshots", "person_snapshots",
                       "portfolio_snapshots", "retirement_snapshots"]

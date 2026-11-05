@@ -22,7 +22,7 @@ def test_schema_and_required_inputs_match_approved_design(scenario_builders):
         "tax_filing_status", "calculate_state_taxes", "state_of_residence", "second_person_enabled",
         "eq_mean", "bd_mean", "cs_mean", "eq_std", "bd_std", "cs_std"}
     assert declared == required
-    assert len(fields(SimulationConfig)) == 76
+    assert len(fields(SimulationConfig)) == 77
     assert len(fields(RunContext)) == 25
     assert len(fields(PathContext)) == 11
     assert [f.name for f in fields(SimData)] == ["config", "run", "path"]
@@ -58,12 +58,12 @@ def test_shortfall_controls_are_independent(scenario_builders, show, calculate, 
     assert snapshot.calculate_simulated_shortfall_rate is expected
 
 
-@pytest.mark.parametrize("name", ["historical_magi", "special_income_streams", "roth_flows", "report_options",
+@pytest.mark.parametrize("name", ["historical_magi", "special_income_streams", "roth_flows", "qcd_settings", "report_options",
     "user_annotation_strings", "scenario_explorer_annotations"])
 def test_nested_inputs_and_replacements_are_independent(tmp_path, name):
     config = make_gui(tmp_path).build_simulation_from_gui("portfolio_sim")
     payload = [{"nested": [1]}]
-    if name in {"historical_magi", "report_options"}:
+    if name in {"historical_magi", "qcd_settings", "report_options"}:
         payload = {"nested": [1]}
     first = replace(config, **{name: payload})
     second = replace(first)

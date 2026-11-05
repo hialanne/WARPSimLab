@@ -9,6 +9,7 @@ import pytest
 
 def _config(**overrides):
     values = dict(
+        qcd_settings={},
         calculate_income_taxes=True,
         calculate_payroll_taxes=False,
         calculate_state_taxes=False,
@@ -203,7 +204,12 @@ def test_expense_year_withdraws_each_rmd_once(mod, monkeypatch):
         1.0,
         _zero_irmaa())
 
-    assert calls == [(h_port, 5.0), (w_port, 7.0)]
+    funded_calls = []
+    for portfolio, amount in calls:
+        if amount != 0:
+            funded_calls.append((portfolio, amount))
+
+    assert funded_calls == [(h_port, 5.0), (w_port, 7.0)]
     assert result["rmd_h"] == pytest.approx(5.0)
     assert result["rmd_w"] == pytest.approx(7.0)
 

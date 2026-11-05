@@ -273,6 +273,12 @@ def simulate_yearly_portfolios(
         "ira_401k": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "rmd_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "rmd_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "qcd_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "qcd_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "qcd_rmd_offset_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "qcd_rmd_offset_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "taxable_rmd_husband": np.zeros((effective_num_sims, years_to_simulate + 1)),
+        "taxable_rmd_wife": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "employee_401k_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_employee_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
         "hsa_employer_contributions": np.zeros((effective_num_sims, years_to_simulate + 1)),
@@ -626,6 +632,13 @@ def simulate_yearly_portfolios(
             rmd_h = model_result["rmd_h"]
             rmd_w = model_result["rmd_w"]
 
+            qcd_h = model_result["qcd_h"]
+            qcd_w = model_result["qcd_w"]
+            qcd_rmd_offset_h = model_result["qcd_rmd_offset_h"]
+            qcd_rmd_offset_w = model_result["qcd_rmd_offset_w"]
+            taxable_rmd_h = model_result["taxable_rmd_h"]
+            taxable_rmd_w = model_result["taxable_rmd_w"]
+
             pre_tax_withdrawal = model_result["pre_tax_withdrawal"]
             wd_roth = model_result["wd_roth"]
             wd_hsa = model_result["wd_hsa"]
@@ -774,6 +787,12 @@ def simulate_yearly_portfolios(
 
             results["rmd_husband"][s, year] = rmd_h
             results["rmd_wife"][s, year] = rmd_w
+            results["qcd_husband"][s, year] = qcd_h
+            results["qcd_wife"][s, year] = qcd_w
+            results["qcd_rmd_offset_husband"][s, year] = qcd_rmd_offset_h
+            results["qcd_rmd_offset_wife"][s, year] = qcd_rmd_offset_w
+            results["taxable_rmd_husband"][s, year] = taxable_rmd_h
+            results["taxable_rmd_wife"][s, year] = taxable_rmd_w
             results["fund_expenses"][s, year] = fund_expenses            
             results["bond_interest"][s, year] = bond_interest
             results["cash_interest"][s, year] = cash_interest
@@ -903,6 +922,10 @@ def simulate_yearly_portfolios(
         )
         results["rmd_husband"] = results["rmd_husband"] / discount_factors
         results["rmd_wife"] = results["rmd_wife"] / discount_factors
+        for key in ("qcd_husband", "qcd_wife", "qcd_rmd_offset_husband", "qcd_rmd_offset_wife",
+                    "taxable_rmd_husband", "taxable_rmd_wife"):
+            results[key] = results[key] / discount_factors
+
         results["fund_expenses"]        = results["fund_expenses"]      / discount_factors
         results["bond_interest"]        = results["bond_interest"]      / discount_factors
         results["cash_interest"]        = results["cash_interest"]      / discount_factors

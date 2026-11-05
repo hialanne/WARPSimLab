@@ -49,6 +49,7 @@ def make_portfolio():
 
 def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal", **overrides):
     cfg = SimpleNamespace(
+        qcd_settings={},
         start_year=2026,
         years_to_simulate=years,
         inflation_rate=inflation_rate,

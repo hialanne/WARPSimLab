@@ -1,0 +1,49 @@
+{
+  "s1_single": {
+    "approved_leaves_exactly_equal": true,
+    "differences": []
+  },
+  "s2_married_nominal": {
+    "blocked": "name 'roth_conversion' is not defined"
+  },
+  "s2_married_real": {
+    "blocked": "name 'roth_conversion' is not defined"
+  },
+  "s2_married_raw": {
+    "blocked": "name 'roth_conversion' is not defined"
+  },
+  "s3_expenses": {
+    "approved_leaves_exactly_equal": true,
+    "differences": []
+  },
+  "s3_withdrawals": {
+    "blocked": "name 'roth_conversion' is not defined"
+  },
+  "s3_tax_funding": {
+    "blocked": "name 'roth_conversion' is not defined"
+  },
+  "s4_correlated": {
+    "approved_leaves_exactly_equal": true,
+    "differences": []
+  },
+  "s4_uncorrelated": {
+    "approved_leaves_exactly_equal": true,
+    "differences": []
+  },
+  "s5_historical_nominal": {
+    "approved_leaves_exactly_equal": true,
+    "differences": []
+  },
+  "s5_historical_real": {
+    "approved_leaves_exactly_equal": true,
+    "differences": []
+  },
+  "s6_baseline": {
+    "approved_leaves_exactly_equal": true,
+    "differences": []
+  },
+  "s6_modified": {
+    "approved_leaves_exactly_equal": true,
+    "differences": []
+  }
+}

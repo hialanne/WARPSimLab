@@ -1,0 +1,21 @@
+{
+    "version": 2,
+    "main_window": {
+        "sizing_mode": "maximized",
+        "custom_width": 1200,
+        "custom_height": 750,
+        "remember_geometry": false,
+        "last_geometry": null,
+        "last_maximized": false
+    },
+    "summary_dialog": {
+        "sizing_mode": "maximized",
+        "remember_geometry": true,
+        "last_geometry": "1100x750+10+20",
+        "last_maximized": false
+    },
+    "scenario_explorer": {
+        "layout_mode": "automatic",
+        "layout": null
+    }
+}

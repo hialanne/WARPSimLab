@@ -359,6 +359,34 @@ def _validate_roth_flows(sim_config):
         _require_real(f"{name}.inflation_adjustment_pct", flow["inflation_adjustment_pct"])
 
 
+def _validate_qcd_settings(sim_config):
+    settings = getattr(sim_config, "qcd_settings", None)
+    _require(isinstance(settings, dict), "sim_config.qcd_settings must be a dictionary.")
+    _require_dict_keys("sim_config.qcd_settings", settings, {"husband", "wife"})
+
+    required_keys = {"enabled", "mode", "amount", "percent", "start_age", "end_age"}
+
+    for person in ("husband", "wife"):
+        values = settings[person]
+        name = f"sim_config.qcd_settings.{person}"
+        _require_dict_keys(name, values, required_keys)
+
+        _require_bool(f"{name}.enabled", values["enabled"])
+        _require_choice(f"{name}.mode", values["mode"], {"Fixed Amount", "Percent of RMD"})
+        _require_real(f"{name}.amount", values["amount"], minimum=0.0)
+        _require_real(f"{name}.percent", values["percent"], minimum=0.0)
+        _require(values["percent"] <= 100.0, f"{name}.percent cannot exceed 100.")
+
+        _require_real(f"{name}.start_age", values["start_age"], minimum=70.5)
+        _require(values["start_age"] <= 120.0, f"{name}.start_age cannot exceed 120.")
+
+        end_age = values["end_age"]
+        if end_age is not None:
+            _require_real(f"{name}.end_age", end_age, minimum=70.5)
+            _require(end_age <= 120.0, f"{name}.end_age cannot exceed 120.")
+            _require(end_age >= values["start_age"], f"{name}.end_age must not precede start_age.")
+
+
 def _validate_historical_magi(sim_config):
     historical_magi = getattr(sim_config, "historical_magi", None)
     _require(isinstance(historical_magi, dict), "sim_config.historical_magi must be a dictionary.")
@@ -516,7 +544,9 @@ def _validate_sim_config(sim_config):
 
     _validate_special_income_streams(sim_config)
     _validate_roth_flows(sim_config)
+    _validate_qcd_settings(sim_config)
     _validate_historical_magi(sim_config)
+
 
 def _validate_household(husband_portfolio, wife_portfolio, husband, wife, sim_config):
     _validate_person("husband", husband)

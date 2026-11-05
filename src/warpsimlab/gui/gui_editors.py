@@ -9,7 +9,9 @@ from src.warpsimlab.gui.gui_portfolioPercentages import PortfolioPercentagesEdit
 from src.warpsimlab.gui.gui_historicalData import *
 from src.warpsimlab.gui.gui_portfolioSimulation import *
 from src.warpsimlab.gui.gui_simulationControls import *
-from src.warpsimlab.gui.gui_retirement import *
+from src.warpsimlab.gui.gui_withdrawals import WithdrawalsEditFrame
+from src.warpsimlab.gui.gui_rmdQcd import RmdQcdEditFrame
+from src.warpsimlab.gui.gui_sequenceRisk import SequenceRiskEditFrame
 from src.warpsimlab.gui.gui_main import MainHomeFrame
 from src.warpsimlab.gui.gui_tutorial import TutorialFrame
 from src.warpsimlab.gui.gui_expenses import ExpensesEditFrame
@@ -303,7 +305,8 @@ class PortfolioSimulatorGUI_EditorsMixin:
     # ------------------------
     # Build Retirement editor in edit_frame_container
     # ------------------------
-    def edit_retirement_controls(self):
+
+    def _edit_retirement_section(self, editor_class, title):
         if not self._advanced_only():
             return
 
@@ -312,23 +315,34 @@ class PortfolioSimulatorGUI_EditorsMixin:
 
         control_vars = {"_controls_dict": self.simulation_controls}
 
-        persons = {"husband": self.husband}
-        if self.simulation_controls["second_person_enabled"]:
-            persons["wife"] = self.wife
-
-        portfolio = {"husband": self.husband_portfolio}
-        if self.simulation_controls["second_person_enabled"]:
-            portfolio["wife"] = self.wife_portfolio
-
-        self.retirement_editor_frame = RetirementEditFrame(
-            self.edit_frame_container,
-            main_gui=self,
-            control_vars=control_vars,
-            persons=persons,
-            portfolio=portfolio,
-            title="Retirement",
+        self.retirement_editor_frame = editor_class(
+            self.edit_frame_container, control_vars=control_vars, title=title
         )
         self.retirement_editor_frame.pack(anchor="w", pady=(20, 10))
+
+
+    def edit_withdrawal_strategies(self):
+        self._edit_retirement_section(WithdrawalsEditFrame, "Withdrawal Strategies")
+
+
+
+    def edit_rmd_qcd(self):
+        if not self._advanced_only():
+            return
+
+        if not self._clear_editor_frame():
+            return
+
+        control_vars = {"_controls_dict": self.simulation_controls}
+        self.retirement_editor_frame = RmdQcdEditFrame(
+            self.edit_frame_container, control_vars=control_vars, qcd_settings=self.qcd_settings,
+            second_person_enabled=self.simulation_controls["second_person_enabled"], title="RMDs & QCDs"
+        )
+        self.retirement_editor_frame.pack(anchor="w", pady=(20, 10))
+
+
+    def edit_sequence_risk(self):
+        self._edit_retirement_section(SequenceRiskEditFrame, "Sequence-of-Returns Scenarios")
 
 
     def edit_simulation_assumptions(self):

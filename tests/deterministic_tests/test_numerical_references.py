@@ -1,5 +1,7 @@
 """Accepted pre-refactor financial outputs; no generation/update execution path."""
 
+from functools import lru_cache
+
 import numpy as np
 import pytest
 
@@ -20,6 +22,12 @@ def _without_legacy_allocation_defaults(value, portfolio_inputs=None):
         for key, item in value.items():
             if key in {"household_eq_target", "household_bd_target", "household_cs_target"}:
                 assert item is None, f"Unexpected prepared allocation in frozen inputs: {key}={item}"
+            elif key == "qcd_settings":
+                for owner in ("husband", "wife"):
+                    assert item[owner] == dict(enabled=False, mode="Fixed Amount", amount=0.0,
+                                               percent=0.0, start_age=70.5, end_age=None)
+
+                assert set(item) == {"husband", "wife"}
             elif is_config and key == "root":
                 assert item is None
             elif is_config and key in portfolio_inputs:
@@ -43,12 +51,13 @@ def manifest():
 
 @pytest.fixture(scope="module")
 def current_results():
-    return {name: run_case(name) for name in CASES}
+    # A broken withdrawal case must not prevent expense cases from being compared.
+    return lru_cache(maxsize=None)(run_case)
 
 
 @pytest.mark.parametrize("name", CASES)
 def test_complete_core_matches_accepted_reference(name, manifest, current_results):
-    actual, inputs = current_results[name]
+    actual, inputs = current_results(name)
     frozen_inputs = read_json(DATA / "inputs" / f"{name}.json")
     assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
     entry = manifest["cases"][name]
@@ -56,6 +65,12 @@ def test_complete_core_matches_accepted_reference(name, manifest, current_result
     assert all(checks.values()), f"{name}: inactive mechanisms: {[k for k, v in checks.items() if not v]}"
     assert checks == entry["activation"], f"{name}: activation contract changed"
     expected = load_reference(DATA, name, entry)
+    # Extend only the new disabled-QCD schema; every approved numerical leaf remains unchanged.
+    for owner in ("husband", "wife"):
+        expected["qcd_" + owner] = np.zeros_like(expected["rmd_" + owner])
+        expected["qcd_rmd_offset_" + owner] = np.zeros_like(expected["rmd_" + owner])
+        expected["taxable_rmd_" + owner] = expected["rmd_" + owner].copy()
+
     assert actual["total_assets"].shape == (entry["path_count"], entry["retained_year_count"])
     compare_core(actual, expected, case=name, start_year=entry["start_year"],
                  historical_windows=expected["historical_window_start_year"])
@@ -68,5 +83,5 @@ def test_variants_exercise_different_financial_results(current_results):
         ("s5_historical_nominal", "s5_historical_real"),
         ("s6_baseline", "s6_modified"),
     ]:
-        assert not np.array_equal(current_results[left][0]["total_assets"],
-                                  current_results[right][0]["total_assets"]), (left, right)
+        assert not np.array_equal(current_results(left)[0]["total_assets"],
+                                  current_results(right)[0]["total_assets"]), (left, right)

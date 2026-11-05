@@ -25,13 +25,16 @@ def test_lifetime_tax_summary_uses_ratio_of_totals_and_excludes_opening_bill():
 def test_rmd_first_positive_year_and_account_balance_summaries():
     results = {"year": [2025, 2026, 2027], "rmd": [0, 100, 300],
                "rmd_husband": [0, 100, 100], "rmd_wife": [0, 0, 200],
+               "taxable_rmd_husband": [0, 100, 100], "taxable_rmd_wife": [0, 0, 200],
+               "qcd_husband": [0, 0, 0], "qcd_wife": [0, 0, 0],
                "roth_assets": [500, 600, 700], "roth_conversions": [0, 50, 75],
                "hsa_assets": [100, 200, 300], "medicare_cost": [0, 1000, 1200], "irmaa": [0, 200, 300]}
-    assert mod._build_rmd_summary(results, False) == {"First RMD Year": 2026, "Largest RMD": 300, "Lifetime RMD Withdrawals": 400}
+    assert mod._build_rmd_summary(results, False) == {"First RMD Year": 2026, "Largest Required RMD": 300,
+        "Lifetime Required RMD": 400, "Lifetime QCD": 0, "Lifetime Taxable RMD": 400}
     couple = mod._build_rmd_summary(results, True)
     assert couple["Husband First RMD Year"] == 2026
     assert couple["Wife First RMD Year"] == 2027
-    assert couple["Lifetime Total RMD"] == 400
+    assert couple["Lifetime Required RMD"] == 400
     assert mod._build_rmd_summary({}, False)["First RMD Year"] is None
     assert mod._build_roth_summary(results) == {"Starting Roth Balance": 500, "Ending Roth Balance": 700, "Total Roth Conversions": 125, "Total Roth Withdrawals": 0}
     assert mod._build_hsa_summary(results)["Ending HSA Balance"] == 300
@@ -39,7 +42,7 @@ def test_rmd_first_positive_year_and_account_balance_summaries():
 
 
 def test_tax_rows_exclude_opening_and_terminal_year_and_preserve_tax_components():
-    keys = ("gross_income taxes federal_ordinary_tax federal_qualified_dividend_tax filing_status_single irmaa_lookback_available irmaa_lookback_magi federal_bracket_lower_threshold federal_bracket_upper_threshold magi state_income_tax payroll_tax social_security_payroll_tax medicare_tax additional_medicare_tax tax_bracket taxable_ordinary_income medicare_cost irmaa pre_tax_withdrawals emergency_pre_tax_used roth_conversions roth_withdrawals hsa_qualified_withdrawals hsa_taxable_withdrawals qualified_equity_distributions rmd rmd_husband rmd_wife").split()
+    keys = ("gross_income taxes federal_ordinary_tax federal_qualified_dividend_tax filing_status_single irmaa_lookback_available irmaa_lookback_magi federal_bracket_lower_threshold federal_bracket_upper_threshold magi state_income_tax payroll_tax social_security_payroll_tax medicare_tax additional_medicare_tax tax_bracket taxable_ordinary_income medicare_cost irmaa pre_tax_withdrawals emergency_pre_tax_used roth_conversions roth_withdrawals hsa_qualified_withdrawals hsa_taxable_withdrawals qualified_equity_distributions rmd rmd_husband rmd_wife qcd_husband qcd_wife taxable_rmd_husband taxable_rmd_wife").split()
     results = {key: [0, 0, 0] for key in keys}
     results.update(year=[2025, 2026, 2027], terminal_year=2027, gross_income=[0, 1000, 0],
                    taxes=[0, 150, 0], federal_ordinary_tax=[0, 100, 0],

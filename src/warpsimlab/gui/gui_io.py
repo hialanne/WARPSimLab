@@ -12,6 +12,7 @@ from src.warpsimlab.dataClasses.portfolio import Portfolio  # import the new cla
 from src.warpsimlab.gui.gui_normalIncome import *
 from src.warpsimlab.utils.io_utils import *
 from src.warpsimlab.utils.utilities import *
+from src.warpsimlab.gui.gui_validation import parse_finite_float
 
 WARPSIMLAB_FINANCIAL_DATA_METADATA_KEY = "WARPSIMLAB_METADATA"
 WARPSIMLAB_FINANCIAL_DATA_FILE_TYPE = "financial_data"
@@ -189,6 +190,51 @@ class PortfolioSimulatorGUI_IOMixin:
         return os.path.join(base_path, "exampleFiles")
 
 
+
+    def _parse_qcd_settings(self, data):
+        raw = data.get("QCD_SETTINGS", {})
+        if not isinstance(raw, dict):
+            raise ValueError("QCD settings must be an object.")
+
+        result = {}
+        for person in ("husband", "wife"):
+            values = raw.get(person, {})
+            if not isinstance(values, dict):
+                raise ValueError(f"Invalid QCD settings for {person}.")
+
+            enabled = values.get("enabled", False)
+            mode = values.get("mode", "Fixed Amount")
+            if not isinstance(enabled, bool) or mode not in ("Fixed Amount", "Percent of RMD"):
+                raise ValueError(f"Invalid QCD configuration for {person}.")
+
+            numbers = {}
+            defaults = {"amount": 0.0, "percent": 0.0, "start_age": 70.5, "end_age": None}
+            for name, default in defaults.items():
+                raw_value = values.get(name, default)
+                if name == "end_age" and raw_value is None:
+                    numbers[name] = None
+                    continue
+
+                if isinstance(raw_value, bool):
+                    raise ValueError(f"Invalid QCD {name} for {person}.")
+
+                number = parse_finite_float(
+                    str(raw_value), allow_commas=False, allow_scientific=False, minimum=0
+                )
+                numbers[name] = number
+
+            if numbers["percent"] > 100 or not 70.5 <= numbers["start_age"] <= 120:
+                raise ValueError(f"QCD percentage or starting age is invalid for {person}.")
+
+            if numbers["end_age"] is not None:
+                if numbers["end_age"] > 120 or numbers["end_age"] < numbers["start_age"]:
+                    raise ValueError(f"QCD ending age is invalid for {person}.")
+
+            result[person] = {"enabled": enabled, "mode": mode, **numbers}
+
+        return result
+
+
     def _load_from_json(self, file_path):
         try:
             # Load JSON
@@ -208,6 +254,11 @@ class PortfolioSimulatorGUI_IOMixin:
                 historical_magi = {}
             if not isinstance(historical_magi, dict):
                 raise ValueError("Historical MAGI data is invalid.")
+
+            qcd_settings = self._parse_qcd_settings(data)
+            include_rmd = data.get("INCLUDE_RMD", True)
+            if not isinstance(include_rmd, bool):
+                raise ValueError("Include RMD setting must be true or false.")
 
             # --- Husband ---
             self.husband.age = data.get("DEFAULT_HUSBAND_AGE", self.husband.age)
@@ -324,6 +375,10 @@ class PortfolioSimulatorGUI_IOMixin:
                 self.wife.modeled_death_age = None
 
             self.simulation_controls["irmaa_enabled"] = bool(data.get("IRMAA_ENABLED", False))
+
+            self.simulation_controls["include_rmd"] = include_rmd
+            self.qcd_settings = qcd_settings
+
             self.simulation_controls["state_of_residence"] = data.get(
                 "STATE_OF_RESIDENCE", DEFAULT_STATE_OF_RESIDENCE
             )
@@ -493,6 +548,12 @@ class PortfolioSimulatorGUI_IOMixin:
             "DEFAULT_SIMULATIONS": int(self.simulation_settings.get("num_sims", DEFAULT_SIMULATIONS)),
             "DEFAULT_FUND_EXPENSE": float(self.simulation_settings.get("fund_expense", DEFAULT_FUND_EXPENSE)),
             "IRMAA_ENABLED": bool(self.simulation_controls.get("irmaa_enabled", False)),
+
+            "INCLUDE_RMD": bool(self.simulation_controls["include_rmd"]),
+            "QCD_SETTINGS": {
+                person: dict(settings) for person, settings in self.qcd_settings.items()
+            },
+
             "HISTORICAL_MAGI": dict(self.historical_magi),
 
             "SPECIAL_INCOME_STREAMS": [

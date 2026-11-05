@@ -1,0 +1,19 @@
+WARPSimLab Internal Error Diagnostic
+====================================
+
+Date/time: 2026-11-04 15:57:06 (local time)
+WARPSimLab version: Unknown
+Python version: 3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]
+Operating system: Windows-11-10.0.26200-SP0
+
+Error
+-----
+test
+
+Path Context
+------------
+active_historical_sim_index: 2
+ret_withdraw_base_dollars: 123.0
+
+Call Stack
+----------

@@ -61,6 +61,7 @@ def make_sim(*, years, inflation_rate, inflation_mode):
         monte_carlo_mode="pathBasedAnnualSampling",
         monte_carlo_plot_style="fill",
         use_correlated_returns=True,
+        qcd_settings={},
         include_rmd=False,
         calculate_income_taxes=False,
         calculate_payroll_taxes=False,

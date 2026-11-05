@@ -1,0 +1,155 @@
+WARPSimLab Internal Error Diagnostic
+====================================
+
+Date/time: 2026-11-04 15:52:53 (local time)
+WARPSimLab version: Unknown
+Python version: 3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]
+Operating system: Windows-11-10.0.26200-SP0
+
+Error
+-----
+test
+
+Simulation Configuration
+------------------------
+always_use_expense_mode: False
+annotate_plots: False
+bd_mean: 0.03
+bd_std: 0.04
+calculate_income_taxes: True
+calculate_payroll_taxes: True
+calculate_simulated_shortfall_rate: False
+calculate_state_taxes: True
+constant_y_plots: False
+cs_mean: 0.01
+cs_std: 0.005
+csv_output_dir: None
+custom_bonds: 0.0
+custom_cash: 1.0
+custom_stock: 0.0
+eq_mean: 0.07
+eq_std: 0.14
+fund_expense: 0.002
+historical_asset_returns_file: 'us_asset_returns_1876_2025.csv'
+historical_inflation_file: 'us_inflation_1876_2025_real.csv'
+historical_magi: {'one_year_prior': 150000, 'two_years_prior': 300000}
+historical_window_mode: 'rolling_overlapping_all'
+historical_window_start_year: None
+historical_window_stop_year: None
+historical_window_stride: 1
+include_realestate: True
+include_rmd: True
+inflation_delta: 0.0
+inflation_mode: 'nominal'
+inflation_rate: 0.025
+irmaa_enabled: True
+loaded_data_file: None
+num_sims: 3
+output_csv: 'None'
+overlay_fund_expense_impacts: False
+overlay_household_expenses: False
+overlay_profit_loss: True
+overlay_retirement_age: False
+overlay_tax_impacts: False
+post_tax_bond_interest_yield: 0.02
+post_tax_cash_interest_yield: 0.01
+post_tax_equity_dividend_yield: 0.015
+qcd_settings: {'husband': {'amount': 0.0,
+             'enabled': False,
+             'end_age': None,
+             'mode': 'Fixed Amount',
+             'percent': 0.0,
+             'start_age': 70.5},
+ 'wife': {'amount': 0.0, 'enabled': False, 'end_age': None, 'mode': 'Fixed Amount', 'percent': 0.0, 'start_age': 70.5}}
+re_mean: 0.04
+re_std: 0.08
+rebalance_every_year: True
+report_options: {'columns': ['taxes', 'magi'], 'options': {'detail': True}}
+results_mode: 'risk_analysis'
+retirement_withdraw_dollars: 0
+retirement_withdraw_mode: 'Percentage + Inflation'
+retirement_withdraw_pct: 5.0
+return_asset_order: ('eq', 'bd', 'cs', 're')
+return_correlation_matrix: array([[ 1.  , -0.2 ,  0.  ,  0.55],
+       [-0.2 ,  1.  ,  0.2 ,  0.1 ],
+       [ 0.  ,  0.2 ,  1.  ,  0.05],
+       [ 0.55,  0.1 ,  0.05,  1.  ]])
+risk_analysis_mode: 'monte_carlo'
+risk_analysis_plot_style: 'fill'
+roth_flows: [{'amount': 35000,
+  'enabled': True,
+  'end_age': 70,
+  'inflation_adjustment_pct': 0.0,
+  'name': 'Early conversion',
+  'owner': 'husband',
+  'start_age': 69,
+  'type': 'roth_conversion'}]
+scenario_expense_multiplier: 1.0
+scenario_explorer_annotations: [[{'color': 'blue', 'text': 'scenario note'}]]
+second_person_enabled: True
+sequence_risk_depth: 'Moderate'
+sequence_risk_enabled: False
+sequence_risk_length: 'Medium'
+sequence_risk_start_year_offset: 0
+sequence_risk_timing: 'None'
+show_simulated_shortfall_rate: False
+sim_initial_allocation_mode: 'maintain-current-allocation'
+sim_type: 'portfolio_sim'
+special_income_streams: [{'adjustment_mode': 'inflation',
+  'adjustment_pct': 50.0,
+  'amount': 7000,
+  'enabled': True,
+  'end_age': 69,
+  'name': 'Temporary consulting',
+  'owner': 'wife',
+  'start_age': 67,
+  'taxable': True}]
+start_year: 2026
+state_of_residence: 'CO'
+tax_filing_status: 'Married filing jointly'
+use_correlated_returns: True
+use_fund_expenses: True
+use_snapshot_annotations: False
+user_annotation_strings: [[{'color': None, 'text': 'user note'}]]
+warpsimlab_version: 'Unknown'
+years_to_simulate: 8
+
+Run Context
+-----------
+hist_bd: None
+hist_cs: None
+hist_eq: None
+hist_inflation: None
+hist_num_windows: 0
+hist_re: None
+hist_window_start_indices: None
+hist_years: None
+household_bd_target: None
+household_cs_target: None
+household_eq_target: None
+mc_cholesky: array([[ 6.51469844e-06, -5.03861935e-03,  2.20222457e-02,
+        -1.38165238e-01],
+       [ 1.28237266e-04, -3.56296785e-02, -1.68952664e-02,
+         6.71264009e-03],
+       [-4.89122795e-03, -9.36337129e-04, -4.44741464e-04,
+        -3.69718488e-05],
+       [ 2.61259979e-06,  8.43578028e-03, -5.82551477e-02,
+        -5.41772587e-02]])
+mc_cov_matrix: array([[ 1.96e-02, -1.12e-03,  0.00e+00,  6.16e-03],
+       [-1.12e-03,  1.60e-03,  4.00e-05,  3.20e-04],
+       [ 0.00e+00,  4.00e-05,  2.50e-05,  2.00e-05],
+       [ 6.16e-03,  3.20e-04,  2.00e-05,  6.40e-03]])
+mc_means: array([0.07, 0.03, 0.01, 0.04])
+mc_seed: 12345
+mc_std_devs: array([0.14 , 0.04 , 0.005, 0.08 ])
+medicare_2026_anchor_factor: None
+post_tax_bond_interest_yield_normalized: None
+post_tax_cash_interest_yield_normalized: None
+post_tax_equity_dividend_yield_normalized: None
+state_tax_enabled: None
+state_tax_rate: None
+state_tax_type: None
+tax_2026_anchor_factor: None
+
+Call Stack
+----------

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import SimpleNamespace
 
 import pytest
@@ -8,6 +8,7 @@ import pytest
 
 @dataclass
 class DummySimConfig:
+    qcd_settings: dict = field(default_factory=dict)
     years_to_simulate: int = 2
     second_person_enabled: bool = True
     include_realestate: bool = True

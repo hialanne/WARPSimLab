@@ -19,6 +19,7 @@ def dummy_gui():
         pass
 
     inst = DummyGUI()
+    inst.qcd_settings = {"husband": {"enabled": False}, "wife": {"enabled": False}}
 
     inst.root = object()
     inst.husband = object()

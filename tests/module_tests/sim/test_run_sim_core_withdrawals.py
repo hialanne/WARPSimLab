@@ -9,6 +9,7 @@ import pytest
 
 def _config(**overrides):
     values = dict(
+        qcd_settings={},
         calculate_income_taxes=True,
         calculate_payroll_taxes=False,
         calculate_state_taxes=False,

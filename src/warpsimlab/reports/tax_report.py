@@ -462,8 +462,9 @@ def _render_rmd_analysis(report_data):
 <section>
     <h2>Required Minimum Distribution Analysis</h2>
     <p class="section-intro">
-        Required Minimum Distributions can increase taxable income later in retirement.
-        This section summarizes when RMDs appear and their total simulated impact.
+        Required RMDs are shown before Qualified Charitable Distribution (QCD) offsets.
+        QCDs satisfy RMD requirements up to the required amount, reducing taxable RMDs.
+        QCDs exceeding the RMD are included in total QCDs but not taxable income.
     </p>
     <div class="card-grid two-col">
         <div class="summary-card">
@@ -523,14 +524,19 @@ def _render_yearly_tax_table(report_data):
         "Qualified Equity Distributions",
     ]
 
-    if "Husband RMD" in first_row:
+    if "Husband Required RMD" in first_row:
         distribution_columns.extend([
-            "Husband RMD",
-            "Wife RMD",
-            "Total RMD",
+            "Husband Required RMD",
+            "Wife Required RMD",
+            "Husband QCD",
+            "Wife QCD",
         ])
-    else:
-        distribution_columns.append("RMD")
+
+    distribution_columns.extend([
+        "Required RMD",
+        "QCD",
+        "Taxable RMD",
+    ])
 
     account_flow_columns = [
         "Year",
@@ -705,7 +711,7 @@ def _render_tax_insights(report_data):
 
     if first_rmd or husband_first_rmd or wife_first_rmd:
         observations.append(
-            "Once RMDs begin, they increase taxable retirement income."
+            "RMDs increase taxable retirement income to the extent they are not satisfied by QCDs."
         )
 
     #

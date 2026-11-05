@@ -84,7 +84,7 @@ def build_income_tab(dialog, notebook):
 
     add_combined_row("Gross Wages", ("wages", "employee_401k_contributions", "hsa_employee_contributions"))
 
-    add_row("RMD", "rmd")
+    add_row("Taxable RMD", "rmd")
     add_row("Social Security", "social_security")
     add_combined_row("Pensions and Annuities", ("pensions", "annuities"))
     add_row("Special Income", "special_income")
@@ -109,6 +109,11 @@ def build_income_tab(dialog, notebook):
 
     ttk.Label(income_tab, text=note_text, font=body_font, justify="left").grid(
         row=row_idx, column=0, columnspan=5, sticky="w", pady=(15, 10)
+    )
+
+    total_qcd = sum(r["qcd_husband"]) + sum(r["qcd_wife"])
+    ttk.Label(income_tab, text=f"Total QCDs (simulation): {fmt(total_qcd)}", font=body_font_bold).grid(
+        row=row_idx + 1, column=0, columnspan=5, sticky="w", pady=(5, 10)
     )
 
     return income_tab

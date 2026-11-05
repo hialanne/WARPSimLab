@@ -113,7 +113,12 @@ def _build_year_row(results, index, husband, wife, sim_config):
         "MAGI": _array_value(results, "magi", index),
 
         "Gross Wages": gross_wages,
-        "RMD": _array_value(results, "rmd", index),
+        "Required RMD": (_array_value(results, "rmd_husband", index)
+                         + _array_value(results, "rmd_wife", index)),
+        "QCD": (_array_value(results, "qcd_husband", index)
+                + _array_value(results, "qcd_wife", index)),
+        "Taxable RMD": (_array_value(results, "taxable_rmd_husband", index)
+                        + _array_value(results, "taxable_rmd_wife", index)),
         "Social Security": _array_value(results, "social_security", index),
         "Pensions and Annuities": pensions_and_annuities,
         "Special Income": _array_value(results, "special_income", index),

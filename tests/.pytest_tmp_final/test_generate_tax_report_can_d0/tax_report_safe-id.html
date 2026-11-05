@@ -1,0 +1,647 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WARPSimLab Tax and Medicare Report</title>
+
+    <style>
+    
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    color: #222;
+    line-height: 1.4;
+    background: #fff;
+}
+
+.report-page {
+    max-width: 920px;
+    margin: 34px auto;
+}
+
+.report-header {
+    border-top: 6px solid #2e7d32;
+    padding-top: 12px;
+}
+
+.brand-name {
+    color: #2e7d32;
+}
+
+.brand-website {
+    color: #666;
+    font-size: 14px;
+    margin-top: -4px;
+    margin-bottom: 12px;
+}
+
+h1 {
+    margin: 0 0 10px 0;
+    font-size: 30px;
+}
+
+h2 {
+    margin-top: 34px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #ddd;
+    font-size: 22px;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 6px;
+    font-size: 17px;
+}
+
+section {
+    margin-bottom: 28px;
+    page-break-inside: avoid;
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 6px 24px;
+    margin: 10px 0 14px 0;
+    font-size: 14px;
+}
+
+.disclaimer {
+    border: 1px solid #bbb;
+    background: #f8f8f8;
+    padding: 10px 12px;
+    max-width: 900px;
+    font-size: 14px;
+}
+
+.disclaimer p {
+    margin: 4px 0;
+}
+
+.section-intro {
+    max-width: 900px;
+    color: #444;
+    margin-top: 0;
+}
+
+.card-grid {
+    display: grid;
+    gap: 16px;
+    margin-top: 14px;
+}
+
+.three-col {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.two-col {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+}
+
+.summary-card,
+.explanation-card,
+.placeholder-card,
+.plot-card {
+    border: 1px solid #ccc;
+    background: #fafafa;
+    padding: 14px;
+    border-radius: 6px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.kv-table th,
+.kv-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 6px 4px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.kv-table th {
+    width: 58%;
+    color: #333;
+}
+
+.kv-table td {
+    text-align: right;
+}
+
+.emphasis-row th,
+.emphasis-row td {
+    font-weight: bold;
+    background: #f2f2f2;
+}
+
+.wide-table {
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+.wide-table th,
+.wide-table td {
+    border: 1px solid #ccc;
+    padding: 7px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.wide-table thead th {
+    background: #f0f0f0;
+}
+
+.negative {
+    color: #b00020;
+    font-weight: bold;
+}
+
+.highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.highlight-card {
+    border: 1px solid #bbb;
+    background: #f5f7fa;
+    padding: 16px;
+    border-radius: 7px;
+    border-top: 5px solid #2e7d32;
+}
+
+.highlight-card.negative-risk {
+    border-top-color: #b00020;
+}
+
+.highlight-label {
+    font-size: 16px;
+    color: #2e7d32;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.highlight-card.negative-risk .highlight-label {
+    color: #b00020;
+}
+
+.highlight-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+}
+
+.plot-card {
+    margin-top: 14px;
+}
+
+.plot-card img {
+    width: 90%;
+    max-width: none;
+    height: auto;
+    display: block;
+    margin: 10px auto 0 auto;
+}
+
+.plot-stack {
+    display: block;
+    max-width: 1200px;
+    margin-top: 14px;
+}
+
+.warnings {
+    border: 1px solid #d6b656;
+    background: #fff8dd;
+    padding: 12px 12px 12px 30px;
+}
+
+.footer {
+    margin-top: 36px;
+    color: #666;
+    font-size: 13px;
+}
+
+@media print {
+    body {
+        margin: 0;
+    }
+
+    .report-page {
+        max-width: 900px;
+        margin: 22px auto;
+        padding: 0;
+    }
+
+    .three-col {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .two-col {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .highlight-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .plot-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    section {
+        page-break-inside: avoid;
+    }
+}
+
+
+    .summary-card .kv-table th {
+        width: auto;
+        white-space: nowrap;
+        padding-right: 16px;
+    }
+
+    .summary-card .kv-table td {
+        width: 1%;
+        white-space: nowrap;
+        text-align: right;
+    }
+
+    .wide-table {
+        font-size: 13px;
+    }
+
+    .wide-table td:not(:first-child),
+    .wide-table th:not(:first-child) {
+        text-align: right;
+    }
+
+    .wide-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f0f0f0;
+    }
+
+    </style>
+</head>
+<body>
+    <main class="report-page">
+
+        
+<section class="report-header">
+    <h1>
+        <span class="brand-name">WARPSimLab</span> Tax and Medicare Report
+    </h1>
+    <div class="brand-website">warpsimlab.org</div>
+    <div class="metadata-grid">
+        <div><strong>Generated:</strong> 2026-01-01 12:00:00</div>
+        <div><strong>Projection Period:</strong> 2026-2031 (5 Years)</div>
+        <div><strong>Report Basis:</strong> Raw Dollars</div>
+        <div><strong>Report ID:</strong> test-report</div>
+    </div>
+    <div class="disclaimer">
+        <p>This report is intended solely for educational purposes.</p>
+        <p>It is not financial, investment, tax, legal, retirement, or other professional advice.</p>
+        <p>All results are generated from user-provided data and simulated market conditions.</p>
+    </div>
+</section>
+
+
+        
+<section>
+    <h2>Tax Highlights</h2>
+    <div class="highlight-grid">
+        
+            <div class="highlight-card">
+                <div class="highlight-label">Lifetime Total Tax</div>
+                <div class="highlight-value">$10,000</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Lifetime Federal Income Tax</div>
+                <div class="highlight-value">$7,000</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Lifetime State Income Tax</div>
+                <div class="highlight-value">$1,000</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Lifetime Payroll Tax</div>
+                <div class="highlight-value">$2,000</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Average Effective Tax Rate</div>
+                <div class="highlight-value">12.50%</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Highest Marginal Tax Bracket</div>
+                <div class="highlight-value">24.00%</div>
+            </div>
+            
+    </div>
+</section>
+
+
+        
+<section>
+    <h2>Tax Overview</h2>
+    <p class="section-intro">
+        This report summarizes the taxes estimated by WARPSimLab over the simulation period
+        and shows Medicare and IRMAA information relevant to the modeled tax path.
+        Medicare costs and IRMAA are modeled cash outflows and are not included in Total Taxes.
+    </p>
+    <p class="section-intro">
+        This report is not a tax return, does not replace tax software, and should not be
+        interpreted as professional tax advice.
+    </p>
+</section>
+
+
+        
+<section>
+    <h2>Tax Model Limitations</h2>
+    <p class="section-intro">
+        WARPSimLab uses simplified tax calculations intended to model broad retirement
+        tax behavior rather than reproduce an individual tax return.
+    </p>
+    <ul>
+        <li>
+            Social Security benefits are currently treated as ordinary taxable income rather than
+            using the detailed federal provisional-income rules.
+        </li>
+        <li>
+            Taxable equity distributions: WARPSimLab assumes taxable equities are held primarily
+            in low-turnover U.S. stock funds or ETFs and that applicable holding-period requirements
+            are met. Qualified dividends and long-term capital gain distributions are combined into
+            a single simplified taxable-equity-distribution amount and taxed using the federal
+            preferential rate structure. The distribution amount is based on the simulator's
+            taxable-equity portfolio bucket rather than individual securities.
+        </li>
+        <li>
+            Emergency Tax-Deferred withdrawals use a one-pass tax adjustment rather than repeatedly
+            recalculating taxes and withdrawals until they converge.
+        </li>
+        <li>
+            Roth accounts are modeled as tax-free retirement buckets. The simulator does not currently
+            optimize Roth withdrawal timing or Roth conversions.
+        </li>
+        <li>
+            HSA accounts are modeled using simplified tax treatment. Qualified HSA withdrawals used
+            for modeled HSA-eligible medical expenses are tax-free. HSA withdrawals used for general
+            household funding are treated as ordinary taxable income. WARPSimLab does not model the
+            real-world additional penalty that may apply to some non-qualified HSA withdrawals.
+        </li>
+        <li>
+            State income taxes are planning-grade approximations and may omit deductions, credits,
+            local taxes, and state-specific retirement income rules.
+        </li>
+    </ul>
+</section>
+
+
+        
+<section>
+    <h2>Tax Settings Used</h2>
+    <p class="section-intro">
+        These are the tax calculation settings used when the simulation was run.
+    </p>
+    <div class="card-grid two-col">
+        <div class="summary-card">
+            <table class='kv-table'><tbody><tr><th>Calculate Income Taxes</th><td>Yes</td></tr>
+<tr><th>Calculate Payroll Taxes</th><td>Yes</td></tr>
+<tr><th>Calculate State Taxes</th><td>No</td></tr>
+<tr><th>Initial Tax Filing Status</th><td>Married Filing Jointly</td></tr>
+<tr><th>State of Residence</th><td>None</td></tr></tbody></table>
+        </div>
+    </div>
+</section>
+
+
+        
+<section>
+    <h2>Lifetime Tax Summary</h2>
+    <p class="section-intro">
+        This section summarizes estimated taxes across the full simulation period.
+    </p>
+    <div class="card-grid two-col">
+        <div class="summary-card">
+            <table class='kv-table'><tbody><tr class='emphasis-row'><th>Lifetime Total Tax</th><td>$10,000</td></tr>
+<tr><th>Lifetime Federal Income Tax</th><td>$7,000</td></tr>
+<tr><th>Lifetime State Income Tax</th><td>$1,000</td></tr>
+<tr><th>Lifetime Payroll Tax</th><td>$2,000</td></tr>
+<tr class='emphasis-row'><th>Average Effective Tax Rate</th><td>12.50%</td></tr>
+<tr class='emphasis-row'><th>Highest Marginal Tax Bracket</th><td>24.00%</td></tr></tbody></table>
+        </div>
+    </div>
+</section>
+
+
+        
+<section>
+    <h2>Medicare and IRMAA Summary</h2>
+    <p class="section-intro">
+        Medicare costs and IRMAA are modeled household cash outflows. They are shown here
+        for tax-planning context but are not included in Lifetime Total Tax.
+    </p>
+    <div class="card-grid two-col">
+        <div class="summary-card">
+            <table class='kv-table'><tbody><tr><th>Lifetime Medicare Cost</th><td>$12,000</td></tr>
+<tr><th>Lifetime IRMAA</th><td>$3,000</td></tr>
+<tr><th>Lifetime Medicare and IRMAA Outlays</th><td>$15,000</td></tr></tbody></table>
+        </div>
+    </div>
+</section>
+
+
+        
+<section>
+    <h2>IRMAA Analysis</h2>
+    <p class="section-intro">
+        IRMAA uses Modified Adjusted Gross Income from two years earlier. The cards below
+        identify the first modeled Medicare year and the first year in which the simulation
+        produces an IRMAA surcharge.
+    </p>
+
+    <div class="card-grid two-col">
+        
+        <div class="summary-card">
+            <h3>First Medicare Year</h3>
+            <table class='kv-table'><tbody></tbody></table>
+        </div>
+        
+        <div class="summary-card">
+            <h3>First IRMAA Year</h3>
+            <table class='kv-table'><tbody></tbody></table>
+        </div>
+        
+    </div>
+
+    <h3>IRMAA Projection by Year</h3>
+    <p class="section-intro">
+        IRMAA Year is the year in which the surcharge applies. MAGI Year identifies the
+        two-year lookback year whose MAGI is used for that determination. Lower and upper
+        thresholds are the boundaries of the applicable modeled IRMAA tier.
+    </p>
+    
+
+    <br>
+    <br>
+
+    <h3>2026 IRMAA Threshold and Cost Reference</h3>
+    <p class="section-intro">
+        These are the 2026 base MAGI ranges and annual IRMAA surcharges used by WARPSimLab.
+        Annual IRMAA / Person shows the additional annual Part B and Part D surcharge for one
+        Medicare-covered person. Increase / Person shows the additional annual cost of moving
+        from the preceding tier into that tier. The simulator adjusts applicable thresholds and
+        surcharge amounts for future modeled years; the projection table above shows the actual
+        tier boundaries used for each year.
+    </p>
+    
+</section>
+
+
+        
+<section>
+    <h2>Tax Insights</h2>
+    <p class="section-intro">
+        This section summarizes the most important tax characteristics of the
+        simulation and explains why they occurred. These observations are
+        generated directly from the simulation results.
+    </p>
+
+    <ul>
+        <li>Federal income taxes account for 70.0% of lifetime taxes.</li>
+<li>State income taxes account for 10.0% of lifetime taxes.</li>
+<li>Payroll taxes account for 20.0% of lifetime taxes.</li>
+<li>Average effective tax rate over the simulation is 12.50%.</li>
+<li>Payroll taxes decline and eventually disappear once earned employment income ends.</li>
+<li>Required Minimum Distributions begin in 2035.</li>
+<li>RMDs increase taxable retirement income to the extent they are not satisfied by QCDs.</li>
+<li>The largest annual tax bill occurs in 2027 ($200).</li>
+<li>Roth withdrawals provide tax-free retirement income under the current simulation model.</li>
+<li>Qualified HSA withdrawals fund modeled HSA-eligible medical expenses without increasing ordinary taxable income.</li>
+    </ul>
+
+</section>
+
+
+        
+
+        
+<section>
+    <h2>Tax Source Breakdown</h2>
+    <p class="section-intro">
+        These values summarize the income sources that contributed to taxable income
+        and tax exposure during the simulation.
+    </p>
+    <div class="card-grid two-col">
+        <div class="summary-card">
+            <table class='kv-table'><tbody><tr><th>Wages</th><td>$50,000</td></tr>
+<tr><th>Social Security</th><td>$10,000</td></tr>
+<tr><th>RMD</th><td>$5,000</td></tr>
+<tr><th>Withdrawals</th><td>$3,000</td></tr>
+<tr><th>Qualified Dividends</th><td>$1,000</td></tr></tbody></table>
+        </div>
+    </div>
+</section>
+
+
+        
+
+        
+
+        
+
+        
+<section>
+    <h2>Year-by-Year Tax Details</h2>
+    <p class="section-intro">
+        These tables show annual taxes, filing status, MAGI, IRMAA lookback values,
+        Medicare and IRMAA outlays, and taxable or retirement flows that affect the simulation.
+        Medicare costs and IRMAA are not included in Total Taxes.
+    </p>
+
+    <h3>Annual Tax Summary</h3>
+    
+        <table class="wide-table">
+            <thead>
+                <tr><th>Year</th><th>Age</th><th>Filing Status</th><th>Gross Income</th><th>MAGI</th><th>2-Year Lookback MAGI</th><th>Federal Income Tax</th><th>State Income Tax</th><th>Payroll Tax</th><th>Total Taxes</th><th>Effective Tax Rate</th><th>Marginal Tax Bracket</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>2026</td><td>60</td><td>N/A</td><td>$1,000</td><td>N/A</td><td>N/A</td><td>$70</td><td>$10</td><td>$20</td><td>$100</td><td>10.00%</td><td>12.00%</td></tr><tr><td>2027</td><td>61</td><td>N/A</td><td>$2,000</td><td>N/A</td><td>N/A</td><td>$140</td><td>$20</td><td>$40</td><td>$200</td><td>10.00%</td><td>12.00%</td></tr>
+            </tbody>
+        </table>
+        
+
+    <br>
+    <br>
+
+    <h3>Federal Ordinary Income Tax Bracket Context</h3>
+    <p class="section-intro">
+        This table shows the taxable ordinary income used for the federal ordinary income-tax
+        calculation, the resulting marginal tax rate, and the lower and upper limits of that
+        year's applicable bracket. Bracket limits reflect the filing status and inflation-adjusted
+        tax assumptions used by the simulation.
+    </p>
+    
+        <table class="wide-table">
+            <thead>
+                <tr><th>Year</th><th>Filing Status</th><th>Taxable Ordinary Income</th><th>Marginal Tax Bracket</th><th>Lower Bracket Limit</th><th>Upper Bracket Limit</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>2026</td><td>N/A</td><td>N/A</td><td>12.00%</td><td>N/A</td><td>N/A</td></tr><tr><td>2027</td><td>N/A</td><td>N/A</td><td>12.00%</td><td>N/A</td><td>N/A</td></tr>
+            </tbody>
+        </table>
+        
+
+    <br>
+    <br>
+
+    <h3>Annual Medicare and Required Distributions</h3>
+    
+        <table class="wide-table">
+            <thead>
+                <tr><th>Year</th><th>Medicare Cost</th><th>IRMAA</th><th>Qualified Equity Distributions</th><th>Required RMD</th><th>QCD</th><th>Taxable RMD</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>2026</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td></tr><tr><td>2027</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>
+            </tbody>
+        </table>
+        
+
+    <br>
+    <br>
+
+    <h3>Annual Retirement Account Flows</h3>
+    
+        <table class="wide-table">
+            <thead>
+                <tr><th>Year</th><th>Traditional Withdrawals</th><th>Emergency Tax-Deferred Withdrawal</th><th>Roth Conversions</th><th>Roth Withdrawals</th><th>Qualified HSA Withdrawals</th><th>Taxable HSA Withdrawals</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>2026</td><td>N/A</td><td>N/A</td><td>N/A</td><td>$0</td><td>N/A</td><td>N/A</td></tr><tr><td>2027</td><td>N/A</td><td>N/A</td><td>N/A</td><td>$1,000</td><td>N/A</td><td>N/A</td></tr>
+            </tbody>
+        </table>
+        
+</section>
+
+
+        
+
+        
+<div class="footer">
+    Generated by WARPSimLab on 2026-11-04T15:57:36.
+</div>
+
+
+    </main>
+</body>
+</html>

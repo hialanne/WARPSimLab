@@ -1,0 +1,555 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WARPSimLab Risk Analysis Report</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    color: #222;
+    line-height: 1.4;
+    background: #fff;
+}
+
+.report-page {
+    max-width: 920px;
+    margin: 34px auto;
+}
+
+.report-header {
+    border-top: 6px solid #2e7d32;
+    padding-top: 12px;
+}
+
+.brand-name {
+    color: #2e7d32;
+}
+
+.brand-website {
+    color: #666;
+    font-size: 14px;
+    margin-top: -4px;
+    margin-bottom: 12px;
+}
+
+h1 {
+    margin: 0 0 10px 0;
+    font-size: 30px;
+}
+
+h2 {
+    margin-top: 34px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #ddd;
+    font-size: 22px;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 6px;
+    font-size: 17px;
+}
+
+section {
+    margin-bottom: 28px;
+    page-break-inside: avoid;
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 6px 24px;
+    margin: 10px 0 14px 0;
+    font-size: 14px;
+}
+
+.disclaimer {
+    border: 1px solid #bbb;
+    background: #f8f8f8;
+    padding: 10px 12px;
+    max-width: 900px;
+    font-size: 14px;
+}
+
+.disclaimer p {
+    margin: 4px 0;
+}
+
+.section-intro {
+    max-width: 900px;
+    color: #444;
+    margin-top: 0;
+}
+
+.card-grid {
+    display: grid;
+    gap: 16px;
+    margin-top: 14px;
+}
+
+.three-col {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.two-col {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+}
+
+.summary-card,
+.explanation-card,
+.placeholder-card,
+.plot-card {
+    border: 1px solid #ccc;
+    background: #fafafa;
+    padding: 14px;
+    border-radius: 6px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.kv-table th,
+.kv-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 6px 4px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.kv-table th {
+    width: 58%;
+    color: #333;
+}
+
+.kv-table td {
+    text-align: right;
+}
+
+.emphasis-row th,
+.emphasis-row td {
+    font-weight: bold;
+    background: #f2f2f2;
+}
+
+.wide-table {
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+.wide-table th,
+.wide-table td {
+    border: 1px solid #ccc;
+    padding: 7px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.wide-table thead th {
+    background: #f0f0f0;
+}
+
+.negative {
+    color: #b00020;
+    font-weight: bold;
+}
+
+.highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.highlight-card {
+    border: 1px solid #bbb;
+    background: #f5f7fa;
+    padding: 16px;
+    border-radius: 7px;
+    border-top: 5px solid #2e7d32;
+}
+
+.highlight-card.negative-risk {
+    border-top-color: #b00020;
+}
+
+.highlight-label {
+    font-size: 16px;
+    color: #2e7d32;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.highlight-card.negative-risk .highlight-label {
+    color: #b00020;
+}
+
+.highlight-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+}
+
+.plot-card {
+    margin-top: 14px;
+}
+
+.plot-card img {
+    width: 90%;
+    max-width: none;
+    height: auto;
+    display: block;
+    margin: 10px auto 0 auto;
+}
+
+.plot-stack {
+    display: block;
+    max-width: 1200px;
+    margin-top: 14px;
+}
+
+.warnings {
+    border: 1px solid #d6b656;
+    background: #fff8dd;
+    padding: 12px 12px 12px 30px;
+}
+
+.footer {
+    margin-top: 36px;
+    color: #666;
+    font-size: 13px;
+}
+
+@media print {
+    body {
+        margin: 0;
+    }
+
+    .report-page {
+        max-width: 900px;
+        margin: 22px auto;
+        padding: 0;
+    }
+
+    .three-col {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .two-col {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .highlight-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .plot-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    section {
+        page-break-inside: avoid;
+    }
+}
+
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+.wide-table th:not(:first-child),
+.wide-table td:not(:first-child) {
+    text-align: right;
+}
+
+.observations {
+    border: 1px solid #ccc;
+    background: #fafafa;
+    padding: 14px 14px 14px 34px;
+}
+
+.observations li {
+    margin-bottom: 6px;
+}
+
+.historical-window-plot img {
+    width: 88%;
+    max-width: 900px;
+}
+
+.year-list {
+    margin-top: 10px;
+    padding-left: 22px;
+}
+
+.year-list li {
+    margin-bottom: 5px;
+}
+
+.interpretation-card {
+    margin-top: 16px;
+}
+
+.historical-year-lists {
+    margin-top: 16px;
+}
+
+.historical-year-break {
+    page-break-before: always;
+    break-before: page;
+}
+
+.market-left {
+    text-align: left !important;
+}
+
+</style>
+
+</head>
+<body>
+<main class="report-page">
+
+
+<section class="report-header">
+    <h1>
+        <span class="brand-name">WARPSimLab</span> Risk Analysis Report
+    </h1>
+    <div class="brand-website">warpsimlab.org</div>
+    <div class="metadata-grid">
+        <div><strong>Generated:</strong> 2026-01-01 12:00:00</div>
+        <div><strong>Projection Period:</strong> 2026-2031 (5 Years)</div>
+        <div><strong>Report Basis:</strong> Raw Dollars</div>
+        <div><strong>Report ID:</strong> test-report</div>
+    </div>
+    <div class="disclaimer">
+        <p>This report is intended solely for educational purposes.</p>
+        <p>It is not financial, investment, tax, legal, retirement, or other professional advice.</p>
+        <p>All results are generated from user-provided data and simulated or historical market conditions.</p>
+    </div>
+</section>
+
+
+
+<section>
+    <h2>Executive Summary</h2>
+    <p class="section-intro">
+        This section summarizes the main risk results from the selected analysis method.
+    </p>
+    <div class="highlight-grid">
+        
+            <div class="highlight-card">
+                <div class="highlight-label">Scenario Count</div>
+                <div class="highlight-value">100</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Years Simulated</div>
+                <div class="highlight-value">5</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Simulated Shortfall Rate</div>
+                <div class="highlight-value">10.00%</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">10th Percentile Ending Portfolio</div>
+                <div class="highlight-value">$0</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Median Ending Portfolio</div>
+                <div class="highlight-value">$100,000</div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">90th Percentile Ending Portfolio</div>
+                <div class="highlight-value">$250,000</div>
+            </div>
+            
+    </div>
+</section>
+
+
+<section>
+    <h2>Method Explanation</h2>
+    <div class="explanation-card">
+        
+        <p>
+            Monte Carlo Analysis evaluates your financial plan across many
+            simulated market paths. Investment returns are generated from your
+            selected market assumptions rather than replaying one specific
+            historical period.
+        </p>
+        <p>
+            This method helps illustrate how your financial plan may perform
+            across a broad range of possible future market conditions, including
+            return sequences that have not occurred in the historical record.
+        </p>
+        
+    </div>
+</section>
+
+
+
+<section>
+    <h2>Portfolio Sustainability Analysis</h2>
+    
+        <p class="section-intro">
+            This section summarizes how often the modeled portfolio was depleted
+            before the end of the modeled period across the Monte Carlo paths.
+            When mortality is modeled, that period ends with the modeled household lifetime.
+        </p>
+        
+    <div class="summary-card">
+        <table class='kv-table'><tbody><tr class='emphasis-row'><th>Simulated Shortfall Rate</th><td>10.00%</td></tr>
+<tr><th>Scenario Count</th><td>100</td></tr>
+<tr class='emphasis-row'><th>Earliest Portfolio Depletion Year</th><td>2030</td></tr>
+<tr class='emphasis-row'><th>Median Portfolio Depletion Year</th><td>2032</td></tr>
+<tr class='emphasis-row'><th>Latest Portfolio Depletion Year</th><td>2035</td></tr></tbody></table>
+    </div>
+</section>
+
+
+
+<section>
+    <h2>Monte Carlo Insights</h2>
+
+    <div class="summary-card">
+        <h3>Monte Carlo Run Settings</h3>
+        <table class='kv-table'><tbody><tr><th>Sampling Method</th><td>Path-Based Annual Sampling</td></tr>
+<tr><th>Correlated Returns</th><td>Yes</td></tr>
+<tr><th>Sequence Risk</th><td>No</td></tr>
+<tr><th>Random Seed</th><td>12,345</td></tr></tbody></table>
+    </div>
+
+    <div class="summary-card interpretation-card">
+        <h3>Sequence-of-Returns Risk</h3>
+
+        <p>
+            Monte Carlo paths naturally include sequence-of-returns effects because
+            each path contains an ordered series of annual investment returns. Losses
+            that occur early in retirement can reduce the portfolio while withdrawals
+            continue, leaving a smaller portfolio to participate in later market
+            recoveries.
+        </p>
+
+        <p>
+            WARPSimLab's optional Sequence Risk feature adds a deliberate downturn
+            pattern to the generated market path. When enabled, the configured
+            downturn replaces sampled equity, bond, and real-estate returns for the
+            affected years while leaving cash returns unchanged.
+        </p>
+    </div>
+
+    
+    <div class="summary-card interpretation-card">
+        <h3>Monte Carlo Outcome Summary</h3>
+        <p>10.0% of the analyzed Monte Carlo paths depleted the portfolio before the end of the modeled period.</p>
+    </div>
+
+
+</section>
+
+
+<section>
+    <h2>Percentile Portfolio Table</h2>
+    
+        <p class="section-intro">
+            This table summarizes how portfolio values varied across all simulated
+            scenarios during each year of the projection. Each row represents one
+            projection year, while the percentile columns show the distribution of
+            portfolio values across the simulations at that point in time.
+        </p>
+
+        <p>
+            For example, the 10th percentile is the portfolio value below which
+            approximately 10% of simulations fell at that point in the projection.
+            The median represents the middle simulated outcome, while the 90th
+            percentile represents a stronger simulated outcome.
+        </p>
+        
+    <div class="table-scroll">
+        
+<table class="wide-table">
+    <thead>
+        <tr>
+            <th rowspan="2">Year</th>
+            <th colspan="2" class="market-left">Less Favorable Market</th>
+            <th>Median</th>
+            <th colspan="2">More Favorable Market</th>
+        </tr>
+        <tr>
+            <th>10th Percentile</th>
+            <th>25th Percentile</th>
+            <th></th>
+            <th>75th Percentile</th>
+            <th>90th Percentile</th>
+        </tr>
+    </thead>
+    <tbody>
+        
+            <tr>
+                <td>
+                    2026
+                </td>
+                <td>
+                    $90,000
+                </td>
+                <td>
+                    N/A
+                </td>
+                <td>
+                    $100,000
+                </td>
+                <td>
+                    N/A
+                </td>
+                <td>
+                    $120,000
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    2027
+                </td>
+                <td>
+                    $80,000
+                </td>
+                <td>
+                    N/A
+                </td>
+                <td>
+                    $105,000
+                </td>
+                <td>
+                    N/A
+                </td>
+                <td>
+                    $130,000
+                </td>
+            </tr>
+            
+    </tbody>
+</table>
+
+    </div>
+</section>
+
+
+
+
+<div class="footer">
+    Generated by WARPSimLab on 2026-11-04T15:57:36.
+</div>
+
+
+</main>
+</body>
+</html>

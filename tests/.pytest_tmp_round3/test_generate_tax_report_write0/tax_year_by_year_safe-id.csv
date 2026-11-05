@@ -1,0 +1,3 @@
+Year,Age,Gross Income,Federal Income Tax,State Income Tax,Payroll Tax,Total Taxes,Effective Tax Rate,Marginal Tax Bracket,RMD,Roth Withdrawals,HSA Withdrawals
+2026,60,1000.0,70.0,10.0,20.0,100.0,0.1,0.12,0.0,0.0,0.0
+2027,61,2000.0,140.0,20.0,40.0,200.0,0.1,0.12,100.0,1000.0,500.0

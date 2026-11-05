@@ -130,7 +130,7 @@ def _build_income_milestone(results, index):
         "Year": _array_value(results, "year", index),
         "Gross Wages": gross_wages,
         "Special Income": _array_value(results, "special_income", index),
-        "RMD": _array_value(results, "rmd", index),
+        "Taxable RMD": _array_value(results, "rmd", index),
         "Retirement Withdrawals": _array_value(results, "withdrawal", index),
         "Social Security": _array_value(results, "social_security", index),
         "Pensions and Annuities": pensions_and_annuities,
@@ -245,6 +245,9 @@ def _build_simulation_totals(results, simulated_shortfall_rate=None):
         "Maximum Portfolio": maximum_portfolio,
         "Minimum Portfolio": minimum_portfolio,
         "Total Income": float(sum(results.get("gross_income", []))),
+        "Total QCDs": float(sum(results.get("qcd_husband", [])) + sum(results.get("qcd_wife", []))),
+        "Total Taxable RMDs": float(sum(results.get("taxable_rmd_husband", []))
+                                    + sum(results.get("taxable_rmd_wife", []))),
         "Taxes Paid": float(sum(results.get("taxes", []))),
         "Lifetime Medicare Cost": float(sum(results.get("medicare_cost", []))),
         "Lifetime IRMAA": float(sum(results.get("irmaa", []))),

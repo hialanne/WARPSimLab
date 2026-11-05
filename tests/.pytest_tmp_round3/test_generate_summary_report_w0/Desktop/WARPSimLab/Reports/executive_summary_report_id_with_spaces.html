@@ -1,0 +1,592 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WARPSimLab Executive Summary Report</title>
+
+    <style>
+
+    
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    color: #222;
+    line-height: 1.4;
+    background: #fff;
+}
+
+.report-page {
+    max-width: 920px;
+    margin: 34px auto;
+}
+
+.report-header {
+    border-top: 6px solid #2e7d32;
+    padding-top: 12px;
+}
+
+.brand-name {
+    color: #2e7d32;
+}
+
+.brand-website {
+    color: #666;
+    font-size: 14px;
+    margin-top: -4px;
+    margin-bottom: 12px;
+}
+
+h1 {
+    margin: 0 0 10px 0;
+    font-size: 30px;
+}
+
+h2 {
+    margin-top: 34px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #ddd;
+    font-size: 22px;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 6px;
+    font-size: 17px;
+}
+
+section {
+    margin-bottom: 28px;
+    page-break-inside: avoid;
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 6px 24px;
+    margin: 10px 0 14px 0;
+    font-size: 14px;
+}
+
+.disclaimer {
+    border: 1px solid #bbb;
+    background: #f8f8f8;
+    padding: 10px 12px;
+    max-width: 900px;
+    font-size: 14px;
+}
+
+.disclaimer p {
+    margin: 4px 0;
+}
+
+.section-intro {
+    max-width: 900px;
+    color: #444;
+    margin-top: 0;
+}
+
+.card-grid {
+    display: grid;
+    gap: 16px;
+    margin-top: 14px;
+}
+
+.three-col {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.two-col {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+}
+
+.summary-card,
+.explanation-card,
+.placeholder-card,
+.plot-card {
+    border: 1px solid #ccc;
+    background: #fafafa;
+    padding: 14px;
+    border-radius: 6px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.kv-table th,
+.kv-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 6px 4px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.kv-table th {
+    width: 58%;
+    color: #333;
+}
+
+.kv-table td {
+    text-align: right;
+}
+
+.emphasis-row th,
+.emphasis-row td {
+    font-weight: bold;
+    background: #f2f2f2;
+}
+
+.wide-table {
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+.wide-table th,
+.wide-table td {
+    border: 1px solid #ccc;
+    padding: 7px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.wide-table thead th {
+    background: #f0f0f0;
+}
+
+.negative {
+    color: #b00020;
+    font-weight: bold;
+}
+
+.highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.highlight-card {
+    border: 1px solid #bbb;
+    background: #f5f7fa;
+    padding: 16px;
+    border-radius: 7px;
+    border-top: 5px solid #2e7d32;
+}
+
+.highlight-card.negative-risk {
+    border-top-color: #b00020;
+}
+
+.highlight-label {
+    font-size: 16px;
+    color: #2e7d32;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.highlight-card.negative-risk .highlight-label {
+    color: #b00020;
+}
+
+.highlight-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+}
+
+.plot-card {
+    margin-top: 14px;
+}
+
+.plot-card img {
+    width: 90%;
+    max-width: none;
+    height: auto;
+    display: block;
+    margin: 10px auto 0 auto;
+}
+
+.plot-stack {
+    display: block;
+    max-width: 1200px;
+    margin-top: 14px;
+}
+
+.warnings {
+    border: 1px solid #d6b656;
+    background: #fff8dd;
+    padding: 12px 12px 12px 30px;
+}
+
+.footer {
+    margin-top: 36px;
+    color: #666;
+    font-size: 13px;
+}
+
+@media print {
+    body {
+        margin: 0;
+    }
+
+    .report-page {
+        max-width: 900px;
+        margin: 22px auto;
+        padding: 0;
+    }
+
+    .three-col {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .two-col {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .highlight-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .plot-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    section {
+        page-break-inside: avoid;
+    }
+}
+
+
+    .milestone-card,
+    .appendix-block {
+        border: 1px solid #ccc;
+        background: #fafafa;
+        padding: 14px;
+        border-radius: 6px;
+    }
+
+    .subhead {
+        color: #555;
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    .summary-card .kv-table {
+        table-layout: auto;
+    }
+
+    .summary-card .kv-table th {
+        width: auto;
+        white-space: normal;
+        padding-right: 16px;
+    }
+
+    .summary-card .kv-table td {
+        width: 1%;
+        white-space: nowrap;
+        text-align: right;
+    }
+
+    .year {
+        font-weight: normal;
+        color: #555;
+        font-size: 12px;
+    }
+
+    .placeholder-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+        gap: 14px;
+        margin-top: 14px;
+    }
+
+    .placeholder-grid.two-col {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+
+    .placeholder-card {
+        border-style: dashed;
+        color: #555;
+        background: #fcfcfc;
+    }
+
+    .placeholder-card h3 {
+        color: #333;
+    }
+
+    .appendix {
+        margin-top: 42px;
+    }
+
+    .appendix-block {
+        margin-bottom: 14px;
+    }
+
+    .appendix-subblock {
+        margin-top: 12px;
+    }
+
+    .appendix-subblock h4 {
+        margin: 8px 0 6px 0;
+        font-size: 15px;
+    }
+
+    .simulation-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(220px, 1fr));
+        gap: 16px;
+        margin-top: 14px;
+    }
+
+    .assumptions-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    .assumptions-table th,
+    .assumptions-table td {
+        border: 1px solid #ccc;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .assumptions-table thead th {
+        background: #f0f0f0;
+    }
+
+    .assumptions-table td:not(:first-child),
+    .assumptions-table th:not(:first-child) {
+        text-align: right;
+    }
+
+    .negative {
+        color: #b00020;
+    }
+
+    @media print {
+
+        .simulation-summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .simulation-summary-grid .summary-card {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .simulation-summary-grid .kv-table th {
+            width: 55%;
+            white-space: nowrap;
+        }
+
+        .simulation-summary-grid .kv-table td {
+            width: 45%;
+            white-space: nowrap;
+        }
+
+        .placeholder-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .portfolio-break-before {
+            page-break-before: always;
+            break-before: page;
+        }
+
+    }
+
+    </style>
+</head>
+<body>
+    <main class="report-page">
+
+        
+<section class="report-header">
+    <h1>
+        <span class="brand-name">WARPSimLab</span> Executive Summary Report
+    </h1>
+    <div class="brand-website">warpsimlab.org</div>
+    <div class="metadata-grid">
+        <div><strong>Generated:</strong> 2026-01-01 12:00:00</div>
+        <div><strong>Projection Period:</strong> 2026-2031 (5 Years)</div>
+        <div><strong>Report Basis:</strong> Raw Dollars</div>
+        <div><strong>Report ID:</strong> report id/with spaces</div>
+    </div>
+    <div class="disclaimer">
+        <p>This report is intended solely for educational purposes.</p>
+        <p>It is not financial, investment, tax, legal, retirement, or other professional advice.</p>
+        <p>All results are generated from user-provided data and simulated market conditions.</p>
+    </div>
+</section>
+
+
+        
+<section>
+    <h2>Simulation Highlights</h2>
+    <div class="highlight-grid">
+        
+            <div class="highlight-card">
+                <div class="highlight-label">Portfolio Start Value</div>
+                <div class="highlight-value">
+                    $100,000
+                </div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Portfolio End Value</div>
+                <div class="highlight-value">
+                    $150,000
+                </div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Total Income Generated</div>
+                <div class="highlight-value">
+                    $50,000
+                </div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Total Expenses</div>
+                <div class="highlight-value">
+                    $30,000
+                </div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Years Simulated</div>
+                <div class="highlight-value">
+                    5
+                </div>
+            </div>
+            
+            <div class="highlight-card">
+                <div class="highlight-label">Scenarios That Depleted Portfolio</div>
+                <div class="highlight-value">
+                    0.00%
+                </div>
+            </div>
+            
+    </div>
+</section>
+
+
+        
+<section>
+    <h2>Income and Cash Flow Summary</h2>
+    <p class="section-intro">
+        This section shows how major income and Cash Flow categories change at key points
+        in the simulation. It is a milestone summary, not a year-by-year table.
+    </p>
+    <table class="wide-table">
+        <thead>
+            <tr><th>Cash Flow Category</th><th>Start Simulation<br><span class='year'>(2026)</span></th></tr>
+        </thead>
+        <tbody>
+            <tr><th>Gross Wages</th><td class=''>N/A</td></tr><tr><th>Special Income</th><td class=''>N/A</td></tr><tr><th>RMD</th><td class=''>$0</td></tr><tr><th>Retirement Withdrawals</th><td class=''>N/A</td></tr><tr><th>Social Security</th><td class=''>$0</td></tr><tr><th>Pensions and Annuities</th><td class=''>N/A</td></tr><tr><th>Investment Income</th><td class=''>N/A</td></tr><tr class='emphasis-row'><th>Gross Income</th><td class=''>$1,000</td></tr><tr><th>Employee 401k Contribution</th><td class=''>N/A</td></tr><tr><th>Taxes</th><td class=''>$100</td></tr><tr><th>Tax Bracket</th><td class=''>10%</td></tr><tr class='emphasis-row'><th>Net Income</th><td class=''>$900</td></tr><tr><th>Household Expenses</th><td class=''>$500</td></tr><tr class='emphasis-row'><th>Net Cash Flow</th><td class=''>$400</td></tr><tr><th>Cash Flow Shortfall</th><td class=''>N/A</td></tr><tr><th>Fund Expenses</th><td class=''>$0</td></tr>
+        </tbody>
+    </table>
+</section>
+
+
+        
+
+        
+
+        
+
+        
+<section>
+    <h2>Portfolio Summary</h2>
+    <p class="section-intro">
+        This section summarizes the portfolio at three major points in the simulation:
+        the start, retirement, and the end of the projection period.
+    </p>
+    <div class="card-grid three-col">
+        
+            <div class="milestone-card">
+                <h3>Start of Simulation</h3>
+                <div class="subhead">Portfolio Value in 2026</div>
+                <table class='kv-table'><tbody><tr><th>Tax-Deferred Assets</th><td>$60,000</td></tr>
+<tr><th>Taxable Assets</th><td>$40,000</td></tr>
+<tr><th>Roth Assets</th><td>N/A</td></tr>
+<tr><th>HSA Assets</th><td>N/A</td></tr>
+<tr class='emphasis-row'><th>Total Portfolio</th><td>$100,000</td></tr>
+<tr><th>Real Estate</th><td>$0</td></tr>
+<tr class='emphasis-row'><th>Total Assets</th><td>$100,000</td></tr></tbody></table>
+            </div>
+            
+    </div>
+</section>
+
+
+        
+
+        
+<section>
+    <h2>Simulation Summary</h2>
+    <p class="section-intro">
+        These totals summarize the overall simulated outcome across the projection period.
+    </p>
+    <div class="card-grid three-col">
+        
+            <div class="summary-card">
+                <h3>Portfolio Outcome</h3>
+                <table class='kv-table'><tbody><tr><th>Portfolio Start</th><td>$100,000</td></tr>
+<tr><th>Portfolio End</th><td>$150,000</td></tr>
+<tr><th>Maximum Portfolio</th><td>$160,000</td></tr>
+<tr><th>Minimum Portfolio</th><td>$90,000</td></tr></tbody></table>
+            </div>
+            
+            <div class="summary-card">
+                <h3>Simulation Results</h3>
+                <table class='kv-table'><tbody><tr><th>Taxes Paid</th><td>N/A</td></tr>
+<tr><th>Total QCDs</th><td>N/A</td></tr>
+<tr><th>Total Taxable RMDs</th><td>N/A</td></tr>
+<tr><th>Household Expenses</th><td>$30,000</td></tr>
+<tr class='emphasis-row'><th>Lifetime Funding Gap</th><td>N/A</td></tr>
+<tr><th>Total Cash Flow Shortfall</th><td>N/A</td></tr>
+<tr><th>Fund Expenses</th><td>$100</td></tr></tbody></table>
+            </div>
+            
+            <div class="summary-card">
+                <h3>Risk Indicator</h3>
+                <table class='kv-table'><tbody><tr class='emphasis-row'><th>Scenarios That Depleted Portfolio</th><td>0.00%</td></tr></tbody></table>
+            </div>
+            
+    </div>
+</section>
+
+
+        
+<section class="appendix">
+    <h2>Assumptions Appendix</h2>
+    <p class="section-intro">
+        This appendix documents the user-provided inputs and report settings used for the simulation.
+    </p>
+    
+            <div class="appendix-block">
+                <h3>Tax Assumptions</h3>
+                <table class='kv-table'><tbody><tr><th>Calculate Income Taxes</th><td>Yes</td></tr>
+<tr><th>Calculate Payroll Taxes</th><td>No</td></tr></tbody></table>
+            </div>
+            
+</section>
+
+
+        
+
+        
+<div class="footer">
+    Generated by WARPSimLab on 2026-11-04T15:54:16.
+</div>
+
+
+    </main>
+</body>
+</html>

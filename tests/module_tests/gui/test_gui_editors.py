@@ -282,21 +282,16 @@ def test_edit_derived_statistics(monkeypatch):
     assert frame.kwargs["wife_portfolio"] is gui.wife_portfolio
 
 
-def test_edit_retirement_controls(monkeypatch):
+def test_edit_withdrawal_strategies(monkeypatch):
     gui = _make_gui()
     factory = FrameFactory()
-    monkeypatch.setattr(gui_editors, "RetirementEditFrame", factory)
+    monkeypatch.setattr(gui_editors, "WithdrawalsEditFrame", factory)
 
-    gui.edit_retirement_controls()
+    gui.edit_withdrawal_strategies()
 
     frame = factory.instances[0]
-    assert frame.kwargs["main_gui"] is gui
     assert frame.kwargs["control_vars"] == {"_controls_dict": gui.simulation_controls}
-    assert frame.kwargs["persons"] == {"husband": gui.husband, "wife": gui.wife}
-    assert frame.kwargs["portfolio"] == {
-        "husband": gui.husband_portfolio,
-        "wife": gui.wife_portfolio,
-    }
+    assert frame.kwargs["title"] == "Withdrawal Strategies"
     assert gui.retirement_editor_frame is frame
 
 

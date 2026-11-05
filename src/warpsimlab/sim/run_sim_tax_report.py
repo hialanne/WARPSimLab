@@ -291,12 +291,19 @@ def _build_yearly_tax_rows(results, husband, wife, sim_config):
             "Qualified Equity Distributions": _as_float(results.get("qualified_equity_distributions", [])[i]),
         })
 
+        required_rmd = (_as_float(results["rmd_husband"][i]) + _as_float(results["rmd_wife"][i]))
+        qcd = (_as_float(results["qcd_husband"][i]) + _as_float(results["qcd_wife"][i]))
+        taxable_rmd = (_as_float(results["taxable_rmd_husband"][i]) + _as_float(results["taxable_rmd_wife"][i]))
+
         if second_person_enabled:
-            row["Husband RMD"] = _as_float(results.get("rmd_husband", [])[i])
-            row["Wife RMD"] = _as_float(results.get("rmd_wife", [])[i])
-            row["Total RMD"] = _as_float(results.get("rmd", [])[i])
-        else:
-            row["RMD"] = _as_float(results.get("rmd", [])[i])
+            row["Husband Required RMD"] = _as_float(results["rmd_husband"][i])
+            row["Wife Required RMD"] = _as_float(results["rmd_wife"][i])
+            row["Husband QCD"] = _as_float(results["qcd_husband"][i])
+            row["Wife QCD"] = _as_float(results["qcd_wife"][i])
+
+        row["Required RMD"] = required_rmd
+        row["QCD"] = qcd
+        row["Taxable RMD"] = taxable_rmd
 
         rows.append(row)
 
@@ -345,7 +352,7 @@ def _build_tax_source_summary(results):
         "Annuities": _sum(results, "annuities"),
         "Traditional Withdrawals": _sum(results, "pre_tax_withdrawals"),
         "Emergency Tax-Deferred Withdrawals": _sum(results, "emergency_pre_tax_used"),
-        "RMDs": _sum(results, "rmd"),
+        "Taxable RMDs": _sum(results, "rmd"),
         "Roth Conversions": _sum(results, "roth_conversions"),
         "Taxable HSA Withdrawals": _sum(results, "hsa_taxable_withdrawals"),
         "Bond Interest": _sum(results, "bond_interest"),
@@ -381,7 +388,16 @@ def _build_hsa_summary(results):
 
 def _build_rmd_summary(results, second_person_enabled):
     years = _safe_array(results, "year")
-    total_rmd = [_as_float(v) for v in _safe_array(results, "rmd")]
+    husband_rmd = [_as_float(v) for v in _safe_array(results, "rmd_husband")]
+    wife_rmd = [_as_float(v) for v in _safe_array(results, "rmd_wife")]
+    husband_qcd = [_as_float(v) for v in _safe_array(results, "qcd_husband")]
+    wife_qcd = [_as_float(v) for v in _safe_array(results, "qcd_wife")]
+    husband_taxable = [_as_float(v) for v in _safe_array(results, "taxable_rmd_husband")]
+    wife_taxable = [_as_float(v) for v in _safe_array(results, "taxable_rmd_wife")]
+
+    total_rmd = [h + w for h, w in zip(husband_rmd, wife_rmd)]
+    total_qcd = sum(husband_qcd) + sum(wife_qcd)
+    total_taxable = sum(husband_taxable) + sum(wife_taxable)
 
     def first_rmd_year(values):
         for i, value in enumerate(values):
@@ -390,23 +406,27 @@ def _build_rmd_summary(results, second_person_enabled):
 
         return None
 
-    if second_person_enabled:
-        husband_rmd = [_as_float(v) for v in _safe_array(results, "rmd_husband")]
-        wife_rmd = [_as_float(v) for v in _safe_array(results, "rmd_wife")]
 
+    if second_person_enabled:
         return {
             "Husband First RMD Year": first_rmd_year(husband_rmd),
             "Wife First RMD Year": first_rmd_year(wife_rmd),
-            "Largest Total RMD": max(total_rmd) if total_rmd else 0.0,
-            "Husband Lifetime RMD": sum(husband_rmd),
-            "Wife Lifetime RMD": sum(wife_rmd),
-            "Lifetime Total RMD": sum(total_rmd),
+            "Largest Total Required RMD": max(total_rmd) if total_rmd else 0.0,
+            "Husband Lifetime Required RMD": sum(husband_rmd),
+            "Wife Lifetime Required RMD": sum(wife_rmd),
+            "Husband Lifetime QCD": sum(husband_qcd),
+            "Wife Lifetime QCD": sum(wife_qcd),
+            "Lifetime Required RMD": sum(total_rmd),
+            "Lifetime QCD": total_qcd,
+            "Lifetime Taxable RMD": total_taxable,
         }
 
     return {
         "First RMD Year": first_rmd_year(total_rmd),
-        "Largest RMD": max(total_rmd) if total_rmd else 0.0,
-        "Lifetime RMD Withdrawals": sum(total_rmd),
+        "Largest Required RMD": max(total_rmd) if total_rmd else 0.0,
+        "Lifetime Required RMD": sum(total_rmd),
+        "Lifetime QCD": total_qcd,
+        "Lifetime Taxable RMD": total_taxable,
     }
 
 

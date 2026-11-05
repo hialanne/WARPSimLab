@@ -49,6 +49,7 @@ def make_config(
     inflation_delta=0.0,
 ):
     return SimpleNamespace(
+        qcd_settings={},
         include_rmd=False,
         second_person_enabled=second_person_enabled,
         retirement_withdraw_mode=withdrawal_mode,

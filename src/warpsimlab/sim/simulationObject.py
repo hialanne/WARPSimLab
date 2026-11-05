@@ -71,6 +71,7 @@ class SimulationConfig:
     sequence_risk_start_year_offset: int = 0
     sequence_risk_length: str = "Medium"
     sequence_risk_depth: str = "Moderate"
+    qcd_settings: dict | None = None
 
     # Scenario configuration and overlays.
     scenario_expense_multiplier: float = 1.0
@@ -106,10 +107,13 @@ class SimulationConfig:
     def __post_init__(self):
         if self.post_tax_equity_dividend_yield is None:
             self.post_tax_equity_dividend_yield = 0.015
+
         if self.post_tax_bond_interest_yield is None:
             self.post_tax_bond_interest_yield = max(0.0, self.bd_mean)
+
         if self.post_tax_cash_interest_yield is None:
             self.post_tax_cash_interest_yield = self.cs_mean
+
         if self.calculate_simulated_shortfall_rate is None:
             self.calculate_simulated_shortfall_rate = self.show_simulated_shortfall_rate
 
@@ -117,26 +121,46 @@ class SimulationConfig:
             self.historical_magi = {"two_years_prior": None, "one_year_prior": None}
         else:
             self.historical_magi = deepcopy(self.historical_magi)
+
         if self.special_income_streams is None:
             self.special_income_streams = []
         else:
             self.special_income_streams = deepcopy(self.special_income_streams)
+
         if self.roth_flows is None:
             self.roth_flows = []
         else:
             self.roth_flows = deepcopy(self.roth_flows)
+
+        if self.qcd_settings is None:
+            self.qcd_settings = {
+                "husband": {
+                    "enabled": False, "mode": "Fixed Amount", "amount": 0.0,
+                    "percent": 0.0, "start_age": 70.5, "end_age": None,
+                },
+                "wife": {
+                    "enabled": False, "mode": "Fixed Amount", "amount": 0.0,
+                    "percent": 0.0, "start_age": 70.5, "end_age": None,
+                },
+            }
+        else:
+            self.qcd_settings = deepcopy(self.qcd_settings)
+
         if self.report_options is None:
             self.report_options = {}
         else:
             self.report_options = deepcopy(self.report_options)
+
         if self.user_annotation_strings is None:
             self.user_annotation_strings = []
         else:
             self.user_annotation_strings = deepcopy(self.user_annotation_strings)
+
         if self.scenario_explorer_annotations is None:
             self.scenario_explorer_annotations = []
         else:
             self.scenario_explorer_annotations = deepcopy(self.scenario_explorer_annotations)
+
         self.return_correlation_matrix = self.return_correlation_matrix.copy()
 
 

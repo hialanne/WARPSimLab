@@ -468,10 +468,10 @@ def save_taxable_income_source_report_plot(
 
     years = [row["Year"] for row in yearly_tax_rows]
 
-    rmd = [
-        row["Total RMD"] if "Total RMD" in row else row["RMD"]
-        for row in yearly_tax_rows
-    ]
+    rmd = []
+    for row in yearly_tax_rows:
+        rmd.append(row["Taxable RMD"])
+
     traditional = [row["Traditional Withdrawals"] for row in yearly_tax_rows]
     emergency = [row["Emergency Tax-Deferred Withdrawal"] for row in yearly_tax_rows]
     roth_conversions = [row["Roth Conversions"] for row in yearly_tax_rows]
@@ -481,7 +481,7 @@ def save_taxable_income_source_report_plot(
 
     try:
         series = [
-            ("RMD", rmd),
+            ("Taxable RMD", rmd),
             ("Traditional Withdrawals", traditional),
             ("Emergency Tax-Deferred Withdrawals", emergency),
             ("Roth Conversions", roth_conversions),

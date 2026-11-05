@@ -107,23 +107,29 @@ def simulate_expense_year(
     # taxable-income changes made by earlier steps.
     # -------------------------------------------------------------------------
 
-    # RMDs
+    # RMDs and QCDs
     sim_config = sim_data.config
     run_context = sim_data.run
     path_context = sim_data.path
-    rmd_h = 0.0
-    if husband_alive:
-        rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config)
-        withdrawalEngine.withdraw_rmds(h_port, rmd_h)
+    rmd_h = withdrawalEngine.calculate_rmds(h_port, husband, curr_h_age, sim_config) if husband_alive else 0.0
+    rmd_w = withdrawalEngine.calculate_rmds(w_port, wife, curr_w_age, sim_config) if second_person_enabled and wife_alive else 0.0
 
-    rmd_w = 0.0
-    if second_person_enabled and wife_alive:
-        rmd_w = withdrawalEngine.calculate_rmds(w_port, wife, curr_w_age, sim_config)
-        withdrawalEngine.withdraw_rmds(w_port, rmd_w)
+    qcd_h = withdrawalEngine.calculate_qcd(
+        h_port, "husband", curr_h_age, husband_alive, rmd_h, year, sim_config,
+        run_context=run_context, path_context=path_context)
+    qcd_w = withdrawalEngine.calculate_qcd(
+        w_port, "wife", curr_w_age, second_person_enabled and wife_alive, rmd_w, year, sim_config,
+        run_context=run_context, path_context=path_context)
+
+    withdrawalEngine.withdraw_rmds(h_port, qcd_h["qcd"])
+    withdrawalEngine.withdraw_rmds(h_port, qcd_h["taxable_rmd"])
+    if second_person_enabled:
+        withdrawalEngine.withdraw_rmds(w_port, qcd_w["qcd"])
+        withdrawalEngine.withdraw_rmds(w_port, qcd_w["taxable_rmd"])
 
     # Income breakdown
     income = incomeEngine.calculate_income_breakdown(
-        husband, wife, curr_h_age, curr_w_age, rmd_h, rmd_w, year,
+        husband, wife, curr_h_age, curr_w_age, qcd_h["taxable_rmd"], qcd_w["taxable_rmd"], year,
         husband_alive, wife_alive, sim_config, run_context=run_context, path_context=path_context)
 
     income["by_class"]["roth_conversion"] = 0.0
@@ -541,6 +547,12 @@ def simulate_expense_year(
         "cash_flow_shortfall": cash_flow_shortfall,
         "rmd_h": rmd_h,
         "rmd_w": rmd_w,
+        "qcd_h": qcd_h["qcd"],
+        "qcd_w": qcd_w["qcd"],
+        "qcd_rmd_offset_h": qcd_h["rmd_offset"],
+        "qcd_rmd_offset_w": qcd_w["rmd_offset"],
+        "taxable_rmd_h": qcd_h["taxable_rmd"],
+        "taxable_rmd_w": qcd_w["taxable_rmd"],
         "wd_roth": wd_roth,
         "wd_hsa": wd_hsa,
         "pre_tax_withdrawal": emergency_pre_tax_used,

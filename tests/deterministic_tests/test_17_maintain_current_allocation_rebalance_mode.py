@@ -72,6 +72,7 @@ def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal"):
         monte_carlo_plot_style="fill",
         use_correlated_returns=True,
 
+        qcd_settings={},
         include_rmd=False,
         calculate_income_taxes=False,
         calculate_payroll_taxes=False,

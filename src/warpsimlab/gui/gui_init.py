@@ -21,7 +21,6 @@ from src.warpsimlab.gui.gui_historicalData import *
 from src.warpsimlab.gui.gui_portfolioSimulation import *
 from src.warpsimlab.gui.gui_simulationControls import *
 from src.warpsimlab.dataClasses.dynamicExpenses import DynamicExpenses
-from src.warpsimlab.gui.gui_retirement import *
 from src.warpsimlab.gui.gui_main import MainHomeFrame
 from src.warpsimlab.gui.gui_tutorial import TutorialFrame
 from src.warpsimlab.gui.scenario.gui_scenarioSnapshots import *
@@ -275,6 +274,25 @@ class PortfolioSimulatorGUI(
             "always_use_expense_mode": True,
             "annotate_plots": False,
             "user_annotation_strings": [],
+        }
+
+        self.qcd_settings = {
+            "husband": {
+                "enabled": False,
+                "mode": "Fixed Amount",
+                "amount": 0.0,
+                "percent": 0.0,
+                "start_age": 70.5,
+                "end_age": None,
+            },
+            "wife": {
+                "enabled": False,
+                "mode": "Fixed Amount",
+                "amount": 0.0,
+                "percent": 0.0,
+                "start_age": 70.5,
+                "end_age": None,
+            },
         }
         
         self.historical_magi = {

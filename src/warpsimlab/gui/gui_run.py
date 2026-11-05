@@ -166,6 +166,7 @@ class PortfolioSimulatorGUI_RunMixin:
             custom_cash=custom_cash,
 
             include_rmd=controls.get("include_rmd", False),
+            qcd_settings=copy.deepcopy(self.qcd_settings),
             retirement_withdraw_mode=controls.get("retirement_withdraw_mode", "Off"),
 
             retirement_withdraw_pct=(

@@ -74,6 +74,7 @@ def make_sim(years):
         use_fund_expenses=False,
         inflation_mode="nominal",
         results_mode="fixed",
+        qcd_settings={},
         include_rmd=False,
         calculate_income_taxes=False,
         calculate_payroll_taxes=False,

@@ -1,0 +1,140 @@
+{
+    "WARPSIMLAB_METADATA": {
+        "file_type": "financial_data",
+        "schema_version": 2,
+        "warpsimlab_version": "feature-test"
+    },
+    "DEFAULT_HUSBAND_AGE": 68,
+    "DEFAULT_HUSBAND_RETIRE": 70,
+    "DEFAULT_HUSBAND_INCOME": 120000.0,
+    "DEFAULT_HUSBAND_SOC": 28000.0,
+    "DEFAULT_HUSBAND_SOC_AGE": 70,
+    "DEFAULT_HUSBAND_PENSION": 12000.0,
+    "DEFAULT_HUSBAND_PENSION_AGE": 70,
+    "DEFAULT_HUSBAND_PENSION_INFLATION_ADJ": 0.0,
+    "DEFAULT_HUSBAND_ANNUITY": 2000.0,
+    "DEFAULT_HUSBAND_ANNUITY_AGE": 70,
+    "DEFAULT_HUSBAND_401K_CONTRIB": 9000.0,
+    "DEFAULT_HUSBAND_401K_MATCH": 2000.0,
+    "DEFAULT_HUSBAND_HSA_CONTRIB": 3000.0,
+    "DEFAULT_HUSBAND_HSA_EMPLOYER_CONTRIB": 1000.0,
+    "DEFAULT_HUSBAND_MODELED_DEATH_AGE": 72,
+    "DEFAULT_HUSBAND_MEDICARE_START_AGE": 65,
+    "DEFAULT_HUSBAND_MEDICARE_ANNUAL_COST": 3000,
+    "DEFAULT_EQUITY_PRE_H": 200000.0,
+    "DEFAULT_EQUITY_POST_H": 120000.0,
+    "DEFAULT_BOND_PRE_H": 80000.0,
+    "DEFAULT_BOND_POST_H": 40000.0,
+    "DEFAULT_CASH_PRE_H": 20000.0,
+    "DEFAULT_CASH_POST_H": 40000.0,
+    "DEFAULT_EQUITY_ROTH_H": 30000.0,
+    "DEFAULT_BOND_ROTH_H": 10000.0,
+    "DEFAULT_CASH_ROTH_H": 5000.0,
+    "DEFAULT_HSA_CASH_H": 2000.0,
+    "DEFAULT_HSA_EQUITY_H": 5000.0,
+    "DEFAULT_HSA_BOND_H": 3000.0,
+    "DEFAULT_REAL_ESTATE_H": 100000.0,
+    "DEFAULT_ENABLE_SECOND_PERSON": true,
+    "DEFAULT_WIFE_AGE": 66,
+    "DEFAULT_WIFE_RETIRE": 68,
+    "DEFAULT_WIFE_INCOME": 75000.0,
+    "DEFAULT_WIFE_SOC": 20000.0,
+    "DEFAULT_WIFE_SOC_AGE": 68,
+    "DEFAULT_WIFE_PENSION": 8000.0,
+    "DEFAULT_WIFE_PENSION_AGE": 68,
+    "DEFAULT_WIFE_PENSION_INFLATION_ADJ": 0.0,
+    "DEFAULT_WIFE_ANNUITY": 1000.0,
+    "DEFAULT_WIFE_ANNUITY_AGE": 68,
+    "DEFAULT_WIFE_401K_CONTRIB": 5000.0,
+    "DEFAULT_WIFE_401K_MATCH": 1000.0,
+    "DEFAULT_WIFE_HSA_CONTRIB": 2000.0,
+    "DEFAULT_WIFE_HSA_EMPLOYER_CONTRIB": 500.0,
+    "DEFAULT_WIFE_MODELED_DEATH_AGE": 74,
+    "DEFAULT_WIFE_MEDICARE_START_AGE": 65,
+    "DEFAULT_WIFE_MEDICARE_ANNUAL_COST": 2500,
+    "DEFAULT_EQUITY_PRE_W": 120000.0,
+    "DEFAULT_EQUITY_POST_W": 72000.0,
+    "DEFAULT_BOND_PRE_W": 48000.0,
+    "DEFAULT_BOND_POST_W": 24000.0,
+    "DEFAULT_CASH_PRE_W": 12000.0,
+    "DEFAULT_CASH_POST_W": 24000.0,
+    "DEFAULT_EQUITY_ROTH_W": 18000.0,
+    "DEFAULT_BOND_ROTH_W": 6000.0,
+    "DEFAULT_CASH_ROTH_W": 3000.0,
+    "DEFAULT_HSA_CASH_W": 1200.0,
+    "DEFAULT_HSA_EQUITY_W": 3000.0,
+    "DEFAULT_HSA_BOND_W": 1800.0,
+    "DEFAULT_REAL_ESTATE_W": 60000.0,
+    "DEFAULT_START_YEAR": 2026,
+    "DEFAULT_LONGEVITY_MODE": "custom_death_age",
+    "DEFAULT_FIXED_YEARS": 8,
+    "DEFAULT_YEARS": 8,
+    "DEFAULT_SIMULATIONS": 3,
+    "DEFAULT_FUND_EXPENSE": 0.2,
+    "IRMAA_ENABLED": true,
+    "INCLUDE_RMD": true,
+    "QCD_SETTINGS": {
+        "husband": {
+            "enabled": true,
+            "mode": "Fixed Amount",
+            "amount": 5000,
+            "percent": 0.0,
+            "start_age": 71,
+            "end_age": 75
+        },
+        "wife": {
+            "enabled": true,
+            "mode": "Percent of RMD",
+            "amount": 0.0,
+            "percent": 50,
+            "start_age": 73,
+            "end_age": null
+        }
+    },
+    "HISTORICAL_MAGI": {
+        "two_years_prior": 300000,
+        "one_year_prior": 150000
+    },
+    "SPECIAL_INCOME_STREAMS": [
+        {
+            "name": "Temporary consulting",
+            "owner": "wife",
+            "amount": 7000,
+            "start_age": 67,
+            "end_age": 69,
+            "taxable": true,
+            "enabled": true,
+            "adjustment_mode": "inflation",
+            "adjustment_pct": 50.0
+        }
+    ],
+    "ROTH_FLOWS": [
+        {
+            "name": "Early conversion",
+            "owner": "husband",
+            "type": "roth_conversion",
+            "amount": 35000,
+            "start_age": 69,
+            "end_age": 70,
+            "enabled": true,
+            "inflation_adjustment_pct": 0.0
+        }
+    ],
+    "EXPENSES": [
+        {
+            "start_year": 2027,
+            "end_year": null,
+            "cost": 40000,
+            "comment": "ordinary household spending",
+            "is_hsa_eligible": false
+        },
+        {
+            "start_year": 2027,
+            "end_year": null,
+            "cost": 5000,
+            "comment": "qualified spending",
+            "is_hsa_eligible": true
+        }
+    ],
+    "STATE_OF_RESIDENCE": "CO"
+}

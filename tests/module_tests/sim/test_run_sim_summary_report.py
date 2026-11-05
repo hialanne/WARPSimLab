@@ -146,7 +146,7 @@ def test_build_income_milestone_combines_pensions_and_annuities():
     assert milestone["Year"] == pytest.approx(2030.0)
     assert milestone["Gross Wages"] == pytest.approx(107.0)
     assert milestone["Special Income"] == pytest.approx(3.0)
-    assert milestone["RMD"] == pytest.approx(5.0)
+    assert milestone["Taxable RMD"] == pytest.approx(5.0)
     assert milestone["Social Security"] == pytest.approx(10.0)
     assert milestone["Pensions and Annuities"] == pytest.approx(50.0)
     assert milestone["Investment Income"] == pytest.approx(7.0)

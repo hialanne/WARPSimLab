@@ -63,6 +63,7 @@ def make_portfolio(*, equity_pre=0.0, equity_post=0.0, bond_pre=0.0, bond_post=0
 
 def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal", **overrides):
     cfg = SimpleNamespace(
+        qcd_settings={},
         start_year=2026,
         years_to_simulate=years,
         inflation_rate=inflation_rate,

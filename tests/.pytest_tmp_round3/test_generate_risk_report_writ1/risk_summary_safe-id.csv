@@ -1,0 +1,10 @@
+Metric,Value
+Analysis Method,Monte Carlo Analysis
+Scenario Count,100
+Years Simulated,5
+Simulated Shortfall Rate,10.0
+Worst Ending Portfolio,0.0
+Median Ending Portfolio,100000.0
+Best Ending Portfolio,250000.0
+10th Percentile Ending Portfolio,0.0
+90th Percentile Ending Portfolio,250000.0

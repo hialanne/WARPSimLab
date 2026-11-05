@@ -6,6 +6,9 @@ from . import diagnosticEngine
 from src.warpsimlab.dataClasses.portfolioState import *
 from src.warpsimlab.utils.constants import UNIFORM_LIFETIME_TABLE, RMD_START_AGE
 
+QCD_LIMIT_2026 = 111_000.0
+QCD_BASE_YEAR = 2026
+
 
 def _get_withdrawal_inflation_factor(year, sim_config, run_context=None, path_context=None):
     if path_context is None:
@@ -54,6 +57,39 @@ def calculate_rmds(sim_portfolio, person, age, sim_config):
     rmd = calculate_rmd(total_pre, age)
 
     return rmd
+
+
+def calculate_qcd(sim_portfolio, owner, age, alive, required_rmd, year, sim_config, run_context=None, path_context=None):
+    """Calculate a funded QCD and its RMD offset without changing the portfolio."""
+    required_rmd = max(0.0, float(required_rmd))
+    result = {"qcd": 0.0, "rmd_offset": 0.0, "taxable_rmd": required_rmd}
+    settings = (sim_config.qcd_settings or {}).get(owner, {})
+
+    if not alive or not settings.get("enabled", False):
+        return result
+
+    start_age = max(71.0, float(settings.get("start_age", 70.5)))
+    end_age = settings.get("end_age")
+
+    if age < start_age or (end_age is not None and age > float(end_age)):
+        return result
+
+    inflation_factor = _get_withdrawal_inflation_factor(
+        year, sim_config, run_context=run_context, path_context=path_context)
+
+    if settings.get("mode", "Fixed Amount") == "Fixed Amount":
+        requested = max(0.0, float(settings.get("amount", 0.0))) * inflation_factor
+    else:
+        requested = required_rmd * max(0.0, float(settings.get("percent", 0.0))) / 100.0
+
+    base_factor = 1.0 + sim_config.inflation_rate + sim_config.inflation_delta
+    limit = QCD_LIMIT_2026 * base_factor ** (sim_config.start_year - QCD_BASE_YEAR) * inflation_factor
+    available = max(0.0, float(sim_portfolio.total_value_pre))
+    qcd = min(requested, limit, available)
+    result["qcd"] = qcd
+    result["rmd_offset"] = min(qcd, required_rmd)
+    result["taxable_rmd"] = required_rmd - result["rmd_offset"]
+    return result
 
 
 def withdraw_rmds(sim_portfolio, rmd):
@@ -186,16 +222,8 @@ def fund_tax_cash_shortfall(h_port, w_port, tax_due, cash_available, sim_config)
     return result
 
 
-def calculate_retirement_withdrawal(
-    h_port,
-    w_port,
-    husband,
-    wife,
-    year,
-    sim_config,
-    *,
-    rmd_h,
-    rmd_w=0.0,
+def calculate_retirement_withdrawal(h_port, w_port, husband, wife, year, sim_config, *,
+    rmd_h, rmd_w=0.0, qcd_h=0.0, qcd_w=0.0,
     additional_cash_needed=0.0, run_context=None, path_context=None):
     """
     Retirement withdrawals.
@@ -243,6 +271,11 @@ def calculate_retirement_withdrawal(
     else:
         rmd_w = 0.0
 
+    qcd_h = max(0.0, float(qcd_h))
+    qcd_w = max(0.0, float(qcd_w)) if sim_config.second_person_enabled else 0.0
+    taxable_rmd_h = max(0.0, rmd_h - min(qcd_h, rmd_h))
+    taxable_rmd_w = max(0.0, rmd_w - min(qcd_w, rmd_w))
+
     if rmd_h > h_port.total_value_pre + 1.0:
         diagnosticEngine.raise_internal_error("Husband RMD exceeds remaining pre-tax assets", sim_config,
                                               context={"year": year, "rmd": rmd_h,
@@ -255,12 +288,16 @@ def calculate_retirement_withdrawal(
                                                        "remaining_pre_tax_assets": w_port.total_value_pre,
                                                        "difference": rmd_w - w_port.total_value_pre}, run_context=run_context, path_context=path_context)
 
-    withdraw_rmds(h_port, rmd_h)
+    withdraw_rmds(h_port, qcd_h)
+    withdraw_rmds(h_port, taxable_rmd_h)
 
     if sim_config.second_person_enabled:
-        withdraw_rmds(w_port, rmd_w)
+        withdraw_rmds(w_port, qcd_w)
+        withdraw_rmds(w_port, taxable_rmd_w)
 
     rmd_total = rmd_h + rmd_w
+    qcd_total = qcd_h + qcd_w
+    mandatory_total = taxable_rmd_h + taxable_rmd_w + qcd_total
 
     if mode == "Off":
         withdrawal_amount = rmd_total
@@ -275,16 +312,17 @@ def calculate_retirement_withdrawal(
     else:
         withdrawal_amount = rmd_total
 
-    withdrawal_amount = max(withdrawal_amount, rmd_total)
+    withdrawal_amount = max(withdrawal_amount, mandatory_total)
     additional_cash_needed = max(0.0, float(additional_cash_needed))
     withdrawal_amount += additional_cash_needed
 
-    remaining = max(0.0, withdrawal_amount - rmd_total)
+    remaining = max(0.0, withdrawal_amount - mandatory_total)
     withdrawal = _withdraw_cash_by_order(h_port, w_port, remaining, sim_config)
 
     return {
-        "total": rmd_total + withdrawal["total"],
-        "rmd": rmd_total,
+        "total": taxable_rmd_h + taxable_rmd_w + withdrawal["total"],
+        "rmd": taxable_rmd_h + taxable_rmd_w,
+        "qcd": qcd_total,
         "pre_tax": withdrawal["pre_tax"],
         "post_tax": withdrawal["post_tax"],
         "roth": withdrawal["roth"],
@@ -292,11 +330,12 @@ def calculate_retirement_withdrawal(
         "real_estate": withdrawal["real_estate"],
         "uncovered": withdrawal["uncovered"],
         "by_person": {
-            "husband": rmd_h + withdrawal["by_person"]["husband"],
-            "wife": rmd_w + withdrawal["by_person"]["wife"],
+            "husband": taxable_rmd_h + withdrawal["by_person"]["husband"],
+            "wife": taxable_rmd_w + withdrawal["by_person"]["wife"],
         },
-        "rmd_by_person": {"husband": rmd_h, "wife": rmd_w},
+        "rmd_by_person": {"husband": taxable_rmd_h, "wife": taxable_rmd_w},
     }
+
 
 def use_expenses_this_year(sim_config, husband, wife, year, husband_alive, wife_alive):
     """

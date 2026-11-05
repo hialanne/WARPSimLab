@@ -642,6 +642,8 @@ def _render_simulation_summary(report_data):
             "Simulation Results",
             {
                 "Taxes Paid": totals.get("Taxes Paid"),
+                "Total QCDs": totals.get("Total QCDs"),
+                "Total Taxable RMDs": totals.get("Total Taxable RMDs"),
                 "Household Expenses": totals.get("Household Expenses"),
                 "Lifetime Funding Gap": totals.get("Lifetime Funding Gap"),
                 "Total Cash Flow Shortfall": totals.get("Total Cash Flow Shortfall"),

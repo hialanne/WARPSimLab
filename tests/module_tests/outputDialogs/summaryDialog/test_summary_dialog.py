@@ -60,6 +60,8 @@ def _make_results():
         "employee_401k_contributions": values(10000, 10000, 0, 0),
         "hsa_employee_contributions": values(2000, 2000, 0, 0),
         "rmd": values(0, 0, 0, 5000),
+        "qcd_husband": values(0, 0, 0, 0),
+        "qcd_wife": values(0, 0, 0, 0),
         "social_security": values(0, 0, 30000, 30000),
         "pensions": values(0, 0, 12000, 12000),
         "annuities": values(0, 0, 6000, 6000),

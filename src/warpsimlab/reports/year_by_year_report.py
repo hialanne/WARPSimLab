@@ -38,7 +38,9 @@ DETAILED_INCOME_COLUMNS = [
     "MAGI",
 
     "Gross Wages",
-    "RMD",
+    "Required RMD",
+    "QCD",
+    "Taxable RMD",
     "Social Security",
     "Pensions and Annuities",
     "Special Income",

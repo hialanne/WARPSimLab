@@ -31,7 +31,7 @@ def make_gui(tmp_path, **overrides):
     gui.inflation = config.inflation_rate * 100
     for name in ("eq_mean", "bd_mean", "cs_mean", "re_mean", "eq_std", "bd_std", "cs_std", "re_std"):
         setattr(gui, name, getattr(config, name) * 100)
-    for name in ("historical_magi", "special_income_streams", "roth_flows"):
+    for name in ("historical_magi", "special_income_streams", "roth_flows", "qcd_settings"):
         setattr(gui, name, copy.deepcopy(getattr(config, name)))
     # Only the event loop and file pickers are replaced; domain objects and
     # all GUI-to-simulation conversion methods remain production implementations.
