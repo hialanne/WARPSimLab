@@ -36,6 +36,8 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
         self.mode = mode
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._body_bold_font = self._body_font.copy()
+        self._body_bold_font.configure(weight="bold")
         self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
         self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
         self._column_header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
@@ -44,6 +46,7 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._body_bold_font)
         self._register_scalable_font(self._header_font)
         self._register_scalable_font(self._header_text_font)
         self._register_scalable_font(self._column_header_font)
@@ -333,7 +336,7 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
                 total_var = tk.StringVar(value="--")
                 self.row_total_vars[key] = total_var
                 ttk.Entry(
-                    bucket_frame, textvariable=total_var, width=12, font=self._column_header_font,
+                    bucket_frame, textvariable=total_var, width=12, font=self._body_bold_font,
                     state="readonly", style="Derived.TEntry"
                 ).grid(row=field_row, column=3, sticky="ew", padx=self._scaled_bucket_cell_padx)
 
@@ -360,7 +363,7 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
                 ).grid(row=4, column=2, sticky="ew", padx=self._scaled_bucket_cell_padx, pady=(5, 0))
 
             ttk.Entry(
-                bucket_frame, textvariable=bucket_vars["total"], width=12, font=self._column_header_font,
+                bucket_frame, textvariable=bucket_vars["total"], width=12, font=self._body_bold_font,
                 state="readonly", style="Derived.TEntry"
             ).grid(row=4, column=3, sticky="ew", padx=self._scaled_bucket_cell_padx, pady=(5, 0))
 
