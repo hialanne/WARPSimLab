@@ -69,7 +69,7 @@ jobs:
       - name: Build with PyInstaller
         shell: pwsh
         run: |
-          python -m PyInstaller --clean --noconfirm WARPSimLab.spec
+          python -m PyInstaller --clean --noconfirm WARPSimLab-Windows.spec
 
       - name: Inspect and verify build output
         shell: pwsh
