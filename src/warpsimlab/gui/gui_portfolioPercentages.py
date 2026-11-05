@@ -44,6 +44,8 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
         self.mode = mode
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._body_bold_font = self._body_font.copy()
+        self._body_bold_font.configure(weight="bold")
         self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
         self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
         self._column_header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
@@ -51,6 +53,7 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)
+        self._register_scalable_font(self._body_bold_font)
         self._register_scalable_font(self._header_font)
         self._register_scalable_font(self._header_text_font)
         self._register_scalable_font(self._column_header_font)
@@ -209,13 +212,13 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
 
         self.tax_total_vars["husband"] = tk.StringVar(value="--")
         ttk.Label(
-            self, textvariable=self.tax_total_vars["husband"], font=self._column_header_font
+            self, textvariable=self.tax_total_vars["husband"], font=self._body_bold_font
         ).grid(row=row, column=1, sticky="w", padx=5)
 
         if self.wife_portfolio is not None:
             self.tax_total_vars["wife"] = tk.StringVar(value="--")
             ttk.Label(
-                self, textvariable=self.tax_total_vars["wife"], font=self._column_header_font
+                self, textvariable=self.tax_total_vars["wife"], font=self._body_bold_font
             ).grid(row=row, column=2, sticky="w", padx=5)
 
         row += 2
@@ -271,7 +274,7 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
             self.asset_total_vars[("husband", bucket)] = tk.StringVar(value="--")
             ttk.Label(
                 husband_frame, textvariable=self.asset_total_vars[("husband", bucket)],
-                font=self._column_header_font
+                font=self._body_bold_font
             ).grid(row=bucket_row, column=4, sticky="w", padx=5)
 
             if wife_frame is not None:
@@ -289,7 +292,7 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
                 self.asset_total_vars[("wife", bucket)] = tk.StringVar(value="--")
                 ttk.Label(
                     wife_frame, textvariable=self.asset_total_vars[("wife", bucket)],
-                    font=self._column_header_font
+                    font=self._body_bold_font
                 ).grid(row=bucket_row, column=4, sticky="w", padx=5)
 
         row += 1
