@@ -33,9 +33,10 @@ class RmdQcdEditFrame(ScalableFrameMixin, ttk.Frame):
         ttk.Label(self, text="Qualified Charitable Distributions", font=self._header_font).grid(
             row=3, column=0, columnspan=4, sticky="w", pady=(0, 5)
         )
-        ttk.Label(self, text="Annual charitable distributions from tax-deferred assets; separate from household spending.").grid(
-            row=4, column=0, columnspan=4, sticky="w", pady=(0, 10)
-        )
+        ttk.Label(
+            self, text="Annual charitable distributions from tax-deferred assets; separate from household spending.",
+            font=self._body_font
+        ).grid(row=4, column=0, columnspan=4, sticky="w", pady=(0, 10))
 
         self.qcd_vars = {}
         persons = ["husband"]
@@ -47,8 +48,9 @@ class RmdQcdEditFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _apply_scaled_styles(self):
-        ttk.Style(self).configure("Retirement.TCheckbutton", font=self._body_font)
-
+        style = ttk.Style(self)
+        style.configure("Retirement.TCheckbutton", font=self._body_font)
+        style.configure("RmdQcd.TMenubutton", font=self._body_font)
 
     def _add_include_rmd(self):
         self.rmd_var = tk.BooleanVar(value=self.controls.get("include_rmd", True))
@@ -80,9 +82,12 @@ class RmdQcdEditFrame(ScalableFrameMixin, ttk.Frame):
         )
         enabled_cb.grid(row=6, column=col, columnspan=2, sticky="w", pady=3)
 
-        ttk.Label(self, text="Calculation:").grid(row=7, column=col, sticky="w", pady=3)
+        ttk.Label(self, text="Calculation:", font=self._body_font).grid(
+            row=7, column=col, sticky="w", pady=3
+        )
         mode_menu = ttk.OptionMenu(
-            self, vars_for_person["mode"], vars_for_person["mode"].get(), "Fixed Amount", "Percent of RMD"
+            self, vars_for_person["mode"], vars_for_person["mode"].get(), "Fixed Amount", "Percent of RMD",
+            style="RmdQcd.TMenubutton"
         )
         mode_menu.grid(row=7, column=col + 1, sticky="w", padx=5)
         mode_menu["menu"].configure(font=self._body_font)
@@ -93,7 +98,9 @@ class RmdQcdEditFrame(ScalableFrameMixin, ttk.Frame):
             "start_age": "Starting Age:", "end_age": "Ending Age (blank = lifetime):"
         }
         for row, field in enumerate(("amount", "percent", "start_age", "end_age"), start=8):
-            ttk.Label(self, text=labels[field]).grid(row=row, column=col, sticky="w", pady=3)
+            ttk.Label(self, text=labels[field], font=self._body_font).grid(
+                row=row, column=col, sticky="w", pady=3
+            )
             command = (self.register(lambda value, p=person, f=field: self._validate_qcd_field(p, f, value)), "%P")
             entry = ttk.Entry(
                 self, textvariable=vars_for_person[field], width=13, font=self._body_font,
