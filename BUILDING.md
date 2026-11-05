@@ -620,3 +620,39 @@ Do not announce the release until the public download path has been tested.
 * [ ] Update the WARPSimLab website.
 * [ ] Test the complete public download process.
 * [ ] Announce the release.
+
+
+Here are the Mac instructions:
+
+# Activate Python environment
+source .venv-mac/bin/activate
+
+# Build WARPSimLab.app
+python -m PyInstaller --clean --noconfirm WARPSimLab-macOS.spec
+
+# Create clean DMG staging directory
+rm -rf dist/dmg-staging
+mkdir -p dist/dmg-staging
+
+# Copy application bundle
+ditto dist/WARPSimLab.app dist/dmg-staging/WARPSimLab.app
+
+# Add Applications shortcut
+ln -s /Applications dist/dmg-staging/Applications
+
+# Create compressed DMG
+hdiutil create \
+    -volname "WARPSimLab" \
+    -srcfolder dist/dmg-staging \
+    -format UDZO \
+    -ov \
+    "dist/WARPSimLab-v4.5.1-macOS-arm64.dmg"
+
+# Generate SHA-256 checksum
+shasum -a 256 dist/WARPSimLab-v4.5.1-macOS-arm64.dmg \
+    > dist/WARPSimLab-v4.5.1-macOS-arm64-SHA256.txt
+
+# Open DMG for testing
+open dist/WARPSimLab-v4.5.1-macOS-arm64.dmg
+
+
