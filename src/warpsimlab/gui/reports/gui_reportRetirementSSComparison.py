@@ -38,11 +38,15 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
         self.current_ss_age = self._compute_household_ss_age()
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._title_font = tkfont.Font(root=self, family="Arial", size=14, weight="bold")
-        self._text_font = tkfont.Font(root=self, family="Arial", size=11)
-        self._text_bold_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._text_italic_font = tkfont.Font(root=self, family="Arial", size=11, slant="italic")
-        self._section_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
+        self._title_font = self._body_font.copy()
+        self._title_font.configure(size=int(self._body_font.cget("size")) + 3, weight="bold")
+        self._text_font = self._body_font.copy()
+        self._text_bold_font = self._body_font.copy()
+        self._text_bold_font.configure(weight="bold")
+        self._text_italic_font = self._body_font.copy()
+        self._text_italic_font.configure(slant="italic")
+        self._section_font = self._body_font.copy()
+        self._section_font.configure(size=int(self._body_font.cget("size")) + 1, weight="bold")
 
         self._age_entries = []
 

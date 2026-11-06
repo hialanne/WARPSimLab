@@ -15,7 +15,7 @@ class AnnotationsEditFrame(ScalableFrameMixin, ttk.Frame):
         self.row_vars = []  # store each row's vars to prevent GC
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._tooltip_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)

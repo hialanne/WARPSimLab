@@ -39,15 +39,19 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
         self.mode = mode
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
-        self._person_header_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
+        self._header_font = self._body_font.copy()
+        self._header_font.configure(weight="bold")
+        self._header_text_font = self._body_font.copy()
+        self._person_header_font = self._body_font.copy()
+        self._person_header_font.configure(size=int(self._body_font.cget("size")) + 1, weight="bold")
+        self._tooltip_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)
         self._register_scalable_font(self._header_font)
         self._register_scalable_font(self._header_text_font)
         self._register_scalable_font(self._person_header_font)
+        self._register_scalable_font(self._tooltip_font)
         self._apply_gui_scale()
 
         self._enable_second_person_var = tk.BooleanVar(
@@ -230,7 +234,7 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
 
             entry_h.grid(row=r, column=1 + col_offset, sticky="w", padx=5)
             bind_entry_commit_on_return(entry_h)
-            Tooltip(entry_h, tooltip_text, font=("Arial", 11))
+            Tooltip(entry_h, tooltip_text, font=self._tooltip_font)
             
             if wife_vars:
                 vcmd_w = (
@@ -244,7 +248,7 @@ class NormalIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
                                     validate="focusout", validatecommand=vcmd_w)
                 entry_w.grid(row=r, column=2 + col_offset, sticky="w", padx=5)
                 bind_entry_commit_on_return(entry_w)
-                Tooltip(entry_w, tooltip_text, font=("Arial", 11))
+                Tooltip(entry_w, tooltip_text, font=self._tooltip_font)
 
         if self.mode == "Basic":
             for label_text, key, tooltip_text in fields_basic:

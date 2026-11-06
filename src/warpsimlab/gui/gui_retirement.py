@@ -23,12 +23,16 @@ class RetirementEditFrame(ScalableFrameMixin, ttk.Frame):
         self.title = title
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
-        self._intro_font = tkfont.Font(root=self, family="Arial", size=11, slant="italic")
-        self._section_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._description_font = tkfont.Font(root=self, family="Arial", size=10, slant="italic")
-        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._header_font = self._body_font.copy()
+        self._header_font.configure(weight="bold")
+        self._header_text_font = self._body_font.copy()
+        self._intro_font = self._body_font.copy()
+        self._intro_font.configure(slant="italic")
+        self._section_font = self._body_font.copy()
+        self._section_font.configure(weight="bold")
+        self._description_font = self._body_font.copy()
+        self._description_font.configure(size=max(1, int(self._body_font.cget("size")) - 1), slant="italic")
+        self._tooltip_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)

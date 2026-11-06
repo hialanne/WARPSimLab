@@ -28,9 +28,11 @@ class DerivedStatisticsFrame(ScalableFrameMixin, ttk.Frame):
         self.mode = mode
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
-        self._section_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
+        self._header_font = self._body_font.copy()
+        self._header_font.configure(weight="bold")
+        self._header_text_font = self._body_font.copy()
+        self._section_font = self._body_font.copy()
+        self._section_font.configure(weight="bold")
         self._total_font = self._body_font.copy()
         self._total_font.configure(weight="bold")
 
