@@ -51,7 +51,7 @@ from src.warpsimlab.gui.gui_display import PortfolioSimulatorGUI_DisplayMixin
 WARPSIMLAB_VERSION = "4.5.1"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
-SCREEN_DEBUG = False
+SCREEN_DEBUG = True
 
 
 class PortfolioSimulatorGUI(
