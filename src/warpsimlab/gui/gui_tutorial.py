@@ -34,11 +34,14 @@ class TutorialFrame(ScalableFrameMixin, ttk.Frame):
         **kwargs
     ):
         super().__init__(parent, padding=10, **kwargs)
-        self._body_font = tkfont.Font(root=self, family="Arial", size=11)
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._button_font = tkfont.Font(root=self, family="Arial", size=13, weight="bold")
-        self._section_title_font = tkfont.Font(root=self, family="Arial", size=13, weight="bold")
-        self._card_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._header_font = self._body_font.copy()
+        self._header_font.configure(weight="bold")
+        self._button_font = self._body_font.copy()
+        self._button_font.configure(size=int(self._body_font.cget("size")) + 2, weight="bold")
+        self._section_title_font = self._body_font.copy()
+        self._section_title_font.configure(size=int(self._body_font.cget("size")) + 2, weight="bold")
+        self._card_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)

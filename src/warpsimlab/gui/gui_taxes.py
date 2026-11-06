@@ -26,10 +26,12 @@ class TaxesEditFrame(ScalableFrameMixin, ttk.Frame):
         self.controls = control_vars["_controls_dict"]
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
-        self._section_header_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
-        self._section_text_font = tkfont.Font(root=self, family="Arial", size=10)
+        self._header_font = self._body_font.copy()
+        self._header_font.configure(weight="bold")
+        self._header_text_font = self._body_font.copy()
+        self._section_header_font = self._body_font.copy()
+        self._section_header_font.configure(weight="bold")
+        self._section_text_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)

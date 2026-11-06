@@ -24,11 +24,14 @@ class GuidedTutorialController(ScalableClientMixin):
     def __init__(self, parent_gui):
         self.parent_gui = parent_gui
 
-        self._control_font = tkfont.Font(root=parent_gui.root, family="Arial", size=13, weight="bold")
-        self._title_font = tkfont.Font(root=parent_gui.root, family="Arial", size=16, weight="bold")
-        self._section_font = tkfont.Font(root=parent_gui.root, family="Arial", size=12, weight="bold")
-        self._body_font = tkfont.Font(root=parent_gui.root, family="Arial", size=12)
-        self._button_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._button_font = self._body_font.copy()
+        self._control_font = self._body_font.copy()
+        self._control_font.configure(size=int(self._body_font.cget("size")) + 1, weight="bold")
+        self._title_font = self._body_font.copy()
+        self._title_font.configure(size=int(self._body_font.cget("size")) + 4, weight="bold")
+        self._section_font = self._body_font.copy()
+        self._section_font.configure(weight="bold")
 
         self._initialize_scaling(parent_gui.root)
         self._register_scalable_font(self._control_font)

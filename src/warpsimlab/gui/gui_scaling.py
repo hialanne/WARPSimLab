@@ -12,7 +12,7 @@ class ScalableClientMixin:
 
     def _register_scalable_font(self, font, base_size=None):
         if base_size is None:
-            base_size = abs(int(font.cget("size")))
+            base_size = int(font.cget("size"))
 
         self._scalable_fonts.append((font, base_size))
 
@@ -25,7 +25,12 @@ class ScalableClientMixin:
         scale = self._get_gui_scale()
 
         for font, base_size in self._scalable_fonts:
-            font.configure(size=max(1, round(base_size * scale)))
+            scaled_size = max(1, round(abs(base_size) * scale))
+
+            if base_size < 0:
+                font.configure(size=-scaled_size)
+            else:
+                font.configure(size=scaled_size)
 
         self._apply_scaled_styles()
 

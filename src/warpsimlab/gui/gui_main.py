@@ -83,9 +83,10 @@ class MainHomeFrame(ScalableFrameMixin, ttk.Frame):
         self.title = title
 
         self.parent_gui = parent_gui
-        self._title_font = tkfont.Font(root=self, family="Arial", size=16, weight="bold")
-        self._intro_font = tkfont.Font(root=self, family="Arial", size=12)
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._title_font = self._body_font.copy()
+        self._title_font.configure(size=int(self._body_font.cget("size")) + 4, weight="bold")
+        self._intro_font = self._body_font.copy()
         self._text_font = tkfont.nametofont("TkTextFont").copy()
 
         self._initialize_frame_scaling()
@@ -115,9 +116,7 @@ class MainHomeFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _get_intro_wraplength(self):
-        # Scale the reference wrap width using actual font metrics.
-        reference_font = tkfont.Font(root=self, family="Arial", size=12)
-        reference_width = reference_font.measure("WARPSimLab")
+        reference_width = self._intro_font.measure("WARPSimLab")
 
         development_width = 102
         scale = reference_width / development_width

@@ -17,7 +17,7 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         self.normal_label_font = tkfont.nametofont("TkDefaultFont").copy()
         self.changed_label_font = self.normal_label_font.copy()
         self.changed_label_font.configure(weight="bold")
-        self._section_font = tkfont.Font(root=self, family="Arial", size=10, weight="bold")
+        self._section_font = self.changed_label_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self.normal_label_font)
