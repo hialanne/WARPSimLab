@@ -9,6 +9,7 @@ from tkinter import ttk
 
 from datetime import datetime
 import os
+import sys
 
 from src.warpsimlab.utils.constants import *
 from src.warpsimlab.gui.gui_run import PortfolioSimulatorGUI_RunMixin
@@ -82,6 +83,9 @@ class PortfolioSimulatorGUI(
         # Diagnostic prints for dialog and subdialog diagnostics. Comment out in production.
         if SCREEN_DEBUG:
             self._print_display_diagnostics()
+
+        if sys.platform == "darwin":
+            self.root.after(150, self._raise_startup_window)
 
         ttk.Label(root, text=WARPSIMLAB_TITLE, font=self._title_font).pack(pady=10)
 
@@ -195,6 +199,13 @@ class PortfolioSimulatorGUI(
         self._save_main_window_geometry()
         save_display_settings(self.display_settings)
         self.root.destroy()
+
+    def _raise_startup_window(self):
+        from AppKit import NSRunningApplication, NSApplicationActivateIgnoringOtherApps
+
+        app = NSRunningApplication.runningApplicationWithProcessIdentifier_(os.getpid())
+        app.activateWithOptions_(NSApplicationActivateIgnoringOtherApps)
+        self.root.lift()
 
 
     # ------------------------
