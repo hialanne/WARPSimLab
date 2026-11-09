@@ -176,11 +176,13 @@ class PortfolioSimulatorGUI(
 
         self._build_run_button()
         self.edit_main_home()
+
         if SCREEN_DEBUG:
             self.root.bind("<Control-Shift-G>", self._print_editor_geometry_diagnostics)
 
         if SCREEN_DEBUG:
-            self._print_content_geometry_diagnostics()
+            self.root.after(500, self._print_content_geometry_diagnostics)
+
 
     def _close_application(self):
         """
@@ -189,11 +191,12 @@ class PortfolioSimulatorGUI(
         scenario_controller = getattr(self, "scenario_controller", None)
 
         if scenario_controller is not None and scenario_controller.session_active:
-            scenario_controller.capture_current_layout()
+            scenario_controller._stop_session()
 
         self._save_main_window_geometry()
         save_display_settings(self.display_settings)
         self.root.destroy()
+
 
     def _raise_startup_window(self):
         from AppKit import NSRunningApplication, NSApplicationActivateIgnoringOtherApps

@@ -221,9 +221,22 @@ class PortfolioSimulatorGUI_DisplayMixin:
         return window_width, window_height
 
 
+    def _calculate_startup_main_window_size(self):
+        """Apply the Linux screen-relative minimum to automatic sizing."""
+        window_width, window_height = self._calculate_automatic_main_window_size()
+
+        if sys.platform.startswith("linux"):
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            window_width = max(window_width, int(screen_width * 0.70))
+            window_height = max(window_height, int(screen_height * 0.70))
+
+        return window_width, window_height
+
+
     def _apply_automatic_main_window_size(self):
         """Scale the main window from the original Windows development layout."""
-        window_width, window_height = self._calculate_automatic_main_window_size()
+        window_width, window_height = self._calculate_startup_main_window_size()
         self._set_main_window_normal()
         self._center_main_window(window_width, window_height)
 
@@ -492,6 +505,22 @@ class PortfolioSimulatorGUI_DisplayMixin:
         print("")
         print("WARPSimLab content geometry diagnostics")
         print("---------------------------------------")
+
+        base_width, base_height = self._calculate_automatic_main_window_size()
+        automatic_width, automatic_height = self._calculate_startup_main_window_size()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        print(f"font-based reference size: {base_width}x{base_height}")
+
+        print(f"screen: {screen_width}x{screen_height}")
+        print(f"automatic window size: {automatic_width}x{automatic_height}")
+        print(f"main window settings: {self.display_settings['main_window']}")
+        print(f"root geometry: {self.root.winfo_geometry()}")
+        print(f"root state: {self.root.state()}")
+        print(f"root mapped: {self.root.winfo_ismapped()}")
+        print(f"GUI scale: {self.get_gui_scale():.4f}")
+        print(f"automatic width / screen: {automatic_width / screen_width:.1%}")
+        print(f"automatic height / screen: {automatic_height / screen_height:.1%}")
 
         print(f"root requested size: {self.root.winfo_reqwidth()}x{self.root.winfo_reqheight()}")
         print(f"root actual size: {self.root.winfo_width()}x{self.root.winfo_height()}")

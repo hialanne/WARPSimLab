@@ -21,9 +21,15 @@ class DummyScenarioController:
     def __init__(self, active=False):
         self.session_active = active
         self.capture_called = 0
+        self.stop_called = 0
 
     def capture_current_layout(self):
         self.capture_called += 1
+
+    def _stop_session(self):
+        self.stop_called += 1
+        self.capture_current_layout()
+        self.session_active = False
 
 
 def test_gui_class_contains_expected_mixins():
@@ -113,7 +119,7 @@ def test_close_application_saves_active_scenario_layout(monkeypatch):
     assert geometry_calls == [True]
     assert settings_calls == [gui.display_settings]
     assert gui.root.destroy_called == 1
-
+    assert gui.scenario_controller.stop_called == 1
 
 def test_close_application_handles_inactive_scenario(monkeypatch):
     gui = _make_gui()

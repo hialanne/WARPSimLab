@@ -4,6 +4,9 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 
+
+SCREEN_DEBUG = False
+
 SCENARIO_MODE_SCENARIO_VIEW = "scenario_view"
 SCENARIO_MODE_INCOME_COMPARE = "income_compare"
 SCENARIO_MODE_CASHFLOW_COMPARE = "cashflow_compare"
@@ -155,6 +158,32 @@ class ScenarioController(ScalableClientMixin):
         if not self.plot_manager._layout_restored:
             self.window.after_idle(self._position_windows)
 
+        if SCREEN_DEBUG:
+            self.window.after(300, self._print_scenario_font_diagnostics)
+
+
+    def _print_scenario_font_diagnostics(self):
+        if self.window is None:
+            return
+
+        default_font = tkfont.nametofont("TkDefaultFont")
+        reference_font = tkfont.Font(root=self.window, family="Arial", size=12)
+        slider_font = self.sliders_frame.normal_label_font
+        results_font = self.results_frame.normal_label_font
+
+        print("\nScenario Explorer font diagnostics")
+        print(f"Tk scaling: {self.window.tk.call('tk', 'scaling')}")
+        print(f"Main GUI scale: {getattr(self.main_gui.root, '_warpsimlab_gui_scale', None)}")
+        print(f"Dashboard scale: {self._get_gui_scale():.3f}")
+        print(f"Dashboard geometry: {self.window.winfo_geometry()}")
+        print(f"TkDefaultFont: {default_font.actual()}")
+        print(f"TkDefaultFont linespace: {default_font.metrics('linespace')}")
+        print(f"Arial 12 linespace: {reference_font.metrics('linespace')}")
+        print(f"Slider font: {slider_font.actual()}")
+        print(f"Slider linespace: {slider_font.metrics('linespace')}")
+        print(f"Results font: {results_font.actual()}")
+        print(f"Results linespace: {results_font.metrics('linespace')}")
+
 
     def _initialize_dashboard_scaling(self):
         self.window.update_idletasks()
@@ -163,7 +192,10 @@ class ScenarioController(ScalableClientMixin):
         self._dashboard_reference_height = max(1, self.window.winfo_height())
         self._dashboard_scale_after_id = None
 
-        self.window._warpsimlab_gui_scale = 1.0
+        self._dashboard_base_scale = float(
+            getattr(self.main_gui.root, "_warpsimlab_gui_scale", 1.0)
+        )
+        self.window._warpsimlab_gui_scale = self._dashboard_base_scale
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
         self._label_frame_font = self._body_font.copy()
@@ -203,6 +235,7 @@ class ScenarioController(ScalableClientMixin):
             width / self._dashboard_reference_width,
             height / self._dashboard_reference_height,
         )
+        scale = max(1.0, scale) * self._dashboard_base_scale
 
         old_scale = float(getattr(self.window, "_warpsimlab_gui_scale", 1.0))
 
@@ -232,6 +265,7 @@ class ScenarioController(ScalableClientMixin):
         if not self.session_active:
             return
 
+        self.session_active = False
         self._cancel_pending_update()
 
         self.capture_current_layout()
@@ -610,7 +644,7 @@ class ScenarioController(ScalableClientMixin):
             values=[label for label, _value in SCENARIO_MODE_OPTIONS],
             state="readonly", width=20, font=self._body_font, style="Scenario.TCombobox"
         )
-        self.mode_dropdown.grid(row=1, column=0, sticky="w", pady=(2, 6))
+        self.mode_dropdown.grid(row=1, column=0, sticky="ew", pady=(2, 6))
         self.mode_dropdown.bind("<<ComboboxSelected>>", self._on_mode_dropdown_selected)
 
         current_plot_style_label = self.plot_style_value_to_label.get(
@@ -627,7 +661,7 @@ class ScenarioController(ScalableClientMixin):
             values=[label for label, _value in SCENARIO_PLOT_STYLE_OPTIONS],
             state="readonly", width=20, font=self._body_font, style="Scenario.TCombobox"
         )
-        self.plot_style_dropdown.grid(row=3, column=0, sticky="w", pady=(2, 6))
+        self.plot_style_dropdown.grid(row=3, column=0, sticky="ew", pady=(2, 6))
         self.plot_style_dropdown.bind("<<ComboboxSelected>>", self._on_plot_style_dropdown_selected)
 
         ttk.Label(controls_frame, text="Rebalancing", font=self._body_font).grid(
@@ -645,7 +679,7 @@ class ScenarioController(ScalableClientMixin):
             values=[label for label, _value in SCENARIO_REBALANCING_OPTIONS],
             state="readonly", width=20, font=self._body_font, style="Scenario.TCombobox"
         )
-        self.rebalancing_dropdown.grid(row=5, column=0, sticky="w", pady=(2, 6))
+        self.rebalancing_dropdown.grid(row=5, column=0, sticky="ew", pady=(2, 6))
         self.rebalancing_dropdown.bind("<<ComboboxSelected>>", self._on_rebalancing_dropdown_selected)
 
         self.include_realestate_var = tk.BooleanVar(value=bool(controls.get("include_realestate", False)))
@@ -662,14 +696,15 @@ class ScenarioController(ScalableClientMixin):
         self.adjust_infl_delta_cb.grid(row=7, column=0, sticky="w")
 
         button_frame = ttk.Frame(controls_frame)
-        button_frame.grid(row=8, column=0, sticky="w", pady=(8, 0))
+        button_frame.grid(row=8, column=0, sticky="ew", pady=(8, 0))
+        button_frame.columnconfigure(0, weight=1)
 
         ttk.Button(button_frame, text="Restore Layout", width=20, command=self._position_windows,
-                   style="Scenario.TButton").grid(row=0, column=0, sticky="w", pady=(0, 4))
+                   style="Scenario.TButton").grid(row=0, column=0, sticky="ew", pady=(0, 4))
         ttk.Button(button_frame, text="Reset Scenario", width=20, command=self.resync,
-                   style="Scenario.TButton").grid(row=1, column=0, sticky="w", pady=(0, 4))
+                   style="Scenario.TButton").grid(row=1, column=0, sticky="ew", pady=(0, 4))
         ttk.Button(button_frame, text="Close Explorer", width=20, command=self._stop_session,
-                   style="Scenario.TButton").grid(row=2, column=0, sticky="w")
+                   style="Scenario.TButton").grid(row=2, column=0, sticky="ew")
 
         # ---- Results (right) ----
         self.results_frame = ScenarioResultsFrame(main)
@@ -687,8 +722,8 @@ class ScenarioController(ScalableClientMixin):
         if self.sliders_frame.winfo_reqheight() > self.slider_canvas.winfo_height():
             self.slider_scrollbar.grid()
         else:
-            self.slider_scrollbar.grid_remove()
             self.slider_canvas.yview_moveto(0)
+            self.slider_canvas.after_idle(self.slider_scrollbar.grid_remove)
 
 
     def _on_slider_mousewheel(self, event):

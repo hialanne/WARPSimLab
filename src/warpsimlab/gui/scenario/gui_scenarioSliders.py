@@ -91,6 +91,8 @@ class ScenarioSlidersFrame(ScalableFrameMixin, ttk.LabelFrame):
         self.enable_annotations = tk.BooleanVar(value=True)
         self.calculate_real_dollars = tk.BooleanVar(value=True)
 
+        self.columnconfigure(0, weight=1)
+
         self.sliders_container = ttk.Frame(self)
         self.sliders_container.grid(row=1, column=0, columnspan=2, sticky="nsew")
         self.sliders_container.columnconfigure(0, weight=1)
