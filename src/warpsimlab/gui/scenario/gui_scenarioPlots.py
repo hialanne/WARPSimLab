@@ -30,28 +30,30 @@ class ScenarioPlotManager:
         self.income_ax = None
         self.portfolio_fig = None
         self.portfolio_ax = None
+        self._layout_restored = False
 
 
     def create_persistent_plots(self, dashboard_window):
         """
         Create the two persistent Scenario Explorer Matplotlib figures.
         """
-        self.income_fig, self.income_ax = plt.subplots(figsize=(8, 5))
+        self.income_fig, self.income_ax = plt.subplots(figsize=(8, 3))
         self.income_fig.canvas.manager.set_window_title("Scenario Explorer")
 
-        self.portfolio_fig, self.portfolio_ax = plt.subplots(figsize=(8, 5))
+        self.portfolio_fig, self.portfolio_ax = plt.subplots(figsize=(8, 3))
         self.portfolio_fig.canvas.manager.set_window_title("Scenario Explorer")
 
         self.income_fig.canvas.mpl_connect("close_event", lambda event: self.close_callback())
         self.portfolio_fig.canvas.mpl_connect("close_event", lambda event: self.close_callback())
 
-        if not self.restore_saved_layout(dashboard_window):
-            self.position_windows(dashboard_window)
-
         try:
             plt.show(block=False)
         except Exception:
             pass
+
+        self._layout_restored = self.restore_saved_layout(dashboard_window)
+        if not self._layout_restored:
+            self.position_windows(dashboard_window)
 
 
     def has_plots(self):
@@ -188,14 +190,23 @@ class ScenarioPlotManager:
             usable_height = screen_height - gap * 3
 
             dashboard_width = int(usable_width * 0.43)
+            if dashboard_window is not None:
+                dashboard_window.update_idletasks()
+                dashboard_width = max(dashboard_width, dashboard_window.winfo_reqwidth())
+
             plot_width = usable_width - dashboard_width
-            plot_height = usable_height // 2
-            dashboard_height = plot_height * 2 + gap
+
+            window_chrome = 0
+            if screen_height < development_screen_height:
+                window_chrome = 36
+
+            plot_height = (usable_height - 2 * window_chrome) // 2
+            dashboard_height = usable_height + gap
 
             dashboard_x = work_left + gap
             plot_x = dashboard_x + dashboard_width + gap
             top_y = work_top + gap
-            portfolio_y = top_y + plot_height + gap
+            portfolio_y = top_y + plot_height + gap + window_chrome
 
             if dashboard_window is not None:
                 dashboard_window.geometry(f"{dashboard_width}x{dashboard_height}+{dashboard_x}+{top_y}")

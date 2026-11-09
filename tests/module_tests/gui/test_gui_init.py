@@ -78,7 +78,9 @@ def test_init_vars_loads_market_data_and_defaults(monkeypatch):
     assert gui.simulation_controls["overlay_profit_loss"] is True
     assert gui.simulation_controls["user_annotation_strings"] == []
     assert gui.simulation_controls["state_of_residence"] == gui_init.DEFAULT_STATE_OF_RESIDENCE
-    assert gui.simulation_controls["csv_output_dir"] == "C:\\Users\\TestUser\\Desktop\\WARPSimLab"
+    assert gui.simulation_controls["csv_output_dir"] == os.path.join(
+        "C:\\Users\\TestUser", "Desktop", "WARPSimLab"
+    )
 
     assert "executive_summary" in gui.report_options
     assert "year_by_year_details" in gui.report_options

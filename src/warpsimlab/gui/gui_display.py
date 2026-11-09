@@ -142,6 +142,19 @@ class PortfolioSimulatorGUI_DisplayMixin:
 
             return info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom
 
+        if sys.platform == "darwin":
+            from AppKit import NSScreen
+
+            screen = NSScreen.mainScreen()
+            frame = screen.frame()
+            visible = screen.visibleFrame()
+
+            left = round(visible.origin.x)
+            top = round(frame.origin.y + frame.size.height - visible.origin.y - visible.size.height)
+            right = left + round(visible.size.width)
+            bottom = top + round(visible.size.height)
+            return left, top, right, bottom
+
         return 0, 0, self.root.winfo_screenwidth(), self.root.winfo_screenheight()
 
 
