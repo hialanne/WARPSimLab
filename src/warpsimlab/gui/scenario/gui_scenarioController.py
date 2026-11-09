@@ -133,6 +133,9 @@ class ScenarioController(ScalableClientMixin):
         # Create control window
         self.window = tk.Toplevel(self.main_gui.root)
         self.window.title("Scenario Dashboard")
+        self.window.bind("<MouseWheel>", self._on_slider_mousewheel, add="+")
+        self.window.bind("<Button-4>", self._on_slider_mousewheel, add="+")
+        self.window.bind("<Button-5>", self._on_slider_mousewheel, add="+")
 
         # If user closes via X
         self.window.protocol(
@@ -148,6 +151,9 @@ class ScenarioController(ScalableClientMixin):
 
         # Build snapshots + controls UI + run once
         self.resync()
+
+        if not self.plot_manager._layout_restored:
+            self.window.after_idle(self._position_windows)
 
 
     def _initialize_dashboard_scaling(self):
@@ -543,8 +549,25 @@ class ScenarioController(ScalableClientMixin):
         main.columnconfigure(1, weight=2, minsize=360)
 
         # ---- Sliders (left) ----
+        slider_panel = ttk.Frame(main)
+        slider_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        slider_panel.columnconfigure(0, weight=1)
+        slider_panel.rowconfigure(0, weight=1)
+
+        self.slider_canvas = tk.Canvas(
+            slider_panel, width=1, height=1, borderwidth=0, highlightthickness=0,
+            background=self.window.cget("background")
+        )
+        self.slider_canvas.grid(row=0, column=0, sticky="nsew")
+
+        self.slider_scrollbar = ttk.Scrollbar(
+            slider_panel, orient="vertical", command=self.slider_canvas.yview
+        )
+        self.slider_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.slider_canvas.configure(yscrollcommand=self.slider_scrollbar.set)
+
         self.sliders_frame = ScenarioSlidersFrame(
-            main,
+            self.slider_canvas,
             main_gui=self.main_gui,
             persons=self.session_state.person_snapshots,
             portfolio=self.session_state.portfolio_snapshots,
@@ -552,7 +575,11 @@ class ScenarioController(ScalableClientMixin):
             show_enable_overrides_checkbox=False,      # Scenario: no checkbox
             show_wife=show_wife                        # hide wife when not enabled
         )
-        self.sliders_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        self._slider_canvas_window = self.slider_canvas.create_window(
+            (0, 0), window=self.sliders_frame, anchor="nw"
+        )
+        self.sliders_frame.bind("<Configure>", self._update_slider_scrollregion, add="+")
+        self.slider_canvas.bind("<Configure>", self._on_slider_canvas_configure, add="+")
 
         self._wire_live_update_traces()
 
@@ -647,6 +674,50 @@ class ScenarioController(ScalableClientMixin):
         # ---- Results (right) ----
         self.results_frame = ScenarioResultsFrame(main)
         self.results_frame.grid(row=0, column=1, rowspan=2, sticky="nsew")
+
+
+    def _on_slider_canvas_configure(self, event):
+        self.slider_canvas.itemconfigure(self._slider_canvas_window, width=event.width)
+        self._update_slider_scrollregion()
+
+
+    def _update_slider_scrollregion(self, event=None):
+        self.slider_canvas.configure(scrollregion=self.slider_canvas.bbox("all"))
+
+        if self.sliders_frame.winfo_reqheight() > self.slider_canvas.winfo_height():
+            self.slider_scrollbar.grid()
+        else:
+            self.slider_scrollbar.grid_remove()
+            self.slider_canvas.yview_moveto(0)
+
+
+    def _on_slider_mousewheel(self, event):
+        canvas = getattr(self, "slider_canvas", None)
+        if canvas is None:
+            return
+
+        x = event.x_root - canvas.winfo_rootx()
+        y = event.y_root - canvas.winfo_rooty()
+
+        if x < 0 or x >= canvas.winfo_width():
+            return
+
+        if y < 0 or y >= canvas.winfo_height():
+            return
+
+        if getattr(event, "num", None) == 4:
+            direction = -1
+        elif getattr(event, "num", None) == 5:
+            direction = 1
+        elif event.delta > 0:
+            direction = -1
+        elif event.delta < 0:
+            direction = 1
+        else:
+            return
+
+        canvas.yview_scroll(direction, "units")
+        return "break"
 
 
     def _apply_slider_values_to_snapshots(self):
