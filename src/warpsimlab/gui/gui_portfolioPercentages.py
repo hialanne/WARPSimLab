@@ -137,7 +137,7 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
 
         row = 1
 
-        ttk.Label(self, text="Total Investable Assets", font=self._major_header_font).grid(
+        ttk.Label(self, text="Total Investable Assets ($)", font=self._major_header_font).grid(
             row=row, column=0, sticky="w", padx=5, pady=(10, 5)
         )
 
@@ -164,7 +164,7 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
         )
         row += 1
 
-        ttk.Label(self, text="Tax Bucket Allocation", font=self._major_header_font).grid(
+        ttk.Label(self, text="Tax Bucket Allocation (%)", font=self._major_header_font).grid(
             row=row, column=0, sticky="w", padx=5, pady=(5, 5)
         )
         row += 1
@@ -192,18 +192,12 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
             ttk.Entry(
                 self, textvariable=self.tax_vars[("husband", bucket)], width=10, font=self._body_font
             ).grid(row=row, column=1, sticky="w", padx=5)
-            ttk.Label(self, text="%", font=self._body_font).grid(
-                row=row, column=1, sticky="w", padx=(88, 0)
-            )
 
             if self.wife_portfolio is not None:
                 self.tax_vars[("wife", bucket)] = tk.StringVar()
                 ttk.Entry(
                     self, textvariable=self.tax_vars[("wife", bucket)], width=10, font=self._body_font
                 ).grid(row=row, column=2, sticky="w", padx=5)
-                ttk.Label(self, text="%", font=self._body_font).grid(
-                    row=row, column=2, sticky="w", padx=(88, 0)
-                )
 
             row += 1
 
@@ -229,7 +223,7 @@ class PortfolioPercentagesEditFrame(ScalableFrameMixin, ttk.Frame):
         row += 1
 
         ttk.Label(
-            self, text="Asset Allocation Within Each Tax Bucket", font=self._major_header_font
+            self, text="Asset Allocation Within Each Tax Bucket (%)", font=self._major_header_font
         ).grid(row=row, column=0, columnspan=7, sticky="w", padx=5, pady=(5, 5))
         row += 1
 
