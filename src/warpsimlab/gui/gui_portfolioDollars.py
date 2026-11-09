@@ -68,7 +68,7 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
         header_frame.grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 8))
 
         ttk.Label(
-            header_frame, text="Balance Sheet > Portfolio Amounts", font=self._header_font
+            header_frame, text="Balance Sheet > Portfolio Amounts ($)", font=self._header_font
         ).pack(side="left")
 
         ttk.Label(
@@ -193,7 +193,7 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
             )
 
             row += 1
-            self._add_money_row(row, "Savings", "cash_post", "Cash and savings held outside retirement accounts")
+            self._add_money_row(row, "Savings ($)", "cash_post", "Cash and savings held outside retirement accounts")
             row += 1
 
             ttk.Separator(self, orient="horizontal").grid(

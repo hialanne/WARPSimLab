@@ -49,13 +49,20 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
 
         self._apply_summary_startup_settings(width, height)
 
-        self._title_font = tkfont.Font(root=self, family="Arial", size=17, weight="bold")
-        self._tab_font = tkfont.Font(root=self, family="Arial", size=14)
-        self._tab_bold_font = tkfont.Font(root=self, family="Arial", size=14, weight="bold")
-        self._report_header_font = tkfont.Font(root=self, family="Arial", size=14, weight="bold")
-        self._report_body_font = tkfont.Font(root=self, family="Courier New", size=12)
-        self._report_body_bold_font = tkfont.Font(root=self, family="Courier New", size=12, weight="bold")
         self._button_font = tkfont.nametofont("TkDefaultFont").copy()
+        base_size = int(self._button_font.cget("size"))
+
+        self._title_font = self._button_font.copy()
+        self._title_font.configure(size=base_size + 5, weight="bold")
+        self._tab_font = self._button_font.copy()
+        self._tab_font.configure(size=base_size + 2)
+        self._tab_bold_font = self._tab_font.copy()
+        self._tab_bold_font.configure(weight="bold")
+        self._report_header_font = self._tab_bold_font.copy()
+        self._report_body_font = tkfont.nametofont("TkFixedFont").copy()
+        self._report_body_font.configure(size=base_size + 1)
+        self._report_body_bold_font = self._report_body_font.copy()
+        self._report_body_bold_font.configure(weight="bold")
 
         self._initialize_scaling(self)
         self._register_scalable_font(self._title_font)
