@@ -97,7 +97,7 @@ def test_basic_mode_builds_only_savings_row(mod_no_tooltip, tk_root):
     frame.pack()
 
     texts = _all_texts(frame)
-    assert "Savings" in texts
+    assert "Savings ($)" in texts
 
     # In Basic mode, only husband + wife savings entries
     assert _count_entries(frame) == 6
