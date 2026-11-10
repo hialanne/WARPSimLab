@@ -31,7 +31,11 @@ a = Analysis(
         ],
     hiddenimports=[],
     hookspath=[],
-    hooksconfig={},
+    hooksconfig={
+        'matplotlib': {
+            'backends': 'TkAgg',
+        },
+    },
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
