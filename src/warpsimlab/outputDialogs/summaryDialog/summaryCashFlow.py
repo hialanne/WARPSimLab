@@ -4,7 +4,7 @@ from tkinter import ttk
 
 
 def build_cash_flow_tab(dialog, notebook):
-    cash_flow_tab = ttk.Frame(notebook, padding=15)
+    cash_flow_tab = ttk.Frame(notebook, padding=(15, 5))
     notebook.add(cash_flow_tab, text="Cash Flow")
 
     header_font = dialog._report_header_font
@@ -125,7 +125,7 @@ def build_cash_flow_tab(dialog, notebook):
             "Fund expenses are removed directly from the portfolio and are shown for reference."
         )
     ttk.Label(cash_flow_tab, text=note_text, font=body_font, justify="left").grid(
-        row=row_idx, column=0, columnspan=5, sticky="w", pady=(15, 10)
+        row=row_idx, column=0, columnspan=5, sticky="w", pady=(0, 0)
     )
 
     return cash_flow_tab

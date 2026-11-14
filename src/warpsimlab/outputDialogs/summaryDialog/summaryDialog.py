@@ -37,11 +37,11 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
         reference_font = tkfont.Font(root=self, family="Arial", size=16)
         gui_scale = reference_font.metrics("linespace") / development_font_linespace
 
-        width = int(1100 * gui_scale)
+        width = max(int(1100 * gui_scale), int(parent.winfo_width() * 0.92))
+        height = max(int(750 * gui_scale), int(parent.winfo_height() * 0.90))
 
-        # Making the dialog slightly shorter vertically to keep the dialog close to the same height as the main window.
-        # height = int(800 * gui_scale)
-        height = int(750 * gui_scale)
+        width = min(width, self.winfo_screenwidth() - 60)
+        height = min(height, self.winfo_screenheight() - 40)
 
         self._summary_reference_width = width
         self._summary_reference_height = height
@@ -61,7 +61,7 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
         self._tab_bold_font.configure(weight="bold")
         self._report_header_font = self._tab_bold_font.copy()
         self._report_body_font = tkfont.nametofont("TkFixedFont").copy()
-        self._report_body_font.configure(size=base_size + 1)
+        self._report_body_font.configure(size=base_size - 1)
         self._report_body_bold_font = self._report_body_font.copy()
         self._report_body_bold_font.configure(weight="bold")
 
@@ -208,6 +208,12 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
         build_income_tab(self, notebook)
         build_cash_flow_tab(self, notebook)
         build_summary_tab(self, notebook)
+
+        notebook.bind(
+            "<<NotebookTabChanged>>",
+            lambda event: self.update_idletasks(),
+            add="+"
+        )
 
         ttk.Button(container, text="Close", command=self._close_dialog, style="Summary.TButton").grid(
             row=2, column=0, columnspan=2, pady=(20, 0)
