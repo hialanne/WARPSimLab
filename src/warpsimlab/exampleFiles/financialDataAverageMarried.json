@@ -79,7 +79,7 @@
         {
             "start_year": 2026,
             "end_year": null,
-            "cost": 72600.0,
+            "cost": 70500.0,
             "comment": "Initial yearly expense",
             "is_hsa_eligible": false
         },

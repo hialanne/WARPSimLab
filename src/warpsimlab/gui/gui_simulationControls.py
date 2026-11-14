@@ -41,7 +41,6 @@ class SimulationControlsEditFrame(ScalableFrameMixin, ttk.Frame):
         # Ensure defaults exist
         self.controls.setdefault("include_realestate", False)
         self.controls.setdefault("constant_y_plots", False)
-        self.controls.setdefault("rebalance_every_year", False)
 
         self.controls.setdefault("overlay_tax_impacts", False)
         self.controls.setdefault("overlay_fund_expense_impacts", False)
@@ -146,7 +145,6 @@ class SimulationControlsEditFrame(ScalableFrameMixin, ttk.Frame):
             left_col0_row += 1
 
         add_left_check("Constant Y Plots", "constant_y_plots")
-        add_left_check("Rebalance Every Year", "rebalance_every_year")
 
         # -------------------------------------------------
         # LEFT PANEL, COLUMN 1: Overlays

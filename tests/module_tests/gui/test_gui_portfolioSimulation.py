@@ -38,6 +38,7 @@ def _base_settings():
         "start_year": 2025,
         "num_sims": 500,
         "use_fund_expenses": True,
+        "rebalance_every_year": True,
         "fund_expense": 0.75,
         "initial_allocation_mode": "dont-rebalance",
         "custom_stock": 60.0,
@@ -60,6 +61,16 @@ def test_init_sets_stringvars_from_settings(tk_root, mod_no_tooltip):
     assert frame.use_fund_expenses_var.get() is True
     assert frame.fund_expense_var.get() == frame._format_sim_field("fund_expense", settings["fund_expense"])
     assert frame.initial_allocation_mode_var.get() == settings["initial_allocation_mode"]
+
+
+def test_rebalance_checkbox_updates_existing_settings(tk_root, mod_no_tooltip):
+    settings = _base_settings()
+    frame = mod_no_tooltip.PortfolioSimulationEditFrame(tk_root, {"_settings_dict": settings})
+    assert frame.rebalance_every_year_var.get() is True
+    frame.rebalance_every_year_cb.invoke()
+    assert settings["rebalance_every_year"] is False
+    frame.rebalance_every_year_cb.invoke()
+    assert settings["rebalance_every_year"] is True
 
 def test_bind_var_updates_settings_and_ignores_invalid(monkeypatch, tk_root, mod_no_tooltip):
     mod = mod_no_tooltip

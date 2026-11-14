@@ -109,29 +109,40 @@ def test_secondary_cores_have_independent_contexts(monkeypatch):
 
 
 def test_allocation_and_normalized_yields_keep_configuration_independent(monkeypatch):
-    case = make_execution_case(sim_initial_allocation_mode="maintain-current-allocation",
+    case = make_execution_case(sim_initial_allocation_mode="original-allocation",
         post_tax_equity_dividend_yield=-0.01, post_tax_bond_interest_yield=0.04,
         post_tax_cash_interest_yield=-0.02)
     config = case["sim_config"]
-    calls = []
-    original = portfolioEngine.compute_household_allocation_targets
-    initial = deepcopy(case["husband_portfolio"])
+    initial = deepcopy(vars(config))
+    initialized = []
+    original = portfolioEngine.create_sim_portfolio
 
-    def prepare(husband_portfolio, wife_portfolio, actual_config, run_context=None):
-        assert vars(husband_portfolio) == vars(initial)
-        calls.append(run_context)
-        return original(husband_portfolio, wife_portfolio, actual_config, run_context=run_context)
+    def create(portfolio, sim_config=None, run_context=None):
+        result = original(portfolio, sim_config, run_context=run_context)
+        assert result.eq_pre == portfolio.equity_pre
+        assert result.bd_pre == portfolio.bond_pre
+        assert result.cs_pre == portfolio.cash_pre
+        initialized.append((run_context, result))
+        return result
 
-    monkeypatch.setattr(portfolioEngine, "compute_household_allocation_targets", prepare)
-    _, run = run_pipeline(**case, return_run_context=True)
-    assert calls == [run]
-    assert run.household_eq_target + run.household_bd_target + run.household_cs_target == pytest.approx(1.0)
-    assert run.post_tax_equity_dividend_yield_normalized == 0.0
-    assert run.post_tax_bond_interest_yield_normalized == 0.04
-    assert run.post_tax_cash_interest_yield_normalized == 0.0
-    assert config.post_tax_equity_dividend_yield == -0.01
-    assert config.post_tax_cash_interest_yield == -0.02
-    assert not hasattr(config, "household_eq_target")
+    monkeypatch.setattr(portfolioEngine, "create_sim_portfolio", create)
+    _, first = run_pipeline(**case, return_run_context=True)
+    assert_tree_equal(vars(config), initial)
+    config.include_realestate = False
+    changed = deepcopy(vars(config))
+    _, second = run_pipeline(**case, return_run_context=True)
+    assert_tree_equal(vars(config), changed)
+    assert first is not second
+    assert any(context is first for context, _ in initialized)
+    assert any(context is second for context, _ in initialized)
+    assert len({id(portfolio) for _, portfolio in initialized}) == len(initialized)
+    for run in (first, second):
+        assert run.post_tax_equity_dividend_yield_normalized == 0.0
+        assert run.post_tax_bond_interest_yield_normalized == 0.04
+        assert run.post_tax_cash_interest_yield_normalized == 0.0
+    first.post_tax_bond_interest_yield_normalized = 0.99
+    assert second.post_tax_bond_interest_yield_normalized == 0.04
+    assert config.post_tax_bond_interest_yield == 0.04
 
 
 def test_standalone_market_preparation_returns_explicit_context_and_report_seed():

@@ -33,7 +33,7 @@ class SimulationConfig:
     post_tax_equity_dividend_yield: float | None = None
     post_tax_bond_interest_yield: float | None = None
     post_tax_cash_interest_yield: float | None = None
-    sim_initial_allocation_mode: str = "none"
+    sim_initial_allocation_mode: str = "original-allocation"
     use_correlated_returns: bool = True
     custom_stock: float = 0.0
     custom_bonds: float = 0.0
@@ -105,6 +105,11 @@ class SimulationConfig:
     ], dtype=float))
 
     def __post_init__(self):
+        if self.sim_initial_allocation_mode in (
+            "none", "dont-rebalance", "maintain-current-allocation"
+        ):
+            self.sim_initial_allocation_mode = "original-allocation"
+
         if self.post_tax_equity_dividend_yield is None:
             self.post_tax_equity_dividend_yield = 0.015
 
@@ -183,11 +188,6 @@ class RunContext:
     hist_inflation: np.ndarray | None = None
     hist_window_start_indices: np.ndarray | None = None
     hist_num_windows: int = 0
-
-    # Initial household allocation targets.
-    household_eq_target: float | None = None
-    household_bd_target: float | None = None
-    household_cs_target: float | None = None
 
     # Normalized execution assumptions, distinct from config inputs.
     post_tax_equity_dividend_yield_normalized: float | None = None

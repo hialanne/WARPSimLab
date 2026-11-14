@@ -16,13 +16,13 @@ def test_scaling_uses_base_size_and_unbinds_only_on_frame_destroy():
     font.cget.return_value = -10
     client._register_scalable_font(font)
     client._apply_gui_scale()
-    font.configure.assert_called_with(size=15)
+    font.configure.assert_called_with(size=-15)
     root._warpsimlab_gui_scale = .01
     client._on_gui_scale_changed()
-    font.configure.assert_called_with(size=1)
+    font.configure.assert_called_with(size=-1)
     root._warpsimlab_gui_scale = 2
     client._on_gui_scale_changed()
-    font.configure.assert_called_with(size=20)
+    font.configure.assert_called_with(size=-20)
     client._on_scaling_destroy(SimpleNamespace(widget=object()))
     root.unbind.assert_not_called()
     client._on_scaling_destroy(SimpleNamespace(widget=client))

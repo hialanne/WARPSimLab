@@ -343,7 +343,7 @@ def _plot_pre_post_tax_assets(years_list, simulation_data):
             bottom + post_tax,
             color=COLOR_POST_TAX,
             alpha=0.5,
-            label="Tax-Deferred Assets",
+            label="Taxable Assets",
         )
         bottom += post_tax
 
@@ -354,7 +354,7 @@ def _plot_pre_post_tax_assets(years_list, simulation_data):
             bottom + pre_tax,
             color=COLOR_PRE_TAX,
             alpha=0.5,
-            label="Pre-Tax Assets",
+            label="Tax-Deferred Assets",
         )
         bottom += pre_tax
 

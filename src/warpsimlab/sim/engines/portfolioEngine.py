@@ -160,8 +160,6 @@ def create_sim_portfolio(portfolio, sim_config=None, run_context=None):
     - included in net worth
     """
 
-    if run_context is None:
-        run_context = RunContext()
     sim_portfolio = PortfolioState(
         eq_pre=portfolio.equity_pre,
         bd_pre=portfolio.bond_pre,
@@ -182,7 +180,7 @@ def create_sim_portfolio(portfolio, sim_config=None, run_context=None):
         re_post=getattr(portfolio, "real_estate", 0.0) if sim_config.include_realestate else 0.0,
     )
 
-    if sim_config.sim_initial_allocation_mode == "dont-rebalance":
+    if sim_config.sim_initial_allocation_mode == "original-allocation":
         for bucket_name, total_attr, eq_attr, bd_attr, cs_attr in [
             ("pre", "total_value_pre", "eq_pre", "bd_pre", "cs_pre"),
             ("post", "total_value_post", "eq_post", "bd_post", "cs_post"),
@@ -203,12 +201,7 @@ def create_sim_portfolio(portfolio, sim_config=None, run_context=None):
         "70-20-10": {"equity": 0.70, "bonds": 0.20, "cash": 0.10},
     }
 
-    if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
-        eq_ratio = getattr(run_context, 'household_eq_target', 1 / 3)
-        bd_ratio = getattr(run_context, 'household_bd_target', 1 / 3)
-        cs_ratio = getattr(run_context, 'household_cs_target', 1 / 3)
-
-    elif sim_config.sim_initial_allocation_mode == "custom":
+    if sim_config.sim_initial_allocation_mode == "custom":
         eq_ratio = sim_config.custom_stock
         bd_ratio = sim_config.custom_bonds
         cs_ratio = sim_config.custom_cash
@@ -518,54 +511,7 @@ def rebalance(sim_portfolio, sim_config, run_context=None):
     pre-tax, post-tax, Roth, and HSA.
     """
     
-    if run_context is None:
-        run_context = RunContext()
-    if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
-        eq_ratio = run_context.household_eq_target
-        bd_ratio = run_context.household_bd_target
-        cs_ratio = run_context.household_cs_target
-
-        total = (
-            sim_portfolio.eq_pre
-            + sim_portfolio.bd_pre
-            + sim_portfolio.cs_pre
-        )
-        sim_portfolio.eq_pre = total * eq_ratio
-        sim_portfolio.bd_pre = total * bd_ratio
-        sim_portfolio.cs_pre = total * cs_ratio
-
-        total = (
-            sim_portfolio.eq_post
-            + sim_portfolio.bd_post
-            + sim_portfolio.cs_post
-        )
-        sim_portfolio.eq_post = total * eq_ratio
-        sim_portfolio.bd_post = total * bd_ratio
-        sim_portfolio.cs_post = total * cs_ratio
-
-        total = (
-            sim_portfolio.eq_roth
-            + sim_portfolio.bd_roth
-            + sim_portfolio.cs_roth
-        )
-        sim_portfolio.eq_roth = total * eq_ratio
-        sim_portfolio.bd_roth = total * bd_ratio
-        sim_portfolio.cs_roth = total * cs_ratio
-
-        total = (
-            sim_portfolio.hsa_eq
-            + sim_portfolio.hsa_bd
-            + sim_portfolio.hsa_cs
-        )
-        sim_portfolio.hsa_eq = total * eq_ratio
-        sim_portfolio.hsa_bd = total * bd_ratio
-        sim_portfolio.hsa_cs = total * cs_ratio
-
-        # Pretty sure nothing in the portfolio can go negative.  Lets not clamp above zero.
-        #_clamp_portfolio_components(sim_portfolio)
-        return
-
-    elif sim_config.sim_initial_allocation_mode == "dont-rebalance":
+    if sim_config.sim_initial_allocation_mode == "original-allocation":
         buckets = [
             ("pre", "eq_pre", "bd_pre", "cs_pre"),
             ("post", "eq_post", "bd_post", "cs_post"),
@@ -718,25 +664,59 @@ def create_empty_sim_portfolio(sim_config):
     )
 
 
-def _refresh_portfolio_bucket_ratios(sim_portfolio):
+def _merge_original_allocation_targets(deceased_portfolio, survivor_portfolio):
     buckets = [
-        ("pre", "total_value_pre", "eq_pre", "bd_pre", "cs_pre"),
-        ("post", "total_value_post", "eq_post", "bd_post", "cs_post"),
-        ("roth", "total_value_roth", "eq_roth", "bd_roth", "cs_roth"),
-        ("hsa", "total_value_hsa", "hsa_eq", "hsa_bd", "hsa_cs"),
+        ("pre", "eq_pre", "bd_pre", "cs_pre"),
+        ("post", "eq_post", "bd_post", "cs_post"),
+        ("roth", "eq_roth", "bd_roth", "cs_roth"),
+        ("hsa", "hsa_eq", "hsa_bd", "hsa_cs"),
     ]
 
-    for bucket_name, total_attr, eq_attr, bd_attr, cs_attr in buckets:
-        total = getattr(sim_portfolio, total_attr)
+    for bucket_name, eq_attr, bd_attr, cs_attr in buckets:
+        survivor_total = (
+            getattr(survivor_portfolio, eq_attr)
+            + getattr(survivor_portfolio, bd_attr)
+            + getattr(survivor_portfolio, cs_attr)
+        )
+        deceased_total = (
+            getattr(deceased_portfolio, eq_attr)
+            + getattr(deceased_portfolio, bd_attr)
+            + getattr(deceased_portfolio, cs_attr)
+        )
+        combined_total = survivor_total + deceased_total
 
-        if total > 0.0:
-            setattr(sim_portfolio, f"eq_ratio_{bucket_name}", getattr(sim_portfolio, eq_attr) / total)
-            setattr(sim_portfolio, f"bd_ratio_{bucket_name}", getattr(sim_portfolio, bd_attr) / total)
-            setattr(sim_portfolio, f"cs_ratio_{bucket_name}", getattr(sim_portfolio, cs_attr) / total)
-        else:
-            setattr(sim_portfolio, f"eq_ratio_{bucket_name}", 0.0)
-            setattr(sim_portfolio, f"bd_ratio_{bucket_name}", 0.0)
-            setattr(sim_portfolio, f"cs_ratio_{bucket_name}", 0.0)
+        if combined_total <= EPS:
+            continue
+
+        survivor_target_total = (
+            getattr(survivor_portfolio, f"eq_ratio_{bucket_name}", 0.0)
+            + getattr(survivor_portfolio, f"bd_ratio_{bucket_name}", 0.0)
+            + getattr(survivor_portfolio, f"cs_ratio_{bucket_name}", 0.0)
+        )
+        deceased_target_total = (
+            getattr(deceased_portfolio, f"eq_ratio_{bucket_name}", 0.0)
+            + getattr(deceased_portfolio, f"bd_ratio_{bucket_name}", 0.0)
+            + getattr(deceased_portfolio, f"cs_ratio_{bucket_name}", 0.0)
+        )
+
+        for asset, component_attr in (
+            ("eq", eq_attr), ("bd", bd_attr), ("cs", cs_attr)
+        ):
+            ratio_attr = f"{asset}_ratio_{bucket_name}"
+            survivor_ratio = getattr(survivor_portfolio, ratio_attr, 0.0)
+            deceased_ratio = getattr(deceased_portfolio, ratio_attr, 0.0)
+
+            if survivor_total > EPS and survivor_target_total <= EPS:
+                survivor_ratio = getattr(survivor_portfolio, component_attr) / survivor_total
+
+            if deceased_total > EPS and deceased_target_total <= EPS:
+                deceased_ratio = getattr(deceased_portfolio, component_attr) / deceased_total
+
+            combined_ratio = (
+                survivor_ratio * survivor_total + deceased_ratio * deceased_total
+            ) / combined_total
+            setattr(survivor_portfolio, ratio_attr, combined_ratio)
+            setattr(deceased_portfolio, ratio_attr, 0.0)
 
 
 def transfer_portfolio_to_survivor(deceased_portfolio, survivor_portfolio):
@@ -753,15 +733,14 @@ def transfer_portfolio_to_survivor(deceased_portfolio, survivor_portfolio):
         "hsa_eq", "hsa_bd", "hsa_cs",
     )
 
+    _merge_original_allocation_targets(deceased_portfolio, survivor_portfolio)
+
     for attr in component_attrs:
         setattr(survivor_portfolio, attr, getattr(survivor_portfolio, attr) + getattr(deceased_portfolio, attr))
         setattr(deceased_portfolio, attr, 0.0)
 
     survivor_portfolio.re_post += deceased_portfolio.re_post
     deceased_portfolio.re_post = 0.0
-
-    _refresh_portfolio_bucket_ratios(survivor_portfolio)
-    _refresh_portfolio_bucket_ratios(deceased_portfolio)
 
 
 def get_pre_tax_ratios(sim_portfolio):

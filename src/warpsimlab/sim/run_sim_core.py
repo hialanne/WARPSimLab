@@ -218,13 +218,6 @@ def simulate_yearly_portfolios(
                                                   context={"effective_num_sims": effective_num_sims,
                                                            "years_to_simulate": years_to_simulate}, run_context=run_context)
 
-    # ---------------------------------------------------------
-    # Compute household allocation target if using
-    # "maintain-current-allocation"
-    # ---------------------------------------------------------
-    if sim_config.sim_initial_allocation_mode == "maintain-current-allocation":
-        portfolioEngine.compute_household_allocation_targets(husband_portfolio, wife_portfolio, sim_config, run_context=run_context)
-
     # --------------------------
     # Initialize results containers
     # --------------------------

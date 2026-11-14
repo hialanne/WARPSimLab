@@ -23,13 +23,14 @@ def test_schema_and_required_inputs_match_approved_design(scenario_builders):
         "eq_mean", "bd_mean", "cs_mean", "eq_std", "bd_std", "cs_std"}
     assert declared == required
     assert len(fields(SimulationConfig)) == 77
-    assert len(fields(RunContext)) == 25
+    assert len(fields(RunContext)) == 22
     assert len(fields(PathContext)) == 11
     assert [f.name for f in fields(SimData)] == ["config", "run", "path"]
     inputs = {name: getattr(initial, name) for name in required}
     config = SimulationConfig(**inputs)
     assert set(vars(config)) == {field.name for field in fields(SimulationConfig)}
-    assert config.sim_initial_allocation_mode == "none"
+    assert config.sim_initial_allocation_mode == "original-allocation"
+    assert config.rebalance_every_year is False
     assert config.re_mean == 3.0
     assert config.re_std == 5.0
     assert config.post_tax_equity_dividend_yield == 0.015
@@ -45,6 +46,13 @@ def test_schema_and_required_inputs_match_approved_design(scenario_builders):
         SimulationConfig()
     with pytest.raises(TypeError):
         SimulationConfig(*inputs.values())
+
+
+@pytest.mark.parametrize("mode", ["none", "dont-rebalance", "maintain-current-allocation", "original-allocation"])
+def test_legacy_allocation_modes_normalize_without_enabling_rebalancing(scenario_builders, mode):
+    config = replace(scenario_builders.make_config(), sim_initial_allocation_mode=mode, rebalance_every_year=False)
+    assert config.sim_initial_allocation_mode == "original-allocation"
+    assert config.rebalance_every_year is False
 
 
 @pytest.mark.parametrize("show,calculate,expected", [(False, None, False), (True, None, True), (False, True, True), (True, False, False)])
@@ -144,6 +152,15 @@ def test_gui_assembly_does_not_require_presentation_or_portfolios(tmp_path):
     del gui.wife_portfolio
     config = gui.build_simulation_from_gui("portfolio_sim")
     assert isinstance(config, SimulationConfig)
+
+
+@pytest.mark.parametrize("rebalance", [False, True])
+def test_gui_rebalance_setting_reaches_config_independently_of_stale_controls(tmp_path, rebalance):
+    gui = make_gui(tmp_path)
+    gui.simulation_settings["rebalance_every_year"] = rebalance
+    gui.simulation_controls["rebalance_every_year"] = not rebalance
+    config = gui.build_simulation_from_gui("portfolio_sim")
+    assert config.rebalance_every_year is rebalance
 
 
 def test_gui_config_snapshots_match_and_detach_inputs(tmp_path):

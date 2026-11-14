@@ -1,0 +1,294 @@
+...............................F........................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+.....................FFFFFFFFFFFFF...................................... [ 19%]
+........................................................................ [ 23%]
+........................................................................ [ 26%]
+........................................................................ [ 29%]
+...........................................................F............ [ 32%]
+.................................................ss..................... [ 36%]
+........................................................................ [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 46%]
+........................................................................ [ 49%]
+........................................................................ [ 52%]
+..................................FFFFF................................. [ 56%]
+........................................................................ [ 59%]
+........................................................................ [ 62%]
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 72%]
+........................................................................ [ 75%]
+.....................................................FF..........FF..... [ 79%]
+........................................................................ [ 82%]
+........................................................................ [ 85%]
+........................................................................ [ 88%]
+........................................................................ [ 92%]
+....F................................................................... [ 95%]
+........................................................................ [ 98%]
+.........................                                                [100%]
+================================== FAILURES ===================================
+___________ test_maintain_current_allocation_rebalance_mode_nominal ___________
+tests\deterministic_tests\test_17_maintain_current_allocation_rebalance_mode.py:154: in test_maintain_current_allocation_rebalance_mode_nominal
+    assert run_context.household_eq_target == pytest.approx(0.50)
+E   assert None == 0.5 ± 5.0e-07
+E     
+E     comparison failed
+E     Obtained: None
+E     Expected: 0.5 ± 5.0e-07
+---------------------------- Captured stdout call -----------------------------
+Bad, bad, bad in rebalance
+sim_initial_allocation_mode:maintain-current-allocation
+Bad, bad, bad in rebalance
+sim_initial_allocation_mode:maintain-current-allocation
+__________ test_complete_core_matches_accepted_reference[s1_single] ___________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s1_single
+E   assert {'boundary': ....0, ...}, ...} == {'boundary': ....0, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}} != {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}}
+E     Use -v to get more diff
+______ test_complete_core_matches_accepted_reference[s2_married_nominal] ______
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s2_married_nominal
+E   assert {'boundary': ....0, ...}, ...} == {'boundary': ....0, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}} != {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}}
+E     Use -v to get more diff
+_______ test_complete_core_matches_accepted_reference[s2_married_real] ________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s2_married_real
+E   assert {'boundary': ....0, ...}, ...} == {'boundary': ....0, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}} != {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}}
+E     Use -v to get more diff
+________ test_complete_core_matches_accepted_reference[s2_married_raw] ________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s2_married_raw
+E   assert {'boundary': ....0, ...}, ...} == {'boundary': ....0, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}} != {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}}
+E     Use -v to get more diff
+_________ test_complete_core_matches_accepted_reference[s3_expenses] __________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s3_expenses
+E   assert {'boundary': ...00, ...}, ...} == {'boundary': ...00, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.0, 'bd_std': 0.0, ...}} != {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.0, 'bd_std': 0.0, ...}}
+E     Use -v to get more diff
+________ test_complete_core_matches_accepted_reference[s3_withdrawals] ________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s3_withdrawals
+E   assert {'boundary': ...00, ...}, ...} == {'boundary': ...00, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.0, 'bd_std': 0.0, ...}} != {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.0, 'bd_std': 0.0, ...}}
+E     Use -v to get more diff
+________ test_complete_core_matches_accepted_reference[s3_tax_funding] ________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s3_tax_funding
+E   assert {'boundary': ...00, ...}, ...} == {'boundary': ...00, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.0, 'bd_std': 0.0, ...}} != {'sim_config': {'always_use_expense_mode': False, 'annotate_plots': False, 'bd_mean': 0.0, 'bd_std': 0.0, ...}}
+E     Use -v to get more diff
+________ test_complete_core_matches_accepted_reference[s4_correlated] _________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s4_correlated
+E   assert {'boundary': ....0, ...}, ...} == {'boundary': ....0, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}} != {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}}
+E     Use -v to get more diff
+_______ test_complete_core_matches_accepted_reference[s4_uncorrelated] ________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s4_uncorrelated
+E   assert {'boundary': ....0, ...}, ...} == {'boundary': ....0, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}} != {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}}
+E     Use -v to get more diff
+____ test_complete_core_matches_accepted_reference[s5_historical_nominal] _____
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s5_historical_nominal
+E   assert {'boundary': ....0, ...}, ...} == {'boundary': ....0, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}} != {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}}
+E     Use -v to get more diff
+______ test_complete_core_matches_accepted_reference[s5_historical_real] ______
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s5_historical_real
+E   assert {'boundary': ....0, ...}, ...} == {'boundary': ....0, ...}, ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Differing items:
+E     {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}} != {'sim_config': {'always_use_expense_mode': True, 'annotate_plots': False, 'bd_mean': 0.03, 'bd_std': 0.04, ...}}
+E     Use -v to get more diff
+_________ test_complete_core_matches_accepted_reference[s6_baseline] __________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s6_baseline
+E   assert {'include_rea...}, ...}}, ...} == {'include_rea...}, ...}}, ...}
+E     
+E     Omitting 4 identical items, use -vv to show
+E     Differing items:
+E     {'session': {'snapshots': {'baseline_person_snapshots': {'husband': {'age': 68, 'annual_401k_contribution': 9000, 'ann...usband_portfolio': {'bond_post': 40000.0, 'bond_pre': 80000.0, 'bond_roth': 10000.0, 'cash_post': 40000.0, ...}, ...}}} != {'session': {'snapshots': {'baseline_person_snapshots': {'husband': {'age': 68, 'annual_401k_contribution': 9000, 'ann...usband_portfolio': {'bond_post': 40000.0, 'bond_pre': 80000.0, 'bond_roth': 10000.0, 'cash_post': 40000.0, ...}, ...}}}
+E     Use -v to get more diff
+_________ test_complete_core_matches_accepted_reference[s6_modified] __________
+tests\deterministic_tests\test_numerical_references.py:62: in test_complete_core_matches_accepted_reference
+    assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
+E   AssertionError: s6_modified
+E   assert {'include_rea...}, ...}}, ...} == {'include_rea...}, ...}}, ...}
+E     
+E     Omitting 4 identical items, use -vv to show
+E     Differing items:
+E     {'session': {'snapshots': {'baseline_person_snapshots': {'husband': {'age': 68, 'annual_401k_contribution': 9000, 'ann...usband_portfolio': {'bond_post': 40000.0, 'bond_pre': 80000.0, 'bond_roth': 10000.0, 'cash_post': 40000.0, ...}, ...}}} != {'session': {'snapshots': {'baseline_person_snapshots': {'husband': {'age': 68, 'annual_401k_contribution': 9000, 'ann...usband_portfolio': {'bond_post': 40000.0, 'bond_pre': 80000.0, 'bond_roth': 10000.0, 'cash_post': 40000.0, ...}, ...}}}
+E     Use -v to get more diff
+____ test_allocation_and_normalized_yields_keep_configuration_independent _____
+tests\invariant_tests\test_run_context_lifecycle.py:127: in test_allocation_and_normalized_yields_keep_configuration_independent
+    assert calls == [run]
+E   AssertionError: assert [] == [RunContext(m...r_factor=1.0)]
+E     
+E     Right contains one more item: RunContext(mc_means=array([0.07, 0.03, 0.01, 0.04]), mc_std_devs=array([0.14 , 0.04 , 0.005, 0.08 ]), mc_cov_matrix=No...nchor_factor=1.0, state_tax_enabled=True, state_tax_type='flat', state_tax_rate=0.044, medicare_2026_anchor_factor=1.0)
+E     Use -v to get more diff
+___________________ test_init_sets_stringvars_from_settings ___________________
+tests\module_tests\gui\test_gui_portfolioSimulation.py:55: in test_init_sets_stringvars_from_settings
+    frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\warpsimlab\gui\gui_portfolioSimulation.py:318: in __init__
+    self.rebalance_every_year_var = tk.BooleanVar(value=settings["rebalance_every_year"])
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'rebalance_every_year'
+_____________ test_bind_var_updates_settings_and_ignores_invalid ______________
+tests\module_tests\gui\test_gui_portfolioSimulation.py:70: in test_bind_var_updates_settings_and_ignores_invalid
+    frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\warpsimlab\gui\gui_portfolioSimulation.py:318: in __init__
+    self.rebalance_every_year_var = tk.BooleanVar(value=settings["rebalance_every_year"])
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'rebalance_every_year'
+_____________ test_toggle_fund_expense_entry_enables_and_disables _____________
+tests\module_tests\gui\test_gui_portfolioSimulation.py:109: in test_toggle_fund_expense_entry_enables_and_disables
+    frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\warpsimlab\gui\gui_portfolioSimulation.py:318: in __init__
+    self.rebalance_every_year_var = tk.BooleanVar(value=settings["rebalance_every_year"])
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'rebalance_every_year'
+___________ test_toggle_custom_entries_shows_and_hides_custom_block ___________
+tests\module_tests\gui\test_gui_portfolioSimulation.py:131: in test_toggle_custom_entries_shows_and_hides_custom_block
+    frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\warpsimlab\gui\gui_portfolioSimulation.py:318: in __init__
+    self.rebalance_every_year_var = tk.BooleanVar(value=settings["rebalance_every_year"])
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'rebalance_every_year'
+________ test_custom_percent_vars_update_settings_when_custom_selected ________
+tests\module_tests\gui\test_gui_portfolioSimulation.py:176: in test_custom_percent_vars_update_settings_when_custom_selected
+    frame = mod.PortfolioSimulationEditFrame(tk_root, sim_vars)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\warpsimlab\gui\gui_portfolioSimulation.py:318: in __init__
+    self.rebalance_every_year_var = tk.BooleanVar(value=settings["rebalance_every_year"])
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'rebalance_every_year'
+___ test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings ___
+tests\module_tests\sim\engines\test_portfolioEngine.py:222: in test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings
+    assert ps.eq_ratio_pre == pytest.approx(60 / 100)
+E   assert 0.0 == 0.6 ± 6.0e-07
+E     
+E     comparison failed
+E     Obtained: 0.0
+E     Expected: 0.6 ± 6.0e-07
+_ test_create_sim_portfolio_maintain_current_allocation_applies_household_targets _
+tests\module_tests\sim\engines\test_portfolioEngine.py:250: in test_create_sim_portfolio_maintain_current_allocation_applies_household_targets
+    assert ps.eq_pre == pytest.approx(50.0)
+E   assert 60.0 == 50.0 ± 5.0e-05
+E     
+E     comparison failed
+E     Obtained: 60.0
+E     Expected: 50.0 ± 5.0e-05
+______________ test_rebalance_dont_rebalance_uses_stored_ratios _______________
+tests\module_tests\sim\engines\test_portfolioEngine.py:565: in test_rebalance_dont_rebalance_uses_stored_ratios
+    assert ps.eq_post == pytest.approx(100 * 0.2)
+E   assert 80 == 20.0 ± 2.0e-05
+E     
+E     comparison failed
+E     Obtained: 80
+E     Expected: 20.0 ± 2.0e-05
+---------------------------- Captured stdout call -----------------------------
+Bad, bad, bad in rebalance
+sim_initial_allocation_mode:dont-rebalance
+______ test_rebalance_maintain_current_allocation_uses_household_targets ______
+tests\module_tests\sim\engines\test_portfolioEngine.py:582: in test_rebalance_maintain_current_allocation_uses_household_targets
+    assert ps.eq_pre == pytest.approx(100 * 0.6)
+E   assert 40.0 == 60.0 ± 6.0e-05
+E     
+E     comparison failed
+E     Obtained: 40.0
+E     Expected: 60.0 ± 6.0e-05
+---------------------------- Captured stdout call -----------------------------
+Bad, bad, bad in rebalance
+sim_initial_allocation_mode:maintain-current-allocation
+____________ test_schema_and_required_inputs_match_approved_design ____________
+tests\module_tests\sim\test_simulation_config.py:32: in test_schema_and_required_inputs_match_approved_design
+    assert config.sim_initial_allocation_mode == "none"
+E   AssertionError: assert 'original-allocation' == 'none'
+E     
+E     - none
+E     + original-allocation
+=========================== short test summary info ===========================
+FAILED tests\deterministic_tests\test_17_maintain_current_allocation_rebalance_mode.py::test_maintain_current_allocation_rebalance_mode_nominal
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s1_single]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s2_married_nominal]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s2_married_real]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s2_married_raw]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s3_expenses]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s3_withdrawals]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s3_tax_funding]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s4_correlated]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s4_uncorrelated]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s5_historical_nominal]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s5_historical_real]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s6_baseline]
+FAILED tests\deterministic_tests\test_numerical_references.py::test_complete_core_matches_accepted_reference[s6_modified]
+FAILED tests\invariant_tests\test_run_context_lifecycle.py::test_allocation_and_normalized_yields_keep_configuration_independent
+FAILED tests\module_tests\gui\test_gui_portfolioSimulation.py::test_init_sets_stringvars_from_settings
+FAILED tests\module_tests\gui\test_gui_portfolioSimulation.py::test_bind_var_updates_settings_and_ignores_invalid
+FAILED tests\module_tests\gui\test_gui_portfolioSimulation.py::test_toggle_fund_expense_entry_enables_and_disables
+FAILED tests\module_tests\gui\test_gui_portfolioSimulation.py::test_toggle_custom_entries_shows_and_hides_custom_block
+FAILED tests\module_tests\gui\test_gui_portfolioSimulation.py::test_custom_percent_vars_update_settings_when_custom_selected
+FAILED tests\module_tests\sim\engines\test_portfolioEngine.py::test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings
+FAILED tests\module_tests\sim\engines\test_portfolioEngine.py::test_create_sim_portfolio_maintain_current_allocation_applies_household_targets
+FAILED tests\module_tests\sim\engines\test_portfolioEngine.py::test_rebalance_dont_rebalance_uses_stored_ratios
+FAILED tests\module_tests\sim\engines\test_portfolioEngine.py::test_rebalance_maintain_current_allocation_uses_household_targets
+FAILED tests\module_tests\sim\test_simulation_config.py::test_schema_and_required_inputs_match_approved_design
+25 failed, 2158 passed, 2 skipped in 54.47s

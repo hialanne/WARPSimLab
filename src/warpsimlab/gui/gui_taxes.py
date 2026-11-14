@@ -89,7 +89,6 @@ class TaxesEditFrame(ScalableFrameMixin, ttk.Frame):
         self._add_section_header("Federal Taxes")
         self._add_text("Taxes are approximated.  Examples are:")
         self._add_text("  100% of social security is taxed.")
-        self._add_text("  After tax interest and dividends are not taxed until spent.")
 
         self._add_calculate_income_taxes()
         self._add_filing_status()

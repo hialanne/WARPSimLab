@@ -1,4 +1,4 @@
-"""Accepted pre-refactor financial outputs; no generation/update execution path."""
+"""Accepted financial outputs, including independently checked allocation changes."""
 
 from functools import lru_cache
 
@@ -9,6 +9,11 @@ from tests.numerical_reference_helpers import (
     ATOL, RTOL, compare_core, load_reference, read_json,
 )
 from tests.numerical_reference_scenarios import CASES, DATA, activation_checks, run_case
+
+
+REVISED_CASES = ("s1_single", "s2_married_nominal", "s2_married_real", "s2_married_raw",
+    "s4_correlated", "s4_uncorrelated", "s5_historical_nominal", "s5_historical_real")
+ALLOCATION_DATA = DATA.parent / "allocation_redesign"
 
 
 def _without_legacy_allocation_defaults(value, portfolio_inputs=None):
@@ -32,6 +37,9 @@ def _without_legacy_allocation_defaults(value, portfolio_inputs=None):
                 assert item is None
             elif is_config and key in portfolio_inputs:
                 assert item == portfolio_inputs[key], f"Redundant portfolio differs from explicit inputs: {key}"
+            elif key == "sim_initial_allocation_mode" and item in {
+                    "none", "dont-rebalance", "maintain-current-allocation"}:
+                projected[key] = "original-allocation"
             else:
                 projected[key] = _without_legacy_allocation_defaults(item, portfolio_inputs)
         return projected
@@ -64,7 +72,11 @@ def test_complete_core_matches_accepted_reference(name, manifest, current_result
     checks = activation_checks(name, actual)
     assert all(checks.values()), f"{name}: inactive mechanisms: {[k for k, v in checks.items() if not v]}"
     assert checks == entry["activation"], f"{name}: activation contract changed"
-    expected = load_reference(DATA, name, entry)
+    directory = DATA
+    if name in REVISED_CASES:
+        directory = ALLOCATION_DATA
+
+    expected = load_reference(directory, name, entry)
     # Extend only the new disabled-QCD schema; every approved numerical leaf remains unchanged.
     for owner in ("husband", "wife"):
         expected["qcd_" + owner] = np.zeros_like(expected["rmd_" + owner])

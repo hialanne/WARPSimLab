@@ -137,7 +137,7 @@ def make_portfolio(
 def make_config(
     *,
     include_realestate=False,
-    sim_initial_allocation_mode="dont-rebalance",
+    sim_initial_allocation_mode="original-allocation",
     custom_stock=0.7,
     custom_bonds=0.2,
     custom_cash=0.1,
@@ -152,9 +152,6 @@ def make_config(
     cs_std=0.0,
     re_std=0.0,
     second_person_enabled=False,
-    household_eq_target=1 / 3,
-    household_bd_target=1 / 3,
-    household_cs_target=1 / 3,
     post_tax_bond_interest_yield=0.0,
     post_tax_cash_interest_yield=0.0,
     post_tax_equity_dividend_yield=0.0,
@@ -180,8 +177,7 @@ def make_config(
         post_tax_cash_interest_yield=post_tax_cash_interest_yield,
         post_tax_equity_dividend_yield=post_tax_equity_dividend_yield,
     )
-    run_context = RunContext(household_eq_target=household_eq_target, household_bd_target=household_bd_target,
-        household_cs_target=household_cs_target, post_tax_bond_interest_yield_normalized=post_tax_bond_interest_yield,
+    run_context = RunContext(post_tax_bond_interest_yield_normalized=post_tax_bond_interest_yield,
         post_tax_cash_interest_yield_normalized=post_tax_cash_interest_yield,
         post_tax_equity_dividend_yield_normalized=post_tax_equity_dividend_yield)
     return config, run_context
@@ -196,7 +192,7 @@ def test_initialize_portfolio_returns_inputs():
     assert out == (1, 2, 3, 4, 5, 6)
 
 
-def test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings():
+def test_create_sim_portfolio_original_allocation_records_ratios_and_keeps_holdings():
     run_context = RunContext()
     p = make_portfolio(
         equity_pre=60,
@@ -207,7 +203,7 @@ def test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings():
         cash_post=60,
         real_estate=999,
     )
-    cfg, run_context = make_config(include_realestate=True, sim_initial_allocation_mode="dont-rebalance")
+    cfg, run_context = make_config(include_realestate=True, sim_initial_allocation_mode="original-allocation")
 
     ps = pe.create_sim_portfolio(p, cfg, run_context=run_context)
 
@@ -228,32 +224,49 @@ def test_create_sim_portfolio_dont_rebalance_sets_ratios_and_keeps_holdings():
     assert ps.cs_ratio_post == pytest.approx(60 / 100)
 
 
-def test_create_sim_portfolio_maintain_current_allocation_applies_household_targets():
-    run_context = RunContext()
-    p = make_portfolio(
-        equity_pre=60,
-        bond_pre=30,
-        cash_pre=10,
-        equity_post=20,
-        bond_post=20,
-        cash_post=60,
-    )
-    cfg, run_context = make_config(
-        sim_initial_allocation_mode="maintain-current-allocation",
-        household_eq_target=0.5,
-        household_bd_target=0.3,
-        household_cs_target=0.2,
-    )
+@pytest.mark.parametrize("mode,ratios", [
+    ("original-allocation", None), ("30-30-40", (0.3, 0.3, 0.4)),
+    ("50-30-20", (0.5, 0.3, 0.2)), ("70-20-10", (0.7, 0.2, 0.1)),
+    ("custom", (0.7, 0.2, 0.1)),
+])
+def test_initialization_and_rebalance_preserve_each_category_total(mode, ratios):
+    p = make_portfolio(equity_pre=60, bond_pre=30, cash_pre=10,
+        equity_post=40, bond_post=40, cash_post=120, equity_roth=90, bond_roth=150,
+        cash_roth=60, hsa_equity=40, hsa_bond=80, hsa_cash=280, real_estate=999)
+    cfg, run = make_config(include_realestate=True, sim_initial_allocation_mode=mode)
+    ps = pe.create_sim_portfolio(p, cfg, run_context=run)
+    buckets = [("pre", ("eq_pre", "bd_pre", "cs_pre"), (60, 30, 10)),
+        ("post", ("eq_post", "bd_post", "cs_post"), (40, 40, 120)),
+        ("roth", ("eq_roth", "bd_roth", "cs_roth"), (90, 150, 60)),
+        ("hsa", ("hsa_eq", "hsa_bd", "hsa_cs"), (40, 80, 280))]
+    for bucket, attrs, original in buckets:
+        total = sum(original)
+        for asset, attr, amount in zip(("eq", "bd", "cs"), attrs, original):
+            expected = amount
+            if ratios is not None:
+                expected = total * ratios[("eq", "bd", "cs").index(asset)]
 
-    ps = pe.create_sim_portfolio(p, cfg, run_context=run_context)
+            assert getattr(ps, attr) == pytest.approx(expected)
+            if ratios is None:
+                assert getattr(ps, f"{asset}_ratio_{bucket}") == pytest.approx(amount / total)
 
-    assert ps.eq_pre == pytest.approx(50.0)
-    assert ps.bd_pre == pytest.approx(30.0)
-    assert ps.cs_pre == pytest.approx(20.0)
+        # Unequal returns create drift within every category.
+        for attr, growth in zip(attrs, (1.1, 1.02, 1.0)):
+            setattr(ps, attr, getattr(ps, attr) * growth)
 
-    assert ps.eq_post == pytest.approx(50.0)
-    assert ps.bd_post == pytest.approx(30.0)
-    assert ps.cs_post == pytest.approx(20.0)
+    totals = []
+    for _, attrs, _ in buckets:
+        totals.append(sum(getattr(ps, attr) for attr in attrs))
+    pe.rebalance(ps, cfg, run_context=run)
+    for (_, attrs, original), total in zip(buckets, totals):
+        for index, attr in enumerate(attrs):
+            target = original[index] / sum(original)
+            if ratios is not None:
+                target = ratios[index]
+
+            assert getattr(ps, attr) == pytest.approx(total * target)
+        assert sum(getattr(ps, attr) for attr in attrs) == pytest.approx(total)
+    assert ps.re_post == 999
 
 
 def test_create_sim_portfolio_preset_rebalance_70_20_10_applies_to_pre_and_post():
@@ -302,72 +315,38 @@ def test_create_sim_portfolio_custom_rebalance_applies_to_pre_and_post():
     assert ps.cs_post == pytest.approx(20.0)
 
 
-def test_compute_household_allocation_targets_single_person():
-    run_context = RunContext()
-    husband = make_portfolio(
-        equity_pre=60,
-        bond_pre=20,
-        cash_pre=20,
-        equity_post=40,
-        bond_post=10,
-        cash_post=10,
-    )
-    cfg, run_context = make_config(second_person_enabled=False)
-
-    pe.compute_household_allocation_targets(husband, None, cfg, run_context=run_context)
-
-    total_eq = 60 + 40
-    total_bd = 20 + 10
-    total_cs = 20 + 10
-    total = total_eq + total_bd + total_cs
-
-    assert run_context.household_eq_target == pytest.approx(total_eq / total)
-    assert run_context.household_bd_target == pytest.approx(total_bd / total)
-    assert run_context.household_cs_target == pytest.approx(total_cs / total)
+def test_original_allocation_empty_categories_have_no_invented_targets():
+    cfg, run = make_config(sim_initial_allocation_mode="original-allocation")
+    ps = pe.create_sim_portfolio(make_portfolio(), cfg, run_context=run)
+    assert ps.total_value == 0
+    for bucket in ("pre", "post", "roth", "hsa"):
+        for asset in ("eq", "bd", "cs"):
+            assert getattr(ps, f"{asset}_ratio_{bucket}") == 0
 
 
-def test_compute_household_allocation_targets_two_people():
-    run_context = RunContext()
-    husband = make_portfolio(
-        equity_pre=50,
-        bond_pre=20,
-        cash_pre=10,
-        equity_post=20,
-        bond_post=0,
-        cash_post=0,
-    )
-    wife = make_portfolio(
-        equity_pre=30,
-        bond_pre=10,
-        cash_pre=10,
-        equity_post=20,
-        bond_post=20,
-        cash_post=10,
-    )
-    cfg, run_context = make_config(second_person_enabled=True)
-
-    pe.compute_household_allocation_targets(husband, wife, cfg, run_context=run_context)
-
-    total_eq = 50 + 20 + 30 + 20
-    total_bd = 20 + 0 + 10 + 20
-    total_cs = 10 + 0 + 10 + 10
-    total = total_eq + total_bd + total_cs
-
-    assert run_context.household_eq_target == pytest.approx(total_eq / total)
-    assert run_context.household_bd_target == pytest.approx(total_bd / total)
-    assert run_context.household_cs_target == pytest.approx(total_cs / total)
+def test_original_allocation_empty_starting_category_keeps_new_assets():
+    cfg, run = make_config(sim_initial_allocation_mode="original-allocation")
+    ps = pe.create_sim_portfolio(make_portfolio(equity_pre=100), cfg, run_context=run)
+    ps.eq_post, ps.bd_post, ps.cs_post = 20, 30, 50
+    ps.eq_roth, ps.bd_roth, ps.cs_roth = 10, 20, 30
+    ps.hsa_eq, ps.hsa_bd, ps.hsa_cs = 5, 10, 15
+    pe.rebalance(ps, cfg, run_context=run)
+    assert (ps.eq_pre, ps.bd_pre, ps.cs_pre) == (100, 0, 0)
+    assert (ps.eq_post, ps.bd_post, ps.cs_post) == (20, 30, 50)
+    assert (ps.eq_roth, ps.bd_roth, ps.cs_roth) == (10, 20, 30)
+    assert (ps.hsa_eq, ps.hsa_bd, ps.hsa_cs) == (5, 10, 15)
 
 
-def test_compute_household_allocation_targets_empty_defaults_to_thirds():
-    run_context = RunContext()
-    husband = make_portfolio()
-    cfg, run_context = make_config(second_person_enabled=False)
-
-    pe.compute_household_allocation_targets(husband, None, cfg, run_context=run_context)
-
-    assert run_context.household_eq_target == pytest.approx(1 / 3)
-    assert run_context.household_bd_target == pytest.approx(1 / 3)
-    assert run_context.household_cs_target == pytest.approx(1 / 3)
+def test_survivor_merge_uses_deceased_current_allocation_when_original_category_empty():
+    cfg, run = make_config(sim_initial_allocation_mode="original-allocation")
+    survivor = pe.create_sim_portfolio(make_portfolio(equity_pre=80, bond_pre=20), cfg, run_context=run)
+    deceased = pe.create_sim_portfolio(make_portfolio(), cfg, run_context=run)
+    deceased.eq_pre, deceased.bd_pre, deceased.cs_pre = 60, 100, 40
+    pe.transfer_portfolio_to_survivor(deceased, survivor)
+    survivor.eq_pre, survivor.bd_pre, survivor.cs_pre = 200, 50, 50
+    pe.rebalance(survivor, cfg, run_context=run)
+    assert (survivor.eq_pre, survivor.bd_pre, survivor.cs_pre) == pytest.approx((140, 120, 40))
+    assert deceased.total_value == 0
 
 
 def test_estimate_post_tax_income_components_uses_post_tax_yields():
@@ -543,10 +522,10 @@ def test_apply_fund_expenses_reduces_all_components_and_returns_removed_amount()
     assert removed == pytest.approx(total_before - total_after)
 
 
-def test_rebalance_dont_rebalance_uses_stored_ratios():
+def test_rebalance_original_allocation_uses_stored_ratios():
     run_context = RunContext()
     ps = DummyPortfolioState(eq_pre=0, bd_pre=0, cs_pre=0, eq_post=50, bd_post=25, cs_post=25)
-    cfg, run_context = make_config(sim_initial_allocation_mode="dont-rebalance")
+    cfg, run_context = make_config(sim_initial_allocation_mode="original-allocation")
 
     ps.eq_ratio_post = 0.2
     ps.bd_ratio_post = 0.3
@@ -567,25 +546,38 @@ def test_rebalance_dont_rebalance_uses_stored_ratios():
     assert ps.cs_post == pytest.approx(100 * 0.5)
 
 
-def test_rebalance_maintain_current_allocation_uses_household_targets():
-    run_context = RunContext()
-    ps = DummyPortfolioState(eq_pre=40, bd_pre=30, cs_pre=30, eq_post=50, bd_post=25, cs_post=25)
-    cfg, run_context = make_config(
-        sim_initial_allocation_mode="maintain-current-allocation",
-        household_eq_target=0.6,
-        household_bd_target=0.2,
-        household_cs_target=0.2,
-    )
+def test_original_allocation_keeps_spouse_targets_independent():
+    cfg, run = make_config(sim_initial_allocation_mode="original-allocation")
+    husband = pe.create_sim_portfolio(make_portfolio(equity_pre=80, bond_pre=20), cfg, run_context=run)
+    wife = pe.create_sim_portfolio(make_portfolio(equity_pre=100, bond_pre=100), cfg, run_context=run)
+    husband.eq_pre, husband.bd_pre = 90, 10
+    wife.eq_pre, wife.bd_pre = 150, 50
+    pe.rebalance(husband, cfg, run_context=run)
+    pe.rebalance(wife, cfg, run_context=run)
+    assert (husband.eq_pre, husband.bd_pre, husband.cs_pre) == pytest.approx((80, 20, 0))
+    assert (wife.eq_pre, wife.bd_pre, wife.cs_pre) == pytest.approx((100, 100, 0))
 
-    pe.rebalance(ps, cfg, run_context=run_context)
 
-    assert ps.eq_pre == pytest.approx(100 * 0.6)
-    assert ps.bd_pre == pytest.approx(100 * 0.2)
-    assert ps.cs_pre == pytest.approx(100 * 0.2)
-
-    assert ps.eq_post == pytest.approx(100 * 0.6)
-    assert ps.bd_post == pytest.approx(100 * 0.2)
-    assert ps.cs_post == pytest.approx(100 * 0.2)
+def test_survivor_targets_use_transfer_time_category_balances_and_empty_target_fallback():
+    cfg, run = make_config(sim_initial_allocation_mode="original-allocation", include_realestate=True)
+    survivor = pe.create_sim_portfolio(make_portfolio(equity_pre=80_000, bond_pre=20_000,
+        cash_post=50_000, equity_roth=20_000, real_estate=1_000), cfg, run_context=run)
+    deceased = pe.create_sim_portfolio(make_portfolio(equity_pre=50_000, bond_pre=50_000,
+        equity_post=150_000, bond_roth=40_000, hsa_cash=60_000, real_estate=2_000), cfg, run_context=run)
+    # The deceased category grows to 200k before transfer; initial balances cannot be the weights.
+    deceased.eq_pre, deceased.bd_pre = 150_000, 50_000
+    # The survivor's initially empty HSA acquires assets without an original target.
+    survivor.hsa_eq, survivor.hsa_bd = 30_000, 10_000
+    pe.transfer_portfolio_to_survivor(deceased, survivor)
+    assert (survivor.eq_pre, survivor.bd_pre, survivor.cs_pre) == (230_000, 70_000, 0)
+    pe.rebalance(survivor, cfg, run_context=run)
+    assert (survivor.eq_pre, survivor.bd_pre, survivor.cs_pre) == pytest.approx((180_000, 120_000, 0))
+    assert (survivor.eq_post, survivor.bd_post, survivor.cs_post) == pytest.approx((150_000, 0, 50_000))
+    assert (survivor.eq_roth, survivor.bd_roth, survivor.cs_roth) == pytest.approx((20_000, 40_000, 0))
+    assert (survivor.hsa_eq, survivor.hsa_bd, survivor.hsa_cs) == pytest.approx((30_000, 10_000, 60_000))
+    assert survivor.re_post == 3_000
+    assert deceased.total_value == 0
+    assert deceased.re_post == 0
 
 
 def test_rebalance_custom_uses_custom_ratios():

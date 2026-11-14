@@ -1,0 +1,17 @@
+..............................................................s......... [ 68%]
+...............FF................                                        [100%]
+================================== FAILURES ===================================
+_ test_gui_rebalance_setting_reaches_config_independently_of_stale_controls[False] _
+tests\module_tests\sim\test_simulation_config.py:163: in test_gui_rebalance_setting_reaches_config_independently_of_stale_controls
+    assert config.rebalance_every_year is rebalance
+E   assert True is False
+E    +  where True = SimulationConfig(start_year=2026, years_to_simulate=8, inflation_rate=0.025, num_sims=3, fund_expense=0.002, use_fund_...0.55],\n       [-0.2 ,  1.  ,  0.2 ,  0.1 ],\n       [ 0.  ,  0.2 ,  1.  ,  0.05],\n       [ 0.55,  0.1 ,  0.05,  1.  ]])).rebalance_every_year
+_ test_gui_rebalance_setting_reaches_config_independently_of_stale_controls[True] _
+tests\module_tests\sim\test_simulation_config.py:163: in test_gui_rebalance_setting_reaches_config_independently_of_stale_controls
+    assert config.rebalance_every_year is rebalance
+E   assert False is True
+E    +  where False = SimulationConfig(start_year=2026, years_to_simulate=8, inflation_rate=0.025, num_sims=3, fund_expense=0.002, use_fund_...0.55],\n       [-0.2 ,  1.  ,  0.2 ,  0.1 ],\n       [ 0.  ,  0.2 ,  1.  ,  0.05],\n       [ 0.55,  0.1 ,  0.05,  1.  ]])).rebalance_every_year
+=========================== short test summary info ===========================
+FAILED tests\module_tests\sim\test_simulation_config.py::test_gui_rebalance_setting_reaches_config_independently_of_stale_controls[False]
+FAILED tests\module_tests\sim\test_simulation_config.py::test_gui_rebalance_setting_reaches_config_independently_of_stale_controls[True]
+2 failed, 102 passed, 1 skipped in 4.47s

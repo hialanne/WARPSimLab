@@ -1,10 +1,10 @@
 
-from src.warpsimlab.sim.simulationObject import RunContext
 import numpy as np
 import pytest
 from types import SimpleNamespace
 
 from src.warpsimlab.sim.run_sim_core import simulate_yearly_portfolios
+from tests.architectural_helpers import make_person as real_person, make_simulation, make_portfolio as real_portfolio
 
 
 class FlatExpenses:
@@ -97,7 +97,7 @@ def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal"):
         post_tax_bond_interest_yield=0.0,
         post_tax_cash_interest_yield=0.0,
         sim_type="portfolio_sim",
-        sim_initial_allocation_mode="maintain-current-allocation",
+        sim_initial_allocation_mode="original-allocation",
         rebalance_every_year=True,
         include_realestate=False,
         retirement_withdraw_mode="Off",
@@ -105,9 +105,6 @@ def make_sim(*, years, inflation_rate=0.0, inflation_mode="nominal"):
         retirement_withdraw_dollars=0.0,
         always_use_expense_mode=True,
         scenario_expense_multiplier=1.0,
-        household_eq_target=None,
-        household_bd_target=None,
-        household_cs_target=None,
         custom_stock=0.0,
         custom_bonds=0.0,
         custom_cash=1.0,
@@ -142,32 +139,40 @@ def row(results, key):
 
 
 def assert_discounted(raw_results, real_results, key, inflation_rate):
-    discount = np.array([(1.0 + inflation_rate) ** t for t in range(raw_results[key].shape[1])])
+    discount = (1.0 + inflation_rate) ** np.arange(raw_results[key].shape[1])
     assert row(real_results, key) == pytest.approx(row(raw_results, key) / discount)
 
 
-def test_maintain_current_allocation_rebalance_mode_nominal():
-    run_context = RunContext()
-    results, run_context = run_sim(make_sim(years=1, inflation_rate=0.0, inflation_mode="nominal"))
-
-    # Household targets are computed once from the combined starting investable assets.
-    assert run_context.household_eq_target == pytest.approx(0.50)
-    assert run_context.household_bd_target == pytest.approx(0.00)
-    assert run_context.household_cs_target == pytest.approx(0.50)
-
-    # Year 0 already reflects the maintain-current-allocation mapping per portfolio.
+def test_original_allocation_preserves_spouse_and_category_holdings_nominal():
+    results, _ = run_sim(make_sim(years=1, inflation_rate=0.0, inflation_mode="nominal"))
     assert row(results, "total_assets") == pytest.approx([200.0, 210.0])
+    assert row(results, "pre_tax_assets") == pytest.approx([100.0, 110.0])
+    assert row(results, "post_tax_assets") == pytest.approx([100.0, 100.0])
     assert row(results, "bonds") == pytest.approx([0.0, 0.0])
-    assert row(results, "cash") == pytest.approx([100.0, 105.0])
-
-    # Household cash remains at 50% of total after the yearly rebalance.
-    assert row(results, "cash")[1] == pytest.approx(0.50 * row(results, "total_assets")[1])
+    assert row(results, "cash") == pytest.approx([100.0, 100.0])
 
 
-def test_maintain_current_allocation_rebalance_mode_real_mode_deflates_correctly():
+def test_original_allocation_real_mode_deflates_correctly():
     infl = 0.03
     raw_results, _ = run_sim(make_sim(years=1, inflation_rate=infl, inflation_mode="nominal"))
     real_results, _ = run_sim(make_sim(years=1, inflation_rate=infl, inflation_mode="real"))
 
     for key in ["total_assets", "cash", "bonds", "pre_tax_assets", "post_tax_assets"]:
         assert_discounted(raw_results, real_results, key, infl)
+
+
+@pytest.mark.parametrize("rebalance,expected_cash", [(True, [50, 52.5, 55.125]), (False, [50, 50, 50])])
+def test_annual_rebalance_restores_original_targets_or_allows_drift(rebalance, expected_cash):
+    cfg = make_simulation(years_to_simulate=2, eq_mean=0.1,
+        sim_initial_allocation_mode="original-allocation", rebalance_every_year=rebalance)
+    portfolio = real_portfolio(equity_pre=50, cash_pre=50)
+    results = simulate_yearly_portfolios(portfolio, real_portfolio(), real_person(), real_person(),
+        FlatExpenses(0), cfg, num_sims=1)
+    assert row(results, "cash") == pytest.approx(expected_cash)
+    assert row(results, "post_tax_assets") == pytest.approx([0, 0, 0])
+    assert row(results, "pre_tax_assets")[:2] == pytest.approx([100, 105])
+    expected_total = 110.25
+    if not rebalance:
+        expected_total = 110.5
+
+    assert row(results, "total_assets")[2] == pytest.approx(expected_total)

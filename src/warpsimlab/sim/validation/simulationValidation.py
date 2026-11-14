@@ -33,9 +33,7 @@ SIM_TYPES = {
 }
 
 INITIAL_ALLOCATION_MODES = {
-    "none",
-    "maintain-current-allocation",
-    "dont-rebalance",
+    "original-allocation",
     "30-30-40",
     "50-30-20",
     "70-20-10",

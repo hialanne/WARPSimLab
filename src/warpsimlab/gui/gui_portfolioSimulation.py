@@ -65,11 +65,9 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
                 "Average annual fund expenses as a percentage. "
                 "Only active if 'Use and Show Fund Expenses' is checked."
             ),
-            "maintain-current-allocation": (
-                "Choose to maintain the current portfolio allocation,\n"
-                "choose a pre-set rebalance strategy, or use 'Custom' to define your own "
-                "portfolio allocations.\n"
-                "Percentages are Stocks, Bonds and Cash."
+            "original-allocation": (
+                "Start with the stock, bond, and cash values entered for each investment "
+                "account. Original allocations are preserved separately for each account."
             ),
             "custom_stock_var": "Custom percentage of your portfolio allocated to stocks.",
             "custom_bonds_var": "Custom percentage of your portfolio allocated to bonds.",
@@ -205,8 +203,9 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
         row += 1
 
         # --- Rebalance Options ---
+        # --- Starting Portfolio Allocation ---
         ttk.Label(
-            self, text="Simulate Re-balanced Portfolio", font=self._section_font
+            self, text="Starting Portfolio Allocation", font=self._section_font
         ).grid(row=row, column=0, sticky="w")
 
         row += 1
@@ -219,14 +218,8 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
             lambda x, s=settings: s.__setitem__("initial_allocation_mode", x)
         )
 
-        rb_current = ttk.Radiobutton(
-            self, text="Maintain Current Allocation",
-            variable=self.initial_allocation_mode_var,
-            value="maintain-current-allocation",
-            style="PortfolioSimulation.TRadiobutton"
-        )
-        rb_dont = ttk.Radiobutton(
-            self, text="Don't Rebalance",
+        rb_original = ttk.Radiobutton(
+            self, text="Use Original Allocations",
             variable=self.initial_allocation_mode_var,
             value="dont-rebalance",
             style="PortfolioSimulation.TRadiobutton"
@@ -256,15 +249,15 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
             style="PortfolioSimulation.TRadiobutton"
         )
 
-        radiobuttons = [rb_current, rb_dont, rb_30, rb_50, rb_70, rb_custom]
+        radiobuttons = [rb_original, rb_30, rb_50, rb_70, rb_custom]
 
         for i, rb in enumerate(radiobuttons):
             rb.grid(row=row + i, column=0, columnspan=2, sticky="w", pady=0)
 
-        self.custom_anchor_row = row + 4
+        self.custom_anchor_row = row + len(radiobuttons)
 
         Tooltip(
-            rb_current, self.tooltips_text["maintain-current-allocation"],
+            rb_original, self.tooltips_text["original-allocation"],
             font=self._tooltip_font
         )
 
@@ -317,6 +310,29 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
         )
         self.toggle_custom_entries()
 
+        row = self.custom_anchor_row + 3
+        sep3 = ttk.Separator(self, orient="horizontal")
+        sep3.grid(row=row, column=0, columnspan=2, sticky="ew", pady=8)
+        row += 1
+
+        self.rebalance_every_year_var = tk.BooleanVar(value=settings["rebalance_every_year"])
+
+        self.rebalance_every_year_cb = ttk.Checkbutton(
+            self, text="Rebalance Every Year", variable=self.rebalance_every_year_var,
+            style="PortfolioSimulation.TCheckbutton"
+        )
+        self.rebalance_every_year_cb.grid(row=row, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        Tooltip(
+            self.rebalance_every_year_cb,
+            "At the end of each simulation year, restore the selected stock, bond, and cash "
+            "percentages within each investment account. If unchecked, allocations are "
+            "allowed to drift over time.",
+            font=self._tooltip_font
+        )
+        self._bind_var(
+            self.rebalance_every_year_var,
+            lambda x, s=settings: s.__setitem__("rebalance_every_year", x)
+        )
 
     def _apply_scaled_styles(self):
         style = ttk.Style(self)

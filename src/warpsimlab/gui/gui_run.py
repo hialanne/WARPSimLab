@@ -100,7 +100,9 @@ class PortfolioSimulatorGUI_RunMixin:
         else:
             inflation               = self.inflation
             fund_expense            = sim_cfg.get("fund_expense")
-            initial_allocation_mode = sim_cfg.get("initial_allocation_mode", "none")
+            initial_allocation_mode = sim_cfg.get("initial_allocation_mode", "dont-rebalance")
+            if initial_allocation_mode in ("maintain-current-allocation", "original-allocation", "none"):
+                initial_allocation_mode = "dont-rebalance"
             custom_stock = self._simulation_float("Custom stock allocation", sim_cfg.get("custom_stock", 0)) / 100
             custom_bonds = self._simulation_float("Custom bond allocation", sim_cfg.get("custom_bonds", 0)) / 100
             custom_cash = self._simulation_float("Custom cash allocation", sim_cfg.get("custom_cash", 0)) / 100
@@ -111,7 +113,7 @@ class PortfolioSimulatorGUI_RunMixin:
             use_snapshot_annotations = controls.get("annotate_plots")
             user_annotation_strings = controls.get("user_annotation_strings", [])
             scenario_explorer_annotations = build_normal_run_annotations(controls)
-            rebalance_every_year = bool(controls.get("rebalance_every_year", True))
+            rebalance_every_year = bool(sim_cfg.get("rebalance_every_year", True))
             
 
         # --- Market data ---

@@ -78,8 +78,8 @@ class SequenceRiskEditFrame(ScalableFrameMixin, ttk.Frame):
         ttk.Label(
             parent,
             text=(
-                "Use these controls to explore how a downturn at different points in retirement "
-                "might affect withdrawal outcomes. These settings are educational scenario inputs only."
+                "See how the timing, length, and severity of a recession "
+                "might affect your retirement savings."
             ),
             justify="left", wraplength=360, font=self._description_font
         ).grid(row=self._next_row(), column=0, columnspan=2, sticky="w", pady=(0, 10))

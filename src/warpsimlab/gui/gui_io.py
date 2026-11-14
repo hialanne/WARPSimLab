@@ -169,7 +169,7 @@ class PortfolioSimulatorGUI_IOMixin:
         if not file_path:
             return
 
-        self._load_from_json(file_path)
+        self._load_from_json(file_path, remember_directory=False)
 
 
     def _get_examples_directory(self):
@@ -235,7 +235,7 @@ class PortfolioSimulatorGUI_IOMixin:
         return result
 
 
-    def _load_from_json(self, file_path):
+    def _load_from_json(self, file_path, remember_directory=True):
         try:
             # Load JSON
             data = load_financial_data_from_json(file_path)
@@ -414,7 +414,8 @@ class PortfolioSimulatorGUI_IOMixin:
                     widget.destroy()
 
             self.loaded_data_file = str(file_path)
-            self._remember_data_directory(file_path)
+            if remember_directory:
+                self._remember_data_directory(file_path)
 
             message = f"Financial data loaded successfully from:\n{file_path}"
             if legacy_file:

@@ -69,6 +69,8 @@ def _make_dummy_gui(tmp_path: Path):
         pass
 
     gui = DummyGUI()
+    gui = DummyGUI()
+    gui._get_recent_data_dirs_file = lambda: tmp_path / "recent.json"
     gui.warpsimlab_version = "4.3.0"
 
     # Minimal people
@@ -233,8 +235,9 @@ def test_load_examples_from_json_loads_financial_data_average(
 
     loaded = {}
 
-    def fake_load_from_json(self, file_path):
+    def fake_load_from_json(self, file_path, remember_directory=True):
         loaded["path"] = Path(file_path)
+        loaded["remember_directory"] = remember_directory
 
     monkeypatch.setattr(
         mod.PortfolioSimulatorGUI_IOMixin,
@@ -247,6 +250,7 @@ def test_load_examples_from_json_loads_financial_data_average(
 
     assert Path(dialog_args["initialdir"]) == example_dir
     assert loaded["path"] == example_file
+    assert loaded["remember_directory"] is False
 
 
 def test_load_values_from_json_prompts_when_default_missing(monkeypatch, tmp_path):
