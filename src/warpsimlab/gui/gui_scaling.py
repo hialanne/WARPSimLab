@@ -1,5 +1,7 @@
 # gui_scaling.py
 
+import sys
+
 
 class ScalableClientMixin:
     """Reusable runtime scaling support for WARPSimLab GUI components."""
@@ -24,6 +26,9 @@ class ScalableClientMixin:
     def _apply_gui_scale(self):
         scale = self._get_gui_scale()
 
+        #if sys.platform == "darwin":
+        #    scale *= 1.3
+
         for font, base_size in self._scalable_fonts:
             scaled_size = max(1, round(abs(base_size) * scale))
 
@@ -33,7 +38,6 @@ class ScalableClientMixin:
                 font.configure(size=scaled_size)
 
         self._apply_scaled_styles()
-
 
     def _apply_scaled_styles(self):
         pass

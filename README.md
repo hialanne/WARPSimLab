@@ -65,8 +65,11 @@ environment and installing all dependencies.
 
 ### Building a packaged application
 
-`WARPSimLab.spec` is a PyInstaller specification for an application named
-`WARPSimLab`.
+`WARPSimLab-Windows.spec` is a PyInstaller specification for an application named
+`WARPSimLab` on Windows.
+
+`WARPSimLab-macOS.spec` is a PyInstaller specification for an application named
+`WARPSimLab` on Mac.
 
 TODO: Add a verified PyInstaller version and build command. The data paths in the
 specification should also be checked against the current `src/warpsimlab/` layout
@@ -119,7 +122,8 @@ settings. Tests are run using `python -m pytest`.
 
 ```text
 WARPSimLab.py          Source launcher
-WARPSimLab.spec        PyInstaller specification
+WARPSimLab-Windows.spec PyInstaller specification for Windows
+WARPSimLab-macOS.spec  PyInstaller specification for macOS
 src/warpsimlab/        Application package
   dataClasses/         Financial state and input data classes
   dataFiles/           Bundled historical market and inflation data

@@ -621,38 +621,138 @@ Do not announce the release until the public download path has been tested.
 * [ ] Test the complete public download process.
 * [ ] Announce the release.
 
+## Building the macOS Application and DMG
 
-Here are the Mac instructions:
+WARPSimLab for macOS is built using Python 3.13 and PyInstaller on an Apple Silicon Mac (ARM64).
 
-# Activate Python environment
+The resulting `.dmg` contains a standalone `.app`. End users do not need Python or any additional Python packages.
+
+All commands are executed from the WARPSimLab repository root.
+
+### 1. Create the Python virtual environment (first time only)
+
+If `.venv-mac` does not already exist, create it using Python 3.13:
+
+```bash
+python3.13 -m venv .venv-mac
+```
+
+Activate the environment:
+
+```bash
 source .venv-mac/bin/activate
+```
 
-# Build WARPSimLab.app
+Install the required dependencies:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install pyobjc-framework-Cocoa
+```
+
+PyObjC is required by WARPSimLab's macOS window activation code. The separate installation is necessary if it has not been added to `requirements.txt`.
+
+The virtual environment only needs to be created once. For subsequent builds, simply activate the existing environment:
+
+```bash
+source .venv-mac/bin/activate
+```
+
+### 2. Build the standalone macOS application
+
+```bash
 python -m PyInstaller --clean --noconfirm WARPSimLab-macOS.spec
+```
 
-# Create clean DMG staging directory
-rm -rf dist/dmg-staging
-mkdir -p dist/dmg-staging
+This produces:
 
-# Copy application bundle
-ditto dist/WARPSimLab.app dist/dmg-staging/WARPSimLab.app
+```text
+dist/
+    WARPSimLab/
+    WARPSimLab.app
+```
 
-# Add Applications shortcut
-ln -s /Applications dist/dmg-staging/Applications
+The PyInstaller specification explicitly includes the Matplotlib `TkAgg` backend, which is necessary for interactive plots.
 
-# Create compressed DMG
-hdiutil create \
-    -volname "WARPSimLab" \
-    -srcfolder dist/dmg-staging \
-    -format UDZO \
-    -ov \
-    "dist/WARPSimLab-v4.5.1-macOS-arm64.dmg"
+### 3. Test the standalone application
 
-# Generate SHA-256 checksum
-shasum -a 256 dist/WARPSimLab-v4.5.1-macOS-arm64.dmg \
-    > dist/WARPSimLab-v4.5.1-macOS-arm64-SHA256.txt
+Launch the application:
 
-# Open DMG for testing
-open dist/WARPSimLab-v4.5.1-macOS-arm64.dmg
+```bash
+open dist/WARPSimLab.app
+```
 
+Verify that the GUI launches, simulations execute, and Matplotlib plot windows open correctly.
 
+### 4. Prepare the DMG contents
+
+Create a staging directory containing the application and an Applications shortcut:
+
+```bash
+rm -rf dmg
+mkdir -p dmg
+cp -R dist/WARPSimLab.app dmg/
+ln -s /Applications dmg/Applications
+```
+
+The staging directory contains:
+
+```text
+dmg/
+    WARPSimLab.app
+    Applications -> /Applications
+```
+
+### 5. Create the distributable DMG
+
+```bash
+hdiutil create -volname "WARPSimLab" -srcfolder dmg -ov -format UDZO WARPSimLab-v4.6.0-macOS-arm64.dmg
+```
+
+This creates:
+
+```text
+WARPSimLab-v4.6.0-macOS-arm64.dmg
+```
+
+The DMG is compressed using the UDZO format.
+
+Note: Recent macOS versions report that `hdiutil create` is deprecated in favor of `diskutil image create`. The command above has been tested successfully.
+
+Update the version number in the filename for subsequent releases.
+
+### 6. Test the DMG installation
+
+Open the DMG:
+
+```bash
+open WARPSimLab-v4.6.0-macOS-arm64.dmg
+```
+
+In Finder:
+
+1. Drag `WARPSimLab.app` onto the Applications shortcut.
+2. Launch WARPSimLab from `/Applications`.
+3. Verify the GUI, simulations, plots, reports, tutorials, and file operations.
+
+The application should run independently of the development virtual environment.
+
+### 7. Deactivate the virtual environment
+
+```bash
+deactivate
+```
+
+### 8. Distribution notes
+
+- Architecture: Apple Silicon (ARM64).
+- Python build version: 3.13.
+- Packaging: PyInstaller.
+- Distribution format: compressed `.dmg`.
+- Application signing/notarization: not performed.
+- End-user Python installation: not required.
+
+Because the application is unsigned and not notarized, macOS Gatekeeper may block an application downloaded from the internet. A separately downloaded copy must be tested to establish the required installation instructions.
+
+The locally built DMG and its installation process have been tested successfully on the development Mac.

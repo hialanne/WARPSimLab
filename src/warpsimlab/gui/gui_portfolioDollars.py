@@ -38,8 +38,8 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
         self._body_bold_font = self._body_font.copy()
         self._body_bold_font.configure(weight="bold")
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._header_font = self._body_bold_font.copy()
+        self._header_text_font = self._body_font.copy()
         self._column_header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
         self._major_header_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
         self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
@@ -64,7 +64,7 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
         header_frame.grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 8))
 
         ttk.Label(
-            header_frame, text="Balance Sheet > Portfolio Amounts", font=self._header_font
+            header_frame, text="Balance Sheet > Portfolio Amounts ($)", font=self._header_font
         ).pack(side="left")
 
         ttk.Label(
@@ -189,7 +189,7 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
             )
 
             row += 1
-            self._add_money_row(row, "Savings", "cash_post", "Cash and savings held outside retirement accounts")
+            self._add_money_row(row, "Savings ($)", "cash_post", "Cash and savings held outside retirement accounts")
             row += 1
 
             ttk.Separator(self, orient="horizontal").grid(
