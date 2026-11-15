@@ -121,7 +121,7 @@ class ScenarioStateManager:
         s.baseline_retirement_snapshots = ScenarioSnapshots()
         s.baseline_retirement_snapshots.fund_expense = self.main_gui.simulation_settings.get("fund_expense")
         s.baseline_retirement_snapshots.historical_data_multiplier = 100.0
-        s.baseline_retirement_snapshots.rebalance_every_year = bool(controls.get("rebalance_every_year", True))
+        s.baseline_retirement_snapshots.rebalance_every_year = bool(self.main_gui.simulation_settings["rebalance_every_year"])
 
         s.person_snapshots = copy.deepcopy(s.baseline_person_snapshots)
         s.portfolio_snapshots = copy.deepcopy(s.baseline_portfolio_snapshots)

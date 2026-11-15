@@ -61,7 +61,10 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
         self._tab_bold_font.configure(weight="bold")
         self._report_header_font = self._tab_bold_font.copy()
         self._report_body_font = tkfont.nametofont("TkFixedFont").copy()
-        self._report_body_font.configure(size=base_size - 1)
+
+        # Playing with font size.  Add 1 to increase, subtract 1 to decrease font size. 
+        # Be sure to check all three platforms.
+        self._report_body_font.configure(size=base_size)
         self._report_body_bold_font = self._report_body_font.copy()
         self._report_body_bold_font.configure(weight="bold")
 
