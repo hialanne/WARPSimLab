@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Reject known generated artifacts, even if force-added.
+bad_paths=$(
+    git diff --cached --name-only --diff-filter=ACMR |
+    grep -E '^(\.codex_tmp/|codex_logs/|codex_reports/|tests/(\.pytest_tmp[^/]*/|\.pytest_cache/|reports/|.*\.(log|xml)$|.*_output\.txt$))' || true
+)
+
+# New test files must be Python source unless explicitly approved.
+new_nonpython=$(
+    git diff --cached --name-only --diff-filter=A -- tests/ |
+    grep -Ev '\.py$' || true
+)
+
+if [ -n "$bad_paths" ] || [ -n "$new_nonpython" ]; then
+    echo "COMMIT BLOCKED: Generated or unapproved test files are staged."
+
+    if [ -n "$bad_paths" ]; then
+        printf '%s\n' "$bad_paths"
+    fi
+
+    if [ -n "$new_nonpython" ]; then
+        printf '%s\n' "$new_nonpython"
+    fi
+
+    exit 1
+fi
+
+exit 0

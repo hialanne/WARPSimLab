@@ -33,3 +33,18 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Codex-generated output
+.codex_tmp/
+codex_logs/
+codex_reports/
+
+# Pytest temporary directories
+tests/.pytest_tmp*/
+
+# Legacy Codex reports and test results
+tests/reports/
+tests/pytest_*.xml
+tests/sprint*_results.xml
+tests/sprint*_output.txt
+tests/repair_*_output.txt
