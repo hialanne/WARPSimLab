@@ -51,8 +51,8 @@ You may:
 - Improve test isolation and maintainability.
 - Remove unnecessary coupling to implementation details.
 - Run individual tests, test modules, or the full pytest suite.
-- Use temporary files and directories for test execution.
-
+- Use temporary files and directories for test execution only outside tests/.
+- 
 Do not:
 - Change expected financial results merely to make tests pass.
 - Weaken financial assertions to eliminate failures.
@@ -173,11 +173,92 @@ Escalate:
 
 Do not conceal or work around such issues merely to complete an assignment.
 
-## Report Files
 
-Write persistent reports to `codex_reports/` at the project root.
+## Generated Files, Reports, Logs, and Temporary Data
 
-- Create the directory if it does not exist.
-- Keep audit reports, coverage assessments, numerical comparisons, implementation summaries, and failure investigations in this directory.
-- Use descriptive filenames.
-- Do not
+These restrictions are MANDATORY for every Codex assignment.
+
+### Tests Directory
+
+The `tests/` directory is reserved exclusively for:
+- Python test source files.
+- Maintained test fixtures.
+- Explicitly authorized test input files.
+
+NEVER create generated output inside `tests/` or any subdirectory.
+
+This prohibition includes:
+- Pytest temporary directories and files.
+- Logs and captured terminal output.
+- JUnit XML and other test result files.
+- HTML, CSV, JSON, and text reports.
+- Diagnostic files and execution summaries.
+- Generated plots and images.
+- Coverage output.
+- Bytecode caches.
+
+Do not create directories such as `tests/.pytest_tmp_*`.
+
+Tests that generate files must use pytest's temporary directory facilities, configured to write outside `tests/`.
+
+### Required Output Directories
+
+All generated output belongs in these directories at the project root:
+
+- `codex_reports/` - Reports, analysis, coverage summaries, and failure investigations.
+- `codex_logs/` - Pytest logs, captured output, and execution diagnostics.
+- `.codex_tmp/` - Pytest temporary files and other disposable execution artifacts.
+
+Create these directories when needed.
+
+These directories are not part of the test source tree and must not be synchronized into the authoritative repository.
+
+### Pytest Execution
+
+All pytest executions must direct temporary files outside `tests/`.
+
+Use the project root as the working directory.
+
+The standard pytest invocation is:
+
+    python -m pytest --basetemp=.codex_tmp/pytest -p no:cacheprovider
+
+Additional pytest arguments may be appended.
+
+Always set PYTHONDONTWRITEBYTECODE=1 in the execution environment.
+
+Do not use pytest's default temporary directory location.
+
+Do not override --basetemp with a path inside `tests/`.
+
+When generating JUnit XML, direct it to `codex_reports/`.
+
+When capturing pytest output or logs, direct them to `codex_logs/`.
+
+Never place logs or reports in `tests/`, even temporarily.
+
+### Test Code Requirements
+
+New or modified tests must not hardcode output directories inside `tests/`.
+
+Use pytest's `tmp_path` or `tmp_path_factory` fixtures for generated files.
+
+Do not use the test source directory as a writable scratch directory.
+
+Maintained test fixtures may remain under `tests/`, but generated runtime files must not.
+
+### Completion Checks
+
+Before completing an assignment:
+
+1. Inspect `tests/` for unexpected generated files or directories.
+2. Verify that reports are in `codex_reports/`.
+3. Verify that logs are in `codex_logs/`.
+4. Verify that temporary output is in `.codex_tmp/`.
+5. Report any violations.
+
+Do not silently delete existing files to correct a violation.
+
+Do not modify Git configuration or run Git commands.
+
+These rules override any conflicting output-location instructions in an individual task. If an assignment requests generated files inside `tests/`, report the conflict instead of following that instruction.
