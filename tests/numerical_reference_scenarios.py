@@ -1,6 +1,7 @@
 """Small, real-pipeline scenarios shared by read-only tests and manual capture."""
 
 from pathlib import Path
+import copy
 from unittest.mock import patch
 
 import numpy as np
@@ -122,25 +123,29 @@ def build_case(name):
 def run_case(name):
     """Return complete core and the inputs actually supplied, before preparation."""
     if name.startswith("s6_"):
-        # Existing headless Explorer setup exercises real snapshots and GUI builder.
+        # Preserve approved s6 outputs as explicit custom-mode financial references.
+        # Explorer now preserves account allocations and has separate consistency
+        # regressions; these frozen outputs describe the former custom inputs.
         from tests.feature_tests.test_scenario_financial_isolation import make_session, session_input_tree
 
         manager, gui, state = make_session(True)
         inputs = dict(session=json_inputs(session_input_tree(gui, state)),
                       include_realestate=True, plot_style="fill", variant=name)
-        original = gui.build_simulation_from_gui
+        if name == "s6_baseline":
+            persons = state.baseline_person_snapshots
+            portfolios = state.baseline_portfolio_snapshots
+            retirement = state.baseline_retirement_snapshots
+        else:
+            persons = state.person_snapshots
+            portfolios = state.portfolio_snapshots
+            retirement = state.retirement_snapshots
 
-        def observe_builder(*args, **kwargs):
-            config = original(*args, **kwargs)
-            inputs["resolved_config"] = json_inputs(config)
-            return config
-
-        with patch.object(gui, "build_simulation_from_gui", side_effect=observe_builder):
-            if name == "s6_baseline":
-                manager.compute_baseline_results(True, "fill")
-                core = state.baseline_results["p"]["core"]
-            else:
-                core = manager.compute_scenario_results(True, "fill")["p"]["core"]
+        persons, portfolios, retirement = manager.clone_result_inputs(persons, portfolios, retirement)
+        config = gui.build_simulation_from_gui(sim_type="portfolio_sim", use_snapshots=True, retirement_snapshots=retirement)
+        assert config.sim_initial_allocation_mode == "custom"
+        inputs["resolved_config"] = json_inputs(config)
+        core = run_pipeline(portfolios["husband"], portfolios["wife"], persons["husband"], persons["wife"],
+                            copy.deepcopy(gui.expensesDict), config)["core"]
         return core, inputs
     case = build_case(name)
     inputs = json_inputs(case)

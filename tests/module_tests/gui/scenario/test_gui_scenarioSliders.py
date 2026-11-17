@@ -185,6 +185,21 @@ def test_zero_portfolio_defaults_to_all_cash(slider_module, tk_root):
     frame.destroy()
 
 
+def test_slider_initialization_includes_roth_hsa_and_preserves_rounded_holdings(slider_module, tk_root):
+    from tests.architectural_helpers import make_portfolio
+
+    husband = make_portfolio(equity_roth=334, bond_post=333, hsa_cash=333)
+    wife = make_portfolio(hsa_equity=334, bond_roth=333, cash_pre=333)
+    original_husband, original_wife = vars(husband).copy(), vars(wife).copy()
+    frame = _make_frame(slider_module, tk_root, show_wife=True, husband_portfolio=husband, wife_portfolio=wife)
+    assert frame.stocks_percent.get() == 33
+    assert frame.bonds_percent.get() == 33
+    assert frame.cash_percent.get() == 34
+    assert vars(husband) == original_husband
+    assert vars(wife) == original_wife
+    frame.destroy()
+
+
 def test_stock_change_reduces_bonds_when_cash_would_be_negative(slider_module, tk_root):
     frame = _make_frame(slider_module, tk_root)
 

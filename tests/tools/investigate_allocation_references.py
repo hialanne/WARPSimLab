@@ -175,7 +175,7 @@ def main():
                 input_changes.append(change)
         findings[name] = dict(inputs=input_changes, outputs=changes)
         print(name, len(changes), "changed fields; input differences:", findings[name]["inputs"])
-    Path("tests/allocation_reference_investigation.json").write_text(json.dumps(findings, indent=2) + "\n")
+    Path("codex_reports/allocation_reference_investigation.json").write_text(json.dumps(findings, indent=2) + "\n")
 
 
 if __name__ == "__main__":

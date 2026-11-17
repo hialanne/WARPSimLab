@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 
@@ -73,13 +75,14 @@ def test_run_simulation_from_gui(monkeypatch, dummy_gui, sim_type):
     monkeypatch.setattr(
         mod.PortfolioSimulatorGUI_RunMixin,
         "build_simulation_from_gui",
-        lambda self, sim_type=None: f"SIMCFG_{sim_type}",
+        lambda self, sim_type=None: SimpleNamespace(sim_initial_allocation_mode="original-allocation", sim_type=sim_type),
     )
 
     mod.PortfolioSimulatorGUI_RunMixin.run_simulation_from_gui(dummy_gui, sim_type=sim_type)
 
     assert "kwargs" in called
-    assert called["kwargs"]["sim_config"] == f"SIMCFG_{sim_type}"
+    assert called["kwargs"]["sim_config"].sim_type == sim_type
+    assert called["kwargs"]["sim_config"].sim_initial_allocation_mode == "original-allocation"
     assert called["kwargs"]["expenses"] is dummy_gui.expensesDict
     assert called["kwargs"]["husband"] == f"PERSON_{id(dummy_gui.husband)}"
     assert called["kwargs"]["wife"] == f"PERSON_{id(dummy_gui.wife)}"
@@ -118,7 +121,7 @@ def test_run_simulation_without_second_person(monkeypatch, dummy_gui):
     monkeypatch.setattr(
         mod.PortfolioSimulatorGUI_RunMixin,
         "build_simulation_from_gui",
-        lambda self, sim_type=None: f"SIMCFG_{sim_type}",
+        lambda self, sim_type=None: SimpleNamespace(sim_initial_allocation_mode="original-allocation", sim_type=sim_type),
     )
 
     mod.PortfolioSimulatorGUI_RunMixin.run_simulation_from_gui(dummy_gui, sim_type="cashflow_sim")

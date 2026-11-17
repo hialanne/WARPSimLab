@@ -9,6 +9,7 @@ from src.warpsimlab.dataClasses.portfolioState import PortfolioState
 EPS = 1e-12
 
 
+
 DEBUG_COUPLE = False  # flip False to silence
 DEBUG_REBALANCE = False  # flip False to silence
 
@@ -18,6 +19,89 @@ DEBUG_REBALANCE = False  # flip False to silence
 #else:
 #    portfolioEngine.DEBUG_COUPLE = False
 
+
+ALLOCATION_FIELDS = (
+    ("equity_pre", "bond_pre", "cash_pre"),
+    ("equity_post", "bond_post", "cash_post"),
+    ("equity_roth", "bond_roth", "cash_roth"),
+    ("hsa_equity", "hsa_bond", "hsa_cash"),
+)
+
+
+def compute_portfolio_asset_values(portfolios):
+    totals = [0.0, 0.0, 0.0]
+    for portfolio in portfolios.values():
+        for fields in ALLOCATION_FIELDS:
+            for i in range(3):
+                totals[i] += getattr(portfolio, fields[i], 0.0)
+    return totals
+
+
+def apply_household_allocation(portfolios, stock_percent, bond_percent):
+    targets = [stock_percent, bond_percent, 100.0 - stock_percent - bond_percent]
+    if min(targets) < -1e-9:
+        raise ValueError("Scenario allocation percentages must be nonnegative")
+
+    original = compute_portfolio_asset_values(portfolios)
+    total = sum(original)
+    if total <= 0:
+        return
+
+    buy_dollars = [0.0, 0.0, 0.0]
+    sell_fractions = [0.0, 0.0, 0.0]
+    for i in range(3):
+        delta = total * targets[i] / 100.0 - original[i]
+        if delta > 0:
+            buy_dollars[i] = delta
+        elif delta < 0 and original[i] > 0:
+            sell_fractions[i] = -delta / original[i]
+
+    total_buy = sum(buy_dollars)
+    if total_buy <= 1e-9:
+        return
+
+    for portfolio in portfolios.values():
+        for fields in ALLOCATION_FIELDS:
+            values = []
+            for attr in fields:
+                values.append(getattr(portfolio, attr, 0.0))
+
+            proceeds = 0.0
+            for i in range(3):
+                proceeds += values[i] * sell_fractions[i]
+
+            for i in range(3):
+                value = values[i] * (1.0 - sell_fractions[i])
+                value += proceeds * buy_dollars[i] / total_buy
+                setattr(portfolio, fields[i], value)
+
+
+def apply_starting_allocation(portfolios, sim_config):
+    mode = sim_config.sim_initial_allocation_mode
+
+    if mode == "custom":
+        stocks = sim_config.custom_stock * 100.0
+        bonds = sim_config.custom_bonds * 100.0
+        cash = sim_config.custom_cash * 100.0
+
+    elif mode == "30-30-40":
+        stocks, bonds, cash = 30.0, 30.0, 40.0
+
+    elif mode == "50-30-20":
+        stocks, bonds, cash = 50.0, 30.0, 20.0
+
+    elif mode == "70-20-10":
+        stocks, bonds, cash = 70.0, 20.0, 10.0
+
+    else:
+        return False
+
+    if (min(stocks, bonds, cash) < 0.0
+            or abs(stocks + bonds + cash - 100.0) > 1e-8):
+        raise ValueError("Starting portfolio allocation must total 100% with no negative percentages")
+
+    apply_household_allocation(portfolios, stocks, bonds)
+    return True
 
 
 def _clamp_portfolio_components(port):

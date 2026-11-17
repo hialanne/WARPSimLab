@@ -1,5 +1,6 @@
 from tests.architectural_helpers import make_simulation
 
+import copy
 from types import SimpleNamespace
 
 import pytest
@@ -28,7 +29,7 @@ def _make_main_gui(second_person_enabled=False, expense_mode=True):
             "always_use_expense_mode": expense_mode,
             "retirement_withdraw_pct": 4.0,
         },
-        simulation_settings={"fund_expense": 0.55},
+        simulation_settings={"fund_expense": 0.55, "rebalance_every_year": True},
         husband=_make_person(age=60, retire_age=65, ss_age=67),
         wife=_make_person(age=58, retire_age=63, ss_age=66),
         husband_portfolio=_make_portfolio(equity_pre=60, bond_pre=30, cash_pre=10),
@@ -36,6 +37,9 @@ def _make_main_gui(second_person_enabled=False, expense_mode=True):
         inflation=3.25,
         expensesDict={"expense": 1234},
     )
+    gui._person_for_sim = copy.deepcopy
+    gui._portfolio_for_sim = copy.deepcopy
+    gui.build_simulation_from_gui = lambda **kwargs: make_simulation(second_person_enabled=second_person_enabled)
     return gui
 
 
@@ -308,10 +312,11 @@ def test_clone_result_inputs_returns_deep_copies():
 
 def test_compute_results_from_inputs_uses_copies_and_explicit_options(monkeypatch):
     manager, main_gui, _ = _make_manager(second_person_enabled=False)
+    manager.build_snapshots_from_truth()
 
     persons = {"husband": _make_person()}
     portfolios = {"husband": _make_portfolio(equity_pre=100)}
-    retirement = SimpleNamespace(fund_expense=0.5)
+    retirement = SimpleNamespace(fund_expense=0.5, custom_stock_percent=60, custom_bonds_percent=30)
     sim_config = make_simulation(second_person_enabled=False)
     pipeline_args = {}
 
@@ -356,12 +361,13 @@ def test_compute_results_from_inputs_uses_copies_and_explicit_options(monkeypatc
 
 def test_compute_results_from_inputs_configures_historical_risk(monkeypatch):
     manager, main_gui, _ = _make_manager()
+    manager.build_snapshots_from_truth()
     main_gui.build_simulation_from_gui = lambda **kwargs: make_simulation(second_person_enabled=False)
     monkeypatch.setattr(mod, "run_pipeline", lambda *args: {"result": 42})
 
     persons = {"husband": _make_person()}
     portfolios = {"husband": _make_portfolio(equity_pre=100)}
-    retirement = SimpleNamespace()
+    retirement = SimpleNamespace(custom_stock_percent=60, custom_bonds_percent=30)
 
     result = manager.compute_results_from_inputs(persons, portfolios, retirement, False, "historical_risk")
     sim_config = result["sim_config"]
@@ -374,6 +380,7 @@ def test_compute_results_from_inputs_configures_historical_risk(monkeypatch):
 
 def test_compute_results_from_inputs_passes_wife_when_enabled(monkeypatch):
     manager, main_gui, _ = _make_manager(second_person_enabled=True)
+    manager.build_snapshots_from_truth()
     main_gui.build_simulation_from_gui = lambda **kwargs: make_simulation(second_person_enabled=True)
 
     pipeline_args = {}
@@ -391,7 +398,8 @@ def test_compute_results_from_inputs_passes_wife_when_enabled(monkeypatch):
         "wife": _make_portfolio(equity_pre=50),
     }
 
-    result = manager.compute_results_from_inputs(persons, portfolios, SimpleNamespace(), False, "fill")
+    retirement = SimpleNamespace(custom_stock_percent=60, custom_bonds_percent=30)
+    result = manager.compute_results_from_inputs(persons, portfolios, retirement, False, "fill")
 
     assert result["wife"] is not None
     assert result["wife"] is not persons["wife"]

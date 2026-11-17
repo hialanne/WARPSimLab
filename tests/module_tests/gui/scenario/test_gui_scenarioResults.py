@@ -250,7 +250,7 @@ def test_rebuild_assumptions_shows_changed_rebalancing(tk_root):
 
     assert "Rebalancing" in texts
     assert "Annual Rebalancing" in texts
-    assert "Not Rebalancing" in texts
+    assert "No Rebalancing" in texts
 
     frame.destroy()
 

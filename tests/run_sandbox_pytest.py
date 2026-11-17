@@ -2,7 +2,7 @@
 
 Python 3.13 gives mode 0700 directories a private Windows ACL that excludes
 the sandbox token. Retain inherited ACLs instead, only for this test process.
-Pass standard pytest arguments, including a fresh --basetemp under tests/.
+Pass standard pytest arguments, including a fresh --basetemp under codex_reports/.
 """
 
 import os

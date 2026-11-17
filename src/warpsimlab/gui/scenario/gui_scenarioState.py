@@ -7,6 +7,10 @@ import copy
 from src.warpsimlab.gui.scenario.gui_scenarioSnapshots import ScenarioSnapshots
 from src.warpsimlab.sim.simulation import run_pipeline
 from src.warpsimlab.gui.gui_annotations import build_scenario_explorer_annotations
+from src.warpsimlab.sim.engines.portfolioEngine import (
+    compute_portfolio_asset_values, apply_starting_allocation,
+    apply_household_allocation as apply_scenario_allocation
+)
 from dataclasses import dataclass
 
 
@@ -49,38 +53,15 @@ class ScenarioResultsViewModel:
     changed_assumptions: ScenarioAssumptions
 
 
-def compute_portfolio_percentages(portfolio):
-    husband = portfolio["husband"]
-    wife = portfolio.get("wife")
+def compute_portfolio_percentages(portfolios):
+    stocks, bonds, cash = compute_portfolio_asset_values(portfolios)
+    total = stocks + bonds + cash
+    if total <= 0:
+        return 0, 0, 100
 
-    if wife:
-        wife_equity_pre = wife.equity_pre
-        wife_equity_post = wife.equity_post
-        wife_bond_pre = wife.bond_pre
-        wife_bond_post = wife.bond_post
-        wife_cash_pre = wife.cash_pre
-        wife_cash_post = wife.cash_post
-    else:
-        wife_equity_pre = 0
-        wife_equity_post = 0
-        wife_bond_pre = 0
-        wife_bond_post = 0
-        wife_cash_pre = 0
-        wife_cash_post = 0
-
-    total_equity = husband.equity_pre + husband.equity_post + wife_equity_pre + wife_equity_post
-    total_bonds = husband.bond_pre + husband.bond_post + wife_bond_pre + wife_bond_post
-    total_cash = husband.cash_pre + husband.cash_post + wife_cash_pre + wife_cash_post
-    total_portfolio = total_equity + total_bonds + total_cash
-
-    if total_portfolio > 0:
-        stocks_pct = total_equity / total_portfolio * 100
-        bonds_pct = total_bonds / total_portfolio * 100
-        cash_pct = 100 - stocks_pct - bonds_pct
-    else:
-        stocks_pct, bonds_pct, cash_pct = 0, 0, 100
-
-    return round(stocks_pct), round(bonds_pct), round(cash_pct)
+    stock_pct = round(stocks / total * 100)
+    bond_pct = round(bonds / total * 100)
+    return stock_pct, bond_pct, 100 - stock_pct - bond_pct
 
 
 class ScenarioSessionState:
@@ -110,13 +91,16 @@ class ScenarioStateManager:
         s = self.session_state
         controls = self.main_gui.simulation_controls
 
-        s.baseline_person_snapshots = {"husband": copy.deepcopy(self.main_gui.husband)}
+        s.baseline_person_snapshots = {"husband": self.main_gui._person_for_sim(self.main_gui.husband)}
         if controls.get("second_person_enabled", False):
-            s.baseline_person_snapshots["wife"] = copy.deepcopy(self.main_gui.wife)
+            s.baseline_person_snapshots["wife"] = self.main_gui._person_for_sim(self.main_gui.wife)
 
-        s.baseline_portfolio_snapshots = {"husband": copy.deepcopy(self.main_gui.husband_portfolio)}
+        s.baseline_portfolio_snapshots = {"husband": self.main_gui._portfolio_for_sim(self.main_gui.husband_portfolio)}
         if controls.get("second_person_enabled", False):
-            s.baseline_portfolio_snapshots["wife"] = copy.deepcopy(self.main_gui.wife_portfolio)
+            s.baseline_portfolio_snapshots["wife"] = self.main_gui._portfolio_for_sim(self.main_gui.wife_portfolio)
+
+        sim_config = self.main_gui.build_simulation_from_gui(sim_type="portfolio_sim")
+        apply_starting_allocation(s.baseline_portfolio_snapshots, sim_config)
 
         s.baseline_retirement_snapshots = ScenarioSnapshots()
         s.baseline_retirement_snapshots.fund_expense = self.main_gui.simulation_settings.get("fund_expense")
@@ -212,7 +196,36 @@ class ScenarioStateManager:
         persons_copy, portfolios_copy, retirement_copy = self.clone_result_inputs(persons, portfolios, retirement_snapshots)
 
         sim_config = self.main_gui.build_simulation_from_gui(sim_type='portfolio_sim', use_snapshots=True, retirement_snapshots=retirement_copy)
+        baseline_portfolios = self.session_state.baseline_portfolio_snapshots
+        baseline_stocks, baseline_bonds, _ = compute_portfolio_percentages(baseline_portfolios)
+        stocks_changed = retirement_copy.custom_stock_percent != baseline_stocks
+        bonds_changed = retirement_copy.custom_bonds_percent != baseline_bonds
 
+        if stocks_changed or bonds_changed:
+            original_values = compute_portfolio_asset_values(baseline_portfolios)
+            original_total = sum(original_values)
+            if original_total > 0:
+                target_stocks = original_values[0] * 100.0 / original_total
+                target_bonds = original_values[1] * 100.0 / original_total
+            else:
+                target_stocks = 0.0
+                target_bonds = 0.0
+
+            if stocks_changed:
+                target_stocks = retirement_copy.custom_stock_percent
+
+            if bonds_changed:
+                target_bonds = retirement_copy.custom_bonds_percent
+
+            if target_stocks + target_bonds > 100.0:
+                if stocks_changed and not bonds_changed:
+                    target_bonds = 100.0 - target_stocks
+                elif bonds_changed and not stocks_changed:
+                    target_stocks = 100.0 - target_bonds
+
+            apply_scenario_allocation(portfolios_copy, target_stocks, target_bonds)
+
+        sim_config = replace(sim_config, sim_initial_allocation_mode="original-allocation")
         if plot_style == "historical_risk":
             sim_config = replace(sim_config, results_mode='risk_analysis', risk_analysis_mode='historical_windows',
                 risk_analysis_plot_style='fill')

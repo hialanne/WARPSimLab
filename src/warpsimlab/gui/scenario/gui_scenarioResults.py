@@ -290,12 +290,12 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         if original:
             original_text = "Annual Rebalancing"
         else:
-            original_text = "Not Rebalancing"
+            original_text = "No Rebalancing"
 
         if changed:
             changed_text = "Annual Rebalancing"
         else:
-            changed_text = "Not Rebalancing"
+            changed_text = "No Rebalancing"
 
         ttk.Label(parent, text="Rebalancing", font=self.normal_label_font).grid(
             row=row, column=0, sticky="w", padx=(0, 10), pady=2

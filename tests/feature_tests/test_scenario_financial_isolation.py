@@ -28,7 +28,7 @@ def make_session(expense_mode):
     }
     gui.simulation_controls["manual_expenses"] = expense_mode
     gui.simulation_settings = dict(start_year=2026, years_to_simulate=8,
-                                   num_sims=3, fund_expense=0.2, use_fund_expenses=True)
+                                   num_sims=3, fund_expense=0.2, use_fund_expenses=True, rebalance_every_year=True)
     gui.inflation = config.inflation_rate * 100
     for name in ["eq_mean", "bd_mean", "cs_mean", "re_mean", "eq_std", "bd_std", "cs_std", "re_std"]:
         setattr(gui, name, getattr(config, name) * 100)

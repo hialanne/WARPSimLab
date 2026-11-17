@@ -209,3 +209,4 @@ def scenario_builders():
         DynamicExpenses=DynamicExpensesStub,
         make_config=make_config,
     )
+

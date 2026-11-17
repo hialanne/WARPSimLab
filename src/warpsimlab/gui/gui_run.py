@@ -18,6 +18,7 @@ from src.warpsimlab.utils.io_utils import *
 from src.warpsimlab.utils.utilities import *
 from src.warpsimlab.gui.gui_annotations import build_normal_run_annotations
 from src.warpsimlab.sim.engines.diagnosticEngine import WARPSimLabInternalError
+from src.warpsimlab.sim.engines.portfolioEngine import apply_starting_allocation
 
 
 class PortfolioSimulatorGUI_RunMixin:
@@ -437,6 +438,18 @@ class PortfolioSimulatorGUI_RunMixin:
             wife_portfolio = self._portfolio_for_sim(self.wife_portfolio) if wife else None
 
             sim_config = self.build_simulation_from_gui(sim_type=sim_type)
+
+            portfolios = {"husband": husband_portfolio}
+            if wife_portfolio is not None:
+                portfolios["wife"] = wife_portfolio
+
+            try:
+                allocation_changed = apply_starting_allocation(portfolios, sim_config)
+            except ValueError as exc:
+                raise SimulationValidationError(str(exc)) from exc
+
+            if allocation_changed:
+                sim_config = replace(sim_config, sim_initial_allocation_mode="original-allocation")
 
             run_simulation(
                 husband_portfolio=husband_portfolio,

@@ -324,9 +324,9 @@ class PortfolioSimulationEditFrame(ScalableFrameMixin, ttk.Frame):
         self.rebalance_every_year_cb.grid(row=row, column=0, columnspan=2, sticky="w", pady=(8, 0))
         Tooltip(
             self.rebalance_every_year_cb,
-            "At the end of each simulation year, restore the selected stock, bond, and cash "
-            "percentages within each investment account. If unchecked, allocations are "
-            "allowed to drift over time.",
+            "At the end of each simulation year, restore each investment account to its "
+            "starting stock, bond, and cash percentages. If unchecked, allocations "
+            "are allowed to drift over time.",
             font=self._tooltip_font
         )
         self._bind_var(

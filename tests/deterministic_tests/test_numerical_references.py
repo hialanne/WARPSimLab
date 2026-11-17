@@ -67,6 +67,14 @@ def current_results():
 def test_complete_core_matches_accepted_reference(name, manifest, current_results):
     actual, inputs = current_results(name)
     frozen_inputs = read_json(DATA / "inputs" / f"{name}.json")
+    if name.startswith("s6_"):
+        # New explicit settings ownership, with the same approved effective flag.
+        snapshots = frozen_inputs["session"]["snapshots"]
+        baseline_rebalance = snapshots["baseline_retirement_snapshots"]["rebalance_every_year"]
+        assert baseline_rebalance is True
+        assert snapshots["retirement_snapshots"]["rebalance_every_year"] is True
+        frozen_inputs["session"]["truth"]["simulation_settings"]["rebalance_every_year"] = baseline_rebalance
+
     assert _without_legacy_allocation_defaults(inputs) == _without_legacy_allocation_defaults(frozen_inputs), name
     entry = manifest["cases"][name]
     checks = activation_checks(name, actual)
