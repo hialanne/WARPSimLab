@@ -6,7 +6,8 @@
 
 import subprocess
 import tkinter.font as tkfont
-from tkinter import ttk, messagebox
+from tkinter import ttk
+
 import tkinter as tk
 
 from datetime import datetime
@@ -81,16 +82,7 @@ class PortfolioSimulatorGUI(
         except (OSError, subprocess.SubprocessError, ValueError):
             return
 
-        messagebox.showwarning(
-            "Ubuntu Display Scaling",
-            "WARPSimLab detected automatic scaling for legacy applications.\n\n"
-            "This setting can cause oversized fonts and clipped windows.\n\n"
-            "Open Ubuntu Settings > Displays and turn off "
-            "\"Built-in Scaling for Legacy Apps\".\n\n"
-            "You can keep your preferred display scaling percentage.\n\n"
-            "Restart WARPSimLab after changing this setting.",
-            parent=self.root
-        )
+        self._show_legacy_xwayland_warning()
 
 
     def _show_legacy_xwayland_warning(self):
@@ -273,7 +265,7 @@ class PortfolioSimulatorGUI(
         if self.screen_debug:
             self._print_content_geometry_diagnostics()
 
-        self._show_legacy_xwayland_warning()
+        self.root.after_idle(self._warn_legacy_xwayland_scaling)
 
 
     def _close_application(self):
