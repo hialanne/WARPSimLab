@@ -1,9 +1,6 @@
+# gui_scenarioPlots.py
+
 from dataclasses import replace
-
-# gui_scenarioPlots.py
-
-# gui_scenarioPlots.py
-
 import tkinter as tk
 import matplotlib.pyplot as plt
 
@@ -19,6 +16,11 @@ PLOT_FAMILY_PORTFOLIO = "portfolio"
 RESULT_SOURCE_BASELINE = "baseline"
 RESULT_SOURCE_SCENARIO = "scenario"
 
+SCENARIO_DEVELOPMENT_SCREEN_WIDTH = 1707
+SCENARIO_DEVELOPMENT_SCREEN_HEIGHT = 1067
+SCENARIO_BASE_GAP = 20
+SCENARIO_DASHBOARD_WIDTH_FRACTION = 0.43
+
 class ScenarioPlotManager:
     """
     Owns Scenario Explorer Matplotlib figure creation and plot-window layout.
@@ -32,6 +34,7 @@ class ScenarioPlotManager:
         self.portfolio_fig = None
         self.portfolio_ax = None
         self._layout_restored = False
+        self._debug_position_calls = 0
 
 
     def create_persistent_plots(self, dashboard_window):
@@ -53,6 +56,8 @@ class ScenarioPlotManager:
             pass
 
         self._layout_restored = self.restore_saved_layout(dashboard_window)
+        if getattr(self.main_gui, "scenario_debug", False):
+            print(f"[SCENARIO] create_persistent_plots: layout_restored={self._layout_restored}")
         if not self._layout_restored:
             self.position_windows(dashboard_window)
 
@@ -166,6 +171,25 @@ class ScenarioPlotManager:
         return True
 
 
+    def _debug_positioned_geometry(self, dashboard_window, call_number):
+        if not getattr(self.main_gui, "scenario_debug", False) or not dashboard_window.winfo_exists():
+            return
+
+        print(f"[SCENARIO] position_windows #{call_number} idle: "
+              f"actual={dashboard_window.winfo_geometry()}, "
+              f"requested={dashboard_window.winfo_reqwidth()}x{dashboard_window.winfo_reqheight()}, "
+              f"wm={dashboard_window.wm_geometry()}")
+
+
+    @staticmethod
+    def get_dashboard_development_size():
+        """Return the Dashboard size at the original development resolution."""
+        gap = max(10, SCENARIO_BASE_GAP)
+        usable_width = SCENARIO_DEVELOPMENT_SCREEN_WIDTH - gap * 3
+        usable_height = SCENARIO_DEVELOPMENT_SCREEN_HEIGHT - gap * 3
+        return int(usable_width * SCENARIO_DASHBOARD_WIDTH_FRACTION), usable_height + gap
+
+
     def position_windows(self, dashboard_window):
         """
         Position the Scenario Dashboard on the left, with Cash Flow above Portfolio on the right.
@@ -182,15 +206,16 @@ class ScenarioPlotManager:
             screen_width = work_right - work_left
             screen_height = work_bottom - work_top
 
-            development_screen_width = 1707
-            development_screen_height = 1067
+            development_screen_width = SCENARIO_DEVELOPMENT_SCREEN_WIDTH
+            development_screen_height = SCENARIO_DEVELOPMENT_SCREEN_HEIGHT
+
             scale = min(screen_width / development_screen_width, screen_height / development_screen_height)
 
-            gap = max(10, int(20 * scale))
+            gap = max(10, int(SCENARIO_BASE_GAP * scale))
             usable_width = screen_width - gap * 3
             usable_height = screen_height - gap * 3
 
-            dashboard_width = int(usable_width * 0.43)
+            dashboard_width = int(usable_width * SCENARIO_DASHBOARD_WIDTH_FRACTION)
             if dashboard_window is not None:
                 dashboard_window.update_idletasks()
                 dashboard_width = max(dashboard_width, dashboard_window.winfo_reqwidth())
@@ -209,8 +234,29 @@ class ScenarioPlotManager:
             top_y = work_top + gap
             portfolio_y = top_y + plot_height + gap + window_chrome
 
+            debug = getattr(self.main_gui, "scenario_debug", False)
+            if debug:
+                self._debug_position_calls += 1
+                call_number = self._debug_position_calls
+                before = "None"
+                requested = "None"
+                if dashboard_window is not None:
+                    before = dashboard_window.winfo_geometry()
+                    requested = f"{dashboard_window.winfo_reqwidth()}x{dashboard_window.winfo_reqheight()}"
+
+                print(f"[SCENARIO] position_windows #{call_number}: "
+                      f"work_area=({work_left},{work_top},{work_right},{work_bottom}), "
+                      f"screen={screen_width}x{screen_height}, "
+                      f"reference={development_screen_width}x{development_screen_height}, "
+                      f"screen_scale={scale:.4f}, dashboard_target={dashboard_width}x{dashboard_height}, "
+                      f"before={before}, requested={requested}")
+
             if dashboard_window is not None:
                 dashboard_window.geometry(f"{dashboard_width}x{dashboard_height}+{dashboard_x}+{top_y}")
+                if debug:
+                    print(f"[SCENARIO] position_windows #{call_number} issued: "
+                          f"actual={dashboard_window.winfo_geometry()}, wm={dashboard_window.wm_geometry()}")
+                    dashboard_window.after_idle(self._debug_positioned_geometry, dashboard_window, call_number)
 
             self.income_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{plot_x}+{top_y}")
             self.portfolio_fig.canvas.manager.window.geometry(f"{plot_width}x{plot_height}+{plot_x}+{portfolio_y}")

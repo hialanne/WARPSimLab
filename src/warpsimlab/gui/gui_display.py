@@ -18,8 +18,6 @@ from src.warpsimlab.gui.gui_settings import (
     save_display_settings,
 )
 
-SCREEN_DEBUG = False
-
 
 def set_window_normal(window):
     try:
@@ -210,7 +208,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
         window_width = max(int(MAIN_WINDOW_REFERENCE_WIDTH * gui_scale), MAIN_WINDOW_REFERENCE_WIDTH)
         window_height = max(int(MAIN_WINDOW_REFERENCE_HEIGHT * gui_scale), MAIN_WINDOW_REFERENCE_HEIGHT)
 
-        if SCREEN_DEBUG:
+        if getattr(self, "screen_debug", False):
             print("\ngui_display.py: _calculate_automatic_main_window_size()")
             print("-------------------------------------------------------")
             print(f"Screen: {self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}")
@@ -531,7 +529,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
         """
         Diagnose active editor geometry and controls outside the main window.
         """
-        if not SCREEN_DEBUG:
+        if not getattr(self, "screen_debug", False):
             return
 
         self.root.update_idletasks()

@@ -4,8 +4,10 @@
 # Version string is defined after imports.
 #
 
+import subprocess
 import tkinter.font as tkfont
-from tkinter import ttk
+from tkinter import ttk, messagebox
+import tkinter as tk
 
 from datetime import datetime
 import os
@@ -52,15 +54,99 @@ WARPSIMLAB_VERSION = "4.6.0"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 SCREEN_DEBUG = False
-
+SCENARIO_DEBUG = True
 
 class PortfolioSimulatorGUI(
     PortfolioSimulatorGUI_DisplayMixin, PortfolioSimulatorGUI_NavigationMixin,
     PortfolioSimulatorGUI_EditorsMixin, PortfolioSimulatorGUI_ReportsMixin,
     PortfolioSimulatorGUI_RunMixin, PortfolioSimulatorGUI_IOMixin
 ):
+    def _warn_legacy_xwayland_scaling(self):
+        if sys.platform != "linux":
+            return
+
+        if os.environ.get("XDG_SESSION_TYPE", "").lower() != "wayland":
+            return
+
+        if "gnome" not in os.environ.get("XDG_CURRENT_DESKTOP", "").lower():
+            return
+
+        try:
+            result = subprocess.run(
+                ["gsettings", "get", "org.gnome.mutter.wayland", "xwayland-scaling-factor"],
+                capture_output=True, text=True, timeout=2, check=False
+            )
+            if result.returncode != 0 or float(result.stdout.strip()) != 0.0:
+                return
+        except (OSError, subprocess.SubprocessError, ValueError):
+            return
+
+        messagebox.showwarning(
+            "Ubuntu Display Scaling",
+            "WARPSimLab detected automatic scaling for legacy applications.\n\n"
+            "This setting can cause oversized fonts and clipped windows.\n\n"
+            "Open Ubuntu Settings > Displays and turn off "
+            "\"Built-in Scaling for Legacy Apps\".\n\n"
+            "You can keep your preferred display scaling percentage.\n\n"
+            "Restart WARPSimLab after changing this setting.",
+            parent=self.root
+        )
+
+
+    def _show_legacy_xwayland_warning(self):
+        dialog = tk.Toplevel(self.root)
+        dialog.withdraw()
+        dialog.title("WARPSimLab - Ubuntu Display Scaling")
+        dialog.transient(self.root)
+        dialog.resizable(False, False)
+
+        screen_width = dialog.winfo_screenwidth()
+        screen_height = dialog.winfo_screenheight()
+        width = max(360, min(800, screen_width - 100))
+        wrap_width = width - 60
+
+        content = ttk.Frame(dialog, padding=20)
+        content.pack(fill="both", expand=True)
+
+        dialog._heading_font = tkfont.nametofont("TkDefaultFont").copy()
+        dialog._heading_font.configure(weight="bold")
+        ttk.Label(
+            content, text="Ubuntu display scaling compatibility",
+            font=dialog._heading_font, wraplength=wrap_width,
+            justify="left"
+        ).pack(anchor="w", pady=(0, 12))
+
+        ttk.Label(
+            content,
+            text="WARPSimLab detected automatic scaling for legacy applications. "
+                 "This can cause oversized fonts and clipped controls.\n\n"
+                 "Open Ubuntu Settings > Displays and turn off "
+                 "'Built-in Scaling for Legacy Apps'.\n\n"
+                 "Keep your preferred display scaling percentage, then restart WARPSimLab.",
+            wraplength=wrap_width, justify="left"
+        ).pack(anchor="w", pady=(0, 16))
+
+        ttk.Button(content, text="Continue", command=dialog.destroy).pack(anchor="e")
+
+        dialog.update_idletasks()
+        height = dialog.winfo_reqheight()
+        x = self.root.winfo_rootx() + (self.root.winfo_width() - width) // 2
+        y = self.root.winfo_rooty() + (self.root.winfo_height() - height) // 2
+        x = max(0, min(x, screen_width - width))
+        y = max(0, min(y, screen_height - height))
+
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
+        dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
+        dialog.deiconify()
+        dialog.lift()
+        dialog.after_idle(dialog.grab_set)
+
+
     def __init__(self, root):
         self.root = root
+        self.screen_debug = SCREEN_DEBUG
+        self.scenario_debug = SCENARIO_DEBUG
+
         self.legal_accepted = False
         self.warpsimlab_version = WARPSIMLAB_VERSION
         self.loaded_data_file = None
@@ -81,7 +167,7 @@ class PortfolioSimulatorGUI(
         self._apply_gui_scale()
 
         # Diagnostic prints for dialog and subdialog diagnostics. Comment out in production.
-        if SCREEN_DEBUG:
+        if self.screen_debug:
             self._print_display_diagnostics()
 
         if sys.platform == "darwin":
@@ -181,11 +267,14 @@ class PortfolioSimulatorGUI(
 
         self._build_run_button()
         self.edit_main_home()
-        if SCREEN_DEBUG:
+        if self.screen_debug:
             self.root.bind("<Control-Shift-G>", self._print_editor_geometry_diagnostics)
 
-        if SCREEN_DEBUG:
+        if self.screen_debug:
             self._print_content_geometry_diagnostics()
+
+        self._show_legacy_xwayland_warning()
+
 
     def _close_application(self):
         """

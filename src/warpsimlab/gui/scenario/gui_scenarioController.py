@@ -1,5 +1,6 @@
 # gui_scenarioController.py
 
+import sys
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
@@ -87,6 +88,48 @@ class ScenarioController(ScalableClientMixin):
         self.plot_style_label_to_value = {label: value for label, value in SCENARIO_PLOT_STYLE_OPTIONS}
         self.plot_style_value_to_label = {value: label for label, value in SCENARIO_PLOT_STYLE_OPTIONS}
 
+
+    def _debug_dashboard_state(self, stage):
+        if not getattr(self.main_gui, "scenario_debug", False) or self.window is None:
+            return
+
+        window = self.window
+        if not window.winfo_exists():
+            return
+
+        scale = float(getattr(window, "_warpsimlab_gui_scale", 1.0))
+        main_scale = float(getattr(self.main_gui.root, "_warpsimlab_gui_scale", 1.0))
+        default_font = tkfont.nametofont("TkDefaultFont")
+        print(f"[SCENARIO] {stage}: actual={window.winfo_geometry()}, "
+              f"requested={window.winfo_reqwidth()}x{window.winfo_reqheight()}, "
+              f"wm={window.wm_geometry()}, "
+              f"reference={self._dashboard_reference_width}x{self._dashboard_reference_height}, "
+              f"scale={scale:.4f}, main_scale={main_scale:.4f}")
+        print(f"[SCENARIO]   TkDefaultFont: size={default_font.cget('size')}, "
+              f"linespace={default_font.metrics('linespace')}")
+
+        for name, owner in (("controller", self), ("sliders", self.sliders_frame),
+                            ("results", self.results_frame)):
+            if owner is None:
+                continue
+
+            if owner is not self and not owner.winfo_exists():
+                continue
+
+            if owner is not self:
+                print(f"[SCENARIO]   {name}: actual={owner.winfo_width()}x{owner.winfo_height()}, "
+                      f"requested={owner.winfo_reqwidth()}x{owner.winfo_reqheight()}")
+
+            for font, base_size in getattr(owner, "_scalable_fonts", []):
+                expected = max(1, round(abs(base_size) * scale))
+                if base_size < 0:
+                    expected = -expected
+
+                print(f"[SCENARIO]   {name} font {font}: base={base_size}, "
+                      f"actual={font.cget('size')}, expected={expected}, "
+                      f"linespace={font.metrics('linespace')}")
+
+
     # ----------------------------------------------------------
     # Public entry point from button
     # ----------------------------------------------------------
@@ -155,13 +198,15 @@ class ScenarioController(ScalableClientMixin):
         if not self.plot_manager._layout_restored:
             self.window.after_idle(self._position_windows)
 
+        self.window.after_idle(self._finish_dashboard_scaling)
+
 
     def _initialize_dashboard_scaling(self):
-        self.window.update_idletasks()
-
-        self._dashboard_reference_width = max(1, self.window.winfo_width())
-        self._dashboard_reference_height = max(1, self.window.winfo_height())
+        self._dashboard_reference_width = None
+        self._dashboard_reference_height = None
         self._dashboard_scale_after_id = None
+        self._dashboard_debug_last_measurement = None
+        self._dashboard_debug_missing_reference_logged = False
 
         self.window._warpsimlab_gui_scale = 1.0
 
@@ -175,6 +220,38 @@ class ScenarioController(ScalableClientMixin):
         self._apply_gui_scale()
 
         self.window.bind("<Configure>", self._on_dashboard_configure, add="+")
+        self._debug_dashboard_state("initialize_dashboard_scaling")
+
+
+    def _finish_dashboard_scaling(self):
+        if self.window is None:
+            return
+
+        self._debug_dashboard_state("finish_dashboard_scaling before")
+        self.window.update_idletasks()
+
+        if sys.platform.startswith("linux"):
+            self._dashboard_reference_width, self._dashboard_reference_height = (
+                self.plot_manager.get_dashboard_development_size()
+            )
+        else:
+            self._dashboard_reference_width = max(1, self.window.winfo_width())
+            self._dashboard_reference_height = max(1, self.window.winfo_height())
+
+        self._debug_dashboard_state("finish_dashboard_scaling captured")
+
+        canvas_width = self.slider_canvas.winfo_width()
+        if canvas_width > 1:
+            self.slider_canvas.itemconfigure(
+                self._slider_canvas_window, width=canvas_width
+            )
+
+        self._update_slider_scrollregion()
+
+        if sys.platform.startswith("linux"):
+            if self._dashboard_scale_after_id is not None:
+                self.window.after_cancel(self._dashboard_scale_after_id)
+            self._update_dashboard_scale()
 
 
     def _on_dashboard_configure(self, event):
@@ -193,6 +270,13 @@ class ScenarioController(ScalableClientMixin):
         if self.window is None:
             return
 
+        debug = getattr(self.main_gui, "scenario_debug", False)
+        if self._dashboard_reference_width is None or self._dashboard_reference_height is None:
+            if debug and not self._dashboard_debug_missing_reference_logged:
+                print("[SCENARIO] update_dashboard_scale: skipped (reference not captured)")
+                self._dashboard_debug_missing_reference_logged = True
+            return
+
         width = self.window.winfo_width()
         height = self.window.winfo_height()
 
@@ -205,12 +289,23 @@ class ScenarioController(ScalableClientMixin):
         )
 
         old_scale = float(getattr(self.window, "_warpsimlab_gui_scale", 1.0))
+        changed = abs(scale - old_scale) >= 0.01
+
+        if debug:
+            measurement = (width, height, round(scale, 4), round(old_scale, 4))
+            if measurement != self._dashboard_debug_last_measurement:
+                print(f"[SCENARIO] update_dashboard_scale: actual={width}x{height}, "
+                      f"reference={self._dashboard_reference_width}x{self._dashboard_reference_height}, "
+                      f"old={old_scale:.4f}, calculated={scale:.4f}, event={changed}")
+                self._dashboard_debug_last_measurement = measurement
 
         if abs(scale - old_scale) < 0.01:
             return
 
         self.window._warpsimlab_gui_scale = scale
         self.window.event_generate("<<WARPSimLabScaleChanged>>", when="tail")
+        if debug:
+            self.window.after_idle(self._debug_dashboard_state, "scale-change event applied")
 
 
     def _apply_scaled_styles(self):
@@ -674,7 +769,9 @@ class ScenarioController(ScalableClientMixin):
         # ---- Results (right) ----
         self.results_frame = ScenarioResultsFrame(main)
         self.results_frame.grid(row=0, column=1, rowspan=2, sticky="nsew")
-
+        if getattr(self.main_gui, "scenario_debug", False):
+            self._debug_dashboard_state("build_controls_ui complete")
+            self.window.after_idle(self._debug_dashboard_state, "build_controls_ui idle")
 
     def _on_slider_canvas_configure(self, event):
         self.slider_canvas.itemconfigure(self._slider_canvas_window, width=event.width)
