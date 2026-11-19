@@ -293,8 +293,7 @@ def build_advanced_building_tutorial_steps(gui):
                 "between plots easier. Overlays can add taxes, fund expenses, "
                 "household expenses, profit or loss, and retirement-age markers "
                 "to selected plots. Custom Annotations lets you add your own "
-                "labels to generated plots. CSV output can also be enabled when "
-                "you want the underlying simulation data written to files."
+                "labels to generated plots."
             ),
             "screen_callback": gui.edit_simulation_controls,
         },

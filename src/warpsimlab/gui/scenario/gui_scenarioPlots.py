@@ -55,7 +55,8 @@ class ScenarioPlotManager:
         except Exception:
             pass
 
-        self._layout_restored = self.restore_saved_layout(dashboard_window)
+        self._layout_restored = False
+
         if getattr(self.main_gui, "scenario_debug", False):
             print(f"[SCENARIO] create_persistent_plots: layout_restored={self._layout_restored}")
         if not self._layout_restored:
