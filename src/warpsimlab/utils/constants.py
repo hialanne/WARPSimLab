@@ -161,10 +161,6 @@ UNIFORM_LIFETIME_TABLE = {
 }
 
 
-title_font   = ("Arial", 17, "bold")
-header_font  = ("Arial", 13, "bold")
-body_font    = ("Arial", 12)
-meta_font    = ("Arial", 12)
 
 
 

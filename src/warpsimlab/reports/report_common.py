@@ -97,7 +97,7 @@ def render_footer():
 def render_base_css():
     return """
 body {
-    font-family: Arial, sans-serif;
+    font-family: system-ui, sans-serif;
     margin: 0;
     color: #222;
     line-height: 1.4;

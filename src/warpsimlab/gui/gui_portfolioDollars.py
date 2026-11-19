@@ -40,9 +40,15 @@ class PortfolioDollarsEditFrame(ScalableFrameMixin, ttk.Frame):
         self._body_bold_font.configure(weight="bold")
         self._header_font = self._body_bold_font.copy()
         self._header_text_font = self._body_font.copy()
-        self._column_header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._major_header_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
-        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._column_header_font = self._body_bold_font.copy()
+        self._major_header_font = self._body_font.copy()
+        major_size = int(self._body_font.cget("size"))
+        if major_size < 0:
+            major_size -= 1
+        else:
+            major_size += 1
+        self._major_header_font.configure(size=major_size, weight="bold")
+        self._tooltip_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)

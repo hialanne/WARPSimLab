@@ -280,8 +280,10 @@ class PortfolioSimulatorGUI_NavigationMixin(ScalableClientMixin):
     def _build_top_fields(self, parent):
         self._navigation_font = tkfont.nametofont("TkDefaultFont").copy()
         self._menu_font = tkfont.nametofont("TkMenuFont").copy()
-        self._mode_font = tkfont.Font(root=self.root, family="Arial", size=14)
-        self._run_button_font = tkfont.Font(root=self.root, family="Arial", size=14, weight="bold")
+        self._mode_font = self._navigation_font.copy()
+        self._mode_font.configure(size=14)
+        self._run_button_font = self._mode_font.copy()
+        self._run_button_font.configure(weight="bold")
 
         self._register_scalable_font(self._navigation_font)
         self._register_scalable_font(self._menu_font)

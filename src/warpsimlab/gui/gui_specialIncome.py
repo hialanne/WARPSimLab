@@ -76,7 +76,7 @@ class SpecialIncomeEditFrame(ScalableFrameMixin, ttk.Frame):
 
         ttk.Label(
             header_frame,
-            text="Cash Flow > Special Income",
+            text="Household > Special Income",
             font=self._header_font,
         ).pack(side="left")
 

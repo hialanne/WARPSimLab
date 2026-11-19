@@ -44,7 +44,7 @@ class ExpensesEditFrame(ScalableFrameMixin, ttk.Frame):
         )
 
         ttk.Label(
-            header_frame, text="Cash Flow > Expenses", font=self._header_font
+            header_frame, text="Household > Expenses", font=self._header_font
         ).pack(side="left")
 
         ttk.Label(

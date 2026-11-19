@@ -29,17 +29,20 @@ class YearByYearDetailsReportFrame(ScalableFrameMixin, ttk.Frame):
         self.vars = {}
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
+        base_size = int(self._body_font.cget("size"))
+        font_step = -1 if base_size < 0 else 1
+
         self._title_font = self._body_font.copy()
-        self._title_font.configure(size=int(self._body_font.cget("size")) + 3, weight="bold")
+        self._title_font.configure(size=base_size + 3 * font_step, weight="bold")
+
         self._text_font = self._body_font.copy()
         self._text_bold_font = self._body_font.copy()
         self._text_bold_font.configure(weight="bold")
         self._text_italic_font = self._body_font.copy()
         self._text_italic_font.configure(slant="italic")
         self._section_font = self._body_font.copy()
-        self._section_font.configure(size=int(self._body_font.cget("size")) + 1, weight="bold")
+        self._section_font.configure(size=base_size + font_step, weight="bold")
         self._detail_font = self._body_font.copy()
-        self._detail_font.configure(size=max(1, int(self._body_font.cget("size")) - 1))
         self._tooltip_font = self._body_font.copy()
 
         self._initialize_frame_scaling()

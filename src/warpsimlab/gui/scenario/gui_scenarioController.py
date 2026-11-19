@@ -176,9 +176,9 @@ class ScenarioController(ScalableClientMixin):
         # Create control window
         self.window = tk.Toplevel(self.main_gui.root)
         self.window.title("Scenario Dashboard")
-        self.window.bind("<MouseWheel>", self._on_slider_mousewheel, add="+")
-        self.window.bind("<Button-4>", self._on_slider_mousewheel, add="+")
-        self.window.bind("<Button-5>", self._on_slider_mousewheel, add="+")
+        self.window.bind("<MouseWheel>", self._on_dashboard_mousewheel, add="+")
+        self.window.bind("<Button-4>", self._on_dashboard_mousewheel, add="+")
+        self.window.bind("<Button-5>", self._on_dashboard_mousewheel, add="+")
 
         # If user closes via X
         self.window.protocol(
@@ -247,6 +247,11 @@ class ScenarioController(ScalableClientMixin):
             )
 
         self._update_slider_scrollregion()
+
+        canvas_width = self.results_canvas.winfo_width()
+        if canvas_width > 1:
+            self.results_canvas.itemconfigure(self._results_canvas_window, width=canvas_width)
+        self._update_results_scrollregion()
 
         if sys.platform.startswith("linux"):
             if self._dashboard_scale_after_id is not None:
@@ -767,8 +772,30 @@ class ScenarioController(ScalableClientMixin):
                    style="Scenario.TButton").grid(row=2, column=0, sticky="w")
 
         # ---- Results (right) ----
-        self.results_frame = ScenarioResultsFrame(main)
-        self.results_frame.grid(row=0, column=1, rowspan=2, sticky="nsew")
+        results_panel = ttk.Frame(main)
+        results_panel.grid(row=0, column=1, rowspan=2, sticky="nsew")
+        results_panel.rowconfigure(0, weight=1)
+        results_panel.columnconfigure(0, weight=1)
+
+        self.results_canvas = tk.Canvas(
+            results_panel, width=1, height=1, borderwidth=0, highlightthickness=0,
+            background=self.window.cget("background")
+        )
+        self.results_canvas.grid(row=0, column=0, sticky="nsew")
+
+        self.results_scrollbar = ttk.Scrollbar(
+            results_panel, orient="vertical", command=self.results_canvas.yview
+        )
+        self.results_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.results_canvas.configure(yscrollcommand=self.results_scrollbar.set)
+
+        self.results_frame = ScenarioResultsFrame(self.results_canvas)
+        self._results_canvas_window = self.results_canvas.create_window(
+            (0, 0), window=self.results_frame, anchor="nw"
+        )
+        self.results_frame.bind("<Configure>", self._update_results_scrollregion, add="+")
+        self.results_canvas.bind("<Configure>", self._on_results_canvas_configure, add="+")
+
         if getattr(self.main_gui, "scenario_debug", False):
             self._debug_dashboard_state("build_controls_ui complete")
             self.window.after_idle(self._debug_dashboard_state, "build_controls_ui idle")
@@ -788,33 +815,42 @@ class ScenarioController(ScalableClientMixin):
             self.slider_canvas.yview_moveto(0)
 
 
-    def _on_slider_mousewheel(self, event):
-        canvas = getattr(self, "slider_canvas", None)
-        if canvas is None:
-            return
+    def _on_results_canvas_configure(self, event):
+        self.results_canvas.itemconfigure(self._results_canvas_window, width=event.width)
+        self._update_results_scrollregion()
 
-        x = event.x_root - canvas.winfo_rootx()
-        y = event.y_root - canvas.winfo_rooty()
 
-        if x < 0 or x >= canvas.winfo_width():
-            return
+    def _update_results_scrollregion(self, event=None):
+        self.results_canvas.configure(scrollregion=self.results_canvas.bbox("all"))
 
-        if y < 0 or y >= canvas.winfo_height():
-            return
-
-        if getattr(event, "num", None) == 4:
-            direction = -1
-        elif getattr(event, "num", None) == 5:
-            direction = 1
-        elif event.delta > 0:
-            direction = -1
-        elif event.delta < 0:
-            direction = 1
+        if self.results_frame.winfo_reqheight() > self.results_canvas.winfo_height():
+            self.results_scrollbar.grid()
         else:
-            return
+            self.results_scrollbar.grid_remove()
+            self.results_canvas.yview_moveto(0)
 
-        canvas.yview_scroll(direction, "units")
-        return "break"
+
+    def _on_dashboard_mousewheel(self, event):
+        for canvas in (self.slider_canvas, self.results_canvas):
+            x = event.x_root - canvas.winfo_rootx()
+            y = event.y_root - canvas.winfo_rooty()
+
+            if x < 0 or x >= canvas.winfo_width() or y < 0 or y >= canvas.winfo_height():
+                continue
+
+            if getattr(event, "num", None) == 4:
+                direction = -1
+            elif getattr(event, "num", None) == 5:
+                direction = 1
+            elif getattr(event, "delta", 0) > 0:
+                direction = -1
+            elif getattr(event, "delta", 0) < 0:
+                direction = 1
+            else:
+                return
+
+            canvas.yview_scroll(direction, "units")
+            return "break"
 
 
     def _apply_slider_values_to_snapshots(self):
@@ -858,6 +894,6 @@ class ScenarioController(ScalableClientMixin):
         self._compute_scenario_results()
         if self.results_frame is not None:
             self.results_frame.update_results(self.state_manager.build_results_view_model())
+            self.window.after_idle(self._update_results_scrollregion)
         self._render_panels()
-
 

@@ -36,10 +36,17 @@ class AgeLongevityEditFrame(ScalableFrameMixin, ttk.Frame):
         self.refresh_callback = refresh_callback
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._header_text_font = tkfont.Font(root=self, family="Arial", size=11)
-        self._section_font = tkfont.Font(root=self, family="Arial", size=12, weight="bold")
-        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._header_font = self._body_font.copy()
+        self._header_font.configure(weight="bold")
+        self._header_text_font = self._body_font.copy()
+        self._section_font = self._body_font.copy()
+        section_size = int(self._body_font.cget("size"))
+        if section_size < 0:
+            section_size -= 1
+        else:
+            section_size += 1
+        self._section_font.configure(size=section_size, weight="bold")
+        self._tooltip_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)

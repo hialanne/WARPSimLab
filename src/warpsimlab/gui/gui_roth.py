@@ -111,7 +111,7 @@ class RothEditFrame(ScalableFrameMixin, ttk.Frame):
 
         ttk.Label(
             header_frame,
-            text="Cash Flow > Roth Contributions / Conversions",
+            text="Household > Roth Contributions / Conversions",
             font=self._header_font,
         ).pack(side="left")
 

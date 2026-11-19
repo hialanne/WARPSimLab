@@ -34,7 +34,13 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
         parent.update_idletasks()
 
         development_font_linespace = 24
+
+        # Arial 16 is a fixed calibration reference from the original Windows layout.
+        # Its measured line height determines the automatic window scaling factor.
+        # Do not substitute TkDefaultFont: its metrics vary by platform and can
+        # unexpectedly change the initial window dimensions.
         reference_font = tkfont.Font(root=self, family="Arial", size=16)
+
         gui_scale = reference_font.metrics("linespace") / development_font_linespace
 
         width = max(int(1100 * gui_scale), int(parent.winfo_width() * 0.92))

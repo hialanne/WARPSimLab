@@ -16,8 +16,9 @@ class RmdQcdEditFrame(ScalableFrameMixin, ttk.Frame):
         self.controls = control_vars["_controls_dict"]
         self.qcd_settings = qcd_settings
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._header_font = self._body_font.copy()
+        self._header_font.configure(weight="bold")
+        self._tooltip_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)

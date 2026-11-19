@@ -371,6 +371,10 @@ def test_run_scenario_simulation_updates_results_then_renders(monkeypatch, main_
     controller = mod.ScenarioController(main_gui)
     calls = []
     view_model = object()
+    scheduled = []
+    controller.window = SimpleNamespace(
+        after_idle=lambda callback: scheduled.append(callback)
+    )
 
     controller.results_frame = SimpleNamespace(
         update_results=lambda value: calls.append(("results", value))
@@ -399,6 +403,7 @@ def test_run_scenario_simulation_updates_results_then_renders(monkeypatch, main_
         ("results", view_model),
         ("render", None),
     ]
+    assert scheduled == [controller._update_results_scrollregion]
 
 
 def test_run_scenario_simulation_renders_without_results_frame(monkeypatch, main_gui):

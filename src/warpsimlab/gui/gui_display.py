@@ -201,7 +201,12 @@ class PortfolioSimulatorGUI_DisplayMixin:
         """Return the platform-adjusted WARPSimLab reference window size."""
         development_font_linespace = 24
 
+        # Arial 16 is a fixed calibration reference from the original Windows layout.
+        # Its measured line height determines the automatic window scaling factor.
+        # Do not substitute TkDefaultFont: its metrics vary by platform and can
+        # unexpectedly change the initial window dimensions.
         reference_font = tkfont.Font(root=self.root, family="Arial", size=16)
+
         current_font_linespace = reference_font.metrics("linespace")
         gui_scale = current_font_linespace / development_font_linespace
 
@@ -384,8 +389,11 @@ class PortfolioSimulatorGUI_DisplayMixin:
         print(f"root y: {self.root.winfo_y()}")
         print(f"root geometry: {self.root.winfo_geometry()}")
 
-        font_14 = tkfont.Font(root=self.root, family="Arial", size=14)
-        font_16 = tkfont.Font(root=self.root, family="Arial", size=16)
+        default_font = tkfont.nametofont("TkDefaultFont")
+        font_14 = default_font.copy()
+        font_14.configure(size=14)
+        font_16 = default_font.copy()
+        font_16.configure(size=16)
 
         print("")
         print("Font diagnostics")
@@ -405,11 +413,10 @@ class PortfolioSimulatorGUI_DisplayMixin:
         print(f"Arial 14 actual: {font_14.actual()}")
         print(f"Arial 16 actual: {font_16.actual()}")
 
-        default_font = tkfont.nametofont("TkDefaultFont")
         print(f"TkDefaultFont actual: {default_font.actual()}")
         print(f"TkDefaultFont linespace: {default_font.metrics('linespace')}")
 
-        test_label = ttk.Label(self.root, text="WARPSimLab", font=("Arial", 16))
+        test_label = ttk.Label(self.root, text="WARPSimLab", font=font_16)
         test_button = ttk.Button(self.root, text="Test Button")
 
         test_label.update_idletasks()

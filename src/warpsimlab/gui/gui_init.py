@@ -55,7 +55,7 @@ WARPSIMLAB_VERSION = "4.6.0"
 WARPSIMLAB_TITLE = f"WARPSimLab version {WARPSIMLAB_VERSION}"
 
 SCREEN_DEBUG = False
-SCENARIO_DEBUG = True
+SCENARIO_DEBUG = False
 
 class PortfolioSimulatorGUI(
     PortfolioSimulatorGUI_DisplayMixin, PortfolioSimulatorGUI_NavigationMixin,
@@ -97,41 +97,54 @@ class PortfolioSimulatorGUI(
         width = max(360, min(800, screen_width - 100))
         wrap_width = width - 60
 
-        content = ttk.Frame(dialog, padding=20)
+        style = ttk.Style(dialog)
+        base = style.lookup("TFrame", "background") or dialog.cget("background")
+        red, green, blue = dialog.winfo_rgb(base)
+        background = "#{:02x}{:02x}{:02x}".format(
+            int(red / 257 * 0.92), int(green / 257 * 0.92), int(blue / 257 * 0.92)
+        )
+
+        dialog.configure(background=background)
+
+        content = tk.Frame(dialog, bg=background, padx=20, pady=20)
         content.pack(fill="both", expand=True)
+        foreground = style.lookup("TLabel", "foreground") or "#000000"
 
         dialog._heading_font = tkfont.nametofont("TkDefaultFont").copy()
         dialog._heading_font.configure(weight="bold")
-        ttk.Label(
+        tk.Label(
             content, text="Ubuntu display scaling compatibility",
             font=dialog._heading_font, wraplength=wrap_width,
-            justify="left"
+            justify="left", bg=background, fg=foreground
         ).pack(anchor="w", pady=(0, 12))
 
-        ttk.Label(
+        tk.Label(
             content,
             text="WARPSimLab detected automatic scaling for legacy applications. "
                  "This can cause oversized fonts and clipped controls.\n\n"
                  "Open Ubuntu Settings > Displays and turn off "
                  "'Built-in Scaling for Legacy Apps'.\n\n"
+                 "Note: At 100% display scaling, Ubuntu hides this setting. "
+                 "To change it, temporarily select 125% scaling, turn off "
+                 "'Built-in Scaling for Legacy Apps', then return to 100%.\n\n"
                  "Keep your preferred display scaling percentage, then restart WARPSimLab.",
-            wraplength=wrap_width, justify="left"
+            wraplength=wrap_width, justify="left", bg=background, fg=foreground
         ).pack(anchor="w", pady=(0, 16))
 
         ttk.Button(content, text="Continue", command=dialog.destroy).pack(anchor="e")
 
         dialog.update_idletasks()
         height = dialog.winfo_reqheight()
-        x = self.root.winfo_rootx() + (self.root.winfo_width() - width) // 2
-        y = self.root.winfo_rooty() + (self.root.winfo_height() - height) // 2
-        x = max(0, min(x, screen_width - width))
-        y = max(0, min(y, screen_height - height))
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
 
         dialog.geometry(f"{width}x{height}+{x}+{y}")
         dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
         dialog.deiconify()
+        dialog.attributes("-topmost", True)
         dialog.lift()
         dialog.after_idle(dialog.grab_set)
+        dialog.after_idle(dialog.focus_force)
 
 
     def __init__(self, root):
@@ -154,7 +167,8 @@ class PortfolioSimulatorGUI(
         self._initialize_gui_scaling()
         self._initialize_scaling(self.root)
 
-        self._title_font = tkfont.Font(root=self.root, family="Arial", size=16)
+        self._title_font = tkfont.nametofont("TkDefaultFont").copy()
+        self._title_font.configure(size=16)
         self._register_scalable_font(self._title_font)
         self._apply_gui_scale()
 

@@ -19,10 +19,13 @@ class SequenceRiskEditFrame(ScalableFrameMixin, ttk.Frame):
         self.title = title
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
-        self._header_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._section_font = tkfont.Font(root=self, family="Arial", size=11, weight="bold")
-        self._description_font = tkfont.Font(root=self, family="Arial", size=10, slant="italic")
-        self._tooltip_font = tkfont.Font(root=self, family="Arial", size=11)
+        self._header_font = self._body_font.copy()
+        self._header_font.configure(weight="bold")
+        self._section_font = self._body_font.copy()
+        self._section_font.configure(weight="bold")
+        self._description_font = self._body_font.copy()
+        self._description_font.configure(slant="italic")
+        self._tooltip_font = self._body_font.copy()
 
         self._initialize_frame_scaling()
         self._register_scalable_font(self._body_font)
@@ -71,10 +74,6 @@ class SequenceRiskEditFrame(ScalableFrameMixin, ttk.Frame):
             return True
 
     def _add_sequence_risk_controls(self, parent):
-        ttk.Label(
-            parent, text="Sequence-of-Returns Scenarios (Optional)", font=self._section_font
-        ).grid(row=self._next_row(), column=0, columnspan=2, sticky="w", pady=(0, 6))
-
         ttk.Label(
             parent,
             text=(
