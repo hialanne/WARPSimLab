@@ -29,7 +29,7 @@ class AssetAllocationComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
         self._title_font = self._body_font.copy()
-        self._title_font.configure(size=int(self._body_font.cget("size")) + 3, weight="bold")
+        self._title_font.configure(weight="bold")
         self._text_font = self._body_font.copy()
         self._text_bold_font = self._body_font.copy()
         self._text_bold_font.configure(weight="bold")
@@ -71,20 +71,23 @@ class AssetAllocationComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _build_header(self, title):
-        ttk.Label(self, text=title, font=self._title_font).grid(
-            row=0, column=0, columnspan=2, sticky="w", pady=(0, 8)
-        )
+        header_frame = ttk.Frame(self)
+        header_frame.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         ttk.Label(
-            self,
-            text="Compare how different household equity allocations affect modeled financial outcomes.",
+            header_frame,
+            text=f"Reports > {title}",
+            font=self._title_font,
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=" - Compare how different household equity allocations affect modeled financial outcomes.",
             font=self._text_font,
-            wraplength=900,
-            justify="left",
-        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        ).pack(side="left")
 
         note_frame = ttk.Frame(self)
-        note_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        note_frame.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
         ttk.Label(
             note_frame,
@@ -93,17 +96,19 @@ class AssetAllocationComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
         ).pack(side="left")
 
         ttk.Label(
-            note_frame, text="Desktop \\ WARPSimLab \\ Reports", font=self._text_bold_font
+            note_frame,
+            text="Desktop \\ WARPSimLab \\ Reports",
+            font=self._text_bold_font,
         ).pack(side="left")
 
 
     def _build_current_allocation(self):
         ttk.Label(self, text="Current Allocation", font=self._section_font).grid(
-            row=3, column=0, columnspan=2, sticky="w", pady=(4, 4)
+            row=2, column=0, columnspan=2, sticky="w", pady=(4, 4)
         )
 
         current_frame = ttk.Frame(self)
-        current_frame.grid(row=4, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        current_frame.grid(row=3, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
         equity = self._format_percentage(self.current_equity_percent)
         bonds = self._format_percentage(self.current_bonds_percent)
@@ -120,7 +125,7 @@ class AssetAllocationComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
 
     def _build_equity_cases(self):
         ttk.Label(self, text="Equity Allocation Cases", font=self._section_font).grid(
-            row=5, column=0, columnspan=2, sticky="w", pady=(4, 4)
+            row=4, column=0, columnspan=2, sticky="w", pady=(4, 4)
         )
 
         ttk.Label(
@@ -132,10 +137,10 @@ class AssetAllocationComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
             font=self._text_font,
             wraplength=900,
             justify="left",
-        ).grid(row=6, column=0, columnspan=2, sticky="w", pady=(0, 8))
+        ).grid(row=5, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         values_frame = ttk.Frame(self)
-        values_frame.grid(row=7, column=0, columnspan=2, sticky="w", pady=(0, 8))
+        values_frame.grid(row=6, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         self.equity_vars = []
         percentages = self.working_options["equity_percentages"]
@@ -178,7 +183,7 @@ class AssetAllocationComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
             font=self._text_font,
             wraplength=900,
             justify="left",
-        ).grid(row=8, column=0, columnspan=2, sticky="w", pady=(2, 12))
+        ).grid(row=7, column=0, columnspan=2, sticky="w", pady=(2, 12))
 
 
     def _build_output_options(self):
@@ -191,12 +196,12 @@ class AssetAllocationComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
             text="Open HTML report in web browser when complete",
             variable=self.open_browser_var,
             style="AssetAllocationReport.TCheckbutton",
-        ).grid(row=9, column=0, columnspan=2, sticky="w", pady=2)
+        ).grid(row=8, column=0, columnspan=2, sticky="w", pady=2)
 
 
     def _build_buttons(self):
         button_frame = ttk.Frame(self)
-        button_frame.grid(row=10, column=0, columnspan=2, sticky="w", pady=(18, 0))
+        button_frame.grid(row=9, column=0, columnspan=2, sticky="w", pady=(18, 0))
 
         ttk.Button(
             button_frame,

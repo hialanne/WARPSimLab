@@ -57,7 +57,7 @@ class ExecutiveSummaryReportFrame(ScalableFrameMixin, ttk.Frame):
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
         self._title_font = self._body_font.copy()
-        self._title_font.configure(size=int(self._body_font.cget("size")) + 3, weight="bold")
+        self._title_font.configure(weight="bold")
         self._text_font = self._body_font.copy()
         self._text_bold_font = self._body_font.copy()
         self._text_bold_font.configure(weight="bold")
@@ -90,20 +90,23 @@ class ExecutiveSummaryReportFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _build_header(self, title):
-        ttk.Label(self, text=title, font=self._title_font).grid(
-            row=0, column=0, sticky="w", pady=(0, 8)
-        )
+        header_frame = ttk.Frame(self)
+        header_frame.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         ttk.Label(
-            self,
-            text="Select the sections and outputs to include in the Executive Summary report.",
+            header_frame,
+            text=f"Reports > {title}",
+            font=self._title_font,
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=" - Select the sections and outputs to include in the Executive Summary report.",
             font=self._text_font,
-            wraplength=900,
-            justify="left",
-        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        ).pack(side="left")
 
         note_frame = ttk.Frame(self)
-        note_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        note_frame.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
         ttk.Label(
             note_frame,
@@ -120,7 +123,7 @@ class ExecutiveSummaryReportFrame(ScalableFrameMixin, ttk.Frame):
 
     def _build_content(self):
         content_frame = ttk.Frame(self)
-        content_frame.grid(row=3, column=0, sticky="nw")
+        content_frame.grid(row=2, column=0, sticky="nw")
 
         left_frame = ttk.Frame(content_frame)
         left_frame.grid(row=0, column=0, sticky="nw", padx=(0, 60))

@@ -39,7 +39,7 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
 
         self._body_font = tkfont.nametofont("TkDefaultFont").copy()
         self._title_font = self._body_font.copy()
-        self._title_font.configure(size=int(self._body_font.cget("size")) + 3, weight="bold")
+        self._title_font.configure(weight="bold")
         self._text_font = self._body_font.copy()
         self._text_bold_font = self._body_font.copy()
         self._text_bold_font.configure(weight="bold")
@@ -78,23 +78,26 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _build_header(self, title):
-        ttk.Label(self, text=title, font=self._title_font).grid(
-            row=0, column=0, columnspan=2, sticky="w", pady=(0, 8)
-        )
+        header_frame = ttk.Frame(self)
+        header_frame.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         ttk.Label(
-            self,
+            header_frame,
+            text=f"Reports > {title}",
+            font=self._title_font,
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
             text=(
-                "Compare how different retirement and Social Security claiming ages affect modeled "
-                "financial outcomes."
+                " - Compare how different retirement and Social Security claiming ages "
+                "affect modeled financial outcomes."
             ),
             font=self._text_font,
-            wraplength=900,
-            justify="left",
-        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        ).pack(side="left")
 
         note_frame = ttk.Frame(self)
-        note_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        note_frame.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
         ttk.Label(
             note_frame,
@@ -111,11 +114,11 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
 
     def _build_current_timing(self):
         ttk.Label(self, text="Current Household Timing", font=self._section_font).grid(
-            row=3, column=0, columnspan=2, sticky="w", pady=(4, 6)
+            row=2, column=0, columnspan=2, sticky="w", pady=(4, 6)
         )
 
         current_frame = ttk.Frame(self)
-        current_frame.grid(row=4, column=0, columnspan=2, sticky="w", pady=(0, 8))
+        current_frame.grid(row=3, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         ttk.Label(
             current_frame,
@@ -130,7 +133,7 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
         ).pack(side="left")
 
         person_frame = ttk.Frame(self)
-        person_frame.grid(row=5, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        person_frame.grid(row=4, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
         husband = self.parent_gui.husband
 
@@ -158,7 +161,7 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
 
     def _build_retirement_ages(self):
         ttk.Label(self, text="Retirement Ages", font=self._section_font).grid(
-            row=6, column=0, columnspan=2, sticky="w", pady=(4, 4)
+            row=5, column=0, columnspan=2, sticky="w", pady=(4, 4)
         )
 
         ttk.Label(
@@ -170,10 +173,10 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
             font=self._text_font,
             wraplength=900,
             justify="left",
-        ).grid(row=7, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        ).grid(row=6, column=0, columnspan=2, sticky="w", pady=(0, 6))
 
         retirement_frame = ttk.Frame(self)
-        retirement_frame.grid(row=8, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        retirement_frame.grid(row=7, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
         self.retirement_age_vars = []
         retirement_ages = self.working_options["retirement_ages"]
@@ -206,7 +209,7 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
 
     def _build_social_security_ages(self):
         ttk.Label(self, text="Social Security Ages", font=self._section_font).grid(
-            row=9, column=0, columnspan=2, sticky="w", pady=(4, 4)
+            row=8, column=0, columnspan=2, sticky="w", pady=(4, 4)
         )
 
         ttk.Label(
@@ -218,10 +221,10 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
             font=self._text_font,
             wraplength=900,
             justify="left",
-        ).grid(row=10, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        ).grid(row=9, column=0, columnspan=2, sticky="w", pady=(0, 6))
 
         ss_frame = ttk.Frame(self)
-        ss_frame.grid(row=11, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        ss_frame.grid(row=10, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
         self.social_security_age_vars = []
         social_security_ages = self.working_options["social_security_ages"]
@@ -251,7 +254,7 @@ class RetirementSSComparisonReportFrame(ScalableFrameMixin, ttk.Frame):
             entry.grid(row=0, column=index, padx=(0, 10))
             self._age_entries.append(entry)
 
-        self._after_age_rows = 12
+        self._after_age_rows = 11
 
         if self.show_wife:
             ttk.Label(

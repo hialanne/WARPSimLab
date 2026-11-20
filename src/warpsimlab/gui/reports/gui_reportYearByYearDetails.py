@@ -33,8 +33,7 @@ class YearByYearDetailsReportFrame(ScalableFrameMixin, ttk.Frame):
         font_step = -1 if base_size < 0 else 1
 
         self._title_font = self._body_font.copy()
-        self._title_font.configure(size=base_size + 3 * font_step, weight="bold")
-
+        self._title_font.configure(weight="bold")
         self._text_font = self._body_font.copy()
         self._text_bold_font = self._body_font.copy()
         self._text_bold_font.configure(weight="bold")
@@ -69,20 +68,23 @@ class YearByYearDetailsReportFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _build_header(self, title):
-        ttk.Label(self, text=title, font=self._title_font).grid(
-            row=0, column=0, sticky="w", pady=(0, 8)
-        )
+        header_frame = ttk.Frame(self)
+        header_frame.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         ttk.Label(
-            self,
-            text="Select the outputs and table detail level for the Year-by-Year Details report.",
+            header_frame,
+            text=f"Reports > {title}",
+            font=self._title_font,
+        ).pack(side="left")
+
+        ttk.Label(
+            header_frame,
+            text=" - Select the outputs and table detail level for the Year-by-Year Details report.",
             font=self._text_font,
-            wraplength=900,
-            justify="left",
-        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        ).pack(side="left")
 
         note_frame = ttk.Frame(self)
-        note_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        note_frame.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
         ttk.Label(
             note_frame,
@@ -99,7 +101,7 @@ class YearByYearDetailsReportFrame(ScalableFrameMixin, ttk.Frame):
 
     def _build_content(self):
         content_frame = ttk.Frame(self)
-        content_frame.grid(row=3, column=0, sticky="nw")
+        content_frame.grid(row=2, column=0, sticky="nw")
 
         left_frame = ttk.Frame(content_frame)
         left_frame.grid(row=0, column=0, sticky="nw", padx=(0, 60))
@@ -206,7 +208,7 @@ class YearByYearDetailsReportFrame(ScalableFrameMixin, ttk.Frame):
 
     def _build_buttons(self):
         button_frame = ttk.Frame(self)
-        button_frame.grid(row=4, column=0, sticky="w", pady=(18, 0))
+        button_frame.grid(row=3, column=0, sticky="w", pady=(18, 0))
 
         ttk.Button(
             button_frame,

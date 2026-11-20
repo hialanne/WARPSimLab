@@ -266,8 +266,8 @@ def test_constructor_builds_labels_and_checkbuttons(tk_root):
     labels = _label_texts(frame)
     checkbuttons = _checkbutton_texts(frame)
 
-    assert "Test Risk Report" in labels
-    assert "Test risk report description." in labels
+    assert "Reports > Test Risk Report" in labels
+    assert " - Test risk report description." in labels
     assert "Test method note." in labels
     assert "General" in labels
     assert "Analysis" in labels
@@ -300,8 +300,8 @@ def test_constructor_uses_explicit_title_when_provided(tk_root):
 
     labels = _label_texts(frame)
 
-    assert "Explicit Title" in labels
-    assert "Test Risk Report" not in labels
+    assert "Reports > Explicit Title" in labels
+    assert "Reports > Test Risk Report" not in labels
 
 
 def test_constructor_normalizes_report_options_and_creates_vars(tk_root):

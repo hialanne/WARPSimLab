@@ -34,8 +34,7 @@ class RiskReportBaseFrame(ScalableFrameMixin, ttk.Frame):
         font_step = -1 if base_size < 0 else 1
 
         self._title_font = self._body_font.copy()
-        self._title_font.configure(size=base_size + 3 * font_step, weight="bold")
-
+        self._title_font.configure(weight="bold")
         self._text_font = self._body_font.copy()
         self._text_bold_font = self._body_font.copy()
         self._text_bold_font.configure(weight="bold")
@@ -70,19 +69,22 @@ class RiskReportBaseFrame(ScalableFrameMixin, ttk.Frame):
 
 
     def _build_header(self, title):
-        ttk.Label(self, text=title, font=self._title_font).grid(
-            row=0, column=0, sticky="w", pady=(0, 8)
-        )
+        header_frame = ttk.Frame(self)
+        header_frame.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
 
         ttk.Label(
-            self,
-            text=self.DESCRIPTION,
-            font=self._text_font,
-            wraplength=900,
-            justify="left",
-        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 8))
+            header_frame,
+            text=f"Reports > {title}",
+            font=self._title_font,
+        ).pack(side="left")
 
-        row = 2
+        ttk.Label(
+            header_frame,
+            text=f" - {self.DESCRIPTION}",
+            font=self._text_font,
+        ).pack(side="left")
+
+        row = 1
 
         if self.METHOD_NOTE:
             ttk.Label(

@@ -211,9 +211,9 @@ def test_constructor_builds_labels_checkbuttons_and_radiobuttons(tk_root):
     checkbuttons = _checkbutton_texts(frame)
     radiobuttons = _radiobutton_texts(frame)
 
-    assert "Year-by-Year Details" in labels
+    assert "Reports > Year-by-Year Details" in labels
     assert (
-        "Select the outputs and table detail level for the "
+        " - Select the outputs and table detail level for the "
         "Year-by-Year Details report."
     ) in labels
     assert "Desktop \\ WARPSimLab \\ Reports" in labels
@@ -247,8 +247,8 @@ def test_constructor_uses_explicit_title(tk_root):
 
     labels = _label_texts(frame)
 
-    assert "Explicit Yearly Title" in labels
-    assert "Year-by-Year Details" not in labels
+    assert "Reports > Explicit Yearly Title" in labels
+    assert "Reports > Year-by-Year Details" not in labels
 
 
 def test_constructor_normalizes_report_options_and_creates_vars(tk_root):
