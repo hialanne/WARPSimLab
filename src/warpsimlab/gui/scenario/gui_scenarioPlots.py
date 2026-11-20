@@ -59,8 +59,8 @@ class ScenarioPlotManager:
 
         if getattr(self.main_gui, "scenario_debug", False):
             print(f"[SCENARIO] create_persistent_plots: layout_restored={self._layout_restored}")
-        if not self._layout_restored:
-            self.position_windows(dashboard_window)
+        #if not self._layout_restored:
+        #    self.position_windows(dashboard_window)
 
 
     def has_plots(self):

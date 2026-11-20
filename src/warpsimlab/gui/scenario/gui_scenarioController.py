@@ -169,6 +169,7 @@ class ScenarioController(ScalableClientMixin):
             return
 
         self.session_active = True
+        self.main_gui.scenario_debug = False
 
         # Disable Results menu while Scenario Explorer is active
         self._set_results_menu_enabled(False)
@@ -232,14 +233,31 @@ class ScenarioController(ScalableClientMixin):
 
         self._debug_dashboard_state("finish_dashboard_scaling before")
         self.window.update_idletasks()
+        if getattr(self.main_gui, "scenario_debug", False):
+            for name, widget in (
+                ("slider_canvas", self.slider_canvas),
+                ("sliders_frame", self.sliders_frame),
+                ("results_canvas", self.results_canvas),
+                ("results_frame", self.results_frame),
+            ):
+                print(f"[SCENARIO] {name}: "
+                      f"actual={widget.winfo_width()}x{widget.winfo_height()}, "
+                      f"requested={widget.winfo_reqwidth()}x{widget.winfo_reqheight()}")
 
         if sys.platform.startswith("linux"):
             self._dashboard_reference_width, self._dashboard_reference_height = (
                 self.plot_manager.get_dashboard_development_size()
             )
         else:
-            self._dashboard_reference_width = max(1, self.window.winfo_width())
-            self._dashboard_reference_height = max(1, self.window.winfo_height())
+            width = self.window.winfo_width()
+            height = self.window.winfo_height()
+
+            if width <= 1 or height <= 1:
+                self.window.after(50, self._finish_dashboard_scaling)
+                return
+
+            self._dashboard_reference_width = width
+            self._dashboard_reference_height = height
 
         self._debug_dashboard_state("finish_dashboard_scaling captured")
 
@@ -260,6 +278,24 @@ class ScenarioController(ScalableClientMixin):
             if self._dashboard_scale_after_id is not None:
                 self.window.after_cancel(self._dashboard_scale_after_id)
             self._update_dashboard_scale()
+
+        self.window.after_idle(self._ensure_dashboard_canvases_mapped)
+
+
+    def _ensure_dashboard_canvases_mapped(self):
+        if self.window is None or not self.window.winfo_exists():
+            return
+
+        if not self.window.winfo_ismapped():
+            self.window.after(50, self._ensure_dashboard_canvases_mapped)
+            return
+
+        for canvas in (self.slider_canvas, self.results_canvas):
+            if not canvas.winfo_ismapped():
+                canvas.grid_remove()
+                canvas.grid()
+
+        self.window.update_idletasks()
 
 
     def _on_dashboard_configure(self, event):
