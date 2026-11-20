@@ -195,10 +195,13 @@ class ScenarioController(ScalableClientMixin):
         # Build snapshots + controls UI + run once
         self.resync()
 
+        self.plot_manager._layout_restored = self.plot_manager.restore_saved_layout(self.window)
+
         if not self.plot_manager._layout_restored:
             self.window.after_idle(self._position_windows)
 
         self.window.after_idle(self._finish_dashboard_scaling)
+
 
 
     def _initialize_dashboard_scaling(self):

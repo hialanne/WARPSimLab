@@ -40,6 +40,8 @@ def _without_legacy_allocation_defaults(value, portfolio_inputs=None):
             elif key == "sim_initial_allocation_mode" and item in {
                     "none", "dont-rebalance", "maintain-current-allocation"}:
                 projected[key] = "original-allocation"
+            elif key in {"historical_asset_returns_file", "historical_inflation_file"} and isinstance(item, str):
+                projected[key] = item.replace("\\", "/")
             else:
                 projected[key] = _without_legacy_allocation_defaults(item, portfolio_inputs)
         return projected
