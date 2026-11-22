@@ -35,14 +35,24 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
             dark_background = False
 
         if dark_background:
-            changed_result_color = "#ff6b6b"
+            self._changed_result_color = "#64b5ff"
+            self._warning_result_color = "#ff6b6b"
         else:
-            changed_result_color = "#c62828"
+            self._changed_result_color = "#0057d9"
+            self._warning_result_color = "#c62828"
+
+        self._normal_result_color = style.lookup("TLabel", "foreground")
 
         style.configure(
             "ScenarioChangedResult.TLabel",
-            foreground=changed_result_color,
-            font=self.changed_label_font,
+            foreground=self._changed_result_color,
+            font=self.normal_label_font,
+        )
+
+        style.configure(
+            "ScenarioWarningResult.TLabel",
+            foreground=self._warning_result_color,
+            font=self.normal_label_font,
         )
 
         self.columnconfigure(0, weight=1)
@@ -72,7 +82,7 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         self.assumptions_frame.grid(row=2, column=0, sticky="nsew", pady=(4, 0))
 
         ttk.Label(
-            self, text="Changed assumptions are shown in red.", font=self.normal_label_font
+            self, text="Blue: changed values. Red: unfavorable results.", font=self.normal_label_font
         ).grid(row=2, column=0, sticky="w", pady=(8, 0))
 
 
@@ -80,6 +90,21 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         style = ttk.Style(self)
         style.configure("ScenarioResults.TLabelframe.Label", font=self._section_font)
         style.configure("ScenarioChangedResult.TLabel", font=self.changed_label_font)
+        style.configure("ScenarioWarningResult.TLabel", font=self.changed_label_font)
+
+
+    def _apply_result_style(self, label, style_name):
+        if style_name == "ScenarioChangedResult.TLabel":
+            foreground = self._changed_result_color
+            font = self.changed_label_font
+        elif style_name == "ScenarioWarningResult.TLabel":
+            foreground = self._warning_result_color
+            font = self.changed_label_font
+        else:
+            foreground = self._normal_result_color
+            font = self.normal_label_font
+
+        label.configure(style=style_name, foreground=foreground, font=font)
 
 
     def _build_results_table(self):
@@ -154,18 +179,6 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
             "lifetime_funding_gap", original.lifetime_funding_gap, changed.lifetime_funding_gap, positive_red=True
         )
 
-        style = ttk.Style(self)
-        red = style.lookup("ScenarioChangedResult.TLabel", "foreground")
-        normal = style.lookup("TLabel", "foreground")
-
-        for name in ("original", "changed"):
-            label = self.metric_rows["lifetime_funding_gap"][name]
-
-            if label.cget("style") == "ScenarioChangedResult.TLabel":
-                label.configure(foreground=red)
-            else:
-                label.configure(foreground=normal)
-
         self._set_currency_row("lifetime_taxes", original.lifetime_taxes, changed.lifetime_taxes)
 
         self._set_currency_row("ending_pre_tax", original.ending_pre_tax, changed.ending_pre_tax)
@@ -234,7 +247,6 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         row = self._add_assumption_row(
             frame, row, "Cash", original.cash, changed.cash, "percent", indent=0
         )
-        self._add_rebalancing_row(frame, row, original.rebalance_every_year, changed.rebalance_every_year)
 
 
     def _add_assumption_section(self, parent, row, label):
@@ -283,42 +295,9 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         else:
             changed_font = self.normal_label_font
 
-        ttk.Label(parent, text=changed_text, anchor="e", font=changed_font, style=changed_style).grid(
-            row=row, column=2, sticky="e", padx=(4, 0), pady=2
-        )
-
-        return row + 1
-
-
-    def _add_rebalancing_row(self, parent, row, original, changed):
-        is_changed = bool(original) != bool(changed)
-
-        if is_changed:
-            changed_style = "ScenarioChangedResult.TLabel"
-            changed_font = self.changed_label_font
-        else:
-            changed_style = "TLabel"
-            changed_font = self.normal_label_font
-
-        if original:
-            original_text = "Annual Rebalancing"
-        else:
-            original_text = "No Rebalancing"
-
-        if changed:
-            changed_text = "Annual Rebalancing"
-        else:
-            changed_text = "No Rebalancing"
-
-        ttk.Label(parent, text="Rebalancing", font=self.normal_label_font).grid(
-            row=row, column=0, sticky="w", padx=(0, 10), pady=2
-        )
-        ttk.Label(parent, text=original_text, anchor="e", font=self.normal_label_font).grid(
-            row=row, column=1, sticky="e", padx=4, pady=2
-        )
-        ttk.Label(parent, text=changed_text, anchor="e", font=changed_font, style=changed_style).grid(
-            row=row, column=2, sticky="e", padx=(4, 0), pady=2
-        )
+        value_label = ttk.Label(parent, text=changed_text, anchor="e", font=changed_font)
+        value_label.grid(row=row, column=2, sticky="e", padx=(4, 0), pady=2)
+        self._apply_result_style(value_label, changed_style)
 
         return row + 1
 
@@ -335,21 +314,32 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         changed_style = "TLabel"
 
         if (negative_red and original < 0) or (positive_red and original > 0):
-            original_style = "ScenarioChangedResult.TLabel"
+            original_style = "ScenarioWarningResult.TLabel"
 
-        if is_changed:
-            changed_style = "ScenarioChangedResult.TLabel"
-        elif (negative_red and changed < 0) or (positive_red and changed > 0):
+        if (negative_red and changed < 0) or (positive_red and changed > 0):
+            changed_style = "ScenarioWarningResult.TLabel"
+        elif is_changed:
             changed_style = "ScenarioChangedResult.TLabel"
 
-        self.metric_rows[key]["original"].configure(text=f"${original:,.0f}", style=original_style)
-        self.metric_rows[key]["changed"].configure(text=f"${changed:,.0f}", style=changed_style)
+        original_label = self.metric_rows[key]["original"]
+        changed_label = self.metric_rows[key]["changed"]
+
+        original_label.configure(text=f"${original:,.0f}")
+        changed_label.configure(text=f"${changed:,.0f}")
+
+        self._apply_result_style(original_label, original_style)
+        self._apply_result_style(changed_label, changed_style)
 
 
     def _set_percent_row(self, key, original, changed):
+        original_label = self.metric_rows[key]["original"]
+        changed_label = self.metric_rows[key]["changed"]
+
         if original is None or changed is None:
-            self.metric_rows[key]["original"].configure(text="-", style="TLabel")
-            self.metric_rows[key]["changed"].configure(text="-", style="TLabel")
+            original_label.configure(text="-")
+            changed_label.configure(text="-")
+            self._apply_result_style(original_label, "TLabel")
+            self._apply_result_style(changed_label, "TLabel")
             return
 
         is_changed = abs(float(changed) - float(original)) > 1e-9
@@ -358,5 +348,8 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         if is_changed:
             changed_style = "ScenarioChangedResult.TLabel"
 
-        self.metric_rows[key]["original"].configure(text=f"{original:.1f}%", style="TLabel")
-        self.metric_rows[key]["changed"].configure(text=f"{changed:.1f}%", style=changed_style)
+        original_label.configure(text=f"{original:.1f}%")
+        changed_label.configure(text=f"{changed:.1f}%")
+
+        self._apply_result_style(original_label, "TLabel")
+        self._apply_result_style(changed_label, changed_style)

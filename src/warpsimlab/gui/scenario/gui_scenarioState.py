@@ -319,7 +319,7 @@ class ScenarioStateManager:
             wife_age=wife_age,
             wife_retire_age=wife_retire_age,
             wife_ss_age=wife_ss_age,
-            inflation_rate=sim.inflation_rate * 100,
+            inflation_rate=sim.inflation_rate * 100 + snapshot.delta_inflation,
             fund_expense=sim.fund_expense * 100,
             dynamic_label=dynamic_label,
             dynamic_value=dynamic_value, 

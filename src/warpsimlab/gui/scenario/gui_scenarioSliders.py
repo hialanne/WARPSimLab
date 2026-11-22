@@ -240,7 +240,10 @@ class ScenarioSlidersFrame(ScalableFrameMixin, ttk.LabelFrame):
         self.inflation_slider.grid(row=1, column=0, sticky="ew")
         Tooltip(
             self.inflation_slider,
-            "Set a hypothetical annual inflation rate (%) for the simulation.",
+            "Set a hypothetical annual inflation rate.\n"
+            "Investment returns remain unchanged, allowing you to\n"
+            "measure the impact of inflation on purchasing power\n"
+            "and retirement sustainability.",
             font=self._tooltip_font,
         )
 

@@ -227,8 +227,7 @@ def test_rebuild_assumptions_expense_mode_shows_expected_fields(tk_root):
     assert "Social Security Age" in texts
     assert "Inflation Rate" in texts
     assert "Fund Expenses" in texts
-    assert "Rebalancing" in texts
-    assert "Annual Rebalancing" in texts
+    assert "Rebalancing" not in texts
     assert "Expense Multiplier" in texts
     assert "Withdrawal Rate" not in texts
     assert "Stock" in texts
@@ -238,7 +237,7 @@ def test_rebuild_assumptions_expense_mode_shows_expected_fields(tk_root):
     frame.destroy()
 
 
-def test_rebuild_assumptions_shows_changed_rebalancing(tk_root):
+def test_rebuild_assumptions_omits_rebalancing(tk_root):
     frame = mod.ScenarioResultsFrame(tk_root)
 
     original = _make_assumptions(rebalance_every_year=True)
@@ -248,9 +247,9 @@ def test_rebuild_assumptions_shows_changed_rebalancing(tk_root):
 
     texts = _assumption_texts(frame)
 
-    assert "Rebalancing" in texts
-    assert "Annual Rebalancing" in texts
-    assert "No Rebalancing" in texts
+    assert "Rebalancing" not in texts
+    assert "Annual Rebalancing" not in texts
+    assert "No Rebalancing" not in texts
 
     frame.destroy()
 

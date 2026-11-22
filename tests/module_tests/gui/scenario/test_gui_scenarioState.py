@@ -89,7 +89,7 @@ def _make_summary(total_assets=100000, depletion_rate=5.0, net_cash_flow=1000, f
     }
 
 
-def _make_result(summary=None, wife=None, expense_mode=True, dynamic_value=1.25):
+def _make_result(summary=None, wife=None, expense_mode=True, dynamic_value=1.25, delta_inflation=0.0):
     if summary is None:
         summary = _make_summary()
 
@@ -107,7 +107,7 @@ def _make_result(summary=None, wife=None, expense_mode=True, dynamic_value=1.25)
             retirement_withdraw_pct=retirement_withdraw_pct, inflation_rate=0.03, fund_expense=0.005,
             custom_stock=0.60, custom_bonds=0.30, custom_cash=0.10, rebalance_every_year=True
         ),
-        "retirement_snapshots": SimpleNamespace(historical_data_multiplier=95.0),
+        "retirement_snapshots": SimpleNamespace(historical_data_multiplier=95.0, delta_inflation=delta_inflation),
         "husband": _make_person(age=60, retire_age=65, ss_age=67),
         "wife": wife,
     }
@@ -524,3 +524,15 @@ def test_build_results_view_model_uses_withdrawal_rate_in_withdrawal_mode():
     assert view_model.original_assumptions.dynamic_value == pytest.approx(4.0)
     assert view_model.changed_assumptions.dynamic_label == "Withdrawal Rate"
     assert view_model.changed_assumptions.dynamic_value == pytest.approx(5.5)
+
+
+def test_build_results_view_model_includes_inflation_adjustment():
+    manager, _, state = _make_manager()
+
+    state.baseline_results = _make_result(delta_inflation=0.0)
+    state.scenario_results = _make_result(delta_inflation=1.0)
+
+    view_model = manager.build_results_view_model()
+
+    assert view_model.original_assumptions.inflation_rate == pytest.approx(3.0)
+    assert view_model.changed_assumptions.inflation_rate == pytest.approx(4.0)
