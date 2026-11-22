@@ -128,4 +128,22 @@ def build_cash_flow_tab(dialog, notebook):
         row=row_idx, column=0, columnspan=5, sticky="w", pady=(0, 0)
     )
 
+    def debug_cash_flow_height(event):
+        if notebook.select() != str(cash_flow_tab):
+            return
+
+        def report():
+            needed = cash_flow_tab.winfo_reqheight()
+            available = cash_flow_tab.winfo_height()
+
+            print(f"[SUMMARY] Cash Flow: "
+                  f"requested={needed}, actual={available}, "
+                  f"shortfall={needed - available}, "
+                  f"dialog_height={dialog.winfo_height()}, "
+                  f"screen_height={dialog.winfo_screenheight()}")
+
+        dialog.after_idle(report)
+
+    #notebook.bind("<<NotebookTabChanged>>", debug_cash_flow_height, add="+")
+
     return cash_flow_tab

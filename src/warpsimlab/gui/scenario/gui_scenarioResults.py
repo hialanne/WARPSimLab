@@ -153,6 +153,19 @@ class ScenarioResultsFrame(ScalableFrameMixin, ttk.LabelFrame):
         self._set_currency_row(
             "lifetime_funding_gap", original.lifetime_funding_gap, changed.lifetime_funding_gap, positive_red=True
         )
+
+        style = ttk.Style(self)
+        red = style.lookup("ScenarioChangedResult.TLabel", "foreground")
+        normal = style.lookup("TLabel", "foreground")
+
+        for name in ("original", "changed"):
+            label = self.metric_rows["lifetime_funding_gap"][name]
+
+            if label.cget("style") == "ScenarioChangedResult.TLabel":
+                label.configure(foreground=red)
+            else:
+                label.configure(foreground=normal)
+
         self._set_currency_row("lifetime_taxes", original.lifetime_taxes, changed.lifetime_taxes)
 
         self._set_currency_row("ending_pre_tax", original.ending_pre_tax, changed.ending_pre_tax)

@@ -468,6 +468,8 @@ class ScenarioController(ScalableClientMixin):
         if not self.session_active or self.window is None:
             return
 
+        refresh_mac = sys.platform == "darwin" and self._dashboard_reference_width is not None
+
         self._cancel_pending_update()
         self._needs_redraw = False
 
@@ -485,6 +487,23 @@ class ScenarioController(ScalableClientMixin):
 
         self._compute_baseline_results()
         self.run_and_redraw()
+
+        if refresh_mac:
+            self.window.after_idle(self._refresh_dashboard_exposure)
+
+
+    def _refresh_dashboard_exposure(self):
+        if self.window is None or not self.window.winfo_exists():
+            return
+
+        for canvas in (self.slider_canvas, self.results_canvas):
+            if not canvas.winfo_exists():
+                continue
+
+            canvas.event_generate(
+                "<Expose>", when="tail", x=0, y=0,
+                width=canvas.winfo_width(), height=canvas.winfo_height(), count=0
+            )
 
 
     def run_and_redraw(self):

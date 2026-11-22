@@ -44,7 +44,7 @@ class SummaryDialog(ScalableClientMixin, tk.Toplevel):
         gui_scale = reference_font.metrics("linespace") / development_font_linespace
 
         width = max(int(1100 * gui_scale), int(parent.winfo_width() * 0.92))
-        height = max(int(750 * gui_scale), int(parent.winfo_height() * 0.90))
+        height = max(int(750 * gui_scale), int(parent.winfo_height() * 0.90)) + 60
 
         width = min(width, self.winfo_screenwidth() - 60)
         height = min(height, self.winfo_screenheight() - 40)
