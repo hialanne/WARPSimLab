@@ -863,14 +863,20 @@ class ScenarioController(ScalableClientMixin):
         self._update_slider_scrollregion()
 
 
+
     def _update_slider_scrollregion(self, event=None):
         self.slider_canvas.configure(scrollregion=self.slider_canvas.bbox("all"))
 
         if self.sliders_frame.winfo_reqheight() > self.slider_canvas.winfo_height():
             self.slider_scrollbar.grid()
         else:
-            self.slider_scrollbar.grid_remove()
+            # Removing the scrollbar before its canvas is mapped can
+            # interfere with canvas layout during dashboard reconstruction.
+            # Wait until the canvas is mapped before changing the grid.
+            if self.slider_canvas.winfo_ismapped():
+                self.slider_scrollbar.grid_remove()
             self.slider_canvas.yview_moveto(0)
+
 
 
     def _on_results_canvas_configure(self, event):
