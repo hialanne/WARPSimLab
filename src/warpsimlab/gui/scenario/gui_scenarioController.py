@@ -884,7 +884,15 @@ class ScenarioController(ScalableClientMixin):
         if self.results_frame.winfo_reqheight() > self.results_canvas.winfo_height():
             self.results_scrollbar.grid()
         else:
-            self.results_scrollbar.grid_remove()
+            # On Windows, removing the scrollbar before the Results canvas
+            # is mapped can prevent the canvas from appearing after Reset Scenario.
+            # The canvas remains grid-managed but unmapped until the window is
+            # manually resized or grid() is called again.
+            #
+            # Only remove the scrollbar once the canvas is mapped. This avoids
+            # changing the grid layout during initial widget construction.
+            if self.results_canvas.winfo_ismapped():
+                self.results_scrollbar.grid_remove()
             self.results_canvas.yview_moveto(0)
 
 
