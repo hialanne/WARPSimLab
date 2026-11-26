@@ -371,6 +371,8 @@ class ScenarioController(ScalableClientMixin):
         if not self.session_active:
             return
 
+        self.session_active = False
+
         self._cancel_pending_update()
 
         self.capture_current_layout()
@@ -406,8 +408,6 @@ class ScenarioController(ScalableClientMixin):
         self.session_state.scenario_results = None
 
         self.window = None
-        self.session_active = False
-
 
     def _create_persistent_plots(self):
         self.plot_manager.create_persistent_plots(self.window)

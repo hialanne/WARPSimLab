@@ -329,7 +329,7 @@ class PortfolioSimulatorGUI_DisplayMixin:
         self._gui_reference_width, self._gui_reference_height = self._calculate_automatic_main_window_size()
         self.root._warpsimlab_gui_scale = self._gui_scale
         self.root.bind("<Configure>", self._on_main_window_configure, add="+")
-        self.root.after_idle(self._update_gui_scale)
+        self._gui_scale_after_id = self.root.after_idle(self._update_gui_scale)
 
 
     def _on_main_window_configure(self, event):

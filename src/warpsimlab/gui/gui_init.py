@@ -286,13 +286,28 @@ class PortfolioSimulatorGUI(
         """
         Save remembered display layouts and close WARPSimLab.
         """
+        import matplotlib.pyplot as plt
+
         scenario_controller = getattr(self, "scenario_controller", None)
 
         if scenario_controller is not None and scenario_controller.session_active:
-            scenario_controller.capture_current_layout()
+            scenario_controller._stop_session()
+
+        # Save geometry for any open Simulation Summary dialogs.
+        for child in self.root.winfo_children():
+            save_geometry = getattr(child, "_save_summary_geometry", None)
+            if callable(save_geometry):
+                save_geometry()
 
         self._save_main_window_geometry()
         save_display_settings(self.display_settings)
+
+        plt.close("all")
+
+        if self._gui_scale_after_id is not None:
+            self.root.after_cancel(self._gui_scale_after_id)
+            self._gui_scale_after_id = None
+
         self.root.destroy()
 
     def _raise_startup_window(self):
