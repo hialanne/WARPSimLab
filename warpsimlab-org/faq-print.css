@@ -1,0 +1,90 @@
+/* WARPSimLab FAQ - Printable document */
+
+@page {
+    size: letter;
+    margin: 0.65in 0.75in;
+}
+
+* {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    line-height: 1.4;
+}
+
+.skip-link,
+.header-actions,
+.main-nav,
+.site-footer {
+    display: none !important;
+}
+
+.site-header,
+.brand-bar,
+.brand-inner,
+.brand-block,
+.container,
+.legal-wrap,
+.hero,
+.section {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+.brand {
+    font-size: 24pt;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.brand-subtitle {
+    font-size: 10pt;
+    margin: 2pt 0 12pt;
+}
+
+h1 {
+    font-size: 18pt;
+    margin: 12pt 0 8pt;
+}
+
+.download-intro {
+    font-size: 11pt;
+    margin: 0 0 16pt;
+}
+
+.faq-grid {
+    display: block !important;
+}
+
+.faq-card {
+    display: block !important;
+    margin: 0 0 12pt !important;
+    padding: 0 !important;
+    border: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.faq-card h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 0 0 4pt;
+}
+
+.faq-card p {
+    font-size: 11pt;
+    margin: 0 0 5pt;
+}

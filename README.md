@@ -1,4 +1,4 @@
-# WARPSimLab - v4.4.0
+# WARPSimLab - v4.6.1
 
 ## Project overview
 
@@ -30,7 +30,7 @@ guarantee that simulated outcomes will occur.
 
 ## Key features
 
-- Added three comparitive reports - one for Expenses, one for Asset Allocations and one for Retirement/Social Security
+- Mac Release
 
 Tax and other financial rules are simplified simulation inputs and logic. Their
 presence does not establish current or complete tax-law accuracy.
@@ -51,9 +51,6 @@ The bundled project website documents these steps for its Windows ZIP release:
 2. Extract the ZIP file completely.
 3. Open the extracted folder.
 4. Double-click `WARPSimLab.exe`.
-
-The website notes that the executable is not code-signed, so Windows may display a
-security warning.
 
 ### Running from source
 
