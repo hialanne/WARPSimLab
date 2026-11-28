@@ -6,24 +6,40 @@ from src.warpsimlab.gui import gui_init
 
 
 def _make_gui():
-    return gui_init.PortfolioSimulatorGUI.__new__(gui_init.PortfolioSimulatorGUI)
+    gui = gui_init.PortfolioSimulatorGUI.__new__(gui_init.PortfolioSimulatorGUI)
+    gui._gui_scale_after_id = None
+    return gui
 
 
 class DummyRoot:
     def __init__(self):
         self.destroy_called = 0
+        self.children = []
+        self.cancelled_callbacks = []
 
     def destroy(self):
         self.destroy_called += 1
+
+    def winfo_children(self):
+        return self.children
+
+    def after_cancel(self, callback_id):
+        self.cancelled_callbacks.append(callback_id)
 
 
 class DummyScenarioController:
     def __init__(self, active=False):
         self.session_active = active
         self.capture_called = 0
+        self.stop_called = 0
 
     def capture_current_layout(self):
         self.capture_called += 1
+
+    def _stop_session(self):
+        self.stop_called += 1
+        self.session_active = False
+        self.capture_current_layout()
 
 
 def test_gui_exposes_application_actions():
@@ -104,6 +120,9 @@ def test_close_application_saves_active_scenario_layout(monkeypatch):
 
     gui._close_application()
 
+    assert gui.scenario_controller.stop_called == 1
+    assert gui.scenario_controller.session_active is False
+
     assert gui.scenario_controller.capture_called == 1
     assert geometry_calls == [True]
     assert settings_calls == [gui.display_settings]
@@ -121,6 +140,8 @@ def test_close_application_handles_inactive_scenario(monkeypatch):
 
     gui._close_application()
 
+    assert gui.scenario_controller.stop_called == 0
+
     assert gui.scenario_controller.capture_called == 0
     assert gui.root.destroy_called == 1
 
@@ -135,4 +156,29 @@ def test_close_application_handles_missing_scenario_controller(monkeypatch):
 
     gui._close_application()
 
+    assert gui.root.destroy_called == 1
+
+
+def test_close_application_saves_summary_layout_and_cancels_scaling(monkeypatch):
+    gui = _make_gui()
+    gui.root = DummyRoot()
+    gui.display_settings = {}
+    gui._gui_scale_after_id = "scale_callback"
+
+    summary_geometry_calls = []
+
+    class DummySummary:
+        def _save_summary_geometry(self):
+            summary_geometry_calls.append(True)
+
+    gui.root.children = [DummySummary(), object()]
+
+    gui._save_main_window_geometry = lambda: None
+    monkeypatch.setattr(gui_init, "save_display_settings", lambda settings: None)
+
+    gui._close_application()
+
+    assert summary_geometry_calls == [True]
+    assert gui.root.cancelled_callbacks == ["scale_callback"]
+    assert gui._gui_scale_after_id is None
     assert gui.root.destroy_called == 1

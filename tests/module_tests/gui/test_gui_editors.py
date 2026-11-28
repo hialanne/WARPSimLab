@@ -12,6 +12,9 @@ class DummyVar:
     def get(self):
         return self.value
 
+    def set(self, value):
+        self.value = value
+
 
 class DummyChild:
     def __init__(self):
@@ -61,7 +64,9 @@ def _make_gui(advanced=True, second_person=True):
     gui = gui_editors.PortfolioSimulatorGUI_EditorsMixin()
     gui.edit_frame_container = DummyContainer()
     gui.mode_var = DummyVar("Advanced" if advanced else "Basic")
-    gui._advanced_only = lambda: advanced
+    gui._advanced_only = lambda: gui.mode_var.get() == "Advanced"
+    gui._save_user_mode = lambda: None
+    gui._apply_mode_to_top_buttons = lambda: None
 
     gui.husband = object()
     gui.wife = object()
@@ -114,13 +119,29 @@ def test_tutorial_start_methods(monkeypatch):
     gui = _make_gui()
     gui.guided_tutorial_controller = DummyTutorialController()
 
+    save_mode_calls = []
+    update_button_calls = []
+
+    gui._save_user_mode = lambda: save_mode_calls.append(gui.mode_var.get())
+    gui._apply_mode_to_top_buttons = lambda: update_button_calls.append(gui.mode_var.get())
+
     monkeypatch.setattr(gui_editors, "build_basic_tutorial_steps", lambda parent: ["basic"])
     monkeypatch.setattr(gui_editors, "build_advanced_building_tutorial_steps", lambda parent: ["building"])
     monkeypatch.setattr(gui_editors, "build_advanced_analysis_tutorial_steps", lambda parent: ["analysis"])
 
+    assert gui.mode_var.get() == "Advanced"
+
     gui.start_basic_tutorial()
+    assert gui.mode_var.get() == "Basic"
+
     gui.start_advanced_building_tutorial()
+    assert gui.mode_var.get() == "Advanced"
+
     gui.start_advanced_analysis_tutorial()
+    assert gui.mode_var.get() == "Advanced"
+
+    assert save_mode_calls == ["Basic", "Advanced"]
+    assert update_button_calls == ["Basic", "Advanced"]
 
     assert gui.guided_tutorial_controller.calls == [
         {"tutorial_title": "Basic Tutorial", "steps": ["basic"]},
