@@ -454,17 +454,16 @@ class PortfolioSimulatorGUI_NavigationMixin(ScalableClientMixin):
 
     def _build_fields(self):
         top_frame = ttk.Frame(self.frame)
-        top_frame.grid(row=0, column=0, sticky="nsew", padx=5)
-        self.top_frame = top_frame  # save as an instance variable
+        top_frame.grid(row=0, column=0, columnspan=4, sticky="nsew", padx=5)
+        top_frame.columnconfigure(0, weight=1)
+        self.top_frame = top_frame
 
-        # Make columns resize properly
         self.frame.columnconfigure(0, weight=1)
         self.frame.columnconfigure(1, weight=1)
         self.frame.columnconfigure(2, weight=1)
         self.frame.columnconfigure(3, weight=1)
 
         self._build_top_fields(top_frame)
-
 
     def _build_run_button(self):
         style = ttk.Style()

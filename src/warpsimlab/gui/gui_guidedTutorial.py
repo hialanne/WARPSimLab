@@ -19,7 +19,6 @@ class GuidedTutorialController(ScalableClientMixin):
     """
 
     INSTRUCTION_PANEL_WIDTH = 330
-    INSTRUCTION_WRAP_LENGTH = 280
 
     def __init__(self, parent_gui):
         self.parent_gui = parent_gui
@@ -290,8 +289,8 @@ class GuidedTutorialController(ScalableClientMixin):
 
     def _build_instruction_panel(self, container, step):
         """
-        Build a fixed-width instruction panel over the right side of the
-        simulator screen.
+        Build a fixed-width scrollable instruction panel over the
+        right side of the simulator screen.
         """
         container.update_idletasks()
 
@@ -306,27 +305,30 @@ class GuidedTutorialController(ScalableClientMixin):
             relheight=1.0, height=-(top_offset + bottom_margin)
         )
 
-        tk.Label(
-            self.instruction_panel, text=step["title"], font=self._title_font, background="#f4f7f9",
-            justify="left", anchor="w", wraplength=self.INSTRUCTION_WRAP_LENGTH
-        ).pack(anchor="w", fill="x", padx=14, pady=(14, 8))
+        scrollbar = ttk.Scrollbar(self.instruction_panel, orient="vertical")
+        scrollbar.pack(side="right", fill="y")
 
-        tk.Label(
-            self.instruction_panel, text=step.get("section_title", "What to do"), font=self._section_font,
-            background="#f4f7f9", justify="left", anchor="w"
-        ).pack(anchor="w", fill="x", padx=14, pady=(4, 6))
+        text = tk.Text(
+            self.instruction_panel, wrap="word", font=self._body_font,
+            background="#f4f7f9", foreground="#000000", borderwidth=0,
+            highlightthickness=0, padx=14, pady=14,
+            yscrollcommand=scrollbar.set
+        )
+        text.pack(side="left", fill="both", expand=True)
+        scrollbar.configure(command=text.yview)
 
-        tk.Label(
-            self.instruction_panel, text=step["text"], font=self._body_font, background="#f4f7f9",
-            justify="left", anchor="nw", wraplength=self.INSTRUCTION_WRAP_LENGTH
-        ).pack(anchor="nw", fill="x", padx=14, pady=(0, 10))
+        text.tag_configure("title", font=self._title_font, spacing3=8)
+        text.tag_configure("section", font=self._section_font, spacing1=4, spacing3=6)
+        text.tag_configure("body", font=self._body_font, spacing3=10)
+        text.tag_configure("validation", font=self._section_font, foreground="#8b0000", spacing1=2)
+
+        text.insert("end", step["title"] + "\n", "title")
+        text.insert("end", step.get("section_title", "What to do") + "\n", "section")
+        text.insert("end", step["text"], "body")
 
         if self.validation_message:
-            tk.Label(
-                self.instruction_panel, text=self.validation_message, font=self._section_font,
-                background="#f4f7f9", foreground="#8b0000", justify="left", anchor="w",
-                wraplength=self.INSTRUCTION_WRAP_LENGTH
-            ).pack(anchor="w", fill="x", padx=14, pady=(2, 14))
+            text.insert("end", "\n" + self.validation_message, "validation")
 
+        text.configure(state="disabled")
         self.instruction_panel.lift()
 

@@ -110,8 +110,8 @@ class TutorialFrame(ScalableFrameMixin, ttk.Frame):
             text=(
                 "Learn the primary income, expense, and portfolio inputs. "
                 "Run a simulation, review the Simulation Summary, change an input, "
-                "compare results, and save your work.  This tutorial assums that "
-                "Mode is set to Basic."
+                "compare results, and save your work. This tutorial automatically "
+                "selects Basic mode."
             ),
             font=self._body_font,
             wraplength=850,
@@ -142,6 +142,7 @@ class TutorialFrame(ScalableFrameMixin, ttk.Frame):
                 "Configure detailed income, assets, real estate, retirement "
                 "spending, market assumptions, simulation settings, and "
                 "display controls."
+                " This tutorial automatically selects Advanced mode."
             ),
             font=self._body_font,
             wraplength=850,
@@ -171,6 +172,7 @@ class TutorialFrame(ScalableFrameMixin, ttk.Frame):
             text=(
                 "Review result plots, experiment with Scenario Explorer, "
                 "generate reports, and examine tax and portfolio-risk results."
+                " This tutorial automatically selects Advanced mode."
             ),
             font=self._body_font,
             wraplength=850,

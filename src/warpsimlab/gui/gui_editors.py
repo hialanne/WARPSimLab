@@ -73,10 +73,18 @@ class PortfolioSimulatorGUI_EditorsMixin:
         self.edit_blank()
 
 
+    def _set_tutorial_mode(self, mode):
+        if self.mode_var.get() != mode:
+            self.mode_var.set(mode)
+            self._save_user_mode()
+            self._apply_mode_to_top_buttons()
+
+
     def start_basic_tutorial(self):
         """
         Start the Basic Tutorial.
         """
+        self._set_tutorial_mode("Basic")
         self.guided_tutorial_controller.start(
             tutorial_title="Basic Tutorial", steps=build_basic_tutorial_steps(self)
         )
@@ -86,6 +94,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
         """
         Start Advanced Tutorial 1: Building the Simulation.
         """
+        self._set_tutorial_mode("Advanced")
         self.guided_tutorial_controller.start(
             tutorial_title="Advanced Tutorial 1: Building the Simulation",
             steps=build_advanced_building_tutorial_steps(self),
@@ -96,6 +105,7 @@ class PortfolioSimulatorGUI_EditorsMixin:
         """
         Start Advanced Tutorial 2: Analyzing Results.
         """
+        self._set_tutorial_mode("Advanced")
         self.guided_tutorial_controller.start(
             tutorial_title="Advanced Tutorial 2: Analyzing Results",
             steps=build_advanced_analysis_tutorial_steps(self),
